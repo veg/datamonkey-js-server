@@ -4,5 +4,5 @@ rm -rf Analyses/ModelSelection/spool/$1.progress
 STR=`beomap -np 21`
 echo $STR
 
-(echo $1; echo $2) |  mpirun -map $STR /opt/hyphy/HYPHY/HYPHYMPI USEPATH=`pwd`/dump/ /home/datamonkey/Datamonkey/Analyses/ModelSelection/ModelSelection.bf
+(echo $1; echo $2) |  mpirun -map $STR /opt/hyphy/HYPHY/HYPHYMPI USEPATH=`pwd`/dump/ ../Analyses/ModelSelection/ModelSelection.bf
 #> Analyses/ModelSelection/hpout

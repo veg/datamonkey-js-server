@@ -4,7 +4,7 @@
 #genetic code
 #posterior p
 
-BASEPATH=/home/datamonkey/Datamonkey/Analyses/FUBAR/
+BASEPATH=../Analyses/FUBAR/
 
 (echo $1; echo $2) | /usr/local/bin/HYPHYMP ${BASEPATH}FUBAR_Stage0.bf > Analyses/FUBAR/hpout 2>&1
 (echo $1) | /usr/bin/bpsh `beomap --nolocal` /usr/local/bin/HYPHYMP ${BASEPATH}FUBAR_Stage1.bf  > Analyses/FUBAR/hpout 2>&1

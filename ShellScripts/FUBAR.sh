@@ -6,6 +6,6 @@ rm -f Analyses/FUBAR/spool/$1*
 #genetic code
 #posterior p
 
-bash /home/datamonkey/Datamonkey/ShellScripts/FUBAR_wrapper.sh $1 $2 $3 $4 > /dev/null 2>&1 & 
+bash ../ShellScripts/FUBAR_wrapper.sh $1 $2 $3 $4 > /dev/null 2>&1 & 
 
 
