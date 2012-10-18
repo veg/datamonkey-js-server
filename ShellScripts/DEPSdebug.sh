@@ -13,4 +13,4 @@ rm -f Analyses/DEPS/spool/$1*out
 #tree mode
 #root on this node
 
-(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6; echo $7;) | /usr/local/bin/HYPHYDEBUG USEPATH=/home/datamonkey/Datamonkey/Analyses/DEPS/ /home/datamonkey/Datamonkey/Analyses/DEPS/DEPS.bf 
+(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6; echo $7;) | /usr/local/bin/HYPHYDEBUG USEPATH=../Analyses/DEPS/ ../Analyses/DEPS/DEPS.bf 

@@ -12,4 +12,4 @@ rm -f Analyses/ASR/spool/$1*out
 #root on this node
 
 
-(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6; echo $7; echo $8) | /usr/local/bin/HYPHYMP /home/datamonkey/Datamonkey/Analyses/ASR/ASR.bf > Analyses/ASR/hpout 2>&1 &
+(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6; echo $7; echo $8) | /usr/local/bin/HYPHYMP ../Analyses/ASR/ASR.bf > Analyses/ASR/hpout 2>&1 &
