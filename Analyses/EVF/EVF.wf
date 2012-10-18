@@ -1,0 +1,10 @@
+options = {"0": "upload.9619439686360.1",
+		   "1": "0",
+		   "2": "012345",
+		   "3": "-1",
+		   "4": "0"};
+
+VERBOSITY_LEVEL = 1;			   
+			   
+ExecuteAFile ("EVF.bf",
+			   options);
