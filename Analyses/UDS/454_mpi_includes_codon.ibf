@@ -1,0 +1,93 @@
+/* functions needed by the mpi nodes for 454 processing */
+/*---------------------------------------------
+reverse complement a nucleotide string
+---------------------------------------------*/
+
+_nucleotide_rc = {};
+_nucleotide_rc["A"] = "T";
+_nucleotide_rc["C"] = "G";
+_nucleotide_rc["G"] = "C";
+_nucleotide_rc["T"] = "A";
+_nucleotide_rc["M"] = "K";
+_nucleotide_rc["R"] = "Y";
+_nucleotide_rc["W"] = "W";
+_nucleotide_rc["S"] = "S";
+_nucleotide_rc["Y"] = "R";
+_nucleotide_rc["K"] = "M";
+_nucleotide_rc["B"] = "V";  /* not A */
+_nucleotide_rc["D"] = "H";  /* not C */
+_nucleotide_rc["H"] = "D";  /* not G */
+_nucleotide_rc["V"] = "B";  /* not T */
+_nucleotide_rc["N"] = "N";
+
+function nucleotideReverseComplement (seqIn)
+{
+	_seqOut = "";_seqOut*128;
+	_seqL   = Abs(seqIn);
+	for (_r = _seqL-1; _r >=0 ; _r = _r-1)
+	{
+		_seqOut *_nucleotide_rc[seqIn[_r]];
+	}
+	_seqOut*0;
+	return _seqOut;
+}
+
+/*-------------------------------------------------*/
+
+function	computeCorrection (str)
+{
+	correctionFore	 = (str$"^\\-+")[1]+1;
+	correctionAft	 = (str$"\\-+$")[0];
+	if (correctionAft >= 0)
+	{
+		correctionAft = Abs(str)-correctionAft;
+	}
+	else
+	{
+		correctionAft = 0;
+	}
+	return {{correctionFore__,correctionAft__}};
+}
+
+/*-------------------------------------------------*/
+
+function makeAAMap ()
+{
+	codonToAAMap = {};
+	codeToAA 	 = "FLIMVSPTAYXHQNKDECWRG";
+	
+	nucChars = "ACGT";
+	
+	for (p1=0; p1<64; p1=p1+1)
+	{
+		codon 				= nucChars[p1$16]+nucChars[p1%16$4]+nucChars[p1%4];
+		ccode 				= _Genetic_Code[p1];
+		codonToAAMap[codon] = codeToAA[ccode];
+	}
+	return codonToAAMap;
+}
+
+/*-------------------------------------------------*/
+
+function translateToAA (aSeq, offset)
+{
+	seqLen	= Abs (aSeq)-2;
+	translString = "";
+	translString * (seqLen/3+1);
+	for (seqPos = offset; seqPos < seqLen; seqPos = seqPos+3)
+	{
+		codon = aSeq[seqPos][seqPos+2];
+		prot = codonToAAMap[codon];
+		if (Abs(prot))
+		{
+			translString * prot;
+		}
+		else
+		{
+			translString * "?";
+		}
+	} 
+	translString * 0;
+	translString = translString^{{"X$","?"}};
+	return translString;
+}

@@ -1,0 +1,251 @@
+/*------------------------------------------------*/
+
+function computeAIC (l,p,s)
+{
+	return -2*l + 2*p*(s/(s-p-1)); 
+}
+
+/*------------------------------------------------*/
+
+function rateTransform (r)
+{
+	return Min(4,Log(r+Exp(-4))); 
+}
+
+/*------------------------------------------------*/
+
+function extractRateDistributions (fileName)
+{
+	if (Abs(fileName))
+	{
+		ExecuteAFile 	(fileName);
+	}
+	else
+	{
+		ExecuteAFile 	(PROMPT_FOR_FILE);
+	}
+	
+	GetInformation		(vars,"^P_[0-9]+");
+	rateCount			= Columns (vars)+1;
+	
+	GetString			(lfInfo, lf, -1);
+	fileCount			= Columns(lfInfo["Trees"])/rateCount;
+	
+	ps 			 = {rateCount,1};
+	rateInfo	 = {rateCount,3};
+	rateInfo	 = rateInfo["1"];
+	
+	for (mi = 0; mi < rateCount-1; mi=mi+1)
+	{
+		ExecuteCommands ("ps["+mi+"]="+"P_"+(mi+1)+";");
+	}
+	
+	for (mi = 0; mi < rateCount; mi=mi+1)
+	{
+		ExecuteCommands ("rateInfo[mi][0]="+"S_"+mi+"/c_scale;");
+		ExecuteCommands ("rateInfo[mi][1]="+"NS_"+mi+"/c_scale;");
+	}
+	
+	
+	for (mi=0; mi<rateCount-1; mi=mi+1)
+	{
+		for (mi2 = 0; mi2 < mi; mi2=mi2+1)
+		{
+			rateInfo[mi][2] = rateInfo[mi][2] * (1-ps[mi2]);
+		}
+		rateInfo[mi][2] = rateInfo[mi][2] * ps[mi];
+	}
+	
+	
+	for (mi2 = 0; mi2 < mi; mi2=mi2+1)
+	{
+		rateInfo[mi][2] = rateInfo[mi][2] * (1-ps[mi2]);
+	}
+	
+	return rateInfo;
+}
+
+/*------------------------------------------------*/
+
+function mapValuesToParameterMatrix (theMatrix)
+{
+	
+	S_0 = theMatrix[0][0];
+	R_0	= theMatrix[0][1]/S_0;
+	P_1 = theMatrix[0][2];
+	currentProbMultipler = (1-P1);
+	
+	for (mi = 1; mi < Rows (theMatrix); mi = mi+1)
+	{
+		ExecuteCommands ("S_"+mi+"=theMatrix[mi][0]");
+		ExecuteCommands ("NS_"+mi+"=theMatrix[mi][1]");
+		if (mi < Rows (theMatrix) - 1)
+		{
+			ExecuteCommands ("P_"+(mi+1)+"=theMatrix[mi][2]/currentProbMultipler");
+			ExecuteCommands ("currentProbMultipler=currentProbMultipler*(1-P_"+(mi+1)+")");
+		}
+	}
+	
+	return rateInfo;
+}
+
+/*------------------------------------------------*/
+
+function returnPSBayesFactors (priors)
+{
+	rateCount = Rows(priors);
+	
+	priorOdds	 = 0;
+	
+	multMatrix      = {rateCount,1};
+	for (mi = 0; mi < rateCount; mi = mi + 1)
+	{
+		if (priors[mi][0] < priors[mi][1])
+		{
+			multMatrix[mi] = 1;
+			priorOdds = priorOdds + priors[mi][2];
+		}
+	}
+	
+	ConstructCategoryMatrix (cm, lf, COMPLETE);
+	site_count 		= Columns (cm)/rateCount;
+	posteriorProbs  = {site_count, rateCount};
+	
+	if (priorOdds == 0 || priorOdds == 1)
+	{
+		if (priorOdds == 0)
+		{
+			return {site_count,1}["-1e100"];
+		}
+		else
+		{
+			return {site_count,1}["1e100"];		
+		}
+	}
+	
+	priorOdds = priorOdds/(1-priorOdds);
+	
+	
+	
+	for (site_enumerator = 0; site_enumerator < site_count; site_enumerator = site_enumerator + 1)
+	{
+		sum = 0; 
+		
+		smallestScaler = 1e100;
+		
+		for (rate_enumerator = 0; rate_enumerator < rateCount; rate_enumerator = rate_enumerator + 1)
+		{
+			smallestScaler = Min(smallestScaler,cm.site_scalers[rate_enumerator*site_count+site_enumerator]);
+		}
+		
+		for (rate_enumerator = 0; rate_enumerator < rateCount; rate_enumerator = rate_enumerator + 1)
+		{
+			v = cm[rate_enumerator*site_count+site_enumerator] * priors[rate_enumerator][2] * Exp(cm.log_scale_multiplier*(smallestScaler-cm.site_scalers[rate_enumerator*site_count+site_enumerator]));
+			posteriorProbs[site_enumerator] [rate_enumerator]= v;
+			sum = sum + v;
+		}
+	
+		for (rate_enumerator = 0; rate_enumerator < rateCount; rate_enumerator = rate_enumerator + 1)
+		{
+			posteriorProbs[site_enumerator] [rate_enumerator]= posteriorProbs[site_enumerator] [rate_enumerator]/sum;
+		}
+	}
+	
+	posteriorProbs = posteriorProbs*multMatrix;
+	return posteriorProbs["Log(_MATRIX_ELEMENT_VALUE_/(1-_MATRIX_ELEMENT_VALUE_)/priorOdds)"];
+}
+
+
+/*---------------------------------------------------------------------------------------------*/
+
+function computeESD (g1, g2, doTransform)
+{
+	gbdd1  = g1;
+	gbdd2  = g2;
+	rateC1 = Rows(gbdd1);
+	rateC2 = Rows(gbdd2);
+
+	smc = rateC1*rateC2;
+	smr = rateC1+rateC2-1;
+	
+	tableaux = {smr+1,smc+2}; 
+	tableaux   [0][smc+1] = -1;
+	
+	if (doTransform)
+	{
+		gbdd1 = transformRateMatrix (gbdd1);
+		gbdd2 = transformRateMatrix (gbdd2);
+	}
+	
+	for (_kk2 = 0; _kk2 < rateC1; _kk2 = _kk2+1)
+	{
+		tableaux [_kk2+1][0]		= gbdd1[_kk2][2];
+		for (_kk3 = 0; _kk3 < rateC2; _kk3 = _kk3+1)
+		{
+			tableaux [0][_kk2*rateC2 + _kk3+1]       = computeRateD (gbdd1[_kk2][-1],gbdd2[_kk3][-1]);
+			tableaux [_kk2+1][_kk2*rateC2+_kk3+1]   = -1;
+		}
+	}
+	
+	for (_kk3 = 0; _kk3 < rateC2-1; _kk3 = _kk3+1)
+	{
+		tableaux[_kk3+rateC1+1][0] = gbdd2[_kk3][2];
+		for (_kk2 = 0; _kk2 < rateC1; _kk2 = _kk2+1)
+		{
+			tableaux[_kk3+rateC1+1][_kk2*rateC2+_kk3+1] = -1;
+		}
+	}
+	
+	simplexSolution = Simplex(tableaux);
+	
+	return simplexSolution[0];
+}
+
+/*----------------------------------------------------------------------------------------------*/
+
+function transformRateMatrix (gbdd)
+{
+	for (_ii = 0; _ii < Rows (gbdd); _ii = _ii+1)
+	{
+		gbdd[_ii][0] = 0.5*Log(1e-4+gbdd[_ii][0]);
+		gbdd[_ii][1] = 0.5*Log(1e-4+gbdd[_ii][1]);
+	}
+	return gbdd;
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+function computeRateD (v1,v2)
+{
+	return Sqrt((v1[0]-v2[0])^2+(v1[1]-v2[1])^2);
+}
+
+/*-----------------------------------------------------------------------------------------------*/
+
+
+function _makeLHCSamplerInput (_fileName, _rateCount, samples, resamples, inflation)
+{
+	stdinOverload = {};
+	stdinOverload["000"] = "lf";
+	stdinOverload["001"] = "Latin Hypercube + SiR";
+	stdinOverload["002"] = _fileName + ".samples";
+	stdinOverload["003"] = "Choose";
+	stdinOverload["004"] = "S_0";
+	stdinOverload["005"] = "NS_0";
+	
+	_inputCounter = 6;
+	
+	for (_k = 1; _k < _rateCount; _k = _k+1)
+	{
+		stdinOverload [_mapNumberToString(_inputCounter)] = "S_" + _k;
+		stdinOverload [_mapNumberToString(_inputCounter+1)] = "NS_" + _k;
+		stdinOverload [_mapNumberToString(_inputCounter+2)] = "P_" + _k;
+		_inputCounter = _inputCounter + 3;
+	}	
+	stdinOverload [_mapNumberToString(_inputCounter)] = "";
+	stdinOverload [_mapNumberToString(_inputCounter+1)] = "";
+	stdinOverload [_mapNumberToString(_inputCounter+2)] = ""+samples;
+	stdinOverload [_mapNumberToString(_inputCounter+3)] = ""+resamples;
+	stdinOverload [_mapNumberToString(_inputCounter+4)] = ""+inflation;
+	return stdinOverload;
+}
