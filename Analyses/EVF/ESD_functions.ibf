@@ -226,12 +226,12 @@ function computeRateD (v1,v2)
 function _makeLHCSamplerInput (_fileName, _rateCount, samples, resamples, inflation)
 {
 	stdinOverload = {};
-	stdinOverload["000"] = "lf";
-	stdinOverload["001"] = "Latin Hypercube + SiR";
-	stdinOverload["002"] = _fileName + ".samples";
-	stdinOverload["003"] = "Choose";
-	stdinOverload["004"] = "S_0";
-	stdinOverload["005"] = "NS_0";
+	stdinOverload[_mapNumberToString(0)] = "lf";
+	stdinOverload[_mapNumberToString(1)] = "Latin Hypercube + SiR";
+	stdinOverload[_mapNumberToString(2)] = _fileName + ".samples";
+	stdinOverload[_mapNumberToString(3)] = "Choose";
+	stdinOverload[_mapNumberToString(4)] = "S_0";
+	stdinOverload[_mapNumberToString(5)] = "NS_0";
 	
 	_inputCounter = 6;
 	

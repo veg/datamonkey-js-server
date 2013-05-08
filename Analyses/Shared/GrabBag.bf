@@ -308,21 +308,25 @@ function _copyBranchLengths (_treeID1, _treeID2, _op, _suffix)
 
 
 /*---------------------------------------------*/
-/* convert a number into a 3 letter string 
+/* convert a number into a 5 letter string 
    for initializing stdin lists */
 /*---------------------------------------------*/
    
 function _mapNumberToString (n)
 {
-	if (n>=100)
-	{
+	if (n>=10000) {
 		return "" + n;
 	}
-	if (n>=10)
-	{
+	if (n>=1000) {
 		return "0" + n;
 	}
-	return "00" + n;
+	if (n>=100) {
+		return "00" + n;
+	}
+	if (n>=10) {
+		return "000" + n;
+	}
+	return "0000" + n;
 }
 
 
@@ -610,3 +614,36 @@ function mapSets (sourceList,targetList)
 	
 	return mapping;
 }
+
+/*---------------------------------------------------------*/
+/* unconstrain global variables in a LF at their current values */
+   
+function unconstrainGlobalParameters (_lfName) {
+	GetString (_lfInfo,^_lfName,-1);
+	_lfInfo = _lfInfo["Global Constrained"];
+	for (_gb_idx = 0; _gb_idx < Columns (_lfInfo); _gb_idx += 1) {
+		ExecuteCommands (_lfInfo[_gb_idx] + "=" + _lfInfo[_gb_idx]);
+	} 	
+	return 0;
+}
+
+/*---------------------------------------------------------*/
+function updateAndWriteStatusJSON (status_info, key1, key2, value, do_print) {
+    ((^status_info)[_mapNumberToString(key1)])["Time"] = Time(1);
+    (((^status_info)[_mapNumberToString(key1)])["Information"])[_mapNumberToString(key2)] = value;
+    if (do_print) {
+        fprintf (stdout, CLEAR_FILE, ^status_info, "\n");
+    }
+    return 0;   
+}
+
+/*---------------------------------------------------------*/
+function runTimeEstimator (start,total,done) {
+    now         = Time(1);
+    frac_done   = done/total;
+    if (frac_done == 1) {
+        return "All " + total + " tasks done. Time elapsed: " + _formatTimeString (now-start);
+    }
+    return "" + done + "/" + total + " tasks done. Time elapsed: " + _formatTimeString (now-start) + ", projected run time left: " + _formatTimeString ((now-start)*(1-frac_done)/frac_done);
+}
+

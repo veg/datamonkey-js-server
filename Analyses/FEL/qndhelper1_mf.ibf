@@ -1,1 +1,86 @@
-function BuildCodonFrequencies (obsF){	if (!ModelMatrixDimension)	{		ModelMatrixDimension = 64;		for (h = 0 ;h<64; h=h+1)		{			if (_Genetic_Code[h]==10)			{				ModelMatrixDimension = ModelMatrixDimension-1;			}		}	}	PIStop = 1.0;	result = {ModelMatrixDimension,1};	hshift = 0;	for (h=0; h<64; h=h+1)	{		first = h$16;		second = h%16$4;		third = h%4;		if (_Genetic_Code[h]==10) 		{			hshift = hshift+1;			PIStop = PIStop-obsF[first][0]*obsF[second][1]*obsF[third][2];			continue; 		}		result[h-hshift][0]=obsF[first][0]*obsF[second][1]*obsF[third][2];	}	return result*(1.0/PIStop);}/*------------------------------------------------------------------------*/global AC 	= 1;global AT 	= 1;global CG 	= 1;global CT 	= 1;global GT 	= 1;global dNdS = 1;		NucleotideMatrix	 = {{*,AC*t,t,AT*t}{AC*t,*,CG*t,CT*t}{t,CG*t,*,GT*t}{AT*t,CT*t,GT*t,*}};modelDesc	  = _in_ModelDescription;ModelTitle 	  = ""+modelDesc[0];rateBiasTerms = {{"AC","1","AT","CG","CT","GT"}};paramCount	  = 0;modelConstraintString = "";for (customLoopCounter2=1; customLoopCounter2<6; customLoopCounter2=customLoopCounter2+1){	for (customLoopCounter=0; customLoopCounter<customLoopCounter2; customLoopCounter=customLoopCounter+1)	{		if (modelDesc[customLoopCounter2]==modelDesc[customLoopCounter])		{			ModelTitle  = ModelTitle+modelDesc[customLoopCounter2];				if (rateBiasTerms[customLoopCounter2] == "1")			{				modelConstraintString = modelConstraintString + rateBiasTerms[customLoopCounter]+":="+rateBiasTerms[customLoopCounter2]+";";			}			else			{				modelConstraintString = modelConstraintString + rateBiasTerms[customLoopCounter2]+":="+rateBiasTerms[customLoopCounter]+";";						}			break;		}	}	if (customLoopCounter==customLoopCounter2)	{		ModelTitle = ModelTitle+modelDesc[customLoopCounter2];		}}	if (Abs(modelConstraintString)){	ExecuteCommands (modelConstraintString);}#include "../Shared/_MFReader_.ibf";codonFrequencies 	= BuildCodonFrequencies(positionFrequencies);Model NucModel 		= (NucleotideMatrix, overallFrequencies, 1);
+function BuildCodonFrequencies (obsF)
+{
+	if (!ModelMatrixDimension)
+	{
+		ModelMatrixDimension = 64;
+		for (h = 0 ;h<64; h=h+1)
+		{
+			if (_Genetic_Code[h]==10)
+			{
+				ModelMatrixDimension = ModelMatrixDimension-1;
+			}
+		}
+	}
+
+	PIStop = 1.0;
+	result = {ModelMatrixDimension,1};
+	hshift = 0;
+
+	for (h=0; h<64; h=h+1)
+	{
+		first = h$16;
+		second = h%16$4;
+		third = h%4;
+		if (_Genetic_Code[h]==10) 
+		{
+			hshift = hshift+1;
+			PIStop = PIStop-obsF[first][0]*obsF[second][1]*obsF[third][2];
+			continue; 
+		}
+		result[h-hshift][0]=obsF[first][0]*obsF[second][1]*obsF[third][2];
+	}
+	return result*(1.0/PIStop);
+}
+
+/*------------------------------------------------------------------------*/
+
+global AC 	= 1;
+global AT 	= 1;
+global CG 	= 1;
+global CT 	= 1;
+global GT 	= 1;
+global dNdS = 1;		
+
+NucleotideMatrix	 = {{*,AC*t,t,AT*t}{AC*t,*,CG*t,CT*t}{t,CG*t,*,GT*t}{AT*t,CT*t,GT*t,*}};
+
+modelDesc	  = _in_ModelDescription;
+fprintf("/home/datamonkey/testout", modelDesc)
+ModelTitle 	  = ""+modelDesc[0];
+rateBiasTerms = {{"AC","1","AT","CG","CT","GT"}};
+paramCount	  = 0;
+
+modelConstraintString = "";
+for (customLoopCounter2=1; customLoopCounter2<6; customLoopCounter2=customLoopCounter2+1)
+{
+	for (customLoopCounter=0; customLoopCounter<customLoopCounter2; customLoopCounter=customLoopCounter+1)
+	{
+		if (modelDesc[customLoopCounter2]==modelDesc[customLoopCounter])
+		{
+			ModelTitle  = ModelTitle+modelDesc[customLoopCounter2];	
+			if (rateBiasTerms[customLoopCounter2] == "1")
+			{
+				modelConstraintString = modelConstraintString + rateBiasTerms[customLoopCounter]+":="+rateBiasTerms[customLoopCounter2]+";";
+			}
+			else
+			{
+				modelConstraintString = modelConstraintString + rateBiasTerms[customLoopCounter2]+":="+rateBiasTerms[customLoopCounter]+";";			
+			}
+			break;
+		}
+	}
+	if (customLoopCounter==customLoopCounter2)
+	{
+		ModelTitle = ModelTitle+modelDesc[customLoopCounter2];	
+	}
+}	
+
+if (Abs(modelConstraintString))
+{
+	ExecuteCommands (modelConstraintString);
+}
+
+#include "../Shared/_MFReader_.ibf";
+
+codonFrequencies 	= BuildCodonFrequencies(positionFrequencies);
+Model NucModel 		= (NucleotideMatrix, overallFrequencies, 1);
+
