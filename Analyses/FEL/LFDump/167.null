@@ -1,0 +1,961 @@
+#NEXUS
+
+BEGIN TAXA;
+	DIMENSIONS NTAX = 68;
+	TAXLABELS
+		'RATTUSMX2ENSRNOT00000002695_CDNA_KNOWN_PROTEIN_CODING' 'MGARD0020_OUTGROUP' 'MYGLBR10_001_F_H3' 'APSYBR10_074_F_H5' 'BAINL0142_F_B6' 'BAINR4265_F_F8' 'BAINR4510_F_E4' 'BAINR4831_F_B4' 'BAINR5035_F_B5' 'BASAR4059_F_F4' 'BASAR4060_F_F5' 'BASAR4143_F_E1' 'BASAR4176_F_F7' 'BASAR4483_F_E2' 'BASAR4509_F_E3' 'BEBEC0333_F_C7' 'BEBOR4400_F_C2' 'BEBOR5018_F_G12' 'BEBOR5026_F_E9' 'BEBOR5305_F_C3' 'BEBOR5410_F_C1' 'LEEDR4222_F_A10' 'LEEDR5034_F_E10' 'LENER4471_F_F11' 'MASUC0157_F_C6' 'MASUC0482_F_B7' 'MASUR4099_F_F6' 'MASUR4107_F_B8' 'MASUR5160_F_C10' 'MUCAC0423_F_H7' 'MUCAL0004_F_H8' 'MUCAR4263_F_A12' 'MUCAR5102_F_E11' 'MUCAR5179_F_C12' 'MUCER4952_F_G9' 'MUCER4955_F_G10' 'MUCER5013_F_H10' 'MUCOL0178_F_H11_WHOLE' 'MUCOR4362_F_G4' 'MUFRR5125_F_E12' 'MUMUMM0806ISEM_F_D11' 'NIFUR4802_F_G5' 'NIFUR4870_F_G8' 'RAARC0001_F_E8' 'RAARCB0008_F_G1' 'RAEXR4078_F_D3' 'RAEXR4838_F_G6' 'RALOR4203_F_D7' 'RALOR4229_F_D8' 'RALOR4402_F_D10' 'RANIL0031_F_B1' 'RANIL0180_F_B2' 'RANIL0192_F_B3' 'RANIR4846_F_G7' 'RANOC0224_F_A1' 'RANOC0317_F_A3' 'RANOR4230_F_E7' 'RANORN0806UM01_F_D12' 'RAR3C0028_F_A8' 'RAR3C0084_F_A6' 'RAR3CB0023_F_G3' 'RAR3R5051_F_A7' 'RARA1848_F_E5' 'RARA1850_F_E6' 'RARA1856_F_F1' 'RATAR4016_F_D2' 'RATAR4043_F_F3' 'RATAR4114_F_D5' ;
+END;
+
+BEGIN CHARACTERS;
+	DIMENSIONS NCHAR = 3;
+	FORMAT
+		DATATYPE = DNA
+		GAP=-
+		MISSING=?
+	;
+
+MATRIX
+	'RATTUSMX2ENSRNOT00000002695_CDNA_KNOWN_PROTEIN_CODING'  TTA
+	'MGARD0020_OUTGROUP'                                     TTA
+	'MYGLBR10_001_F_H3'                                      TTA
+	'APSYBR10_074_F_H5'                                      TTA
+	'BAINL0142_F_B6'                                         TTA
+	'BAINR4265_F_F8'                                         TTA
+	'BAINR4510_F_E4'                                         TTA
+	'BAINR4831_F_B4'                                         TTA
+	'BAINR5035_F_B5'                                         TTA
+	'BASAR4059_F_F4'                                         TTA
+	'BASAR4060_F_F5'                                         TTA
+	'BASAR4143_F_E1'                                         TTA
+	'BASAR4176_F_F7'                                         TTA
+	'BASAR4483_F_E2'                                         TTA
+	'BASAR4509_F_E3'                                         TTA
+	'BEBEC0333_F_C7'                                         TTA
+	'BEBOR4400_F_C2'                                         TTA
+	'BEBOR5018_F_G12'                                        TTA
+	'BEBOR5026_F_E9'                                         TTA
+	'BEBOR5305_F_C3'                                         TTA
+	'BEBOR5410_F_C1'                                         TTA
+	'LEEDR4222_F_A10'                                        TTA
+	'LEEDR5034_F_E10'                                        TTA
+	'LENER4471_F_F11'                                        TTA
+	'MASUC0157_F_C6'                                         TTA
+	'MASUC0482_F_B7'                                         TTA
+	'MASUR4099_F_F6'                                         TTA
+	'MASUR4107_F_B8'                                         TTA
+	'MASUR5160_F_C10'                                        TTA
+	'MUCAC0423_F_H7'                                         CAA
+	'MUCAL0004_F_H8'                                         TTA
+	'MUCAR4263_F_A12'                                        ???
+	'MUCAR5102_F_E11'                                        TTA
+	'MUCAR5179_F_C12'                                        TTA
+	'MUCER4952_F_G9'                                         TTA
+	'MUCER4955_F_G10'                                        TTA
+	'MUCER5013_F_H10'                                        TTA
+	'MUCOL0178_F_H11_WHOLE'                                  ???
+	'MUCOR4362_F_G4'                                         TTA
+	'MUFRR5125_F_E12'                                        CTA
+	'MUMUMM0806ISEM_F_D11'                                   CTA
+	'NIFUR4802_F_G5'                                         TTA
+	'NIFUR4870_F_G8'                                         TTA
+	'RAARC0001_F_E8'                                         TTA
+	'RAARCB0008_F_G1'                                        TTA
+	'RAEXR4078_F_D3'                                         TTG
+	'RAEXR4838_F_G6'                                         TTG
+	'RALOR4203_F_D7'                                         TTR
+	'RALOR4229_F_D8'                                         TTA
+	'RALOR4402_F_D10'                                        TTG
+	'RANIL0031_F_B1'                                         TTA
+	'RANIL0180_F_B2'                                         TTA
+	'RANIL0192_F_B3'                                         TTA
+	'RANIR4846_F_G7'                                         TTA
+	'RANOC0224_F_A1'                                         TTA
+	'RANOC0317_F_A3'                                         TTA
+	'RANOR4230_F_E7'                                         TTG
+	'RANORN0806UM01_F_D12'                                   TTA
+	'RAR3C0028_F_A8'                                         TTA
+	'RAR3C0084_F_A6'                                         TTA
+	'RAR3CB0023_F_G3'                                        TTA
+	'RAR3R5051_F_A7'                                         TTG
+	'RARA1848_F_E5'                                          TTG
+	'RARA1850_F_E6'                                          TTG
+	'RARA1856_F_F1'                                          TTG
+	'RATAR4016_F_D2'                                         TTG
+	'RATAR4043_F_F3'                                         TTG
+	'RATAR4114_F_D5'                                         TTG;
+END;
+
+BEGIN HYPHY;
+
+
+global sFactor=1;
+global nFactor:=sFactor;
+CodonMatrix={61,61};
+CodonMatrix[0][1]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[0][2]:=synRate*0.333583;
+CodonMatrix[0][3]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[0][4]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[0][8]:=nonSynRate*0.141553;
+CodonMatrix[0][12]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[0][16]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[0][32]:=nonSynRate*0.337399;
+CodonMatrix[1][0]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[1][2]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[1][3]:=synRate*0.203635;
+CodonMatrix[1][5]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[1][9]:=nonSynRate*0.141553;
+CodonMatrix[1][13]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[1][17]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[1][33]:=nonSynRate*0.337399;
+CodonMatrix[1][48]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[2][0]:=synRate*0.174571;
+CodonMatrix[2][1]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[2][3]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[2][6]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[2][10]:=nonSynRate*0.141553;
+CodonMatrix[2][14]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[2][18]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[2][34]:=nonSynRate*0.337399;
+CodonMatrix[3][0]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[3][1]:=synRate*0.288211;
+CodonMatrix[3][2]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[3][7]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[3][11]:=nonSynRate*0.141553;
+CodonMatrix[3][15]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[3][19]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[3][35]:=nonSynRate*0.337399;
+CodonMatrix[3][49]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[4][0]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[4][5]:=synRate*0.259143*0.288211;
+CodonMatrix[4][6]:=synRate*0.333583;
+CodonMatrix[4][7]:=synRate*0.259143*0.203635;
+CodonMatrix[4][8]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[4][12]:=nonSynRate*0.308127;
+CodonMatrix[4][20]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[4][36]:=nonSynRate*0.337399;
+CodonMatrix[4][50]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[5][1]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[5][4]:=synRate*0.259143*0.174571;
+CodonMatrix[5][6]:=synRate*0.259143*0.333583;
+CodonMatrix[5][7]:=synRate*0.203635;
+CodonMatrix[5][9]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[5][13]:=nonSynRate*0.308127;
+CodonMatrix[5][21]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[5][37]:=nonSynRate*0.337399;
+CodonMatrix[5][51]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[6][2]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[6][4]:=synRate*0.174571;
+CodonMatrix[6][5]:=synRate*0.259143*0.288211;
+CodonMatrix[6][7]:=synRate*0.259143*0.203635;
+CodonMatrix[6][10]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[6][14]:=nonSynRate*0.308127;
+CodonMatrix[6][22]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[6][38]:=nonSynRate*0.337399;
+CodonMatrix[6][52]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[7][3]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[7][4]:=synRate*0.259143*0.174571;
+CodonMatrix[7][5]:=synRate*0.288211;
+CodonMatrix[7][6]:=synRate*0.259143*0.333583;
+CodonMatrix[7][11]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[7][15]:=nonSynRate*0.308127;
+CodonMatrix[7][23]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[7][39]:=nonSynRate*0.337399;
+CodonMatrix[7][53]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[8][0]:=nonSynRate*0.378764;
+CodonMatrix[8][4]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[8][9]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[8][10]:=synRate*0.333583;
+CodonMatrix[8][11]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[8][12]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[8][24]:=synRate*0.259143*0.236583;
+CodonMatrix[8][40]:=nonSynRate*0.337399;
+CodonMatrix[9][1]:=nonSynRate*0.378764;
+CodonMatrix[9][5]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[9][8]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[9][10]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[9][11]:=synRate*0.203635;
+CodonMatrix[9][13]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[9][25]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[9][41]:=nonSynRate*0.337399;
+CodonMatrix[9][54]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[10][2]:=nonSynRate*0.378764;
+CodonMatrix[10][6]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[10][8]:=synRate*0.174571;
+CodonMatrix[10][9]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[10][11]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[10][14]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[10][26]:=synRate*0.259143*0.236583;
+CodonMatrix[10][42]:=nonSynRate*0.337399;
+CodonMatrix[10][55]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[11][3]:=nonSynRate*0.378764;
+CodonMatrix[11][7]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[11][8]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[11][9]:=synRate*0.288211;
+CodonMatrix[11][10]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[11][15]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[11][27]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[11][43]:=nonSynRate*0.337399;
+CodonMatrix[11][56]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[12][0]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[12][4]:=nonSynRate*0.171557;
+CodonMatrix[12][8]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[12][13]:=synRate*0.259143*0.288211;
+CodonMatrix[12][14]:=nonSynRate*0.333583;
+CodonMatrix[12][15]:=synRate*0.259143*0.203635;
+CodonMatrix[12][28]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[12][44]:=nonSynRate*0.337399;
+CodonMatrix[12][57]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[13][1]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[13][5]:=nonSynRate*0.171557;
+CodonMatrix[13][9]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[13][12]:=synRate*0.259143*0.174571;
+CodonMatrix[13][14]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[13][15]:=synRate*0.203635;
+CodonMatrix[13][29]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[13][45]:=nonSynRate*0.337399;
+CodonMatrix[13][58]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[14][2]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[14][6]:=nonSynRate*0.171557;
+CodonMatrix[14][10]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[14][12]:=nonSynRate*0.174571;
+CodonMatrix[14][13]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[14][15]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[14][30]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[14][46]:=nonSynRate*0.337399;
+CodonMatrix[14][59]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[15][3]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[15][7]:=nonSynRate*0.171557;
+CodonMatrix[15][11]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[15][12]:=synRate*0.259143*0.174571;
+CodonMatrix[15][13]:=synRate*0.288211;
+CodonMatrix[15][14]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[15][31]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[15][47]:=nonSynRate*0.337399;
+CodonMatrix[15][60]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[16][0]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[16][17]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[16][18]:=synRate*0.333583;
+CodonMatrix[16][19]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[16][20]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[16][24]:=nonSynRate*0.141553;
+CodonMatrix[16][28]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[16][32]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[17][1]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[17][16]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[17][18]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[17][19]:=synRate*0.203635;
+CodonMatrix[17][21]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[17][25]:=nonSynRate*0.141553;
+CodonMatrix[17][29]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[17][33]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[17][48]:=nonSynRate*0.0886535;
+CodonMatrix[18][2]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[18][16]:=synRate*0.174571;
+CodonMatrix[18][17]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[18][19]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[18][22]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[18][26]:=nonSynRate*0.141553;
+CodonMatrix[18][30]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[18][34]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[19][3]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[19][16]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[19][17]:=synRate*0.288211;
+CodonMatrix[19][18]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[19][23]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[19][27]:=nonSynRate*0.141553;
+CodonMatrix[19][31]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[19][35]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[19][49]:=nonSynRate*0.0886535;
+CodonMatrix[20][4]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[20][16]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[20][21]:=synRate*0.259143*0.288211;
+CodonMatrix[20][22]:=synRate*0.333583;
+CodonMatrix[20][23]:=synRate*0.259143*0.203635;
+CodonMatrix[20][24]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[20][28]:=nonSynRate*0.308127;
+CodonMatrix[20][36]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[20][50]:=nonSynRate*0.0886535;
+CodonMatrix[21][5]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[21][17]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[21][20]:=synRate*0.259143*0.174571;
+CodonMatrix[21][22]:=synRate*0.259143*0.333583;
+CodonMatrix[21][23]:=synRate*0.203635;
+CodonMatrix[21][25]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[21][29]:=nonSynRate*0.308127;
+CodonMatrix[21][37]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[21][51]:=nonSynRate*0.0886535;
+CodonMatrix[22][6]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[22][18]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[22][20]:=synRate*0.174571;
+CodonMatrix[22][21]:=synRate*0.259143*0.288211;
+CodonMatrix[22][23]:=synRate*0.259143*0.203635;
+CodonMatrix[22][26]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[22][30]:=nonSynRate*0.308127;
+CodonMatrix[22][38]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[22][52]:=nonSynRate*0.0886535;
+CodonMatrix[23][7]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[23][19]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[23][20]:=synRate*0.259143*0.174571;
+CodonMatrix[23][21]:=synRate*0.288211;
+CodonMatrix[23][22]:=synRate*0.259143*0.333583;
+CodonMatrix[23][27]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[23][31]:=nonSynRate*0.308127;
+CodonMatrix[23][39]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[23][53]:=nonSynRate*0.0886535;
+CodonMatrix[24][8]:=synRate*0.259143*0.337364;
+CodonMatrix[24][16]:=nonSynRate*0.378764;
+CodonMatrix[24][20]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[24][25]:=synRate*0.259143*0.288211;
+CodonMatrix[24][26]:=synRate*0.333583;
+CodonMatrix[24][27]:=synRate*0.259143*0.203635;
+CodonMatrix[24][28]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[24][40]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[25][9]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[25][17]:=nonSynRate*0.378764;
+CodonMatrix[25][21]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[25][24]:=synRate*0.259143*0.174571;
+CodonMatrix[25][26]:=synRate*0.259143*0.333583;
+CodonMatrix[25][27]:=synRate*0.203635;
+CodonMatrix[25][29]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[25][41]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[25][54]:=nonSynRate*0.0886535;
+CodonMatrix[26][10]:=synRate*0.259143*0.337364;
+CodonMatrix[26][18]:=nonSynRate*0.378764;
+CodonMatrix[26][22]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[26][24]:=synRate*0.174571;
+CodonMatrix[26][25]:=synRate*0.259143*0.288211;
+CodonMatrix[26][27]:=synRate*0.259143*0.203635;
+CodonMatrix[26][30]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[26][42]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[26][55]:=nonSynRate*0.0886535;
+CodonMatrix[27][11]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[27][19]:=nonSynRate*0.378764;
+CodonMatrix[27][23]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[27][24]:=synRate*0.259143*0.174571;
+CodonMatrix[27][25]:=synRate*0.288211;
+CodonMatrix[27][26]:=synRate*0.259143*0.333583;
+CodonMatrix[27][31]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[27][43]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[27][56]:=nonSynRate*0.0886535;
+CodonMatrix[28][12]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[28][16]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[28][20]:=nonSynRate*0.171557;
+CodonMatrix[28][24]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[28][29]:=synRate*0.259143*0.288211;
+CodonMatrix[28][30]:=synRate*0.333583;
+CodonMatrix[28][31]:=synRate*0.259143*0.203635;
+CodonMatrix[28][44]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[28][57]:=synRate*0.0886535;
+CodonMatrix[29][13]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[29][17]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[29][21]:=nonSynRate*0.171557;
+CodonMatrix[29][25]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[29][28]:=synRate*0.259143*0.174571;
+CodonMatrix[29][30]:=synRate*0.259143*0.333583;
+CodonMatrix[29][31]:=synRate*0.203635;
+CodonMatrix[29][45]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[29][58]:=nonSynRate*0.0886535;
+CodonMatrix[30][14]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[30][18]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[30][22]:=nonSynRate*0.171557;
+CodonMatrix[30][26]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[30][28]:=synRate*0.174571;
+CodonMatrix[30][29]:=synRate*0.259143*0.288211;
+CodonMatrix[30][31]:=synRate*0.259143*0.203635;
+CodonMatrix[30][46]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[30][59]:=synRate*0.0886535;
+CodonMatrix[31][15]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[31][19]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[31][23]:=nonSynRate*0.171557;
+CodonMatrix[31][27]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[31][28]:=synRate*0.259143*0.174571;
+CodonMatrix[31][29]:=synRate*0.288211;
+CodonMatrix[31][30]:=synRate*0.259143*0.333583;
+CodonMatrix[31][47]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[31][60]:=nonSynRate*0.0886535;
+CodonMatrix[32][0]:=nonSynRate*0.337364;
+CodonMatrix[32][16]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[32][33]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[32][34]:=synRate*0.333583;
+CodonMatrix[32][35]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[32][36]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[32][40]:=nonSynRate*0.141553;
+CodonMatrix[32][44]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[33][1]:=nonSynRate*0.337364;
+CodonMatrix[33][17]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[33][32]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[33][34]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[33][35]:=synRate*0.203635;
+CodonMatrix[33][37]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[33][41]:=nonSynRate*0.141553;
+CodonMatrix[33][45]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[33][48]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[34][2]:=nonSynRate*0.337364;
+CodonMatrix[34][18]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[34][32]:=synRate*0.174571;
+CodonMatrix[34][33]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[34][35]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[34][38]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[34][42]:=nonSynRate*0.141553;
+CodonMatrix[34][46]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[35][3]:=nonSynRate*0.337364;
+CodonMatrix[35][19]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[35][32]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[35][33]:=synRate*0.288211;
+CodonMatrix[35][34]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[35][39]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[35][43]:=nonSynRate*0.141553;
+CodonMatrix[35][47]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[35][49]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[36][4]:=nonSynRate*0.337364;
+CodonMatrix[36][20]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[36][32]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[36][37]:=synRate*0.259143*0.288211;
+CodonMatrix[36][38]:=synRate*0.333583;
+CodonMatrix[36][39]:=synRate*0.259143*0.203635;
+CodonMatrix[36][40]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[36][44]:=nonSynRate*0.308127;
+CodonMatrix[36][50]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[37][5]:=nonSynRate*0.337364;
+CodonMatrix[37][21]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[37][33]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[37][36]:=synRate*0.259143*0.174571;
+CodonMatrix[37][38]:=synRate*0.259143*0.333583;
+CodonMatrix[37][39]:=synRate*0.203635;
+CodonMatrix[37][41]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[37][45]:=nonSynRate*0.308127;
+CodonMatrix[37][51]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[38][6]:=nonSynRate*0.337364;
+CodonMatrix[38][22]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[38][34]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[38][36]:=synRate*0.174571;
+CodonMatrix[38][37]:=synRate*0.259143*0.288211;
+CodonMatrix[38][39]:=synRate*0.259143*0.203635;
+CodonMatrix[38][42]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[38][46]:=nonSynRate*0.308127;
+CodonMatrix[38][52]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[39][7]:=nonSynRate*0.337364;
+CodonMatrix[39][23]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[39][35]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[39][36]:=synRate*0.259143*0.174571;
+CodonMatrix[39][37]:=synRate*0.288211;
+CodonMatrix[39][38]:=synRate*0.259143*0.333583;
+CodonMatrix[39][43]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[39][47]:=nonSynRate*0.308127;
+CodonMatrix[39][53]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[40][8]:=nonSynRate*0.337364;
+CodonMatrix[40][24]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[40][32]:=nonSynRate*0.378764;
+CodonMatrix[40][36]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[40][41]:=synRate*0.259143*0.288211;
+CodonMatrix[40][42]:=synRate*0.333583;
+CodonMatrix[40][43]:=synRate*0.259143*0.203635;
+CodonMatrix[40][44]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[41][9]:=nonSynRate*0.337364;
+CodonMatrix[41][25]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[41][33]:=nonSynRate*0.378764;
+CodonMatrix[41][37]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[41][40]:=synRate*0.259143*0.174571;
+CodonMatrix[41][42]:=synRate*0.259143*0.333583;
+CodonMatrix[41][43]:=synRate*0.203635;
+CodonMatrix[41][45]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[41][54]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[42][10]:=nonSynRate*0.337364;
+CodonMatrix[42][26]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[42][34]:=nonSynRate*0.378764;
+CodonMatrix[42][38]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[42][40]:=synRate*0.174571;
+CodonMatrix[42][41]:=synRate*0.259143*0.288211;
+CodonMatrix[42][43]:=synRate*0.259143*0.203635;
+CodonMatrix[42][46]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[42][55]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[43][11]:=nonSynRate*0.337364;
+CodonMatrix[43][27]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[43][35]:=nonSynRate*0.378764;
+CodonMatrix[43][39]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[43][40]:=synRate*0.259143*0.174571;
+CodonMatrix[43][41]:=synRate*0.288211;
+CodonMatrix[43][42]:=synRate*0.259143*0.333583;
+CodonMatrix[43][47]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[43][56]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[44][12]:=nonSynRate*0.337364;
+CodonMatrix[44][28]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[44][32]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[44][36]:=nonSynRate*0.171557;
+CodonMatrix[44][40]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[44][45]:=synRate*0.259143*0.288211;
+CodonMatrix[44][46]:=synRate*0.333583;
+CodonMatrix[44][47]:=synRate*0.259143*0.203635;
+CodonMatrix[44][57]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[45][13]:=nonSynRate*0.337364;
+CodonMatrix[45][29]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[45][33]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[45][37]:=nonSynRate*0.171557;
+CodonMatrix[45][41]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[45][44]:=synRate*0.259143*0.174571;
+CodonMatrix[45][46]:=synRate*0.259143*0.333583;
+CodonMatrix[45][47]:=synRate*0.203635;
+CodonMatrix[45][58]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[46][14]:=nonSynRate*0.337364;
+CodonMatrix[46][30]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[46][34]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[46][38]:=nonSynRate*0.171557;
+CodonMatrix[46][42]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[46][44]:=synRate*0.174571;
+CodonMatrix[46][45]:=synRate*0.259143*0.288211;
+CodonMatrix[46][47]:=synRate*0.259143*0.203635;
+CodonMatrix[46][59]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[47][15]:=nonSynRate*0.337364;
+CodonMatrix[47][31]:=nonSynRate*0.259143*0.236583;
+CodonMatrix[47][35]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[47][39]:=nonSynRate*0.171557;
+CodonMatrix[47][43]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[47][44]:=synRate*0.259143*0.174571;
+CodonMatrix[47][45]:=synRate*0.288211;
+CodonMatrix[47][46]:=synRate*0.259143*0.333583;
+CodonMatrix[47][60]:=nonSynRate*0.259143*0.0886535;
+CodonMatrix[48][1]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[48][17]:=nonSynRate*0.236583;
+CodonMatrix[48][33]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[48][49]:=synRate*0.203635;
+CodonMatrix[48][51]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[48][54]:=nonSynRate*0.141553;
+CodonMatrix[48][58]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[49][3]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[49][19]:=nonSynRate*0.236583;
+CodonMatrix[49][35]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[49][48]:=synRate*0.288211;
+CodonMatrix[49][53]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[49][56]:=nonSynRate*0.141553;
+CodonMatrix[49][60]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[50][4]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[50][20]:=nonSynRate*0.236583;
+CodonMatrix[50][36]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[50][51]:=synRate*0.259143*0.288211;
+CodonMatrix[50][52]:=synRate*0.333583;
+CodonMatrix[50][53]:=synRate*0.259143*0.203635;
+CodonMatrix[50][57]:=nonSynRate*0.308127;
+CodonMatrix[51][5]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[51][21]:=nonSynRate*0.236583;
+CodonMatrix[51][37]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[51][48]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[51][50]:=synRate*0.259143*0.174571;
+CodonMatrix[51][52]:=synRate*0.259143*0.333583;
+CodonMatrix[51][53]:=synRate*0.203635;
+CodonMatrix[51][54]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[51][58]:=nonSynRate*0.308127;
+CodonMatrix[52][6]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[52][22]:=nonSynRate*0.236583;
+CodonMatrix[52][38]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[52][50]:=synRate*0.174571;
+CodonMatrix[52][51]:=synRate*0.259143*0.288211;
+CodonMatrix[52][53]:=synRate*0.259143*0.203635;
+CodonMatrix[52][55]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[52][59]:=nonSynRate*0.308127;
+CodonMatrix[53][7]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[53][23]:=nonSynRate*0.236583;
+CodonMatrix[53][39]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[53][49]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[53][50]:=synRate*0.259143*0.174571;
+CodonMatrix[53][51]:=synRate*0.288211;
+CodonMatrix[53][52]:=synRate*0.259143*0.333583;
+CodonMatrix[53][56]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[53][60]:=nonSynRate*0.308127;
+CodonMatrix[54][9]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[54][25]:=nonSynRate*0.236583;
+CodonMatrix[54][41]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[54][48]:=nonSynRate*0.378764;
+CodonMatrix[54][51]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[54][55]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[54][56]:=synRate*0.203635;
+CodonMatrix[54][58]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[55][10]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[55][26]:=nonSynRate*0.236583;
+CodonMatrix[55][42]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[55][52]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[55][54]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[55][56]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[55][59]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[56][11]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[56][27]:=nonSynRate*0.236583;
+CodonMatrix[56][43]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[56][49]:=nonSynRate*0.378764;
+CodonMatrix[56][53]:=nonSynRate*0.259143*0.171557;
+CodonMatrix[56][54]:=synRate*0.288211;
+CodonMatrix[56][55]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[56][60]:=nonSynRate*0.259143*0.308127;
+CodonMatrix[57][12]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[57][28]:=synRate*0.236583;
+CodonMatrix[57][44]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[57][50]:=nonSynRate*0.171557;
+CodonMatrix[57][58]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[57][59]:=synRate*0.333583;
+CodonMatrix[57][60]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[58][13]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[58][29]:=nonSynRate*0.236583;
+CodonMatrix[58][45]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[58][48]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[58][51]:=nonSynRate*0.171557;
+CodonMatrix[58][54]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[58][57]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[58][59]:=nonSynRate*0.259143*0.333583;
+CodonMatrix[58][60]:=synRate*0.203635;
+CodonMatrix[59][14]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[59][30]:=synRate*0.236583;
+CodonMatrix[59][46]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[59][52]:=nonSynRate*0.171557;
+CodonMatrix[59][55]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[59][57]:=synRate*0.174571;
+CodonMatrix[59][58]:=nonSynRate*0.259143*0.288211;
+CodonMatrix[59][60]:=nonSynRate*0.259143*0.203635;
+CodonMatrix[60][15]:=nonSynRate*0.259143*0.337364;
+CodonMatrix[60][31]:=nonSynRate*0.236583;
+CodonMatrix[60][47]:=nonSynRate*0.259143*0.337399;
+CodonMatrix[60][49]:=nonSynRate*0.259143*0.378764;
+CodonMatrix[60][53]:=nonSynRate*0.171557;
+CodonMatrix[60][56]:=nonSynRate*0.259143*0.141553;
+CodonMatrix[60][57]:=nonSynRate*0.259143*0.174571;
+CodonMatrix[60][58]:=synRate*0.288211;
+CodonMatrix[60][59]:=nonSynRate*0.259143*0.333583;
+
+
+codonFrequencies={
+{   0.0227448724253}
+{   0.0375509466801}
+{   0.0434624795472}
+{   0.0265315225107}
+{   0.0103020523461}
+{   0.0170083089986}
+{   0.0196858760521}
+{   0.0120171759426}
+{  0.00850029182001}
+{   0.0140336687289}
+{   0.0162429470899}
+{  0.00991545169183}
+{   0.0185030970637}
+{   0.0305479317826}
+{   0.0353570010264}
+{   0.0215835607728}
+{   0.0159503087383}
+{   0.0263333722767}
+{    0.030478956063}
+{   0.0186057748503}
+{  0.00722452570786}
+{   0.0119274258642}
+{   0.0138051247307}
+{  0.00842729134123}
+{  0.00596100414896}
+{  0.00984139830601}
+{    0.011390700113}
+{  0.00695341406217}
+{   0.0129756766827}
+{   0.0214223643087}
+{   0.0247948228456}
+{   0.0151359151004}
+{   0.0227472218595}
+{   0.0375548255094}
+{    0.043466969009}
+{   0.0265342630874}
+{   0.0103031164978}
+{   0.0170100658738}
+{    0.019687909507}
+{   0.0120184172582}
+{  0.00850116985863}
+{   0.0140351183383}
+{    0.016244624907}
+{  0.00991647590955}
+{   0.0185050083432}
+{   0.0305510872347}
+{   0.0353606532319}
+{   0.0215857902492}
+{  0.00986774179879}
+{  0.00697202698763}
+{  0.00270720185606}
+{  0.00446949055805}
+{  0.00517310904624}
+{  0.00315790678628}
+{   0.0036878063471}
+{  0.00426836663535}
+{   0.0026056098651}
+{   0.0048622951069}
+{  0.00802747014306}
+{  0.00929121068187}
+{  0.00567178789444}
+}
+;
+Model MGModel=(CodonMatrix,codonFrequencies,0);
+
+UseModel (MGModel);
+Tree siteTree=(((((((((RATTUSMX2ENSRNOT00000002695_CDNA_KNOWN_PROTEIN_CODING,RANOC0224_F_A1)Node8,RANOC0317_F_A3)Node7,RANIR4846_F_G7)Node6,RANIL0031_F_B1)Node5,RANIL0192_F_B3)Node4,RANIL0180_F_B2)Node3,(((MGARD0020_OUTGROUP,MYGLBR10_001_F_H3)Node18,(APSYBR10_074_F_H5,((((MUCAL0004_F_H8,((MUCER4952_F_G9,MUCER4955_F_G10)Node29,MUCOR4362_F_G4)Node28)Node26,MUCAR5179_F_C12)Node25,MUCAR5102_F_E11)Node24,(MUFRR5125_F_E12,MUMUMM0806ISEM_F_D11)Node35)Node23)Node21)Node17,(((MASUC0157_F_C6,MASUR4099_F_F6)Node40,MASUC0482_F_B7)Node39,(MASUR4107_F_B8,MASUR5160_F_C10)Node44)Node38)Node16)Node2,(((BAINL0142_F_B6,((BAINR4265_F_F8,(BAINR4510_F_E4,(BAINR4831_F_B4,BAINR5035_F_B5)Node56)Node54)Node52,(((BASAR4059_F_F4,BASAR4176_F_F7)Node61,(((BASAR4060_F_F5,BASAR4483_F_E2)Node66,BASAR4143_F_E1)Node65,BASAR4509_F_E3)Node64)Node60,((((BEBEC0333_F_C7,((BEBOR4400_F_C2,((((BEBOR5018_F_G12,(((MUCAC0423_F_H7,MUCOL0178_F_H11_WHOLE)Node86,MUCER5013_F_H10)Node85,MUCAR4263_F_A12)Node84)Node82,RANORN0806UM01_F_D12)Node81,BEBOR5305_F_C3)Node80,BEBOR5026_F_E9)Node79)Node77,BEBOR5410_F_C1)Node76)Node74,NIFUR4802_F_G5)Node73,NIFUR4870_F_G8)Node72,((LEEDR4222_F_A10,LENER4471_F_F11)Node98,LEEDR5034_F_E10)Node97)Node71)Node59)Node51)Node49,(RAARC0001_F_E8,RAARCB0008_F_G1)Node102)Node48,(RAEXR4078_F_D3,RAEXR4838_F_G6)Node105)Node47)Node1,(((RALOR4203_F_D7,RALOR4229_F_D8)Node110,(RAR3C0028_F_A8,(RAR3C0084_F_A6,RAR3CB0023_F_G3)Node115)Node113)Node109,(RALOR4402_F_D10,RANOR4230_F_E7)Node118)Node108,(((RAR3R5051_F_A7,RATAR4016_F_D2)Node123,(RATAR4043_F_F3,RATAR4114_F_D5)Node126)Node122,((RARA1848_F_E5,RARA1856_F_F1)Node130,RARA1850_F_E6)Node129)Node121);
+
+siteTree.RATTUSMX2ENSRNOT00000002695_CDNA_KNOWN_PROTEIN_CODING.nonSynRate:=nFactor*0;
+siteTree.RATTUSMX2ENSRNOT00000002695_CDNA_KNOWN_PROTEIN_CODING.synRate:=sFactor*0;
+siteTree.RANOC0224_F_A1.nonSynRate:=nFactor*0;
+siteTree.RANOC0224_F_A1.synRate:=sFactor*0;
+siteTree.Node8.nonSynRate:=nFactor*0.0098108;
+siteTree.Node8.synRate:=sFactor*0.0098108;
+siteTree.RANOC0317_F_A3.nonSynRate:=nFactor*0;
+siteTree.RANOC0317_F_A3.synRate:=sFactor*0;
+siteTree.Node7.nonSynRate:=nFactor*0;
+siteTree.Node7.synRate:=sFactor*0;
+siteTree.RANIR4846_F_G7.nonSynRate:=nFactor*0.0295171;
+siteTree.RANIR4846_F_G7.synRate:=sFactor*0.0295171;
+siteTree.Node6.nonSynRate:=nFactor*0.0137729;
+siteTree.Node6.synRate:=sFactor*0.0137729;
+siteTree.RANIL0031_F_B1.nonSynRate:=nFactor*0;
+siteTree.RANIL0031_F_B1.synRate:=sFactor*0;
+siteTree.Node5.nonSynRate:=nFactor*0.0208686;
+siteTree.Node5.synRate:=sFactor*0.0208686;
+siteTree.RANIL0192_F_B3.nonSynRate:=nFactor*0;
+siteTree.RANIL0192_F_B3.synRate:=sFactor*0;
+siteTree.Node4.nonSynRate:=nFactor*0;
+siteTree.Node4.synRate:=sFactor*0;
+siteTree.RANIL0180_F_B2.nonSynRate:=nFactor*0;
+siteTree.RANIL0180_F_B2.synRate:=sFactor*0;
+siteTree.Node3.nonSynRate:=nFactor*0.0207212;
+siteTree.Node3.synRate:=sFactor*0.0207212;
+siteTree.MGARD0020_OUTGROUP.nonSynRate:=nFactor*0.00983066;
+siteTree.MGARD0020_OUTGROUP.synRate:=sFactor*0.00983066;
+siteTree.MYGLBR10_001_F_H3.nonSynRate:=nFactor*0;
+siteTree.MYGLBR10_001_F_H3.synRate:=sFactor*0;
+siteTree.Node18.nonSynRate:=nFactor*0.488107;
+siteTree.Node18.synRate:=sFactor*0.488107;
+siteTree.APSYBR10_074_F_H5.nonSynRate:=nFactor*0.172545;
+siteTree.APSYBR10_074_F_H5.synRate:=sFactor*0.172545;
+siteTree.MUCAL0004_F_H8.nonSynRate:=nFactor*0;
+siteTree.MUCAL0004_F_H8.synRate:=sFactor*0;
+siteTree.MUCER4952_F_G9.nonSynRate:=nFactor*0;
+siteTree.MUCER4952_F_G9.synRate:=sFactor*0;
+siteTree.MUCER4955_F_G10.nonSynRate:=nFactor*0;
+siteTree.MUCER4955_F_G10.synRate:=sFactor*0;
+siteTree.Node29.nonSynRate:=nFactor*0.0294913;
+siteTree.Node29.synRate:=sFactor*0.0294913;
+siteTree.MUCOR4362_F_G4.nonSynRate:=nFactor*0.0295189;
+siteTree.MUCOR4362_F_G4.synRate:=sFactor*0.0295189;
+siteTree.Node28.nonSynRate:=nFactor*0.0196571;
+siteTree.Node28.synRate:=sFactor*0.0196571;
+siteTree.Node26.nonSynRate:=nFactor*0.0196342;
+siteTree.Node26.synRate:=sFactor*0.0196342;
+siteTree.MUCAR5179_F_C12.nonSynRate:=nFactor*0;
+siteTree.MUCAR5179_F_C12.synRate:=sFactor*0;
+siteTree.Node25.nonSynRate:=nFactor*0;
+siteTree.Node25.synRate:=sFactor*0;
+siteTree.MUCAR5102_F_E11.nonSynRate:=nFactor*0.0098181;
+siteTree.MUCAR5102_F_E11.synRate:=sFactor*0.0098181;
+siteTree.Node24.nonSynRate:=nFactor*0.0301658;
+siteTree.Node24.synRate:=sFactor*0.0301658;
+siteTree.MUFRR5125_F_E12.nonSynRate:=nFactor*0.0180315;
+siteTree.MUFRR5125_F_E12.synRate:=sFactor*0.0180315;
+siteTree.MUMUMM0806ISEM_F_D11.nonSynRate:=nFactor*0.0114702;
+siteTree.MUMUMM0806ISEM_F_D11.synRate:=sFactor*0.0114702;
+siteTree.Node35.nonSynRate:=nFactor*0.0108069;
+siteTree.Node35.synRate:=sFactor*0.0108069;
+siteTree.Node23.nonSynRate:=nFactor*0.103001;
+siteTree.Node23.synRate:=sFactor*0.103001;
+siteTree.Node21.nonSynRate:=nFactor*0.0510764;
+siteTree.Node21.synRate:=sFactor*0.0510764;
+siteTree.Node17.nonSynRate:=nFactor*0.0668456;
+siteTree.Node17.synRate:=sFactor*0.0668456;
+siteTree.MASUC0157_F_C6.nonSynRate:=nFactor*0.00210876;
+siteTree.MASUC0157_F_C6.synRate:=sFactor*0.00210876;
+siteTree.MASUR4099_F_F6.nonSynRate:=nFactor*0.00984107;
+siteTree.MASUR4099_F_F6.synRate:=sFactor*0.00984107;
+siteTree.Node40.nonSynRate:=nFactor*0.00768617;
+siteTree.Node40.synRate:=sFactor*0.00768617;
+siteTree.MASUC0482_F_B7.nonSynRate:=nFactor*0.00981507;
+siteTree.MASUC0482_F_B7.synRate:=sFactor*0.00981507;
+siteTree.Node39.nonSynRate:=nFactor*0.0152952;
+siteTree.Node39.synRate:=sFactor*0.0152952;
+siteTree.MASUR4107_F_B8.nonSynRate:=nFactor*0;
+siteTree.MASUR4107_F_B8.synRate:=sFactor*0;
+siteTree.MASUR5160_F_C10.nonSynRate:=nFactor*0.00980299;
+siteTree.MASUR5160_F_C10.synRate:=sFactor*0.00980299;
+siteTree.Node44.nonSynRate:=nFactor*0.0239903;
+siteTree.Node44.synRate:=sFactor*0.0239903;
+siteTree.Node38.nonSynRate:=nFactor*0.083757;
+siteTree.Node38.synRate:=sFactor*0.083757;
+siteTree.Node16.nonSynRate:=nFactor*0.118135;
+siteTree.Node16.synRate:=sFactor*0.118135;
+siteTree.Node2.nonSynRate:=nFactor*0.0196644;
+siteTree.Node2.synRate:=sFactor*0.0196644;
+siteTree.BAINL0142_F_B6.nonSynRate:=nFactor*0;
+siteTree.BAINL0142_F_B6.synRate:=sFactor*0;
+siteTree.BAINR4265_F_F8.nonSynRate:=nFactor*0;
+siteTree.BAINR4265_F_F8.synRate:=sFactor*0;
+siteTree.BAINR4510_F_E4.nonSynRate:=nFactor*0;
+siteTree.BAINR4510_F_E4.synRate:=sFactor*0;
+siteTree.BAINR4831_F_B4.nonSynRate:=nFactor*0;
+siteTree.BAINR4831_F_B4.synRate:=sFactor*0;
+siteTree.BAINR5035_F_B5.nonSynRate:=nFactor*0;
+siteTree.BAINR5035_F_B5.synRate:=sFactor*0;
+siteTree.Node56.nonSynRate:=nFactor*0;
+siteTree.Node56.synRate:=sFactor*0;
+siteTree.Node54.nonSynRate:=nFactor*0.0098153;
+siteTree.Node54.synRate:=sFactor*0.0098153;
+siteTree.Node52.nonSynRate:=nFactor*0;
+siteTree.Node52.synRate:=sFactor*0;
+siteTree.BASAR4059_F_F4.nonSynRate:=nFactor*0;
+siteTree.BASAR4059_F_F4.synRate:=sFactor*0;
+siteTree.BASAR4176_F_F7.nonSynRate:=nFactor*0;
+siteTree.BASAR4176_F_F7.synRate:=sFactor*0;
+siteTree.Node61.nonSynRate:=nFactor*0.0196474;
+siteTree.Node61.synRate:=sFactor*0.0196474;
+siteTree.BASAR4060_F_F5.nonSynRate:=nFactor*0;
+siteTree.BASAR4060_F_F5.synRate:=sFactor*0;
+siteTree.BASAR4483_F_E2.nonSynRate:=nFactor*0.0130654;
+siteTree.BASAR4483_F_E2.synRate:=sFactor*0.0130654;
+siteTree.Node66.nonSynRate:=nFactor*0;
+siteTree.Node66.synRate:=sFactor*0;
+siteTree.BASAR4143_F_E1.nonSynRate:=nFactor*0;
+siteTree.BASAR4143_F_E1.synRate:=sFactor*0;
+siteTree.Node65.nonSynRate:=nFactor*0.0130664;
+siteTree.Node65.synRate:=sFactor*0.0130664;
+siteTree.BASAR4509_F_E3.nonSynRate:=nFactor*0.00982586;
+siteTree.BASAR4509_F_E3.synRate:=sFactor*0.00982586;
+siteTree.Node64.nonSynRate:=nFactor*0;
+siteTree.Node64.synRate:=sFactor*0;
+siteTree.Node60.nonSynRate:=nFactor*0.0131816;
+siteTree.Node60.synRate:=sFactor*0.0131816;
+siteTree.BEBEC0333_F_C7.nonSynRate:=nFactor*0.0392333;
+siteTree.BEBEC0333_F_C7.synRate:=sFactor*0.0392333;
+siteTree.BEBOR4400_F_C2.nonSynRate:=nFactor*0;
+siteTree.BEBOR4400_F_C2.synRate:=sFactor*0;
+siteTree.BEBOR5018_F_G12.nonSynRate:=nFactor*0.013696;
+siteTree.BEBOR5018_F_G12.synRate:=sFactor*0.013696;
+siteTree.MUCAC0423_F_H7.nonSynRate:=nFactor*8989.39;
+siteTree.MUCAC0423_F_H7.synRate:=sFactor*8989.39;
+siteTree.MUCOL0178_F_H11_WHOLE.nonSynRate:=nFactor*0;
+siteTree.MUCOL0178_F_H11_WHOLE.synRate:=sFactor*0;
+siteTree.Node86.nonSynRate:=nFactor*0;
+siteTree.Node86.synRate:=sFactor*0;
+siteTree.MUCER5013_F_H10.nonSynRate:=nFactor*0.0557841;
+siteTree.MUCER5013_F_H10.synRate:=sFactor*0.0557841;
+siteTree.Node85.nonSynRate:=nFactor*0;
+siteTree.Node85.synRate:=sFactor*0;
+siteTree.MUCAR4263_F_A12.nonSynRate:=nFactor*0.0156003;
+siteTree.MUCAR4263_F_A12.synRate:=sFactor*0.0156003;
+siteTree.Node84.nonSynRate:=nFactor*0.345682;
+siteTree.Node84.synRate:=sFactor*0.345682;
+siteTree.Node82.nonSynRate:=nFactor*0;
+siteTree.Node82.synRate:=sFactor*0;
+siteTree.RANORN0806UM01_F_D12.nonSynRate:=nFactor*0.128808;
+siteTree.RANORN0806UM01_F_D12.synRate:=sFactor*0.128808;
+siteTree.Node81.nonSynRate:=nFactor*0.006177;
+siteTree.Node81.synRate:=sFactor*0.006177;
+siteTree.BEBOR5305_F_C3.nonSynRate:=nFactor*0;
+siteTree.BEBOR5305_F_C3.synRate:=sFactor*0;
+siteTree.Node80.nonSynRate:=nFactor*0;
+siteTree.Node80.synRate:=sFactor*0;
+siteTree.BEBOR5026_F_E9.nonSynRate:=nFactor*0.0208614;
+siteTree.BEBOR5026_F_E9.synRate:=sFactor*0.0208614;
+siteTree.Node79.nonSynRate:=nFactor*0.0281984;
+siteTree.Node79.synRate:=sFactor*0.0281984;
+siteTree.Node77.nonSynRate:=nFactor*0;
+siteTree.Node77.synRate:=sFactor*0;
+siteTree.BEBOR5410_F_C1.nonSynRate:=nFactor*0;
+siteTree.BEBOR5410_F_C1.synRate:=sFactor*0;
+siteTree.Node76.nonSynRate:=nFactor*0.0394897;
+siteTree.Node76.synRate:=sFactor*0.0394897;
+siteTree.Node74.nonSynRate:=nFactor*0.118636;
+siteTree.Node74.synRate:=sFactor*0.118636;
+siteTree.NIFUR4802_F_G5.nonSynRate:=nFactor*0;
+siteTree.NIFUR4802_F_G5.synRate:=sFactor*0;
+siteTree.Node73.nonSynRate:=nFactor*0;
+siteTree.Node73.synRate:=sFactor*0;
+siteTree.NIFUR4870_F_G8.nonSynRate:=nFactor*0.0293888;
+siteTree.NIFUR4870_F_G8.synRate:=sFactor*0.0293888;
+siteTree.Node72.nonSynRate:=nFactor*0.0649248;
+siteTree.Node72.synRate:=sFactor*0.0649248;
+siteTree.LEEDR4222_F_A10.nonSynRate:=nFactor*0.00982571;
+siteTree.LEEDR4222_F_A10.synRate:=sFactor*0.00982571;
+siteTree.LENER4471_F_F11.nonSynRate:=nFactor*0.0393735;
+siteTree.LENER4471_F_F11.synRate:=sFactor*0.0393735;
+siteTree.Node98.nonSynRate:=nFactor*0.00982584;
+siteTree.Node98.synRate:=sFactor*0.00982584;
+siteTree.LEEDR5034_F_E10.nonSynRate:=nFactor*0;
+siteTree.LEEDR5034_F_E10.synRate:=sFactor*0;
+siteTree.Node97.nonSynRate:=nFactor*0.0542987;
+siteTree.Node97.synRate:=sFactor*0.0542987;
+siteTree.Node71.nonSynRate:=nFactor*0.0783619;
+siteTree.Node71.synRate:=sFactor*0.0783619;
+siteTree.Node59.nonSynRate:=nFactor*0.0097701;
+siteTree.Node59.synRate:=sFactor*0.0097701;
+siteTree.Node51.nonSynRate:=nFactor*0.00981515;
+siteTree.Node51.synRate:=sFactor*0.00981515;
+siteTree.Node49.nonSynRate:=nFactor*0.00976939;
+siteTree.Node49.synRate:=sFactor*0.00976939;
+siteTree.RAARC0001_F_E8.nonSynRate:=nFactor*0;
+siteTree.RAARC0001_F_E8.synRate:=sFactor*0;
+siteTree.RAARCB0008_F_G1.nonSynRate:=nFactor*0;
+siteTree.RAARCB0008_F_G1.synRate:=sFactor*0;
+siteTree.Node102.nonSynRate:=nFactor*0.00986114;
+siteTree.Node102.synRate:=sFactor*0.00986114;
+siteTree.Node48.nonSynRate:=nFactor*0;
+siteTree.Node48.synRate:=sFactor*0;
+siteTree.RAEXR4078_F_D3.nonSynRate:=nFactor*0;
+siteTree.RAEXR4078_F_D3.synRate:=sFactor*0;
+siteTree.RAEXR4838_F_G6.nonSynRate:=nFactor*0;
+siteTree.RAEXR4838_F_G6.synRate:=sFactor*0;
+siteTree.Node105.nonSynRate:=nFactor*0.0491267;
+siteTree.Node105.synRate:=sFactor*0.0491267;
+siteTree.Node47.nonSynRate:=nFactor*0.00454579;
+siteTree.Node47.synRate:=sFactor*0.00454579;
+siteTree.Node1.nonSynRate:=nFactor*0.0446765;
+siteTree.Node1.synRate:=sFactor*0.0446765;
+siteTree.RALOR4203_F_D7.nonSynRate:=nFactor*0;
+siteTree.RALOR4203_F_D7.synRate:=sFactor*0;
+siteTree.RALOR4229_F_D8.nonSynRate:=nFactor*0;
+siteTree.RALOR4229_F_D8.synRate:=sFactor*0;
+siteTree.Node110.nonSynRate:=nFactor*0.00981167;
+siteTree.Node110.synRate:=sFactor*0.00981167;
+siteTree.RAR3C0028_F_A8.nonSynRate:=nFactor*0;
+siteTree.RAR3C0028_F_A8.synRate:=sFactor*0;
+siteTree.RAR3C0084_F_A6.nonSynRate:=nFactor*0;
+siteTree.RAR3C0084_F_A6.synRate:=sFactor*0;
+siteTree.RAR3CB0023_F_G3.nonSynRate:=nFactor*0;
+siteTree.RAR3CB0023_F_G3.synRate:=sFactor*0;
+siteTree.Node115.nonSynRate:=nFactor*0.00980664;
+siteTree.Node115.synRate:=sFactor*0.00980664;
+siteTree.Node113.nonSynRate:=nFactor*0.00982952;
+siteTree.Node113.synRate:=sFactor*0.00982952;
+siteTree.Node109.nonSynRate:=nFactor*0.00981158;
+siteTree.Node109.synRate:=sFactor*0.00981158;
+siteTree.RALOR4402_F_D10.nonSynRate:=nFactor*0;
+siteTree.RALOR4402_F_D10.synRate:=sFactor*0;
+siteTree.RANOR4230_F_E7.nonSynRate:=nFactor*0;
+siteTree.RANOR4230_F_E7.synRate:=sFactor*0;
+siteTree.Node118.nonSynRate:=nFactor*0;
+siteTree.Node118.synRate:=sFactor*0;
+siteTree.Node108.nonSynRate:=nFactor*0.00981791;
+siteTree.Node108.synRate:=sFactor*0.00981791;
+siteTree.RAR3R5051_F_A7.nonSynRate:=nFactor*0;
+siteTree.RAR3R5051_F_A7.synRate:=sFactor*0;
+siteTree.RATAR4016_F_D2.nonSynRate:=nFactor*0;
+siteTree.RATAR4016_F_D2.synRate:=sFactor*0;
+siteTree.Node123.nonSynRate:=nFactor*0.0196134;
+siteTree.Node123.synRate:=sFactor*0.0196134;
+siteTree.RATAR4043_F_F3.nonSynRate:=nFactor*0;
+siteTree.RATAR4043_F_F3.synRate:=sFactor*0;
+siteTree.RATAR4114_F_D5.nonSynRate:=nFactor*0;
+siteTree.RATAR4114_F_D5.synRate:=sFactor*0;
+siteTree.Node126.nonSynRate:=nFactor*0;
+siteTree.Node126.synRate:=sFactor*0;
+siteTree.Node122.nonSynRate:=nFactor*0.0196133;
+siteTree.Node122.synRate:=sFactor*0.0196133;
+siteTree.RARA1848_F_E5.nonSynRate:=nFactor*0.0294558;
+siteTree.RARA1848_F_E5.synRate:=sFactor*0.0294558;
+siteTree.RARA1856_F_F1.nonSynRate:=nFactor*0.0196246;
+siteTree.RARA1856_F_F1.synRate:=sFactor*0.0196246;
+siteTree.Node130.nonSynRate:=nFactor*0.00982447;
+siteTree.Node130.synRate:=sFactor*0.00982447;
+siteTree.RARA1850_F_E6.nonSynRate:=nFactor*0;
+siteTree.RARA1850_F_E6.synRate:=sFactor*0;
+siteTree.Node129.nonSynRate:=nFactor*0;
+siteTree.Node129.synRate:=sFactor*0;
+siteTree.Node121.nonSynRate:=nFactor*0.00981815;
+siteTree.Node121.synRate:=sFactor*0.00981815;
+DataSet ds_1 = ReadDataFile(USE_NEXUS_FILE_DATA);
+DataSetFilter siteFilter = CreateFilter(ds_1,3,"0-2","0-67","TAA,TAG,TGA");
+LikelihoodFunction siteLikelihood = (siteFilter,siteTree);
+
+END;

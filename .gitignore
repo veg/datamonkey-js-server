@@ -1,3 +1,13 @@
+#Ignore cache files
+.DS_Store
+hpout
+*.log
+*.out
+*.log.*
+
+#Ignore spool
+spool/
+
 # Compiled Object files
 *.slo
 *.lo
