@@ -751,7 +751,7 @@ function ReceiveJobs (sendOrNot, ji)
 		}
 
 		MasterList 	   [jobPrint] = myAIC;
-		//fprintf ("return_tree_dump_debug.txt", fromNode, "\n", lf_TREES, "\n\n");
+		fprintf ("return_tree_dump_debug.txt", fromNode, "\n", lf_TREES, "\n\n");
 		treeLengths	   = ""+ComputeTreeLength(lf_TREES[0]);
 		for (k=1; k<Abs(lf_TREES); k+=1) {
 			treeLengths	 += "," + ComputeTreeLength(lf_TREES[k]);
@@ -945,8 +945,8 @@ function RunASample (dummy,jobIndex)
 	{
 		mpiStringToSend * ("partCount="+(v+1)+";USE_DISTANCES=0;Optimize(res,lf);
 		                    PATHtosave = \"/home/datamonkey/Datamonkey/Analyses/GARD/\"+MPI_NODE_ID + \".lf\";
-		                    //Export (lf_dump, lf);
-                            //fprintf (PATHtosave, CLEAR_FILE, lf_dump);
+		                    Export (lf_dump, lf);
+                            fprintf (PATHtosave, CLEAR_FILE, lf_dump);
 		                    resultAVL={};resultAVL[\"MLES\"]=res;resultAVL[\"TREES\"]={};" +
 						   "for(k=0; k<partCount;k=k+1){ExecuteCommands(\"ts=Format(givenTree\"+k+\",1,1);\");(resultAVL[\"TREES\"])[k]=ts;}\n" +
 						   "return resultAVL;");
@@ -968,8 +968,8 @@ function RunASample (dummy,jobIndex)
 			MPINodeState[mpiNode][0] = 1;
 			MPINodeState[mpiNode][1] = jobIndex;
 		}
-		//fileOut	= "/home/datamonkey/dump_debug/"+mpiNode+".last";
-		//fprintf	(fileOut, CLEAR_FILE, mpiStringToSend);
+		fileOut	= "/home/datamonkey/dump_debug/"+mpiNode+".last";
+		fprintf	(fileOut, CLEAR_FILE, mpiStringToSend);
 
 	}
 	

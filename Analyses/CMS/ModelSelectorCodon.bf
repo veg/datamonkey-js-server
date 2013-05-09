@@ -1138,8 +1138,8 @@ function 	spoolAICTable ()
 		}	
 		sp = sp + "</tr></table>";
 		htmlAICTable * ("\n<tr><td>"+ _partCount+ 
-							  "</td><td><div style = 'width: "+100*currentAIC/byBPImprovement [0]$1+"%; background-color: purple; color: white;'>"+currentAIC+ 
-							  "</div></td><td>"+ ci+ 
+							  "</td><td><div style = 'width: "+100*currentAIC/byBPImprovement [0]$1+"%; background-color: purple; color: white;'>"+Format(currentAIC,9,2)+ 
+							  "</div></td><td>"+ Format(ci,9,2)+ 
 							  "</td><td>"+ sp+
 							  "</td></tr>");
 		

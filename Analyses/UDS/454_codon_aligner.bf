@@ -244,7 +244,7 @@ else
 	
 }
 
-assert (Abs(masterReferenceSequence) <= 3600, "The reference sequence cannot exceed 3600 nucleotides in length");
+assert (Abs(masterReferenceSequence) <= 6000, "The reference sequence cannot exceed 6000 nucleotides in length");
 
 
 if (Abs(masterReferenceSequence) %3 ) {

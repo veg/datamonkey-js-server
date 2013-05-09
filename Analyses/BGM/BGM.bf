@@ -74,7 +74,7 @@ BGM_MCMC_BURNIN		= BGM_MCMC_MAXSTEPS $ 10;
 BGM_MCMC_SAMPLES 	= BGM_MCMC_MAXSTEPS $ 1000;
 
 
-BGM gen_bgm = 		(discreteNodes);
+BayesianGraphicalModel gen_bgm = 		(discreteNodes);
 SetParameter 		(gen_bgm, BGM_DATA_MATRIX, 	 bgm_data_matrix);
 BGM_OPTIMIZATION_METHOD = 4;
 
