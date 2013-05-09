@@ -20,7 +20,6 @@ fscanf (alignmentData, "Raw", dataFileString);
 fscanf (treeData, "Raw", analysisSpecRaw);
 
 
-
 fprintf (timeStamp, CLEAR_FILE, timer);
 
 ExecuteAFile			("../Shared/_MFReader_.ibf");
@@ -42,7 +41,5 @@ fprintf (intermediateHTML, "\n<DIV class = 'RepClassSM'><b>[PHASE 1 DONE]</b> Lo
 
 LF_NEXUS_EXPORT_EXTRA      = "\n\npositionalFrequencies = " + positionFrequencies + ";";
 LIKELIHOOD_FUNCTION_OUTPUT = 7;
-
 nucFitFile = baseFilePath + ".nucFit";
-
 fprintf (nucFitFile, CLEAR_FILE, nucLF);

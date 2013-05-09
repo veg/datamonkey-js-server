@@ -1,3 +1,15 @@
+options = {"0":"/home/datamonkey/Datamonkey/Analyses/UDS/spool//upload.500325077214814.1_uds.gag_121_270.fas.90.sim",
+"1":"HKY85",
+"2":"Global",
+"3":"/home/datamonkey/Datamonkey/Analyses/UDS/spool//upload.500325077214814.1_uds.gag_121_270.fas.90.sim.tree"
+};
+
+ExecuteAFile (HYPHY_LIB_DIRECTORY+"TemplateBatchFiles"+DIRECTORY_SEPARATOR+"AnalyzeNucProtData.bf",options,"sim");
+
+
+
+
+
 aaScoreString = "HIV 5%";
 
 LoadFunctionLibrary ("chooseGeneticCode", {"0" : "Universal"});

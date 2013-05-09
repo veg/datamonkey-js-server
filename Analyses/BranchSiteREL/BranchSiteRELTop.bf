@@ -57,44 +57,29 @@ omega3 = 1.0;
 
 nucCF						= CF3x4	(positionFrequencies, GeneticCodeExclusions);
 
-PopulateModelMatrix			  ("MGMatrix1",  nucCF, "t1", "omega1", "");
-PopulateModelMatrix			  ("MGMatrix2",  nucCF, "t2", "omega2", "");
-PopulateModelMatrix			  ("MGMatrix3",  nucCF, "t3", "omega3", "");
-
-global	omegaG1 = 0.2;
-omegaG1 :< 1;
-global	omegaG2 = 0.5;
-omegaG2 :< 1;
-global	omegaG3 = 2.0;
-omegaG3 :> 1;
-
-PopulateModelMatrix			  ("MGMatrix1G",  nucCF, "t1", "omegaG1", "");
-PopulateModelMatrix			  ("MGMatrix2G",  nucCF, "t2", "omegaG2", "");
-PopulateModelMatrix			  ("MGMatrix3G",  nucCF, "t3", "omegaG3", "");
-
-
+PopulateModelMatrix			  ("MGMatrix1",  nucCF, "t", "omega1", "");
+PopulateModelMatrix			  ("MGMatrix2",  nucCF, "t", "omega2", "");
+PopulateModelMatrix			  ("MGMatrix3",  nucCF, "t", "omega3", "");
 
 PopulateModelMatrix			  ("MGMatrixLocal",  nucCF, "syn", "", "nonsyn");
 
 codon3x4					= BuildCodonFrequencies (nucCF);
 Model		MGL				= (MGMatrixLocal, codon3x4, 0);
 
-//LoadFunctionLibrary			  ("queryTree");
+T0 = Time (1);
 
-//SetDialogPrompt 			("Save analysis results to");
-//fprintf (PROMPT_FOR_FILE, CLEAR_FILE, KEEP_OPEN,"Branch,Mean_dNdS,Omega1,P1,Omega2,P2,Omega3,P3,LRT,p,p_Holm");
-//csvFilePath = LAST_FILE_PATH;
-
-fprintf						    (progressFilePath, CLEAR_FILE, "<DIV class = 'RepClassSM'><b>EPISODIC SELECTION ANALYSIS PROGRESS</b></DIV><DIV class = 'RepClassSM'>Fitting the local MG94 (no site-to-site variation) to obtain initial parameter estimates.</DIV>");
+fprintf						  (progressFilePath, CLEAR_FILE, "<DIV class = 'RepClassSM'><b>EPISODIC SELECTION ANALYSIS PROGRESS</b></DIV><DIV class = 'RepClassSM'>Fitting the local MG94 (no site-to-site variation) to obtain initial parameter estimates.</DIV>");
 
 VERBOSITY_LEVEL				= 0;
 
 populateTrees 				   ("givenTree", 1);
 LikelihoodFunction	base_LF	 = (filteredData_1, givenTree_1);
 
-AUTO_PARALLELIZE_OPTIMIZE 	  = 4;
+//AUTO_PARALLELIZE_OPTIMIZE 	  = 4;
 Optimize	(res_base, base_LF);
-AUTO_PARALLELIZE_OPTIMIZE 	  = 0;
+//AUTO_PARALLELIZE_OPTIMIZE 	  = 0;
+OPTIMIZATION_TIME_HARD_LIMIT = (Time(1)-T0)*10;
+
 
 AC := AC__;
 AT := AT__;
@@ -144,108 +129,104 @@ GLOBAL_FPRINTF_REDIRECT = progressFilePath;
 PrintDescriptiveStats		 ("Branch omega values", omegaStats);
 GLOBAL_FPRINTF_REDIRECT	= "";
 
-fprintf						(progressFilePath, "</pre></DIV>");
+ASSUME_REVERSIBLE_MODELS	  = 1;
+USE_LAST_RESULTS              = 1;
+OPTIMIZATION_METHOD           = 0;
+Tree stepupTree               = givenTree_1;
 
-Paux1 						 = 0.3;
+/*Paux1 						 = 0.3;
 Paux1 						 :< 1;
 Paux2 						 = 0.4;
 Paux2 						 :< 1;
+omega1                       :< 1;
+omega2                       :< 1;*/
 
-global Paux1G 				  = 0.3;
-global Paux2G 				  = 0.4;
-
-treeString			= 		 Format (givenTree_1, 1, 1);
-
-Model 		MG1		=		  ("Exp(MGMatrix1)*Paux1+Exp(MGMatrix2)*(1-Paux1)*Paux2+Exp(MGMatrix3)*(1-Paux1)*(1-Paux2)",codon3x4,EXPLICIT_FORM_MATRIX_EXPONENTIAL);
-Tree						   mixtureTree = treeString;
-
-ReplicateConstraint 		  ("this1.?.t1:=this2.?.syn",mixtureTree,givenTree_1);
-
-ClearConstraints			  (mixtureTree);
-ClearConstraints			  (mixtureTreeG);
-
-omega1G						 :< 1;
-omega2G						 :< 1;
-Paux1G 						 :< 1;
-Paux2G 						 :< 1;
-
-ReplicateConstraint 		  ("this1.?.t2:=this2.?.t1",mixtureTree,mixtureTree);
-ReplicateConstraint 		  ("this1.?.t3:=this2.?.t1",mixtureTree,mixtureTree);
-
-ASSUME_REVERSIBLE_MODELS	  = 1;
-USE_LAST_RESULTS			  = 1;
-
-LikelihoodFunction three_LF   = (filteredData_1,mixtureTree);
+Model 		                  MG1		=		  ("Exp(MGMatrix1)*Paux1+Exp(MGMatrix2)*(1-Paux1)*Paux2+Exp(MGMatrix3)*(1-Paux1)*(1-Paux2)",codon3x4,EXPLICIT_FORM_MATRIX_EXPONENTIAL);
 
 
-for (k = 0; k < totalBranchCount; k = k+1)
-{
-    if (k == 0)
-    {
-        expr            = Eval("BranchLength(givenTree_1,\""+bNames[0]+";EXPECTED_NUMBER_OF_SUBSTITUTIONS\")");
-        syn             = 1; nonsyn = 0;
-        synM            = Eval(expr);
-        syn             = 0; nonsyn = 1;
-        nonsynM         = Eval(expr);
+fprintf						  (progressFilePath, "</pre></div><DIV class = 'RepClassSM'>[PHASE 1] Fitting Branch Site REL models to one branch at a time</DIV>");
+
+
+mg94bls   = BranchLength (givenTree_1,-1);
+sortedBLs = {totalBranchCount, 2}["mg94bls[_MATRIX_ELEMENT_ROW_]*(_MATRIX_ELEMENT_COLUMN_==0)+_MATRIX_ELEMENT_ROW_*(_MATRIX_ELEMENT_COLUMN_==1)"];
+sortedBLs = sortedBLs%0;
+//fprintf (stdout, sortedBLs, "\n");
+
+these_branches_use_mg94 = {};
+
+for (k = 0; k < totalBranchCount; k+=1) {
+    reordered_index = sortedBLs[totalBranchCount-k-1][1];
+    branch_name_to_test = "stepupTree." + bNames[reordered_index];
+    ExecuteCommands ("SetParameter (`branch_name_to_test`, MODEL, MG1);");
+    local_branch_name = bNames[reordered_index];
+   
+    Tree         mixtureTree = stepupTree;
+
+
+    for (l = 0; l < totalBranchCount; l+=1) {
+        if (l != reordered_index) {
+            _constrainVariablesAndDescendants ("mixtureTree." + bNames[l]);
+        }
     }
     
- 	srate  = Eval ("givenTree_1." + bNames[k] + ".syn");
-	nsrate = Eval ("givenTree_1." + bNames[k] + ".nonsyn");
-    bl = Eval("BranchLength(givenTree_1,\""+bNames[k]+"\")")*3;
     
-    if (srate > 0)
-    {
-        baseOmega = nsrate/srate;
-    }
-    else
-    {
-        baseOmega = 10000;
-    }
-        
-    bl = bl / (synM + nonsynM * baseOmega);
+    branch_name_to_test = "mixtureTree." + bNames[reordered_index];
+    ExecuteCommands (branch_name_to_test+".Paux1 :< 1");
+    ExecuteCommands (branch_name_to_test+".Paux2 :< 1");
+    ExecuteCommands (branch_name_to_test+".omega1 :< 1");
+    ExecuteCommands (branch_name_to_test+".omega2 :< 1");
+    copyomegas (branch_name_to_test, Eval ("givenTree_1." + bNames[reordered_index] + ".syn"), Eval ("givenTree_1." + bNames[reordered_index] + ".nonsyn"));
     
-    ExecuteCommands ("mixtureTree." + bNames[k] + ".t1 = bl");
-    ExecuteCommands ("mixtureTree." + bNames[k] + ".omega1 :< 1;");
-	ExecuteCommands ("mixtureTree." + bNames[k] + ".omega2 :< 1;");
-    if (baseOmega > 1)
-    {
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".omega1 = 0.1;");
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".omega2 = 1;");
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".omega3 = baseOmega;");
+    LikelihoodFunction three_LF = (filteredData_1, mixtureTree);
+    Optimize                      (res, three_LF);
+    
+    fprintf 					  (progressFilePath, "<DIV class = 'RepClassSM'>[PHASE 1] Branch ", bNames[reordered_index], " log(L) = ", res[1][0], "</DIV>");
+    Tree stepupTree = mixtureTree;
+    
+    skip_this_node = checkNodeModel ("mixtureTree.`local_branch_name`");
 
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".Paux1 = 0.01;");
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".Paux2 = 0.01;");
-    }
-    else
-    {
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".omega1 = baseOmega;");
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".omega2 = 1;");
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".omega3 = 2;");
-
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".Paux1 = 0.98;");
-        ExecuteCommands ("mixtureTree." + bNames[k] + ".Paux2 = 0.5;");    
+    if (skip_this_node) {
+        branch_name_to_test = "stepupTree.`local_branch_name`";
+        ExecuteCommands ("SetParameter (`branch_name_to_test`, MODEL, MGL);");
+        ExecuteCommands ("`branch_name_to_test`.syn = givenTree_1.`local_branch_name`.syn");
+        ExecuteCommands ("`branch_name_to_test`.nonsyn = givenTree_1.`local_branch_name`.nonsyn");
+        fprintf 		(stdout, "\n\tBranch ", local_branch_name, " will use the MG94 model -- either the branch length is 0 or the substitution process is too simple.");
+        these_branches_use_mg94 [reordered_index] = 1;
+        /*
+         _expression = ("`branch_name_to_test`." && 6) + ".+";
+        GetInformation (_matchedVars, "`_expression`");
+        fprintf (stdout, "\n", _matchedVars, "\n");
+        */
     }
 }
 
 
-OPTIMIZATION_METHOD = 0;
 
+ClearConstraints (mixtureTree);
+unconstrainGlobalParameters ("three_LF");
+
+for (k = 0; k < totalBranchCount; k+=1) {
+    if (these_branches_use_mg94 [k] != 1) {
+        branch_name_to_test = "mixtureTree." + bNames[k];
+        ExecuteCommands (branch_name_to_test+".Paux1 :< 1");
+        ExecuteCommands (branch_name_to_test+".Paux2 :< 1");
+        ExecuteCommands (branch_name_to_test+".omega1 :< 1");
+        ExecuteCommands (branch_name_to_test+".omega2 :< 1");
+    }
+}
 fprintf						  (progressFilePath, "<DIV class = 'RepClassSM'>[PHASE 2] Fitting the full LOCAL alternative model (no constraints)</DIV>");
 
 VERBOSITY_LEVEL				  = 0;
-AUTO_PARALLELIZE_OPTIMIZE 	  = 4;
 Optimize					  (res_three_LF,three_LF);
-AUTO_PARALLELIZE_OPTIMIZE	  = 0;
+VERBOSITY_LEVEL				  = 0;
 
-//fprintf						  (stdout,"\n",three_LF);
-
-/*lfOut	= "phase1.out";
+lfOut	= "phase1.out";
 LIKELIHOOD_FUNCTION_OUTPUT = 7;
 fprintf (lfOut, CLEAR_FILE, three_LF);
 LIKELIHOOD_FUNCTION_OUTPUT = 2;
 
 lfOut = "phase1.mx";
-fprintf (lfOut, CLEAR_FILE, res_three_LF);*/
+fprintf (lfOut, CLEAR_FILE, res_three_LF);
 
 //return 0;
 
@@ -286,12 +267,13 @@ while (k < totalBranchCount)
 		
 		fscanf  (progressFilePath, REWIND, "Raw", previousFile);
 		fprintf (progressFilePath, CLEAR_FILE,  "<DIV class = 'RepClassSM'><DL><DT class = 'DTH'>Branch: ", ref, 
-						 "</DT><DT class = 'DT1'>Class 1: omega = ", Eval (ref+".omega1"), " weight = ", Eval (ref+".Paux1"),
-						 "</DT><DT class = 'DT2'>Class 2: omega = ", Eval (ref+".omega2"), " weight = ", Eval ("(1-"+ref+".Paux1)*"+ref+".Paux2"),
-						 "</DT><DT class = 'DT1'>Class 3: omega = ", thisOmega3, " weight = ", wt3 , "</DT></DL></DIV>"
+						 "</DT><DT class = 'DT1'>Class 1: omega = ", Format(Eval (ref+".omega1"),5,2), " weight = ", Format(Eval (ref+".Paux1"),5,2),
+						 "</DT><DT class = 'DT2'>Class 2: omega = ", Format(Eval (ref+".omega2"),5,2), " weight = ", Format(Eval ("(1-"+ref+".Paux1)*"+ref+".Paux2"),5,2),
+						 "</DT><DT class = 'DT1'>Class 3: omega = ", Format(thisOmega3,5,2), " weight = ", Format(wt3,5,2) , "</DT>",
+						 "</DT><DT class = 'DT2'>"
 						 );
 			
-		if (thisOmega3 > 1 && wt3 > 1e-6)
+		if (thisOmega3 > 1 && wt3 > 1e-6 && these_branches_use_mg94 [k] != 1)
 		{
 			_stashLF = saveLF ("three_LF");
 			ExecuteCommands ("mixtureTree." + bNames[k] + ".omega3 := 1");
@@ -305,7 +287,7 @@ while (k < totalBranchCount)
 		else
 		{
 			pValueByBranch[k][8] = 1.0;
-			fprintf (progressFilePath, "<br>No sites with &omega;&gt;1 along this branch.</DIV>", previousFile);
+			fprintf (progressFilePath, "<span style = 'color:red'>No sites with &omega;&gt;1 along this branch.</span></DT></DL></DIV>", previousFile);
 		}
 	}
 	
@@ -347,25 +329,19 @@ fprintf  			("usage.log",HTML_OUT[0][Abs(HTML_OUT)-2],",",filteredData_1.species
 //------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 function SendAJob (bID)
 {
-	for (nodeID = 0; nodeID < MPI_NODE_COUNT - 1; nodeID += 1)
-	{
-		if (MPI_NODE_STATUS[nodeID] < 0)
-		{
+	fprintf (progressFilePath, "<span style = 'color:green'>Testing for selection at branch ", ref, "</span></DT></DL></DIV>", previousFile);
+	for (nodeID = 0; nodeID < MPI_NODE_COUNT - 1; nodeID += 1) {
+		if (MPI_NODE_STATUS[nodeID] < 0) {
 			break;
 		}
 	}
-	if (nodeID == MPI_NODE_COUNT - 1)
-	{
+	if (nodeID == MPI_NODE_COUNT - 1) {
 		nodeID = ReceiveJobs (0)-1;
 	}
 	
-	if (nodeID >= 0)
-	{
+	if (nodeID >= 0) {
 		MPI_NODE_STATUS[nodeID] = bID;
 		MPISend (nodeID + 1, three_LF);
-		fprintf (progressFilePath, "<DIV class = 'RepClassSM'>Testing for selection at branch ", ref, ". Sent to MPI node ", nodeID+1 ,"</DIV>", previousFile);
-		//fileName = bNames[bID] + ".send";
-		//fprintf (fileName, CLEAR_FILE, MPI_LAST_SENT_MSG);
 		return 1;
 	}
 		
@@ -384,7 +360,7 @@ function ReceiveJobs (rereadPrevious)
 	pValueByBranch[branchID][7]			  = 2*(-three_LF_MLES[1][0] + res_three_LF[1][0]);				 
 	pValueByBranch[branchID][8]			  = (1-CChi2 (pValueByBranch[branchID][7],1))*.5;
 
-	if (pValueByBranch[branchID][7] < (-0.5))
+	if (pValueByBranch[branchID][7] < (-1.))
 	{
 		fprintf 					  (progressFilePath, CLEAR_FILE, "<DIV class = 'RepClassSM'>[PHASE 2/REPEAT] Detected a convergence problem. <br> The log likelihood from the null model for branch ",
 																	  bNames[branchID]," is ",three_LF_MLES[1][0],"<br>Refitting the LOCAL alternative model with new starting values.</DIV>");
@@ -393,8 +369,7 @@ function ReceiveJobs (rereadPrevious)
 		
 		three_LF_MLE_VALUES 		  ["restoreLF"][""];
 		
-		for (bid = 0; bid < totalBranchCount; bid += 1)
-		{
+		for (bid = 0; bid < totalBranchCount; bid += 1) {
 			ExecuteCommands ("mixtureTree." + bNames[bid] + ".omega3 :< 1e26");		
 		}
 
@@ -418,13 +393,12 @@ function ReceiveJobs (rereadPrevious)
 		if (rereadPrevious)
 		{
 			fscanf  (progressFilePath, REWIND, "Raw", previousFile);
-			p2p = previousFile;
+		    fprintf (progressFilePath,CLEAR_FILE, "<DIV class = 'RepClassSM'>UNCORRECTED p-value for branch ", bNames[branchID] ," = ", Format(pValueByBranch[branchID][8],5,2),".<br/>log(L) = ", Format(three_LF_MLES[1][0],9,2),".</DIV>", previousFile);
 		}
 		else
 		{
-			p2p = "";
+		    fprintf (progressFilePath,"<DIV class = 'RepClassSM'>UNCORRECTED p-value for branch ", bNames[branchID] ," = ", Format(pValueByBranch[branchID][8],5,2),".<br/>log(L) = ", Format(three_LF_MLES[1][0],9,2),".</DIV>");
 		}
-		fprintf (progressFilePath,CLEAR_FILE,"<DIV class = 'RepClassSM'>UNCORRECTED p-value for branch ", bNames[branchID] ," = ", pValueByBranch[branchID][8],".<br>Model Log L = ", three_LF_MLES[1][0],"</DIV>", p2p);
 	}
 	
 	return from;		
@@ -450,12 +424,10 @@ function saveLF (ID)
 {
 	ExecuteCommands ("GetString(_lfInfo,"+ID+",-1)");
 	_stashLF = {};
-	for (_k = 0; _k < Columns (_lfInfo["Global Independent"]); _k+=1)
-	{
+	for (_k = 0; _k < Columns (_lfInfo["Global Independent"]); _k+=1) {
 		_stashLF [(_lfInfo["Global Independent"])[_k]] = Eval ((_lfInfo["Global Independent"])[_k]);
 	}
-	for (_k = 0; _k < Columns (_lfInfo["Local Independent"]); _k+=1)
-	{
+	for (_k = 0; _k < Columns (_lfInfo["Local Independent"]); _k+=1) {
 		_stashLF [(_lfInfo["Local Independent"])[_k]] = Eval ((_lfInfo["Local Independent"])[_k]);
 	}
 	
@@ -468,4 +440,80 @@ function restoreLF (key, value)
 {
 	ExecuteCommands (key + " = " + value);
 	return 0;
+}
+
+//------------------------------------------------------------------------------------------------------------------------
+
+function copyomegas (node, syn, nonsyn) {
+    local_omega = =  Min (10, nonsyn/syn);
+    Eval("`node`.omega2 = 1");
+    if (local_omega < 1) {
+        Eval("`node`.Paux1 = 1");
+        Eval("`node`.Paux2 = 0");
+        Eval("`node`.omega1 =  local_omega");
+        Eval("`node`.omega3 = 10");
+    } else {
+        Eval("`node`.Paux1 = 0");
+        Eval("`node`.Paux2 = 0");
+        Eval("`node`.omega3 =  local_omega");
+        Eval("`node`.omega1 = 0");    
+    }
+    Eval("`node`.t = syn");
+    return 0;
+    
+}
+
+
+/*---------------------------------------------------------------------*/
+
+lfunction _constrainVariablesAndDescendants (variable) {
+    GetInformation (allVars, "^" + (variable&&6) + "\\..+$");
+    for (k = 0; k < Columns (allVars); k += 1) {
+        variableID    = allVars[k];
+        current_value = ^variableID;
+        ^variableID := current_value__;
+    }
+    return 0;
+}
+
+/*---------------------------------------------------------------------*/
+
+lfunction _unconstrainVariablesAndDescendants (variable) {
+    GetInformation (allVars, "^" + (variable&&6) + "\\..+$");
+    for (k = 0; k < Columns (allVars); k += 1) {
+        variableID    = allVars[k];
+        ClearConstraints (^variableID);
+    }
+    return 0;
+}
+
+/*---------------------------------------------------------*/
+/* fix global variables in a LF at their current values */
+   
+function fixGlobalParameters (_lfName) {
+	GetString (_lfInfo,^_lfName,-1);
+	_lfInfo = _lfInfo["Global Independent"];
+	for (_gb_idx = 0; _gb_idx < Columns (_lfInfo); _gb_idx += 1) {
+		ExecuteCommands (_lfInfo[_gb_idx] + ":=" + _lfInfo[_gb_idx] + "__;");
+	} 	
+	return 0;
+}
+
+/*---------------------------------------------------------*/
+/* unconstrain global variables in a LF at their current values */
+   
+function unconstrainGlobalParameters (_lfName) {
+	GetString (_lfInfo,^_lfName,-1);
+	_lfInfo = _lfInfo["Global Constrained"];
+	for (_gb_idx = 0; _gb_idx < Columns (_lfInfo); _gb_idx += 1) {
+		ExecuteCommands (_lfInfo[_gb_idx] + "=" + _lfInfo[_gb_idx]);
+	} 	
+	return 0;
+}
+
+function checkNodeModel (ref) {
+    wts = {{ Eval (ref+".Paux1"), Eval ("(1-"+ref+".Paux1)*"+ref+".Paux2"), Eval ("(1-"+ref+".Paux1)*(1-"+ref+".Paux2)")}};
+                 
+    return (Eval (ref+".t") == 0 || wts[0] == 1 || wts[1] == 1);
+
 }

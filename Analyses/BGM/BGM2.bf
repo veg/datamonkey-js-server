@@ -55,6 +55,8 @@ function ReceiveJobs (unused)
 	
 	MPINodeState[fromNode-1][0] = 0;	/* set node status to idle */
 	
+	fprintf (MESSAGE_LOG, "Received replicate ", fromNode, " from node ", mpiNode+1, "\n");
+
 	ExecuteCommands ("res = "+resultString+";");
 
 	rowIndex = 0;
@@ -134,10 +136,10 @@ repStrNoSample		= "genCodeID="+genCodeID+";\nBGM_MCMC_MAXSTEPS="+BGM_MCMC_MAXSTE
 lfEXNS 				= lfEX ^ {{"END;$"}{repStrNoSample}};
 lfEX 				= lfEX ^ {{"END;$"}{repStrSample}};
 
-/*
+
 fprintf ("EX.dump", CLEAR_FILE, lfEX);
 fprintf ("EXNS.dump",CLEAR_FILE,lfEXNS);
-*/
+
 
 howManyDone			= 0;
 timer			= Time(1);
@@ -159,6 +161,7 @@ if (MPI_NODE_COUNT > 0)	/* farm sampling jobs out to cluster via MPI */
 	MPINodeState[0][1] = 0;
 	MPISend (1, lfEXNS);	
 
+		
 	for (rep = 0; rep < nsamples; rep = rep + 1)
 	{
 		/* look for a node that isn't occupied */
@@ -180,6 +183,7 @@ if (MPI_NODE_COUNT > 0)	/* farm sampling jobs out to cluster via MPI */
 		MPINodeState[mpiNode][1] = 1;
 		fprintf (MESSAGE_LOG, "Sent replicate ", rep, " to node ", mpiNode+1, "\n");
 		MPISend (mpiNode+1, lfEX);				
+		//fprintf ("last.send", CLEAR_FILE, MPI_LAST_SENT_MSG);
 	}
 	
 	
