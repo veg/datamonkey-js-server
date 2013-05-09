@@ -2,7 +2,8 @@
 .DS_Store
 hpout
 *.log
-messages.log.*
+*.out
+*.log.*
 
 #Ignore spool
 spool/
