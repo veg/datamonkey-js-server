@@ -34,7 +34,7 @@ ExecuteAFile (codonFit);
 
 treeLengths = {fileCount,1};
 for (file_id = 1; file_id <= fileCount; file_id += 1) {
-    treeLengths [file_id] = +BranchLength (^("codon_tree_" + file_id),-1);
+    treeLengths [file_id-1] = +BranchLength (^("codon_tree_" + file_id),-1);
 }
 
 freqType = 3;
