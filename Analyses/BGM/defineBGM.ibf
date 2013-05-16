@@ -65,7 +65,7 @@ fprintf (MESSAGE_LOG,"\n", num_nodes, "\n");
 for (k = 0; k < num_nodes; k = k+1)
 {
 	fprintf (MESSAGE_LOG, k, "/", num_nodes, " node made\n");
-	discreteNodes[Abs(discreteNodes)] = make_discrete_node (k, 0, num_parents);
+	discreteNodes[Abs(discreteNodes)] = add_discrete_node (k, num_parents, 0, 2);
 }
 
 BGM_MCMC_BURNIN		= BGM_MCMC_MAXSTEPS $ 10;
