@@ -1,40 +1,34 @@
 /* ________________________________________________________________________	*/
 
-function make_discrete_node (node_id, sample_size, max_parents)
+function add_discrete_node (node_id, max_parents, sample_size, nlevels)
 {
-	dnode = {};
-	dnode["NodeID"] = "Node" + node_id;
-	dnode["NodeType"] = 0;
-	dnode["NumLevels"] = 2;
-	dnode["PriorSize"] = sample_size;
-	dnode["MaxParents"] = max_parents;
-	return dnode;
+	node = {};
+	node["NodeID"] = node_id;
+    node["NodeType"] = 0;
+    node["MaxParents"] = max_parents;
+	node["PriorSize"] = sample_size;
+	node["NumLevels"] = nlevels;
+	return node;
 }
 
-function make_continuous_node (node_id, sample_size, mean, precision)
+function add_gaussian_node (node_id, max_parents, sample_size, mean, precision, scale)
 {
-	cnode = {};
-	cnode["NodeID"] 	= node_id;
-	cnode["PriorSize"] 	= sample_size;
-	cnode["MaxParents"] = max_parents;
-	cnode["PriorMean"]	= mean;
-	cnode["PriorVar"]	= precision;
-	return cnode;
+	node = {};
+	node["NodeID"] = node_id;
+    node["NodeType"] = 1;
+	node["MaxParents"] = max_parents;
+	node["PriorSize"] = sample_size;
+	node["PriorMean"]	= mean;
+	node["PriorPrecision"]	= precision;
+	node["PriorScale"] = scale;
+	return node;
 }
 
-function make_banned_edge (parent, child)
-{
-	a_rule = {};
-	a_rule["BanParent"] = parent;
-	a_rule["BanChild"] = child;
-	return a_rule;
-}
 
 /* ________________________________________________________________________	*/
 
-discreteNodes 			= {};
-continuousNodes 		= {};
-banlist 				= {};
+nodes 			= {};
+
 
 if (doAncestralResample)
 {
@@ -77,10 +71,13 @@ for (k = 0; k < num_nodes; k = k+1)
 BGM_MCMC_BURNIN		= BGM_MCMC_MAXSTEPS $ 10;
 BGM_MCMC_SAMPLES 	= BGM_MCMC_MAXSTEPS $ 1000;
 
-BGM gen_bgm = 		(discreteNodes);
+BGM_MCMC_MAXFAILS = 100;
+BGM_MCMC_PROBSWAP = 0.1;
+
+BayesianGraphicalModel gen_bgm = (nodes);
 fprintf              (MESSAGE_LOG, "\nHere5\n");
 
-BGM_OPTIMIZATION_METHOD = 4;
+BGM_OPTIMIZATION_METHOD = 4; // order-MCMC
 
 
 SetParameter 		(gen_bgm, BGM_DATA_MATRIX, 	 bgm_data_matrix);

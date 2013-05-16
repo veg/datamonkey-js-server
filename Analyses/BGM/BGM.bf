@@ -2,42 +2,32 @@ RequireVersion  ("0.9920060815");
 
 /* ________________________________________________________________	*/
 
-function make_discrete_node (node_id, sample_size, max_parents)
+function add_discrete_node (node_id, max_parents, sample_size, nlevels)
 {
-	dnode = {};
-	dnode["NodeID"] = "Node" + node_id;
-	dnode["NodeType"] = 0;
-	dnode["NumLevels"] = 2;
-	dnode["PriorSize"] = sample_size;
-	dnode["MaxParents"] = max_parents;
-	return dnode;
+	node = {};
+	node["NodeID"] = node_id;
+    node["NodeType"] = 0;
+    node["MaxParents"] = max_parents;
+	node["PriorSize"] = sample_size;
+	node["NumLevels"] = nlevels;
+	return node;
 }
 
-function make_continuous_node (node_id, sample_size, mean, precision)
+function add_gaussian_node (node_id, max_parents, sample_size, mean, precision, scale)
 {
-	cnode = {};
-	cnode["NodeID"] 	= "Node" + node_id;
-	cnode["NodeType"] = 1;
-	cnode["PriorSize"] 	= sample_size;
-	cnode["MaxParents"] = max_parents;
-	cnode["PriorMean"]	= mean;
-	cnode["PriorVar"]	= precision;
-	return cnode;
+	node = {};
+	node["NodeID"] = node_id;
+    node["NodeType"] = 1;
+	node["MaxParents"] = max_parents;
+	node["PriorSize"] = sample_size;
+	node["PriorMean"]	= mean;
+	node["PriorPrecision"]	= precision;
+	node["PriorScale"] = scale;
+	return node;
 }
 
-function make_banned_edge (parent, child)
-{
-	a_rule = {};
-	a_rule["BanParent"] = parent;
-	a_rule["BanChild"] = child;
-	return a_rule;
-}
 
-discreteNodes = {};
-continuousNodes = {};
-banlist = {};
 
-/* BGM_NTHREADS = 2; */
 
 
 /* ________________________________________________________________	*/
@@ -63,9 +53,10 @@ num_nodes   = Columns (bgm_data_matrix);
 
 SAVE_OPT_STATUS_TO  = BASE_CLUSTER_DIR + "Analyses/BGM/" + intermediateHTML;
 
+nodes = {};
 for (k = 0; k < num_nodes; k = k+1)
 {
-	discreteNodes[Abs(discreteNodes)] = make_discrete_node (k, 0, num_parents);
+	nodes[Abs(nodes)] = add_discrete_node (k, num_parents, 0, 2);
 }
 
 
@@ -74,14 +65,14 @@ BGM_MCMC_BURNIN		= BGM_MCMC_MAXSTEPS $ 10;
 BGM_MCMC_SAMPLES 	= BGM_MCMC_MAXSTEPS $ 1000;
 
 
-BayesianGraphicalModel gen_bgm = 		(discreteNodes);
-SetParameter 		(gen_bgm, BGM_DATA_MATRIX, 	 bgm_data_matrix);
-BGM_OPTIMIZATION_METHOD = 4;
+BayesianGraphicalModel gen_bgm = (nodes);
+SetParameter (gen_bgm, BGM_DATA_MATRIX, bgm_data_matrix);
+BGM_OPTIMIZATION_METHOD = 4; /* order MCMC */
 
 Optimize 	(postp, gen_bgm);
 
 /* output edge posteriors */
-nvar = Abs		(discreteNodes);
+nvar = Abs		(nodes);
 nobs = Rows 	(bgm_data_matrix);
 
 edgeSupport = {nvar,nvar} ["postp[_MATRIX_ELEMENT_ROW_*nvar+_MATRIX_ELEMENT_COLUMN_][1]"];
