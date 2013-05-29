@@ -1,6 +1,8 @@
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &&  pwd )"
+
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib/
-rm -f /home/datamonkey/Datamonkey/Analyses/GARD/spool/$1*progress
-rm -f /home/datamonkey/Datamonkey/Analyses/GARD/spool/$1*out
+rm -f $ABS_DIR/GARD/spool/$1*progress
+rm -f $ABS_DIR/GARD/spool/$1*out
 . $DIR/Globals.sh
 #filename
 #datatype (0 for nuc, 1 for prot)
