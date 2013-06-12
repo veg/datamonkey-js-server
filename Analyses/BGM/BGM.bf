@@ -5,7 +5,7 @@ RequireVersion  ("0.9920060815");
 function add_discrete_node (node_id, max_parents, sample_size, nlevels)
 {
 	node = {};
-	node["NodeID"] = node_id;
+	node["NodeID"] = ""+node_id;
     node["NodeType"] = 0;
     node["MaxParents"] = max_parents;
 	node["PriorSize"] = sample_size;
