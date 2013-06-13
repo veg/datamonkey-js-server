@@ -17,19 +17,11 @@ fscanf              (stdin,"Number", _concentration);
 
 baseFilePath  		= "spool/"+_in_FilePath;
 intermediateHTML	= baseFilePath + ".progress";
-timeStamp           = baseFilePath + ".time";
 gridFile            = baseFilePath + ".grid";
 weightsFile            = baseFilePath + ".weights";
 
-fscanf (timeStamp, "Number,Number", time0, time1);
-
 fscanf (intermediateHTML, "Raw", status_updates);
 status_updates = Eval (status_updates);
-
-GLOBAL_FPRINTF_REDIRECT = intermediateHTML;
-status_updates [_mapNumberToString(Abs(status_updates))] = {"Phase": "Running FADE estimation of posterior grid points weight using regularized ML (MAP/Variational Bayes)",
-                                                "Time" : Time(1),
-                                                "Information": {"00000":"Loading grid information"}};
 
 fitted_weights = {};
                                                 

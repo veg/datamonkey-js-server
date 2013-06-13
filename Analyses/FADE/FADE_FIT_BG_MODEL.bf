@@ -15,10 +15,13 @@ intermediateHTML	= baseFilePath + ".progress";
 timeStamp           = baseFilePath + ".time";
 alignmentData   	= baseFilePath + ".seq";
 treeData            = baseFilePath + ".trees";
+auxInfoFile         = baseFilePath + ".info";
+
 
 fscanf (alignmentData, "Raw", dataFileString);
 fscanf (treeData,      "Raw", analysisSpecRaw);
-
+fscanf (auxInfoFile,   "Raw", auxInfo);
+auxInfo = Eval (auxInfo);
 
 fprintf (timeStamp, CLEAR_FILE, timer);
 
@@ -59,10 +62,16 @@ populateTrees ("prot_tree", fileCount);
 ExecuteCommands(constructLF ("baseLF", "filteredData", "prot_tree", fileCount));
 Optimize (base_res, baseLF);
 
-updateAndWriteStatusJSON ("status_updates", 0, 1, "LogL = " + Format(base_res[1][0],8,2) + ". Tree length = " + Format(+BranchLength (prot_tree_1, -1),8,2) + " subs/site." ,1);
+bl = +BranchLength (prot_tree_1, -1);
+
+updateAndWriteStatusJSON ("status_updates", 0, 1, "LogL = " + Format(base_res[1][0],8,2) + ". Tree length = " + Format(bl,8,2) + " subs/site." ,1);
 
 baseFitFile = baseFilePath + ".baseFit";
 LIKELIHOOD_FUNCTION_OUTPUT = 7;
 fprintf (baseFitFile, CLEAR_FILE, baseLF);
 
-fprintf (timeStamp, CLEAR_FILE, filteredData_1.species, "\n", Time(1), "\n", _modelInfo["Name"], "\n", Format (prot_tree_1,1,1));
+auxInfo ["TREE_LENGTHS"] = {{bl}};
+auxInfo ["MODEL_INFO"]   = _modelInfo["Name"];
+auxInfo ["ROOTED_TREE"]  = Format (prot_tree_1,1,1);
+auxInfo ["SEQUENCES"]    = filteredData_1.species;
+fprintf (auxInfoFile, CLEAR_FILE, auxInfo);

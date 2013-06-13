@@ -23,11 +23,15 @@ intermediateHTML	= baseFilePath + ".progress";
 timeStamp           = baseFilePath + ".time";
 baseFitFile         = baseFilePath + ".baseFit";
 gridFile            = baseFilePath + ".grid";
+auxInfoFile         = baseFilePath + ".info";
+
+fscanf (auxInfoFile,   "Raw", auxInfo);
+auxInfo = Eval (auxInfo);
 
 
 ExecuteAFile (baseFitFile);
 
-fscanf (timeStamp, "Number,Number,String,String", time0, time1,modelName,_ts);
+fscanf (timeStamp, "Number", time1);
 
 fscanf (intermediateHTML, "Raw", status_updates);
 GLOBAL_FPRINTF_REDIRECT = intermediateHTML;
@@ -84,7 +88,9 @@ for (residue = 0; residue < 20; residue += 1)  {
 }
 
 fprintf (gridFile, CLOSE_FILE);
-fprintf (timeStamp, CLEAR_FILE, time0, "\n", time1, "\n", modelName, "\n", _ts, "\n", Join (";",_branchesToAttachFG), "\n", grid_description) ;
+auxInfo ["BRANCHES_TESTED"] = Join (";",_branchesToAttachFG);
+auxInfo ["GRID_DESCRIPTION"] =  grid_description;
+fprintf (auxInfoFile, CLEAR_FILE, auxInfo);
 
 
 // ------------------------------------------------------------------------------------------------------------------

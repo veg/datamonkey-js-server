@@ -12,13 +12,16 @@ fscanf  			(stdin,"String", _in_FilePath);
 
 baseFilePath  		= "spool/"+_in_FilePath;
 intermediateHTML	= baseFilePath + ".progress";
-timeStamp           = baseFilePath + ".time";
 gridFile            = baseFilePath + ".grid";
 weightsFile         = baseFilePath + ".weights";
 resultsFile         = baseFilePath + ".out";
+auxInfoFile         = baseFilePath + ".info";
+timeFile            = baseFilePath + ".time";
 
-fscanf (timeStamp, "Number,Number,String,String,String,String", species, time1,modelInfo,_ts,branches,gridInfo);
+fscanf (auxInfoFile,   "Raw", auxInfo);
+auxInfo = Eval (auxInfo);
 
+fscanf (timeFile, "Number", time1);
 fscanf (intermediateHTML, "Raw", status_updates);
 status_updates = Eval (status_updates);
 
@@ -49,7 +52,10 @@ for (_residue_id = 0; _residue_id < 20; _residue_id += 1) {
 	if(_residue_id == 0) {
         points              = Rows(current_conditionals);
 	    sites  		     = Columns (current_conditionals);
-		full_table = {sites, (5*20)};
+		full_table = {sites, 1+(5*20)};
+	    for (s = 0; s < sites; s+=1) {
+	        full_table[s][0] = s+1;
+	    }
         //KLUDGE: "grid[_MATRIX_ELEMENT_ROW_][1]>0.001" to deal with removable discontinuity of Lacerda parameterization
         P_selection_stamp = {points,1} ["grid[_MATRIX_ELEMENT_ROW_][1]>0.001"];
         P_prior = +(learntWeights$P_selection_stamp);
@@ -72,13 +78,13 @@ for (_residue_id = 0; _residue_id < 20; _residue_id += 1) {
 	alpha_matrix        = ((transWeights*diag_alpha*current_conditionals)/norm_matrix);
 	beta_matrix         = ((transWeights*diag_beta*current_conditionals)/norm_matrix);
 	
-
+    offset = _residue_id*5 + 1;
 	for (s = 0; s < sites; s+=1) {
-		full_table[s][_residue_id*5+0] = alpha_matrix[s];
-		full_table[s][_residue_id*5+1] = beta_matrix[s];
-		full_table[s][_residue_id*5+2] = neg_sel_matrix[s];
-		full_table[s][_residue_id*5+3] = pos_sel_matrix[s];
-		full_table[s][_residue_id*5+4] = pos_sel_bfs[s];
+		full_table[s][offset] = alpha_matrix[s];
+		full_table[s][offset+1] = beta_matrix[s];
+		full_table[s][offset+2] = neg_sel_matrix[s];
+		full_table[s][offset+3] = pos_sel_matrix[s];
+		full_table[s][offset+4] = pos_sel_bfs[s];
 		
 		if (pos_sel_bfs[s] >= 20) {
 		    sites_with_deps[s] = 1;
@@ -86,7 +92,7 @@ for (_residue_id = 0; _residue_id < 20; _residue_id += 1) {
 	}
 }
 
-/*fubarRowCount     = Rows (bySitePosSel);
+fubarRowCount     = Rows (full_table);
 site_counter = {};
 for (currentFubarIndex = 0; currentFubarIndex < fubarRowCount; currentFubarIndex += 1) {
     site_counter + (currentFubarIndex+1);
@@ -104,10 +110,12 @@ for(residue = 0 ; residue < 20 ; residue += 1)
 }
 
 
-WriteSeparatedTable (resultsFile, header, full_table, site_counter, ",");*/
+WriteSeparatedTable (resultsFile, header, full_table, site_counter, ",");
+auxInfo ["FADE"] = full_table;
+auxInfo ["HEADERS"] = header;
 
-fprintf (resultsFile, CLEAR_FILE, modelInfo, "\n", _ts, "\n", branches, "\n", gridInfo, "\n", full_table);
+fprintf (resultsFile, CLEAR_FILE, auxInfo);
 
 fprintf             (stdout, CLEAR_FILE, "DONE");
 GetString 			(time_info, TIME_STAMP, 1);
-fprintf 			("usage.log",time_info[0][Abs(time_info)-2],",",species,",",sites,",",Time(1)-time1, ",", Abs (sites_with_deps), "\n");
+fprintf 			("usage.log",time_info[0][Abs(time_info)-2],",",auxInfo["SPECIES"],",",sites,",",Time(1)-time1, ",", Abs (sites_with_deps), "\n");
