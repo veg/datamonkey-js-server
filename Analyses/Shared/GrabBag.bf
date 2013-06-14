@@ -388,6 +388,45 @@ function _getLongModelName (modelDesc)
 
 }
 
+/*------------------------------------------------------------------------------------------*/
+
+function _generateProteinModelInfo (modelDesc)
+{
+    _result = {"+F" : 0};
+    
+	isPF = modelDesc $ "\\+F$";
+    if (isPF [0] > 0) {
+        modelDesc = modelDesc[0][isPF[0]-1];
+        _result ["+F"] = 1;
+    }
+    _result ["Filepath"] = BASE_CLUSTER_DIR	+ "Analyses/Shared/ProteinModels/" + modelDesc;
+    ExecuteAFile (BASE_CLUSTER_DIR	+ "Analyses/Shared/ProteinModels/modellist.ibf");
+    for (k = 0; k < Abs(modelList); k += 1) {
+        if (modelDesc == (modelList[k])["File"]) {
+            break;
+        }
+    }
+    if (k == Abs(modelList)) {
+        modelDesc = 0;
+    }
+    else {
+        modelDesc = k;
+    }
+    
+    modelDescString = (modelList[0+modelDesc])["Name"];
+    if (_result ["+F"]) {
+        modelDescString += " [empirical frequencies]";
+    } else {
+        modelDescString += " [model frequencies]";    
+    }
+
+
+		
+    _result ["Name"] = modelDescString;		
+	return _result;
+}
+
+
 function _generateModelName (dataType, modelDesc, rvChoice, modelDescString&)
 {
 	if (dataType)

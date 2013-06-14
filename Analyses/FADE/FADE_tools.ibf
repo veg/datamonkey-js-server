@@ -1,0 +1,196 @@
+//No idea...
+pThresh = 0.001;
+
+/*
+ * @param ModelMatrixName a string specifying the matrix you want to copy and and add a bias to.
+ */
+function AddABiasFADE (ModelMatrixName&, ModelMatrixName2&, biasedBase)
+{
+	ee = Exp(1);
+	ModelMatrixName2 = {20,20};
+	
+	t = 1;	/* branch length, local parameter */
+	_numericRateMatrix = ModelMatrixName;
+
+	global alpha = 1;
+	global beta = 1;
+	
+	for (ri = 0; ri < 20; ri = ri+1)
+	{
+		for (ci = ri+1; ci < 20; ci = ci+1)
+		{
+			ModelMatrixName2[ri][ci] := _numericRateMatrix__[ri__][ci__] * t * alpha;
+			ModelMatrixName2[ci][ri] := _numericRateMatrix__[ri__][ci__] * t * alpha;		
+		}
+	}
+	
+	
+	if (biasedBase < 20)
+	{
+		//Lacerda et al's parameterization
+		global rateBiasTo 	 := beta/(1-Exp(-beta));
+		global rateBiasFrom	 := -beta/(1-Exp(beta));
+		beta    :>0;
+		relBias       :>1;	/* UNUSED ?!? */
+		for (ri = 0; ri < 20; ri = ri+1)
+		{
+			if (ri != biasedBase)
+			{
+				ModelMatrixName2[ri][biasedBase] := _numericRateMatrix__[ri__][biasedBase__] * t * alpha * rateBiasTo;
+				ModelMatrixName2[biasedBase][ri] := _numericRateMatrix__[ri__][biasedBase__] * t * alpha * rateBiasFrom;
+			} 
+		}
+	}
+
+	return 1;
+}
+
+/*
+ * @param ModelMatrixName points to the matrix variable you want to copy and and add a bias to.
+ */
+function AddABiasFADE2 (ModelMatrixName&, ModelMatrixName2&, biasedBase) {
+	ModelMatrixName2 = {20,20};
+	
+	t = 1;	/* branch length, local parameter */
+	_numericRateMatrix = ModelMatrixName;
+
+	global alpha = 1;
+	global beta = 1;
+
+	
+	for (ri = 0; ri < 20; ri += 1)
+	{
+		for (ci = ri+1; ci < 20; ci += 1)
+		{
+			ModelMatrixName2[ri][ci] := _numericRateMatrix__[ri__][ci__] * t * alpha;
+			ModelMatrixName2[ci][ri] := _numericRateMatrix__[ri__][ci__] * t * alpha;		
+		}
+	}
+	
+		
+	if (biasedBase < 20)
+	{
+		//Lacerda et al's parameterization
+		global rateBiasTo 	 := beta/(1-Exp(-beta));
+		global rateBiasFrom	 := -beta/(1-Exp(beta));
+			
+		beta    :>0;
+		for (ri = 0; ri < 20; ri += 1)
+		{
+			if (ri != biasedBase)
+			{
+				ModelMatrixName2[ri][biasedBase] := _numericRateMatrix__[ri__][biasedBase__] * t * alpha * rateBiasTo;
+				ModelMatrixName2[biasedBase][ri] := _numericRateMatrix__[ri__][biasedBase__] * t * alpha * rateBiasFrom;
+			} 
+		}
+	}
+
+	return 1;
+}
+
+function defineFadeGrid (alphaPoints, biasPoints) { // alpha = site-to-site rate variation
+
+	alpha_power = 3;
+	bias_power = 3;
+	
+	alpha_offset = 0;
+	//NOTE: Under Lacerda et al's parameterization, there is a removable discontinuity at 0 (0 is where "no bias" should be)
+	//We kludge the shit out of this, by running the model with 0.000001 for "no bias" rather than 0, which will behave equivalently
+	bias_offset = 0.000001;
+
+	maxAlphaValue = 30;
+	maxBiasValue = 30;
+	
+	alphaAndBiasGrid = {alphaPoints * biasPoints,2}; 
+	
+	alphaPoints = Max(alphaPoints, 10);
+	biasPoints = Max(biasPoints, 10);
+	
+	index = 0;
+	for(i = 0 ; i < alphaPoints ; i += 1)
+	{
+		for(j = 0 ; j < biasPoints ; j += 1)
+		{
+			alphaAndBiasGrid[index][0] = (alpha_offset+i^alpha_power/(((alphaPoints-1)^alpha_power))*(maxAlphaValue-alpha_offset));
+			alphaAndBiasGrid[index][1] = (bias_offset+j^bias_power/(((biasPoints-1)^bias_power))*(maxBiasValue-bias_offset));
+			index +=1;
+		}
+	}
+	//fprintf(stdout,alphaAndBiasGrid);
+    return alphaAndBiasGrid;   
+}
+
+/*--------------------------------------------------------------------------------------------*/
+
+function promptModel (dummy)
+{
+	ChoiceList	     (pickAModel,"Subsitution Model",1,SKIP_NONE, "HIV Within","HIV Within",
+							 								      "HIV Between","HIV Between",
+							 								      "JTT","JTT",
+							 								      "Flu H5N1", "Empirical model for H5N1 Influenza",
+															      "LG", "Le-Gasquel 2008",
+							 								      "REV", "Use general time-reversible model (WARNING: 189 rate parameters will be estimated from your alignment)");
+							 								     
+							 								    
+	if (pickAModel < 0)
+	{
+		return 0;
+	}
+
+	modelSTDINoverload = {};
+	modelSTDINoverload["2"] = "Fixed Rates";
+	//modelSTDINoverload["3"] = "Beta-Gamma";
+	//modelSTDINoverload["4"] = "4";
+	modelNameString = "_customAAModelMatrix";
+
+	if (pickAModel == 0)
+	{
+		modelSTDINoverload["0"] = HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "EmpiricalAA" + 
+								  DIRECTORY_SEPARATOR + "HIVWithin";
+	}
+
+	if (pickAModel == 1)
+	{
+		modelSTDINoverload["0"] = HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "EmpiricalAA" + 
+								  DIRECTORY_SEPARATOR + "HIVBetween";
+	}
+
+	if (pickAModel == 2)
+	{
+		modelSTDINoverload["0"] = HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "EmpiricalAA" + 
+								  DIRECTORY_SEPARATOR + "JTT";
+	}
+
+	if (pickAModel == 3)
+	{
+		modelSTDINoverload["0"] = HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "EmpiricalAA" + 
+								  DIRECTORY_SEPARATOR + "H5N1";
+	}
+	
+	if (pickAModel == 4)
+	{
+		modelSTDINoverload["0"] = HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "EmpiricalAA" + 
+								  DIRECTORY_SEPARATOR + "LG";
+	}
+
+	if (pickAModel < 5)
+	{
+		/* estimate base frequencies as model parameters */
+		modelSTDINoverload["1"]	= "ML Estimates";
+		modelPath = HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "Custom_AA_empirical.mdl";
+	}
+	else
+	{
+		modelNameString = "mtREVMatrix";
+		modelPath = HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "mtREV.mdl";	
+	}
+	
+	ExecuteAFile (modelPath,modelSTDINoverload);
+
+	if (dummy)
+	{
+		ChoiceList	     (pickATarget,"Target residue",1,SKIP_NONE, "Fixed","Fixed Sequence",
+							 								    "Inferred","Inferred Sequence");
+	}						 								    
+	return pickAModel;
+}
