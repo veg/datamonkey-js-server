@@ -158,7 +158,7 @@ for (rep = 0; rep < availableModels; rep = rep + 1)
 	for (freq = 0; freq < 2; freq = freq + 1)
 	{
 		jobDescription				= ""; jobDescription * 256;
-		jobDescription				* ("datapath=\"" + datapath + "\";\nsplitspath=\"" + splitspath + "\";\nExecuteAFile (\"../Shared/_MFReaderAA_.ibf\");\ninputOverload={};"+
+		jobDescription				* ("dataFileString=\""+dataFileString+"\";analysisSpecRaw=\""+analysisSpecRaw+"\";datapath=\"" + datapath + "\";\nsplitspath=\"" + splitspath + "\";\nExecuteAFile (\"../Shared/_MFReaderAA_.ibf\");\ninputOverload={};"+
 							   		"\ninputOverload[\"0\"]=\"ProteinModels/" + (modelList[rep])["File"] + "\";inputOverload[\"1\"] = \""+freqOptions[freq]+"\"; ExecuteAFile (\"../Shared/Custom_AA_empirical.mdl\",inputOverload);" +
 							   		"populateTrees(\"aa_tree\",fileCount);\nExecuteCommands(constructLF(\"lf\",\"filteredData\",\"aa_tree\",fileCount));Optimize(res,lf); bl = BranchLength(aa_tree_1,-1); res[1][2] = (bl*(Transpose(bl)[\"1\"]))[0]; return res;");
 		jobDescription				* 0;
