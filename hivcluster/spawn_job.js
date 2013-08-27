@@ -1,3 +1,33 @@
+/*
+
+  Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
+
+  Copyright (C) 2013
+  Sergei L Kosakovsky Pond (spond@ucsd.edu)
+  Steven Weaver (sweaver@ucsd.edu)
+
+  Permission is hereby granted, free of charge, to any person obtaining a
+  copy of this software and associated documentation files (the
+  "Software"), to deal in the Software without restriction, including
+  without limitation the rights to use, copy, modify, merge, publish,
+  distribute, sublicense, and/or sell copies of the Software, and to
+  permit persons to whom the Software is furnished to do so, subject to
+  the following conditions:
+
+  The above copyright notice and this permission notice shall be included
+  in all copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+*/
+
+
 var spawn = require('child_process').spawn,
     fs = require('fs'),
     config = require('../config.js'),
@@ -27,7 +57,7 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
       min_overlap = hiv_cluster_params.min_overlap,
       bootstrap = 0,
       output_format = OUTPUT_FORMAT,
-      ambiguity_handling = hiv_cluster_params.ambiguity_handling;
+      ambiguity_handling = 'AVERAGE';
 
   var bam_fn = hiv_cluster_params.filename + BAM_OUTPUT_SUFFIX,
       output_fasta_fn = hiv_cluster_params.filename + FASTA_OUTPUT_SUFFIX,
@@ -47,9 +77,16 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
     });
 
     hivnetworkcsv.on('close', function (code) {
-      console.log('finished ' + code);
-      self.emit('status update', {msg: 'HIV Network Analysis Completed'});
-      self.emit('completed',{msg: 'finished'});
+      var results = {};
+      fs.readFile(config.output_dir + output_graph_dot, function (err, data) {
+        if (err) throw err;
+        results.graph_dot = String(data);
+        fs.readFile(config.output_dir + output_cluster_csv, function (err, data) {
+          if (err) throw err;
+          results.cluster_csv = String(data);
+          self.emit('completed',{results: results});
+        });
+      });
     });
   }
 
@@ -66,12 +103,11 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
     });
 
     TN93dist_command.on('close', function (code) {
-      console.log('child process exited with code ' + code);
-      self.emit('status update', {msg: 'TN93 Distribution Analysis Completed'});
-      //hivnetworkcsv();
+      //console.log('child process exited with code ' + code);
+      self.emit('status update', {status_update: config.statuses[3]});
+      hivnetworkcsv();
     });
   }
-
 
   var bam2msa = function() {
     var bam2msa = spawn(config.bam2msa, [bam_fn, output_fasta_fn], { cwd: config.output_dir });
@@ -81,7 +117,7 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
     });
 
     bam2msa.on('close', function (code) {
-      self.emit('status update', {msg: 'Converting to FASTA format Completed'});
+      self.emit('status update', {status_update: config.statuses[2]});
       TN93dist();
     });
   }
@@ -96,20 +132,21 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
     });
 
     bealign.on('close', function (code) {
-      self.emit('status update', {msg: 'Aligning Completed'});
+      self.emit('status update', {status_update: config.statuses[1]});
       bam2msa();
     });
-
   }
 
   var go = function(hiv_cluster_params) {
-    fs.writeFile(config.output_dir + hiv_cluster_params.filename, hiv_cluster_params.file_contents, function (err) {
+    fs.writeFile(config.output_dir + hiv_cluster_params.filename, 
+                 hiv_cluster_params.file_contents, function (err) {
       if (err) throw err;
-      console.log('It\'s saved!');
-      bealign(); 
+      self.emit('status update', {status_update: config.statuses[0]});
+      bealign();
     });
   }
   go(hiv_cluster_params);
 }
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
+
