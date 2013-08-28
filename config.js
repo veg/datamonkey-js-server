@@ -35,6 +35,8 @@ config.hivnetworkcsv = '/usr/local/bin/hivnetworkcsv';
 config.tn93dist      = '/usr/local/bin/TN93dist';
 config.bam2msa       = '/opt/share/python3.3/bam2msa';
 config.bealign       = '/opt/share/python3.3/bealign';
+config.bealign       = '/opt/share/python3.3/bealign';
+config.qsub_script   = '/home/sweaver/datamonkey/datamonkey-server/hivcluster/qsub_submit.sh';
 
 config.statuses = ['In Queue', 'Aligning', 'Converting to FASTA', 
                    'TN93 Analysis', 'HIV Network Analysis'];
