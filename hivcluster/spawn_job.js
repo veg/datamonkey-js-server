@@ -57,7 +57,7 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
   var status_watcher = function() {
     tail = new Tail(status_fn);
     tail.on("line", function(data) {
-      console.log(data);
+      // If data reports error, report back to user
       if(data == 'Completed') {
         var results = {};
         fs.readFile(output_dot_graph, function (err, data) {
@@ -69,6 +69,8 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
             self.emit('completed',{results: results});
           });
        }); 
+      } else if (data == 'error') {
+        self.emit('error', {error: "There was an unexpected error while processing, please try again or report the issue to bitcore@ucsd.edu"});
       } else {
         self.emit('status update', {status_update: data});
       }
@@ -115,8 +117,6 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
   }
   go(hiv_cluster_params);
 }
-
-
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
 

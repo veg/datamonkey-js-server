@@ -48,6 +48,11 @@ io.sockets.on('connection', function (socket) {
       socket.emit('status update', status_update);
     });
 
+    // On errors, report to datamonkey-js
+    cluster_analysis.on('error', function(error) {
+      socket.emit('error', error);
+    });
+
     // When the analysis completes, return the results to datamonkey.
     cluster_analysis.on('completed', function(results) {
       // Send cluster and graph information
