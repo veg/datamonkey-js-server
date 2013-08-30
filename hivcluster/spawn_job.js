@@ -27,7 +27,6 @@
 
 */
 
-
 var spawn = require('child_process').spawn,
     fs = require('fs'),
     config = require('../config.js'),
@@ -38,6 +37,11 @@ var spawn = require('child_process').spawn,
 var DoHivClusterAnalysis = function () {};
 util.inherits(DoHivClusterAnalysis, EventEmitter);
 
+/**
+ * Submits a job to TORQUE by spawning qsub_submit.sh
+ * The job is executed as specified in ./hivcluster/README
+ * Emit events that are being listened for by ./server.js
+ */
 DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
   var self = this;
 
@@ -53,7 +57,7 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
        output_cluster_output = fn + cluster_output_suffix;
 
   // Once the job has been scheduled, we need to watch the files that it
-  // outputs
+  // sends updates to.
   var status_watcher = function() {
     tail = new Tail(status_fn);
     tail.on("line", function(data) {
@@ -76,8 +80,8 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
       }
     });
   }
-
-
+  
+  // qsub_submit.sh
   var qsub_submit = function () {
     var qsub =  spawn('qsub', 
                          ['-v','fn='+fn+',dt='+distance_threshold+',mo='+min_overlap, 
@@ -88,12 +92,12 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
-      console.log('stderr: ' + data);
+      //console.log('stderr: ' + data);
     });
 
     qsub.stdout.on('data', function (data) {
       // Could not start job
-      console.log('stdout: ' + data);
+      //console.log('stdout: ' + data);
     });
 
     qsub.on('close', function (code) {
@@ -102,11 +106,13 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
       fs.writeFile(status_fn, 
                    config.statuses[0], function (err) {
         status_watcher();
-        console.log('Done: ' + code);
+        //console.log('Done: ' + code);
       });
     });
   }
-
+  
+  // Write the contents of the file in the parameters to a file on the 
+  // local filesystem, then spawn the job.
   var go = function(hiv_cluster_params) {
     fs.writeFile(config.output_dir + hiv_cluster_params.filename, 
                  hiv_cluster_params.file_contents, function (err) {
@@ -115,7 +121,9 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
       qsub_submit();
     });
   }
+
   go(hiv_cluster_params);
+
 }
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
