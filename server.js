@@ -58,6 +58,12 @@ io.sockets.on('connection', function (socket) {
       // Send cluster and graph information
       socket.emit('completed', results);
     });
+
+    // Report the torque job id back to datamonkey
+    cluster_analysis.on('job created', function(torque_id) {
+      // Send cluster and graph information
+      socket.emit('job created', torque_id);
+    });
     
     // Setup has been completed, run the job with the parameters from datamonkey
     cluster_analysis.run(hiv_cluster_params);

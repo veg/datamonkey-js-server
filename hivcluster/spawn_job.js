@@ -97,7 +97,7 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
 
     qsub.stdout.on('data', function (data) {
       // Could not start job
-      //console.log('stdout: ' + data);
+      self.emit('job created',{'torque_id': String(data).replace(/\n$/, '')});
     });
 
     qsub.on('close', function (code) {
@@ -121,9 +121,7 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
       qsub_submit();
     });
   }
-
   go(hiv_cluster_params);
-
 }
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
