@@ -37,12 +37,37 @@ var spawn = require('child_process').spawn,
 var DoHivClusterAnalysis = function () {};
 util.inherits(DoHivClusterAnalysis, EventEmitter);
 
+// Once the job has been scheduled, we need to watch the files that it
+// sends updates to.
+var DoHivClusterAnalysis.prototype.status_watcher = function() {
+  tail = new Tail(status_fn);
+  tail.on("line", function(data) {
+    // If data reports error, report back to user
+    if(data == 'Completed') {
+      var results = {};
+      fs.readFile(output_dot_graph, function (err, data) {
+        if (err) throw err;
+        results.graph_dot = String(data);
+        fs.readFile(output_cluster_output, function (err, data) {
+          if (err) throw err;
+          results.cluster_csv = String(data);
+          self.emit('completed',{results: results});
+        });
+     }); 
+    } else if (data == 'error') {
+      self.emit('error', {error: "There was an unexpected error while processing, please try again or report the issue to bitcore@ucsd.edu"});
+    } else {
+      self.emit('status update', {status_update: data});
+    }
+  });
+}
+
 /**
  * Submits a job to TORQUE by spawning qsub_submit.sh
  * The job is executed as specified in ./hivcluster/README
  * Emit events that are being listened for by ./server.js
  */
-DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
+DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
   var self = this;
 
   var cluster_output_suffix='_user.cluster.csv',
@@ -56,30 +81,6 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
   var  output_dot_graph = fn + graph_output_suffix,
        output_cluster_output = fn + cluster_output_suffix;
 
-  // Once the job has been scheduled, we need to watch the files that it
-  // sends updates to.
-  var status_watcher = function() {
-    tail = new Tail(status_fn);
-    tail.on("line", function(data) {
-      // If data reports error, report back to user
-      if(data == 'Completed') {
-        var results = {};
-        fs.readFile(output_dot_graph, function (err, data) {
-          if (err) throw err;
-          results.graph_dot = String(data);
-          fs.readFile(output_cluster_output, function (err, data) {
-            if (err) throw err;
-            results.cluster_csv = String(data);
-            self.emit('completed',{results: results});
-          });
-       }); 
-      } else if (data == 'error') {
-        self.emit('error', {error: "There was an unexpected error while processing, please try again or report the issue to bitcore@ucsd.edu"});
-      } else {
-        self.emit('status update', {status_update: data});
-      }
-    });
-  }
   
   // qsub_submit.sh
   var qsub_submit = function () {
@@ -110,10 +111,40 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
       });
     });
   }
+
+  // lanl_qsub_submit.sh
+  var lanl_qsub_submit = function () {
+    var qsub =  spawn('qsub', 
+                         ['-v','fn='+fn+',dt='+distance_threshold+',mo='+min_overlap, 
+                          '-o', config.output_dir,
+                          '-e', config.output_dir, 
+                          config.lanl_qsub_script], 
+                          { cwd: config.output_dir });
+
+    qsub.stderr.on('data', function (data) {
+      // Could not start job
+      //console.log('stderr: ' + data);
+    });
+
+    qsub.stdout.on('data', function (data) {
+      // Could not start job
+      self.emit('job created',{'lanl_torque_id': String(data).replace(/\n$/, '')});
+    });
+
+    qsub.on('close', function (code) {
+      // Should have received a job id
+      // Write queuing to status
+      fs.writeFile(status_fn, 
+                   config.statuses[0], function (err) {
+        status_watcher();
+        //console.log('Done: ' + code);
+      });
+    });
+  }
   
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
-  var go = function(hiv_cluster_params) {
+  var do_hivcluster = function(hiv_cluster_params) {
     fs.writeFile(config.output_dir + hiv_cluster_params.filename, 
                  hiv_cluster_params.file_contents, function (err) {
       if (err) throw err;
@@ -121,7 +152,59 @@ DoHivClusterAnalysis.prototype.run = function (hiv_cluster_params) {
       qsub_submit();
     });
   }
+
   go(hiv_cluster_params);
+
+}
+
+DoHivClusterAnalysis.prototype.start_lanl = function (hiv_cluster_params) {
+  var self = this;
+
+  var cluster_output_suffix='_lanl_user.cluster.csv',
+      graph_output_suffix='_lanl_user.graph.dot';
+
+  var fn = config.output_dir + hiv_cluster_params.filename,
+      distance_threshold = hiv_cluster_params.distance_threshold,
+      min_overlap = hiv_cluster_params.min_overlap,
+      status_fn = fn+'_lanl_status';
+
+  var  output_dot_graph = fn + graph_output_suffix,
+       output_cluster_output = fn + cluster_output_suffix;
+
+
+  // lanl_qsub_submit.sh
+  var lanl_qsub_submit = function () {
+    var qsub =  spawn('qsub', 
+                         ['-v','fn='+fn+',dt='+distance_threshold+',mo='+min_overlap, 
+                          '-o', config.output_dir,
+                          '-e', config.output_dir, 
+                          config.lanl_qsub_script], 
+                          { cwd: config.output_dir });
+
+    qsub.stderr.on('data', function (data) {
+      // Could not start job
+      //console.log('stderr: ' + data);
+    });
+
+    qsub.stdout.on('data', function (data) {
+      // Could not start job
+      self.emit('job created',{'lanl_torque_id': String(data).replace(/\n$/, '')});
+    });
+
+    qsub.on('close', function (code) {
+      // Should have received a job id
+      // Write queuing to status
+      fs.writeFile(status_fn, 
+                   config.statuses[0], function (err) {
+        status_watcher();
+        //console.log('Done: ' + code);
+      });
+    });
+  }
+
+  //Spawn process
+  lanl_qsub_submit();
+
 }
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
