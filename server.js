@@ -66,7 +66,7 @@ io.sockets.on('connection', function (socket) {
     });
     
     // Setup has been completed, run the job with the parameters from datamonkey
-    cluster_analysis.run(hiv_cluster_params);
+    cluster_analysis.start(hiv_cluster_params);
 
   });
   
