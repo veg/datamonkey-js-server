@@ -78,6 +78,7 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
   self.fn = config.output_dir + hiv_cluster_params.filename,
   self.distance_threshold = hiv_cluster_params.distance_threshold,
   self.min_overlap = hiv_cluster_params.min_overlap,
+  self.compare_to_lanl = hiv_cluster_params.compare_to_lanl,
   self.status_fn = self.fn+'_status',
   self.output_dot_graph = self.fn + graph_output_suffix,
   self.output_cluster_output = self.fn + cluster_output_suffix;
@@ -86,7 +87,15 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
   // qsub_submit.sh
   var qsub_submit = function () {
     var qsub =  spawn('qsub', 
-                         ['-v','fn='+self.fn+',dt='+self.distance_threshold+',mo='+self.min_overlap, 
+                         ['-v','fn='+self.fn+
+                          ',dt='+self.distance_threshold+
+                          ',mo='+self.min_overlap+ 
+                          ',comparelanl='+self.compare_to_lanl,
+                          ',od='+config.output_dir+ 
+                          ',bealign='+config.bealign+ 
+                          ',bam2msa='+config.bam2msa+ 
+                          ',tn93dist='+config.tn93dist+ 
+                          ',hivnetworkcsv='+config.hivnetworkcsv,
                           '-o', config.output_dir,
                           '-e', config.output_dir, 
                           config.qsub_script], 
@@ -113,36 +122,6 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
     });
   }
 
-  // lanl_qsub_submit.sh
-  var lanl_qsub_submit = function () {
-    var qsub =  spawn('qsub', 
-                         ['-v','fn='+self.fn+',dt='+self.distance_threshold+',mo='+self.min_overlap, 
-                          '-o', config.output_dir,
-                          '-e', config.output_dir, 
-                          config.lanl_qsub_script], 
-                          { cwd: config.output_dir });
-
-    qsub.stderr.on('data', function (data) {
-      // Could not start job
-      //console.log('stderr: ' + data);
-    });
-
-    qsub.stdout.on('data', function (data) {
-      // Could not start job
-      self.emit('job created',{'lanl_torque_id': String(data).replace(/\n$/, '')});
-    });
-
-    qsub.on('close', function (code) {
-      // Should have received a job id
-      // Write queuing to status
-      fs.writeFile(self.status_fn, 
-                   config.statuses[0], function (err) {
-        self.status_watcher();
-        //console.log('Done: ' + code);
-      });
-    });
-  }
-  
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_hivcluster = function(hiv_cluster_params) {
@@ -153,60 +132,7 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
       qsub_submit();
     });
   }
-
   do_hivcluster(hiv_cluster_params);
-
-}
-
-DoHivClusterAnalysis.prototype.start_lanl = function (hiv_cluster_params) {
-
-  var self = this;
-
-  var cluster_output_suffix='_lanl_user.cluster.csv',
-      graph_output_suffix='_lanl_user.graph.dot';
-
-  var fn = config.output_dir + hiv_cluster_params.filename,
-      distance_threshold = hiv_cluster_params.distance_threshold,
-      min_overlap = hiv_cluster_params.min_overlap,
-      status_fn = fn+'_lanl_status';
-
-  var  output_dot_graph = fn + graph_output_suffix,
-       output_cluster_output = fn + cluster_output_suffix;
-
-
-  // lanl_qsub_submit.sh
-  var lanl_qsub_submit = function () {
-    var qsub =  spawn('qsub', 
-                         ['-v','fn='+fn+',dt='+distance_threshold+',mo='+min_overlap, 
-                          '-o', config.output_dir,
-                          '-e', config.output_dir, 
-                          config.lanl_qsub_script], 
-                          { cwd: config.output_dir });
-
-    qsub.stderr.on('data', function (data) {
-      // Could not start job
-      //console.log('stderr: ' + data);
-    });
-
-    qsub.stdout.on('data', function (data) {
-      // Could not start job
-      self.emit('job created',{'lanl_torque_id': String(data).replace(/\n$/, '')});
-    });
-
-    qsub.on('close', function (code) {
-      // Should have received a job id
-      // Write queuing to status
-      fs.writeFile(self.status_fn, 
-                   config.statuses[0], function (err) {
-        self.status_watcher();
-        //console.log('Done: ' + code);
-      });
-    });
-  }
-
-  //Spawn process
-  lanl_qsub_submit();
-
 }
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
