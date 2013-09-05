@@ -26,16 +26,18 @@
 
 export PATH=/usr/local/bin:$PATH
 
+LANL_FASTA='/data/veg/hivcluster/example_files/LANL.FASTA'
+LANL_TN93OUTPUT_CSV='/data/veg/hivcluster/example_files/LANL.TN93OUTPUT.csv'
+
 FN=$fn
 DISTANCE_THRESHOLD=$dt
 MIN_OVERLAP=$mo
-
-
-OUTPUT_DIR='/home/sweaver/datamonkey/datamonkey-server/hivcluster/output/'
-BEALIGN='/opt/share/python3.3/bealign'
-BAM2MSA='/opt/share/python3.3/bam2msa'
-TN93DIST='/usr/local/bin/TN93dist'
-HIVNETWORKCSV='/usr/local/bin/hivnetworkcsv'
+OUTPUT_DIR=$od
+BEALIGN=$bealign
+BAM2MSA=$bam2msa
+TN93DIST=$tn93dist
+HIVNETWORKCSV=$hivnewtorkcsv
+COMPARE_TO_LANL=$comparelanl
 
 REFERENCE='HXB2_prrt'
 SCORE_MATRIX='HIV_BETWEEN_F'
@@ -56,6 +58,11 @@ OUTPUT_CLUSTER_CSV=$FN$CLUSTER_OUTPUT_SUFFIX
 OUTPUT_GRAPH_DOT=$FN$GRAPH_OUTPUT_SUFFIX
 STATUS_FILE=$FN"_status"
 
+LANL_OUTPUT_CLUSTER_CSV=$FN$CLUSTER_OUTPUT_SUFFIX
+LANL_OUTPUT_GRAPH_DOT=$FN$GRAPH_OUTPUT_SUFFIX
+OUTPUT_USERTOLANL_TN93_FN=$FN"_usertolanl.tn93output.csv"
+USER_LANL_TN93OUTPUT=$FN"_userlanl.tn93output.csv"
+
 trap 'echo "error" >> $STATUS_FILE ; do_cleanup failed; exit' ERR
 
 # PHASE 1
@@ -74,6 +81,15 @@ $TN93DIST $OUTPUT_FASTA_FN $OUTPUT_TN93_FN $DISTANCE_THRESHOLD $AMBIGUITY_HANDLI
 echo "HIV Network Analysis">>$STATUS_FILE
 $HIVNETWORKCSV -i $OUTPUT_TN93_FN -c $OUTPUT_CLUSTER_CSV -d $OUTPUT_GRAPH_DOT -t $DISTANCE_THRESHOLD -f $SEQUENCE_ID_FORMAT
 
+if [ $COMPARE_TO_LANL = true ]; then
+# PHASE 5
+  echo "Public Database TN93 Analysis">>$STATUS_FILE
+  echo $TN93DIST $LANL_FASTA $OUTPUT_USERTOLANL_TN93_FN $DISTANCE_THRESHOLD $AMBIGUITY_HANDLING $OUTPUT_FORMAT $MIN_OVERLAP $BOOTSTRAP $OUTPUT_FASTA_FN
+
+# PHASE 6
+  echo "Public Database HIV Network Analysis">>$STATUS_FILE
+  $HIVNETWORKCSV -i $USER_LANL_TN93OUTPUT -c $LANL_OUTPUT_CLUSTER_CSV -d $LANL_OUTPUT_GRAPH_DOT -t $DISTANCE_THRESHOLD -f $SEQUENCE_ID_FORMAT
+fi
+
+
 echo "Completed">>$STATUS_FILE
-
-
