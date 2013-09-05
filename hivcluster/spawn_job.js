@@ -35,20 +35,22 @@ var spawn = require('child_process').spawn,
     EventEmitter = require('events').EventEmitter;
 
 var DoHivClusterAnalysis = function () {};
+
 util.inherits(DoHivClusterAnalysis, EventEmitter);
 
 // Once the job has been scheduled, we need to watch the files that it
 // sends updates to.
-var DoHivClusterAnalysis.prototype.status_watcher = function() {
-  tail = new Tail(status_fn);
+DoHivClusterAnalysis.prototype.status_watcher = function() {
+  self = this;
+  tail = new Tail(self.status_fn);
   tail.on("line", function(data) {
     // If data reports error, report back to user
     if(data == 'Completed') {
       var results = {};
-      fs.readFile(output_dot_graph, function (err, data) {
+      fs.readFile(self.output_dot_graph, function (err, data) {
         if (err) throw err;
         results.graph_dot = String(data);
-        fs.readFile(output_cluster_output, function (err, data) {
+        fs.readFile(self.output_cluster_output, function (err, data) {
           if (err) throw err;
           results.cluster_csv = String(data);
           self.emit('completed',{results: results});
@@ -73,19 +75,18 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
   var cluster_output_suffix='_user.cluster.csv',
       graph_output_suffix='_user.graph.dot';
 
-  var fn = config.output_dir + hiv_cluster_params.filename,
-      distance_threshold = hiv_cluster_params.distance_threshold,
-      min_overlap = hiv_cluster_params.min_overlap,
-      status_fn = fn+'_status';
-
-  var  output_dot_graph = fn + graph_output_suffix,
-       output_cluster_output = fn + cluster_output_suffix;
+  self.fn = config.output_dir + hiv_cluster_params.filename,
+  self.distance_threshold = hiv_cluster_params.distance_threshold,
+  self.min_overlap = hiv_cluster_params.min_overlap,
+  self.status_fn = self.fn+'_status',
+  self.output_dot_graph = self.fn + graph_output_suffix,
+  self.output_cluster_output = self.fn + cluster_output_suffix;
 
   
   // qsub_submit.sh
   var qsub_submit = function () {
     var qsub =  spawn('qsub', 
-                         ['-v','fn='+fn+',dt='+distance_threshold+',mo='+min_overlap, 
+                         ['-v','fn='+self.fn+',dt='+self.distance_threshold+',mo='+self.min_overlap, 
                           '-o', config.output_dir,
                           '-e', config.output_dir, 
                           config.qsub_script], 
@@ -104,9 +105,9 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
     qsub.on('close', function (code) {
       // Should have received a job id
       // Write queuing to status
-      fs.writeFile(status_fn, 
+      fs.writeFile(self.status_fn, 
                    config.statuses[0], function (err) {
-        status_watcher();
+        self.status_watcher();
         //console.log('Done: ' + code);
       });
     });
@@ -115,7 +116,7 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
   // lanl_qsub_submit.sh
   var lanl_qsub_submit = function () {
     var qsub =  spawn('qsub', 
-                         ['-v','fn='+fn+',dt='+distance_threshold+',mo='+min_overlap, 
+                         ['-v','fn='+self.fn+',dt='+self.distance_threshold+',mo='+self.min_overlap, 
                           '-o', config.output_dir,
                           '-e', config.output_dir, 
                           config.lanl_qsub_script], 
@@ -134,9 +135,9 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
     qsub.on('close', function (code) {
       // Should have received a job id
       // Write queuing to status
-      fs.writeFile(status_fn, 
+      fs.writeFile(self.status_fn, 
                    config.statuses[0], function (err) {
-        status_watcher();
+        self.status_watcher();
         //console.log('Done: ' + code);
       });
     });
@@ -153,11 +154,12 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
     });
   }
 
-  go(hiv_cluster_params);
+  do_hivcluster(hiv_cluster_params);
 
 }
 
 DoHivClusterAnalysis.prototype.start_lanl = function (hiv_cluster_params) {
+
   var self = this;
 
   var cluster_output_suffix='_lanl_user.cluster.csv',
@@ -194,9 +196,9 @@ DoHivClusterAnalysis.prototype.start_lanl = function (hiv_cluster_params) {
     qsub.on('close', function (code) {
       // Should have received a job id
       // Write queuing to status
-      fs.writeFile(status_fn, 
+      fs.writeFile(self.status_fn, 
                    config.statuses[0], function (err) {
-        status_watcher();
+        self.status_watcher();
         //console.log('Done: ' + code);
       });
     });
