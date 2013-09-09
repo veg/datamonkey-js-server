@@ -34,28 +34,39 @@ var spawn = require('child_process').spawn,
     Tail = require('tail').Tail,
     EventEmitter = require('events').EventEmitter;
 
+
 var DoHivClusterAnalysis = function () {};
 
 util.inherits(DoHivClusterAnalysis, EventEmitter);
 
-// Once the job has been scheduled, we need to watch the files that it
-// sends updates to.
-DoHivClusterAnalysis.prototype.status_watcher = function() {
+/**
+ * Once the job has been scheduled, we need to watch the files that it
+ * sends updates to.
+ */
+DoHivClusterAnalysis.prototype.status_watcher = function () {
   self = this;
   tail = new Tail(self.status_fn);
   tail.on("line", function(data) {
     // If data reports error, report back to user
     if(data == 'Completed') {
       var results = {};
-      fs.readFile(self.lanl_output_dot_graph, function (err, data) {
+      self.emit('dispatch file', {id : self.id, fn : self.output_dot_graph, type : 'graph_dot', cb : function (err) {
         if (err) throw err;
-        results.graph_dot = String(data);
-        fs.readFile(self.output_cluster_output, function (err, data) {
-          if (err) throw err;
-          results.cluster_csv = String(data);
-          self.emit('completed',{results: results});
-        });
-     }); 
+        self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'cluster_csv', cb : function (err) {
+          if(!self.lanl_compare) {
+            if (err) throw err;
+            self.emit('completed');
+          } else {
+            self.emit('dispatch file', {id : self.id, fn : self.lanl_output_dot_graph, type : 'lanl_graph_dot', cb : function (err) {
+              if (err) throw err;
+              self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_cluster_csv', cb : function (err) {
+                if (err) throw err;
+                self.emit('completed');
+              }});
+            }});
+          }
+        }});
+     }}); 
     } else if (data == 'error') {
       self.emit('error', {error: "There was an unexpected error while processing, please try again or report the issue to bitcore@ucsd.edu"});
     } else {
@@ -70,6 +81,7 @@ DoHivClusterAnalysis.prototype.status_watcher = function() {
  * Emit events that are being listened for by ./server.js
  */
 DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
+
   var self = this;
 
   var cluster_output_suffix='_user.cluster.csv',
@@ -77,23 +89,22 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
       lanl_cluster_output_suffix='_lanl_user.cluster.csv',
       lanl_graph_output_suffix='_lanl_user.graph.dot';
 
-  self.fn = config.output_dir + hiv_cluster_params.filename,
-  self.distance_threshold = hiv_cluster_params.distance_threshold,
-  self.min_overlap = hiv_cluster_params.min_overlap,
-  self.compare_to_lanl = hiv_cluster_params.compare_to_lanl,
+  self.id = hiv_cluster_params.filename;
+  self.filepath = config.output_dir + hiv_cluster_params.filename;
+  self.distance_threshold = hiv_cluster_params.distance_threshold;
+  self.min_overlap = hiv_cluster_params.min_overlap;
   self.status_stack = hiv_cluster_params.status_stack;
   self.lanl_compare = hiv_cluster_params.lanl_compare;
-  self.status_fn = self.fn+'_status',
-  self.output_dot_graph = self.fn + graph_output_suffix,
-  self.output_cluster_output = self.fn + cluster_output_suffix;
-  self.lanl_output_dot_graph = self.fn + lanl_graph_output_suffix,
-  self.lanl_output_cluster_output = self.fn + lanl_cluster_output_suffix;
+  self.status_fn = self.filepath+'_status';
+  self.output_dot_graph = self.filepath + graph_output_suffix;
+  self.output_cluster_output = self.filepath + cluster_output_suffix;
+  self.lanl_output_dot_graph = self.filepath + lanl_graph_output_suffix;
+  self.lanl_output_cluster_output = self.filepath + lanl_cluster_output_suffix;
 
-  
   // qsub_submit.sh
   var qsub_submit = function () {
     var qsub =  spawn('qsub', 
-                         ['-v','fn='+self.fn+
+                         ['-v','fn='+self.filepath+
                           ',dt='+self.distance_threshold+
                           ',mo='+self.min_overlap+ 
                           ',comparelanl='+self.lanl_compare+
@@ -131,15 +142,18 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_hivcluster = function(hiv_cluster_params) {
-    fs.writeFile(config.output_dir + hiv_cluster_params.filename, 
+    fs.writeFile(self.filepath, 
                  hiv_cluster_params.file_contents, function (err) {
       if (err) throw err;
       self.emit('status update', {status_update: self.status_stack[0]});
       qsub_submit();
     });
   }
+
   do_hivcluster(hiv_cluster_params);
+
 }
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
+exports.FileSend = FileSend;
 

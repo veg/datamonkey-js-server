@@ -29,7 +29,11 @@
 
 var config = require('./config.js'),
     io = require('socket.io').listen(config.port),
-    spawn_job = require('./hivcluster/spawn_job.js');
+    fs = require('fs'),
+    spawn_job = require('./hivcluster/spawn_job.js'),
+    ss = require('socket.io-stream');
+
+io.set('log level', 1);
     
 // For every new connection...
 io.sockets.on('connection', function (socket) {
@@ -64,7 +68,17 @@ io.sockets.on('connection', function (socket) {
       // Send cluster and graph information
       socket.emit('job created', torque_id);
     });
-    
+
+    // Send file
+    cluster_analysis.on('dispatch file', function(params) {
+      var stream = ss.createStream();
+      ss(socket).emit('send file', stream, { id : params.id, type: params.type });
+      fs.createReadStream(params.fn).pipe(stream);
+      socket.once('file saved', function () {
+        params.cb();
+      });
+    });
+
     // Setup has been completed, run the job with the parameters from datamonkey
     cluster_analysis.start(hiv_cluster_params);
 
