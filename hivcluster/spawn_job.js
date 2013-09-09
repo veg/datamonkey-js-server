@@ -155,5 +155,4 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 }
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
-exports.FileSend = FileSend;
 
