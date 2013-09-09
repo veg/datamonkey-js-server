@@ -28,7 +28,6 @@
 */
 
 var config = {}
-
 config.port             = 7010;
 config.output_dir       = '/home/sweaver/datamonkey/datamonkey-server-dev/hivcluster/output/';
 config.hivnetworkcsv    = '/usr/local/bin/hivnetworkcsv';
