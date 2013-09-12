@@ -69,6 +69,12 @@ io.sockets.on('connection', function (socket) {
       socket.emit('job created', torque_id);
     });
 
+    // Report the torque job id back to datamonkey
+    cluster_analysis.on('tn93 summary', function(torque_id) {
+      // Send cluster and graph information
+      socket.emit('tn93 summary', torque_id);
+    });
+
     // Send file
     cluster_analysis.on('dispatch file', function(params) {
       var stream = ss.createStream();
