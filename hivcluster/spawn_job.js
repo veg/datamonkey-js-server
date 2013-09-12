@@ -50,26 +50,26 @@ DoHivClusterAnalysis.prototype.status_watcher = function () {
     // If data reports error, report back to user
     if(data == 'Completed') {
       var results = {};
-      self.emit('dispatch file', {id : self.id, fn : self.output_dot_graph, type : 'graph_dot', cb : function (err) {
-        if (err) throw err;
-        self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'cluster_csv', cb : function (err) {
-          if(!self.lanl_compare) {
+      self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'cluster_results', cb : function (err) {
+        if(!self.lanl_compare) {
+          if (err) throw err;
+          self.emit('completed');
+        } else {
+          self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_cluster_results', cb : function (err) {
             if (err) throw err;
             self.emit('completed');
-          } else {
-            self.emit('dispatch file', {id : self.id, fn : self.lanl_output_dot_graph, type : 'lanl_graph_dot', cb : function (err) {
-              if (err) throw err;
-              self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_cluster_csv', cb : function (err) {
-                if (err) throw err;
-                self.emit('completed');
-              }});
-            }});
-          }
-        }});
-     }}); 
+          }});
+        }
+      }});
     } else if (data == 'error') {
       self.emit('error', {error: "There was an unexpected error while processing, please try again or report the issue to bitcore@ucsd.edu"});
     } else {
+      if (data == "HIV Network Analysis") {
+        //Send TN93 Summary
+        fs.readFile(self.tn93_stdout, function(err, data) {
+          self.emit('tn93 summary', {summary: String(data)});
+        }) 
+      }
       self.emit('status update', {status_update: data});
     }
   });
@@ -84,10 +84,10 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 
   var self = this;
 
-  var cluster_output_suffix='_user.cluster.csv',
-      graph_output_suffix='_user.graph.dot';
-      lanl_cluster_output_suffix='_lanl_user.cluster.csv',
-      lanl_graph_output_suffix='_lanl_user.graph.dot';
+  //TODO: MAKE ALL FILENAMES READABLE BY BOTH SHELL SCRIPT AND JAVASCRIPT
+  var cluster_output_suffix='_user.cluster.json',
+      lanl_cluster_output_suffix='_lanl_user.cluster.json',
+      tn93_json_suffix='_user.tn93output.json';
 
   self.id = hiv_cluster_params.filename;
   self.filepath = config.output_dir + hiv_cluster_params.filename;
@@ -96,10 +96,9 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
   self.status_stack = hiv_cluster_params.status_stack;
   self.lanl_compare = hiv_cluster_params.lanl_compare;
   self.status_fn = self.filepath+'_status';
-  self.output_dot_graph = self.filepath + graph_output_suffix;
   self.output_cluster_output = self.filepath + cluster_output_suffix;
-  self.lanl_output_dot_graph = self.filepath + lanl_graph_output_suffix;
   self.lanl_output_cluster_output = self.filepath + lanl_cluster_output_suffix;
+  self.tn93_stdout = self.filepath + tn93_json_suffix;
 
   // qsub_submit.sh
   var qsub_submit = function () {
@@ -134,7 +133,6 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
       fs.writeFile(self.status_fn, 
                    self.status_stack[0], function (err) {
         self.status_watcher();
-        //console.log('Done: ' + code);
       });
     });
   }

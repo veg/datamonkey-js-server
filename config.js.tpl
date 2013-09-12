@@ -27,12 +27,35 @@
 
 */
 
-var config = {}
-config.port             = 7010;
-config.output_dir       = '/home/sweaver/datamonkey/datamonkey-server-dev/hivcluster/output/';
-config.hivnetworkcsv    = '/usr/local/bin/hivnetworkcsv';
-config.tn93dist         = '/usr/local/bin/TN93dist';
-config.bam2msa          = '/opt/share/python3.3/bam2msa';
-config.bealign          = '/opt/share/python3.3/bealign';
-config.qsub_script      = '/home/sweaver/datamonkey/datamonkey-server-dev/hivcluster/qsub_submit.sh';
+////PROD
+//var config = {}
+//config.port             = <PORTNUMBER>;
+//config.output_dir       = '';
+//config.hivnetworkcsv    = '';
+//config.tn93dist         = '';
+//config.bam2msa          = '';
+//config.bealign          = '';
+//config.qsub_script      = '';
+
+////QA
+//var config = {}
+//config.port             = 7010;
+//config.output_dir       = '/home/sweaver/datamonkey/qa/hivcluster/output/';
+//config.hivnetworkcsv    = '/usr/local/bin/hivnetworkcsv';
+//config.tn93dist         = '/usr/local/bin/TN93dist';
+//config.bam2msa          = '/opt/share/python3.3/bam2msa';
+//config.bealign          = '/opt/share/python3.3/bealign';
+//config.qsub_script      = '/home/sweaver/datamonkey/qa/hivcluster/qsub_submit.sh';
+
+////DEV
+//var config = {}
+//config.port             = 7010;
+//config.output_dir       = '/home/sweaver/datamonkey/dev/hivcluster/output/';
+//config.hivnetworkcsv    = '/home/sweaver/bin/cluster/bin/python3.2 /home/sweaver/bin/cluster/HIVClustering/bin/hivnetworkcsv';
+//config.tn93dist         = '/home/sweaver/bin/cluster/TN93/TN93dist';
+//config.bam2msa          = '/opt/share/python3.3/bam2msa';
+//config.bealign          = '/opt/share/python3.3/bealign';
+//config.qsub_script      = '/home/sweaver/datamonkey/dev/hivcluster/qsub_submit.sh';
+
 module.exports = config;
+
