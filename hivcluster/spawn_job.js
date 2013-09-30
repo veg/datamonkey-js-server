@@ -62,7 +62,10 @@ DoHivClusterAnalysis.prototype.status_watcher = function () {
         }
       }});
     } else if (data == 'error') {
-      self.emit('error', {error: "There was an unexpected error while processing, please try again or report the issue to bitcore@ucsd.edu"});
+      // There was an error while performing x. 
+      self.emit('error', {error: "There was an unexpected error while" +
+                                  " processing, please try again or report" +
+                                  " the issue to bitcore@ucsd.edu"});
     } else {
       if (data == "HIV Network Analysis") {
         //Send TN93 Summary

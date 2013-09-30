@@ -33,7 +33,7 @@ var config = require('./config.js'),
     spawn_job = require('./hivcluster/spawn_job.js'),
     ss = require('socket.io-stream');
 
-io.set('log level', 1);
+//io.set('log level', 1);
     
 // For every new connection...
 io.sockets.on('connection', function (socket) {
@@ -54,7 +54,7 @@ io.sockets.on('connection', function (socket) {
 
     // On errors, report to datamonkey-js
     cluster_analysis.on('error', function(error) {
-      socket.emit('error', error);
+      socket.emit('script error', error);
     });
 
     // When the analysis completes, return the results to datamonkey.
@@ -69,7 +69,7 @@ io.sockets.on('connection', function (socket) {
       socket.emit('job created', torque_id);
     });
 
-    // Report the torque job id back to datamonkey
+    // Report tn93 summary back to datamonkey
     cluster_analysis.on('tn93 summary', function(torque_id) {
       // Send cluster and graph information
       socket.emit('tn93 summary', torque_id);
