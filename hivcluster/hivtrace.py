@@ -31,9 +31,19 @@ import csv
 import os
 from itertools import chain
 
+#These should come from config
+PYTHON='/home/sweaver/bin/hivcluster/bin/python3.2'
+BEALIGN='/home/sweaver/bin/hivcluster/bin/bealign'
+BAM2MSA='/home/sweaver/bin/hivcluster/bin/bam2msa'
+TN93DIST='/home/sweaver/bin/hivcluster/TN93/tn93'
+HIVNETWORKCSV='/home/sweaver/bin/hivcluster/HIVClustering/bin/hivnetworkcsv'
+LANL_FASTA='/data/veg/hivcluster/example_files/LANL.FASTA'
+LANL_TN93OUTPUT_CSV='/data/veg/hivcluster/example_files/LANL.TN93OUTPUT.csv'
+
+
 def update_status(status, status_file):
     with open(status_file, 'a') as status_f:
-        status_f.write(status)
+        status_f.write(status + '\n')
 
 def rename_duplicates(fasta_fn):
 
@@ -109,43 +119,77 @@ def create_filter_list(tn93_fn, filter_list_fn, prefix):
             [f.write(row + '\n') for row in rows]
     return
 
-def main(input, threshold, min_overlap, output_dir, compare_to_lanl, prefix):
+def main(input, threshold, min_overlap, output_dir, compare_to_lanl,
+         status_file, prefix):
+
+    #Convert to Python
+    REFERENCE='HXB2_prrt'
+    SCORE_MATRIX='HIV_BETWEEN_F'
+    OUTPUT_FORMAT='csv'
+    SEQUENCE_ID_FORMAT='plain'
+    AMBIGUITY_HANDLING='average'
+
+    BAM_OUTPUT_SUFFIX='_output.bam'
+    FASTA_OUTPUT_SUFFIX='_output.fasta'
+    TN93_OUTPUT_SUFFIX='_user.tn93output.csv'
+    TN93_JSON_SUFFIX='_user.tn93output.json'
+    CLUSTER_JSON_SUFFIX='_user.cluster.json'
+    LANL_CLUSTER_JSON_SUFFIX='_lanl_user.cluster.json'
+
+    BAM_FN=input+BAM_OUTPUT_SUFFIX
+    OUTPUT_FASTA_FN=input+FASTA_OUTPUT_SUFFIX
+    OUTPUT_TN93_FN=input+TN93_OUTPUT_SUFFIX
+    JSON_TN93_FN=input+TN93_JSON_SUFFIX
+    OUTPUT_CLUSTER_JSON=input+CLUSTER_JSON_SUFFIX
+    STATUS_FILE=input+'_status'
+
+    LANL_OUTPUT_CLUSTER_JSON=input+LANL_CLUSTER_JSON_SUFFIX
+    OUTPUT_USERTOLANL_TN93_FN=input+'_usertolanl.tn93output.csv'
+    USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
+    USER_FILTER_LIST=input+'_user_filter.csv'
+
+    #Ensure status file is empty
+    try:
+        os.remove(status_file)
+    except OSError:
+        pass
 
     # PHASE 1
-    update_status("Aligning", STATUS_FILE)
-    subprocess.check_call([PYTHON, BEALIGN, '-r', REFERENCE, '-m', SCORE_MATRIX, '-R', FN, BAM_FN])
+    update_status("Aligning", status_file)
+    subprocess.check_call([PYTHON, BEALIGN, '-r', REFERENCE, '-m', SCORE_MATRIX, '-R', input, BAM_FN])
 
     # PHASE 2
-    update_status("Converting to FASTA", STATUS_FILE)
+    update_status("Converting to FASTA", status_file)
     subprocess.check_call([PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN])
 
     #Ensure unique ids
     rename_duplicates(OUTPUT_FASTA_FN)
 
     # PHASE 3
-    update_status("TN93 Analysis", STATUS_FILE)
+    update_status("TN93 Analysis", status_file)
     tn93_fh = open(JSON_TN93_FN, 'w')
     subprocess.check_call([TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
-                           DISTANCE_THRESHOLD, '-a', AMBIGUITY_HANDLING, '-l',
-                           MIN_OVERLAP, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN],
+                           threshold, '-a', AMBIGUITY_HANDLING, '-l',
+                           min_overlap, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN],
                            stdout=tn93_fh)
     tn93_fh.close()
 
     # PHASE 4
-    update_status("HIV Network Analysis", STATUS_FILE)
+    update_status("HIV Network Analysis", status_file)
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
     subprocess.check_call([PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
-                           DISTANCE_THRESHOLD, '-f', SEQUENCE_ID_FORMAT, '-j'],
+                           threshold, '-f', SEQUENCE_ID_FORMAT, '-j'],
                            stdout=output_cluster_json_fh)
+
     output_cluster_json_fh.close()
 
-    if COMPARE_TO_LANL:
+    if compare_to_lanl:
 
       # PHASE 5
-      update_status("Public Database TN93 Analysis", STATUS_FILE)
+      update_status("Public Database TN93 Analysis", status_file)
       subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
-                             DISTANCE_THRESHOLD, '-a', AMBIGUITY_HANDLING,
-                             '-f', OUTPUT_FORMAT, '-l', MIN_OVERLAP, '-s',
+                             threshold, '-a', AMBIGUITY_HANDLING,
+                             '-f', OUTPUT_FORMAT, '-l', min_overlap, '-s',
                              OUTPUT_FASTA_FN, LANL_FASTA])
 
       #Perform concatenation
@@ -157,16 +201,16 @@ def main(input, threshold, min_overlap, output_dir, compare_to_lanl, prefix):
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST, prefix)
 
       # PHASE 6
-      update_status("Public Database HIV Network Analysis", STATUS_FILE)
+      update_status("Public Database HIV Network Analysis", status_file)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
 
       subprocess.check_call([PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
-                            DISTANCE_THRESHOLD, '-f', SEQUENCE_ID_FORMAT, '-j',
+                            threshold, '-f', SEQUENCE_ID_FORMAT, '-j',
                             '-k', USER_FILTER_LIST],
                             stdout=lanl_output_cluster_json_fh)
       lanl_output_cluster_json_fh.close()
 
-    update_status("Completed", STATUS_FILE)
+    update_status("Completed", status_file)
 
 if __name__ == "__main__":
 
@@ -187,22 +231,6 @@ if __name__ == "__main__":
     OUTPUT_DIR=args.outputdir
     COMPARE_TO_LANL=args.compare
 
-    #These should come from config
-    PYTHON='/home/sweaver/bin/hivcluster/bin/python3.2'
-    BEALIGN='/home/sweaver/bin/hivcluster/bin/bealign'
-    BAM2MSA='/home/sweaver/bin/hivcluster/bin/bam2msa'
-    TN93DIST='/home/sweaver/bin/hivcluster/TN93/tn93'
-    HIVNETWORKCSV='/home/sweaver/bin/hivcluster/HIVClustering/bin/hivnetworkcsv'
-    LANL_FASTA='/data/veg/hivcluster/example_files/LANL.FASTA'
-    LANL_TN93OUTPUT_CSV='/data/veg/hivcluster/example_files/LANL.TN93OUTPUT.csv'
-
-    #Convert to Python
-    REFERENCE='HXB2_prrt'
-    SCORE_MATRIX='HIV_BETWEEN_F'
-    OUTPUT_FORMAT='csv'
-    SEQUENCE_ID_FORMAT='plain'
-    AMBIGUITY_HANDLING='average'
-
     BAM_OUTPUT_SUFFIX='_output.bam'
     FASTA_OUTPUT_SUFFIX='_output.fasta'
     TN93_OUTPUT_SUFFIX='_user.tn93output.csv'
@@ -222,5 +250,5 @@ if __name__ == "__main__":
     USER_LANL_TN93OUTPUT=FN+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=FN+'_user_filter.csv'
 
-    main(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, OUTPUT_DIR, COMPARE_TO_LANL, ID)
+    main(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, OUTPUT_DIR, COMPARE_TO_LANL, STATUS_FILE, ID)
 
