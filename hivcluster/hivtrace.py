@@ -65,14 +65,14 @@ def rename_duplicates(fasta_fn):
 
     return
 
-def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
+def concatenate_data(output, reference_fn, pairwise_fn, user_fn, prefix):
 
     #cp LANL_TN93OUTPUT_CSV USER_LANL_TN93OUTPUT
     shutil.copyfile(reference_fn, output)
 
     with open(output, 'a') as f:
         fwriter = csv.writer(f, delimiter=',', quotechar='|')
-        prependid = lambda x : [x[0], ID + '_' + x[1], x[2]]
+        prependid = lambda x : [x[0], prefix + '_' + x[1], x[2]]
         # Read pairwise results
         #tail -n+2 OUTPUT_USERTOLANL_TN93_FN >> USER_LANL_TN93OUTPUT
         with open(pairwise_fn) as pairwise_f:
@@ -83,7 +83,7 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
 
         # Read user_results, preprend ids
         #tail -n+2 OUTPUT_TN93_FN >> USER_LANL_TN93OUTPUT
-        prependuid = lambda x : [ID + '_' + x[0], ID + '_' + x[1], x[2]]
+        prependuid = lambda x : [prefix + '_' + x[0], prefix + '_' + x[1], x[2]]
         with open(user_fn) as user_f:
             ureader = csv.reader(user_f, delimiter=',', quotechar='|')
             ureader.__next__()
@@ -94,11 +94,11 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
     return
 
 
-def create_filter_list(tn93_fn, filter_list_fn):
+def create_filter_list(tn93_fn, filter_list_fn, prefix):
     #tail -n+2 OUTPUT_TN93_FN | awk -F , '{print 1"\n"2}' | sort -u > USER_FILTER_LIST
     with open(filter_list_fn, 'w') as f:
 
-        ids = lambda x : [ID + '_' + x[0], ID + '_' + x[1]]
+        ids = lambda x : [prefix + '_' + x[0], prefix + '_' + x[1]]
 
         with open(tn93_fn) as tn93_f:
             tn93reader = csv.reader(tn93_f, delimiter=',', quotechar='|')
@@ -109,7 +109,7 @@ def create_filter_list(tn93_fn, filter_list_fn):
             [f.write(row + '\n') for row in rows]
     return
 
-def main(input, threshold, min_overlap, output_dir, compare_to_lanl):
+def main(input, threshold, min_overlap, output_dir, compare_to_lanl, prefix):
 
     # PHASE 1
     update_status("Aligning", STATUS_FILE)
@@ -151,10 +151,10 @@ def main(input, threshold, min_overlap, output_dir, compare_to_lanl):
       #Perform concatenation
       #This is where reference annotation becomes an issue
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
-                       OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN)
+                       OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN, prefix)
 
       # Create a list from TN93 csv for hivnetworkcsv filter
-      create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
+      create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST, prefix)
 
       # PHASE 6
       update_status("Public Database HIV Network Analysis", STATUS_FILE)
@@ -218,9 +218,9 @@ if __name__ == "__main__":
     STATUS_FILE=FN+'_status'
 
     LANL_OUTPUT_CLUSTER_JSON=FN+LANL_CLUSTER_JSON_SUFFIX
-    OUTPUT_USERTOLANL_TN93_FN=FN+"_usertolanl.tn93output.csv"
-    USER_LANL_TN93OUTPUT=FN+"_userlanl.tn93output.csv"
-    USER_FILTER_LIST=FN+"_user_filter.csv"
+    OUTPUT_USERTOLANL_TN93_FN=FN+'_usertolanl.tn93output.csv'
+    USER_LANL_TN93OUTPUT=FN+'_userlanl.tn93output.csv'
+    USER_FILTER_LIST=FN+'_user_filter.csv'
 
-    main(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, OUTPUT_DIR, COMPARE_TO_LANL)
+    main(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, OUTPUT_DIR, COMPARE_TO_LANL, ID)
 

@@ -90,12 +90,13 @@ if [ $COMPARE_TO_LANL = true ]; then
   $TN93DIST -o $OUTPUT_USERTOLANL_TN93_FN -t $DISTANCE_THRESHOLD -a $AMBIGUITY_HANDLING -f $OUTPUT_FORMAT -l $MIN_OVERLAP -s $OUTPUT_FASTA_FN $LANL_FASTA 
 
   #Perform concatenation
+  #This is where reference annotation becomes an issue
   cp $LANL_TN93OUTPUT_CSV $USER_LANL_TN93OUTPUT 
   tail -n+2 $OUTPUT_USERTOLANL_TN93_FN >> $USER_LANL_TN93OUTPUT
   tail -n+2 $OUTPUT_TN93_FN >> $USER_LANL_TN93OUTPUT
 
   # Create a list from TN93 csv for hivnetworkcsv filter
-  tail -n +2 $OUTPUT_TN93_FN | awk -F , '{print $1"\n"$2}' | sort -u > $USER_FILTER_LIST
+  tail -n+2 $OUTPUT_TN93_FN | awk -F , '{print $1"\n"$2}' | sort -u > $USER_FILTER_LIST
 
   # PHASE 6
   echo "Public Database HIV Network Analysis">>$STATUS_FILE
@@ -104,5 +105,4 @@ if [ $COMPARE_TO_LANL = true ]; then
 fi
 
 echo "Completed">>$STATUS_FILE
-
 
