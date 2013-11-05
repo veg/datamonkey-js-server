@@ -1,0 +1,98 @@
+{
+    "Cluster sizes": [
+        3, 
+        2
+    ], 
+    "Degrees": {
+        "Distribution": [
+            4, 
+            1
+        ], 
+        "Model": "Yule", 
+        "fitted": null, 
+        "rho": 6.741657365453795, 
+        "rho CI": null
+    }, 
+    "Directed Edges": {
+        "Count": 0, 
+        "Reasons for unresolved directions": {
+            "Missing dates": 3
+        }
+    }, 
+    "Edges": [
+        {
+            "directed": false, 
+            "length": 0.00230851, 
+            "source": 4, 
+            "target": 3
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0149482, 
+            "source": 0, 
+            "target": 2
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0101121, 
+            "source": 1, 
+            "target": 2
+        }
+    ], 
+    "HIV Stages": {
+        "A-1": 0, 
+        "A-2": 0, 
+        "A-3": 0, 
+        "Chronic": 5, 
+        "E-1": 0, 
+        "E-2": 0, 
+        "E-3": 0
+    }, 
+    "Multiple sequences": {
+        "Followup, days": null, 
+        "Subjects with": 0
+    }, 
+    "Network Summary": {
+        "Clusters": 2, 
+        "Edges": 3, 
+        "Nodes": 5, 
+        "Sequences used to make links": 5
+    }, 
+    "Nodes": [
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "testid_2"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "testid_3"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "testid_4"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "testid_6"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "testid_5"
+        }
+    ]
+}
