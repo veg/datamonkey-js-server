@@ -29,7 +29,7 @@
 
 var spawn = require('child_process').spawn,
     fs = require('fs'),
-    config = require('../config.js'),
+    config = require('../config.json'),
     util = require('util'),
     Tail = require('tail').Tail,
     EventEmitter = require('events').EventEmitter;
@@ -55,6 +55,7 @@ DoHivClusterAnalysis.prototype.status_watcher = function () {
           if (err) throw err;
           self.emit('completed');
         } else {
+          console.log(self.lanl_output_cluster_output);
           self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_cluster_results', cb : function (err) {
             if (err) throw err;
             self.emit('completed');
@@ -94,6 +95,8 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 
   self.id = hiv_cluster_params.filename;
   self.filepath = config.output_dir + hiv_cluster_params.filename;
+  self.hivtrace = config.hivtrace;
+  self.python = config.python;
   self.distance_threshold = hiv_cluster_params.distance_threshold;
   self.min_overlap = hiv_cluster_params.min_overlap;
   self.status_stack = hiv_cluster_params.status_stack;
@@ -105,16 +108,15 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 
   // qsub_submit.sh
   var qsub_submit = function () {
+
     var qsub =  spawn('qsub', 
-                         ['-v','fn='+self.filepath+
+                         ['-v',
+                          'fn='+self.filepath+
+                          ',python='+self.python+
+                          ',hivtrace='+self.hivtrace+
                           ',dt='+self.distance_threshold+
                           ',mo='+self.min_overlap+ 
-                          ',comparelanl='+self.lanl_compare+
-                          ',od='+config.output_dir+ 
-                          ',bealign='+config.bealign+ 
-                          ',bam2msa='+config.bam2msa+ 
-                          ',tn93dist='+config.tn93dist+ 
-                          ',hivnetworkcsv='+config.hivnetworkcsv,
+                          ',comparelanl='+self.lanl_compare,
                           '-o', config.output_dir,
                           '-e', config.output_dir, 
                           config.qsub_script], 
@@ -122,7 +124,7 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
-      //console.log('stderr: ' + data);
+      console.log('stderr: ' + data);
     });
 
     qsub.stdout.on('data', function (data) {
@@ -156,4 +158,3 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 }
 
 exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
-

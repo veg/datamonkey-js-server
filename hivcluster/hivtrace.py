@@ -30,15 +30,19 @@ import argparse
 import csv
 import os
 from itertools import chain
+import json
+
+CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../config.json'
+config = json.loads(open(CONFIG_PATH).read())
 
 #These should come from config
-PYTHON='/home/sweaver/bin/hivcluster/bin/python3.2'
-BEALIGN='/home/sweaver/bin/hivcluster/bin/bealign'
-BAM2MSA='/home/sweaver/bin/hivcluster/bin/bam2msa'
-TN93DIST='/home/sweaver/bin/hivcluster/TN93/tn93'
-HIVNETWORKCSV='/home/sweaver/bin/hivcluster/HIVClustering/bin/hivnetworkcsv'
-LANL_FASTA='/data/veg/hivcluster/example_files/LANL.FASTA'
-LANL_TN93OUTPUT_CSV='/data/veg/hivcluster/example_files/LANL.TN93OUTPUT.csv'
+PYTHON=config.get('python')
+BEALIGN=config.get('bealign')
+BAM2MSA=config.get('bam2msa')
+TN93DIST=config.get('tn93dist')
+HIVNETWORKCSV=config.get('hivnetworkcsv')
+LANL_FASTA=config.get('lanl_fasta')
+LANL_TN93OUTPUT_CSV=config.get('lanl_tn93output_csv')
 
 
 def update_status(status, status_file):
@@ -119,8 +123,8 @@ def create_filter_list(tn93_fn, filter_list_fn, prefix):
             [f.write(row + '\n') for row in rows]
     return
 
-def main(input, threshold, min_overlap, output_dir, compare_to_lanl,
-         status_file, prefix):
+def hivtrace(input, threshold, min_overlap, compare_to_lanl,
+             status_file, prefix):
 
     #Convert to Python
     REFERENCE='HXB2_prrt'
@@ -148,11 +152,11 @@ def main(input, threshold, min_overlap, output_dir, compare_to_lanl,
     USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=input+'_user_filter.csv'
 
-    #Ensure status file is empty
-    try:
-        os.remove(status_file)
-    except OSError:
-        pass
+    ##Ensure status file is empty
+    #try:
+    #    open(status_file, 'w').close()
+    #except OSError:
+    #    pass
 
     # PHASE 1
     update_status("Aligning", status_file)
@@ -212,14 +216,13 @@ def main(input, threshold, min_overlap, output_dir, compare_to_lanl,
 
     update_status("Completed", status_file)
 
-if __name__ == "__main__":
 
+def main():
     parser = argparse.ArgumentParser(description='HIV TRACE')
 
     parser.add_argument('-i', '--input', help='Input CSV file with inferred genetic links (or stdin if omitted). Must be a CSV file with three columns: ID1,ID2,distance.')
     parser.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     parser.add_argument('-m', '--minoverlap', help='Minimum Overlap')
-    parser.add_argument('-o', '--outputdir', help='Output directory')
     parser.add_argument('-c', '--compare', help='Compare to LANL', action='store_true')
 
     args = parser.parse_args()
@@ -228,7 +231,6 @@ if __name__ == "__main__":
     ID=os.path.basename(FN)
     DISTANCE_THRESHOLD=args.threshold
     MIN_OVERLAP=args.minoverlap
-    OUTPUT_DIR=args.outputdir
     COMPARE_TO_LANL=args.compare
 
     BAM_OUTPUT_SUFFIX='_output.bam'
@@ -250,5 +252,8 @@ if __name__ == "__main__":
     USER_LANL_TN93OUTPUT=FN+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=FN+'_user_filter.csv'
 
-    main(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, OUTPUT_DIR, COMPARE_TO_LANL, STATUS_FILE, ID)
+    hivtrace(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, ID)
+
+if __name__ == "__main__":
+    main()
 

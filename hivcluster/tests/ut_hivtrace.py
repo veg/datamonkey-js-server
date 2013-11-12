@@ -27,21 +27,25 @@
 import sys
 sys.path.append('../')
 
+
 import hivtrace
 import subprocess
 import unittest
 import os
+import json
+
+CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../../config.json'
+config = json.loads(open(CONFIG_PATH).read())
 
 class TestHIVTrace(unittest.TestCase):
 
   def setUp(self):
-    self.fn   = './res/TEST.FASTA'
+    self.fn   = config.get('test_output_dir') + '/TEST.FASTA'
     self.user_lanl_tn93output=self.fn+'_USERLANL.TN93OUTPUT.CSV'
-    self.lanl_tn93output_csv='./res/LANL.TN93OUTPUT.csv'
+    self.lanl_tn93output_csv= config.get('lanl_tn93output_csv')
     self.output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
     self.output_usertolanl_tn93_fn=self.fn+'_USERTOLANL.TN93OUTPUT.CSV'
     self.prefix = os.path.basename(self.fn)
-    self.output_dir = './res/'
 
     self.steps = [ 'Aligning',
       'Converting to FASTA',
@@ -58,7 +62,6 @@ class TestHIVTrace(unittest.TestCase):
 
   def tearDown(self):
       #Remove all files
-      #Checkout -f ./res/TEST.FASTA
       subprocess.check_call(['git', 'checkout', '-f', self.fn])
       return
 
@@ -106,9 +109,8 @@ class TestHIVTrace(unittest.TestCase):
     self.compare_to_lanl = True
     self.status_file=self.fn+'_status'
     #Run the whole thing and make sure it completed via the status file
-    hivtrace.main(self.fn, self.distance_threshold, self.min_overlap,
-                  self.output_dir, self.compare_to_lanl, self.status_file,
-                  self.prefix)
+    hivtrace.hivtrace(self.fn, self.distance_threshold, self.min_overlap,
+                  self.compare_to_lanl, self.status_file, self.prefix)
 
     #Read status file and ensure that it has all steps
     with open(self.status_file, 'r') as status_file:

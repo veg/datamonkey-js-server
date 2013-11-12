@@ -27,11 +27,12 @@
 
 */
 
-var config = require('./config.js'),
+var config = require('./config.json'),
     io = require('socket.io').listen(config.port),
     fs = require('fs'),
     spawn_job = require('./hivcluster/spawn_job.js'),
     ss = require('socket.io-stream');
+
 
 //io.set('log level', 1);
     
