@@ -137,8 +137,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     FASTA_OUTPUT_SUFFIX='_output.fasta'
     TN93_OUTPUT_SUFFIX='_user.tn93output.csv'
     TN93_JSON_SUFFIX='_user.tn93output.json'
-    CLUSTER_JSON_SUFFIX='_user.cluster.json'
-    LANL_CLUSTER_JSON_SUFFIX='_lanl_user.cluster.json'
+    CLUSTER_JSON_SUFFIX='_user.trace.json'
+    LANL_CLUSTER_JSON_SUFFIX='_lanl_user.trace.json'
 
     BAM_FN=input+BAM_OUTPUT_SUFFIX
     OUTPUT_FASTA_FN=input+FASTA_OUTPUT_SUFFIX
@@ -237,8 +237,8 @@ def main():
     FASTA_OUTPUT_SUFFIX='_output.fasta'
     TN93_OUTPUT_SUFFIX='_user.tn93output.csv'
     TN93_JSON_SUFFIX='_user.tn93output.json'
-    CLUSTER_JSON_SUFFIX='_user.cluster.json'
-    LANL_CLUSTER_JSON_SUFFIX='_lanl_user.cluster.json'
+    CLUSTER_JSON_SUFFIX='_user.trace.json'
+    LANL_CLUSTER_JSON_SUFFIX='_lanl_user.trace.json'
 
     BAM_FN=FN+BAM_OUTPUT_SUFFIX
     OUTPUT_FASTA_FN=FN+FASTA_OUTPUT_SUFFIX

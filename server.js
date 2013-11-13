@@ -30,7 +30,7 @@
 var config = require('./config.json'),
     io = require('socket.io').listen(config.port),
     fs = require('fs'),
-    spawn_job = require('./hivcluster/spawn_job.js'),
+    spawn_job = require('./hivtrace/spawn_job.js'),
     ss = require('socket.io-stream');
 
 
@@ -43,41 +43,41 @@ io.sockets.on('connection', function (socket) {
   socket.emit('connected', { hello: 'Ready to serve' });
 
   // A job has been spawned by datamonkey, let's go to work
-  socket.on('spawn', function (hiv_cluster_params) {
+  socket.on('spawn', function (hiv_trace_params) {
 
     // Setup Analysis
-    var cluster_analysis = new spawn_job.DoHivClusterAnalysis();
+    var trace_analysis = new spawn_job.DoHivTraceAnalysis();
 
     // On status updates, report to datamonkey-js
-    cluster_analysis.on('status update', function(status_update) {
+    trace_analysis.on('status update', function(status_update) {
       socket.emit('status update', status_update);
     });
 
     // On errors, report to datamonkey-js
-    cluster_analysis.on('error', function(error) {
+    trace_analysis.on('error', function(error) {
       socket.emit('script error', error);
     });
 
     // When the analysis completes, return the results to datamonkey.
-    cluster_analysis.on('completed', function(results) {
-      // Send cluster and graph information
+    trace_analysis.on('completed', function(results) {
+      // Send trace and graph information
       socket.emit('completed', results);
     });
 
     // Report the torque job id back to datamonkey
-    cluster_analysis.on('job created', function(torque_id) {
-      // Send cluster and graph information
+    trace_analysis.on('job created', function(torque_id) {
+      // Send trace and graph information
       socket.emit('job created', torque_id);
     });
 
     // Report tn93 summary back to datamonkey
-    cluster_analysis.on('tn93 summary', function(torque_id) {
-      // Send cluster and graph information
+    trace_analysis.on('tn93 summary', function(torque_id) {
+      // Send trace and graph information
       socket.emit('tn93 summary', torque_id);
     });
 
     // Send file
-    cluster_analysis.on('dispatch file', function(params) {
+    trace_analysis.on('dispatch file', function(params) {
       var stream = ss.createStream();
       ss(socket).emit('send file', stream, { id : params.id, type: params.type });
       fs.createReadStream(params.fn).pipe(stream);
@@ -87,7 +87,7 @@ io.sockets.on('connection', function (socket) {
     });
 
     // Setup has been completed, run the job with the parameters from datamonkey
-    cluster_analysis.start(hiv_cluster_params);
+    trace_analysis.start(hiv_trace_params);
 
   });
   

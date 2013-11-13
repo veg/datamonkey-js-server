@@ -35,22 +35,23 @@ var spawn = require('child_process').spawn,
     EventEmitter = require('events').EventEmitter;
 
 
-var DoHivClusterAnalysis = function () {};
+var DoHivTraceAnalysis = function () {};
 
-util.inherits(DoHivClusterAnalysis, EventEmitter);
+util.inherits(DoHivTraceAnalysis, EventEmitter);
 
 /**
  * Once the job has been scheduled, we need to watch the files that it
  * sends updates to.
  */
-DoHivClusterAnalysis.prototype.status_watcher = function () {
+DoHivTraceAnalysis.prototype.status_watcher = function () {
   self = this;
   tail = new Tail(self.status_fn);
   tail.on("line", function(data) {
     // If data reports error, report back to user
     if(data == 'Completed') {
       var results = {};
-      self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'cluster_results', cb : function (err) {
+      console.log(self.output_cluster_output);
+      self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'trace_results', cb : function (err) {
         if(!self.lanl_compare) {
           if (err) throw err;
           self.emit('completed');
@@ -84,13 +85,13 @@ DoHivClusterAnalysis.prototype.status_watcher = function () {
  * The job is executed as specified in ./hivcluster/README
  * Emit events that are being listened for by ./server.js
  */
-DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
+DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
 
   var self = this;
 
   //TODO: MAKE ALL FILENAMES READABLE BY BOTH SHELL SCRIPT AND JAVASCRIPT
-  var cluster_output_suffix='_user.cluster.json',
-      lanl_cluster_output_suffix='_lanl_user.cluster.json',
+  var cluster_output_suffix='_user.trace.json',
+      lanl_cluster_output_suffix='_lanl_user.trace.json',
       tn93_json_suffix='_user.tn93output.json';
 
   self.id = hiv_cluster_params.filename;
@@ -157,4 +158,4 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 
 }
 
-exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
+exports.DoHivTraceAnalysis = DoHivTraceAnalysis;
