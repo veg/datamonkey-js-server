@@ -182,8 +182,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     update_status("HIV Network Analysis", status_file)
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
     subprocess.check_call([PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
-                           threshold, '-f', SEQUENCE_ID_FORMAT, '-j'],
-                           stdout=output_cluster_json_fh)
+                           threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
+                           'report'], stdout=output_cluster_json_fh)
 
     output_cluster_json_fh.close()
 
@@ -209,8 +209,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
 
       subprocess.check_call([PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
-                            threshold, '-f', SEQUENCE_ID_FORMAT, '-j',
-                            '-k', USER_FILTER_LIST],
+                            threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
+                            'report', '-k', USER_FILTER_LIST],
                             stdout=lanl_output_cluster_json_fh)
       lanl_output_cluster_json_fh.close()
 
