@@ -1,0 +1,122 @@
+{
+    "Cluster sizes": [
+        3, 
+        2
+    ], 
+    "Degrees": {
+        "Distribution": [
+            4, 
+            1
+        ], 
+        "Model": "Yule", 
+        "fitted": [
+            0.8516685221760777, 
+            0.110011136113623
+        ], 
+        "rho": 6.741657365453795, 
+        "rho CI": [
+            1.457751736250405, 
+            798.9933640071333
+        ]
+    }, 
+    "Directed Edges": {
+        "Count": 0, 
+        "Reasons for unresolved directions": {
+            "Missing dates": 3
+        }
+    }, 
+    "Edges": [
+        {
+            "directed": false, 
+            "length": 0.0101121, 
+            "removed": false, 
+            "sequences": [
+                "testid_2", 
+                "testid_3"
+            ], 
+            "source": 0, 
+            "support": 0.0, 
+            "target": 1
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00230851, 
+            "removed": false, 
+            "sequences": [
+                "testid_4", 
+                "testid_5"
+            ], 
+            "source": 3, 
+            "support": 0.0, 
+            "target": 4
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0146112, 
+            "removed": false, 
+            "sequences": [
+                "testid", 
+                "testid_3"
+            ], 
+            "source": 2, 
+            "support": 0.0, 
+            "target": 1
+        }
+    ], 
+    "HIV Stages": {
+        "A-1": 0, 
+        "A-2": 0, 
+        "A-3": 0, 
+        "Chronic": 5, 
+        "E-1": 0, 
+        "E-2": 0, 
+        "E-3": 0
+    }, 
+    "Multiple sequences": {
+        "Followup, days": null, 
+        "Subjects with": 0
+    }, 
+    "Network Summary": {
+        "Clusters": 2, 
+        "Edges": 3, 
+        "Nodes": 5, 
+        "Sequences used to make links": 5
+    }, 
+    "Nodes": [
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "testid_2"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "testid_3"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "B_FR_K03455_1983"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "B_CH_AF077689_9999"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "B_FR_U12055_1985"
+        }
+    ]
+}
