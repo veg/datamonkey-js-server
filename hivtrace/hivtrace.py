@@ -43,6 +43,7 @@ TN93DIST=config.get('tn93dist')
 HIVNETWORKCSV=config.get('hivnetworkcsv')
 LANL_FASTA=config.get('lanl_fasta')
 LANL_TN93OUTPUT_CSV=config.get('lanl_tn93output_csv')
+HXB2_FASTA = config.get('hxb2_fasta')
 
 
 def update_status(status, status_file):
@@ -123,6 +124,35 @@ def create_filter_list(tn93_fn, filter_list_fn, prefix):
             [f.write(row + '\n') for row in rows]
     return
 
+
+def annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn):
+
+    # Read hxb2 links
+    hxb2_fh     = open(hxb2_links_fn)
+    hxb2_reader = csv.reader(hxb2_fh, delimiter=',', quotechar='|')
+    hxb2_reader.__next__()
+    hxb2_links  = [row[0].strip() for row in hxb2_reader]
+    hxb2_fh.close()
+
+    # Load hivcluster json
+    hivcluster_fh = open(hivcluster_json_fn)
+    hivcluster_json = json.loads(hivcluster_fh.read())
+    hivcluster_fh.close()
+    nodes = hivcluster_json.get('Nodes')
+
+    #for each link in hxb2, get id in json object and add attribute
+    ids = filter(lambda x: x['id'] in hxb2_links, nodes)
+
+    [id.update({'hxb2_linked': True}) for id in ids]
+
+    #Save nodes to file
+    with open(hivcluster_json_fn, 'w') as json_fh:
+        json.dump(hivcluster_json, json_fh)
+
+    return
+
+
+
 def hivtrace(input, threshold, min_overlap, compare_to_lanl,
              status_file, prefix):
 
@@ -133,30 +163,25 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     SEQUENCE_ID_FORMAT='plain'
     AMBIGUITY_HANDLING='average'
 
-    BAM_OUTPUT_SUFFIX='_output.bam'
-    FASTA_OUTPUT_SUFFIX='_output.fasta'
-    TN93_OUTPUT_SUFFIX='_user.tn93output.csv'
-    TN93_JSON_SUFFIX='_user.tn93output.json'
-    CLUSTER_JSON_SUFFIX='_user.trace.json'
-    LANL_CLUSTER_JSON_SUFFIX='_lanl_user.trace.json'
-
-    BAM_FN=input+BAM_OUTPUT_SUFFIX
-    OUTPUT_FASTA_FN=input+FASTA_OUTPUT_SUFFIX
-    OUTPUT_TN93_FN=input+TN93_OUTPUT_SUFFIX
-    JSON_TN93_FN=input+TN93_JSON_SUFFIX
-    OUTPUT_CLUSTER_JSON=input+CLUSTER_JSON_SUFFIX
+    BAM_FN=input+'_output.bam'
+    OUTPUT_FASTA_FN=input+'_output.fasta'
+    OUTPUT_TN93_FN=input+'_user.tn93output.csv'
+    JSON_TN93_FN=input+'_user.tn93output.json'
+    JSON_HXB2_TN93_FN=input+'_user.hxb2linked.json'
+    HXB2_LINKED_OUTPUT_FASTA_FN=input+'_user.hxb2linked.csv'
+    OUTPUT_CLUSTER_JSON=input+'_user.trace.json'
     STATUS_FILE=input+'_status'
 
-    LANL_OUTPUT_CLUSTER_JSON=input+LANL_CLUSTER_JSON_SUFFIX
+    LANL_OUTPUT_CLUSTER_JSON=input+'_lanl_user.trace.json'
     OUTPUT_USERTOLANL_TN93_FN=input+'_usertolanl.tn93output.csv'
     USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=input+'_user_filter.csv'
 
     ##Ensure status file is empty
     #try:
-    #    open(status_file, 'w').close()
+    #   open(status_file, 'w').close()
     #except OSError:
-    #    pass
+    #   pass
 
     # PHASE 1
     update_status("Aligning", status_file)
@@ -166,7 +191,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     update_status("Converting to FASTA", status_file)
     subprocess.check_call([PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN])
 
-    #Ensure unique ids
+    # Ensure unique ids
+    # TODO:Ensure that we report changes to the user
     rename_duplicates(OUTPUT_FASTA_FN)
 
     # PHASE 3
@@ -178,6 +204,16 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
                            stdout=tn93_fh)
     tn93_fh.close()
 
+    # PHASE 3b
+    # Flag HXB2 linked sequences
+    tn93_hxb2_fh = open(JSON_HXB2_TN93_FN, 'w')
+    subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
+                           threshold, '-a', AMBIGUITY_HANDLING, '-l',
+                           min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
+                           OUTPUT_FASTA_FN],
+                           stdout=tn93_hxb2_fh)
+    tn93_hxb2_fh.close()
+
     # PHASE 4
     update_status("HIV Network Analysis", status_file)
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
@@ -186,6 +222,10 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
                            'report'], stdout=output_cluster_json_fh)
 
     output_cluster_json_fh.close()
+
+    # TODO: Add hxb2_link attribute to each node that is shown to be linked by way of PHASE 3b
+    # Get nodes from hivclustercsv, annotate with output from HXB2_LINKED_OUTPUT_FASTA_FN
+    #annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
 
     if compare_to_lanl:
 
@@ -214,6 +254,9 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
                             stdout=lanl_output_cluster_json_fh)
       lanl_output_cluster_json_fh.close()
 
+
+    #TODO: Add hxb2_link attribute to each lanl node that is shown to be linked based off a supplied file, but based on the user supplied threshold.
+
     update_status("Completed", status_file)
 
 
@@ -232,28 +275,9 @@ def main():
     DISTANCE_THRESHOLD=args.threshold
     MIN_OVERLAP=args.minoverlap
     COMPARE_TO_LANL=args.compare
-
-    BAM_OUTPUT_SUFFIX='_output.bam'
-    FASTA_OUTPUT_SUFFIX='_output.fasta'
-    TN93_OUTPUT_SUFFIX='_user.tn93output.csv'
-    TN93_JSON_SUFFIX='_user.tn93output.json'
-    CLUSTER_JSON_SUFFIX='_user.trace.json'
-    LANL_CLUSTER_JSON_SUFFIX='_lanl_user.trace.json'
-
-    BAM_FN=FN+BAM_OUTPUT_SUFFIX
-    OUTPUT_FASTA_FN=FN+FASTA_OUTPUT_SUFFIX
-    OUTPUT_TN93_FN=FN+TN93_OUTPUT_SUFFIX
-    JSON_TN93_FN=FN+TN93_JSON_SUFFIX
-    OUTPUT_CLUSTER_JSON=FN+CLUSTER_JSON_SUFFIX
     STATUS_FILE=FN+'_status'
-
-    LANL_OUTPUT_CLUSTER_JSON=FN+LANL_CLUSTER_JSON_SUFFIX
-    OUTPUT_USERTOLANL_TN93_FN=FN+'_usertolanl.tn93output.csv'
-    USER_LANL_TN93OUTPUT=FN+'_userlanl.tn93output.csv'
-    USER_FILTER_LIST=FN+'_user_filter.csv'
 
     hivtrace(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, ID)
 
 if __name__ == "__main__":
     main()
-
