@@ -43,7 +43,8 @@ TN93DIST=config.get('tn93dist')
 HIVNETWORKCSV=config.get('hivnetworkcsv')
 LANL_FASTA=config.get('lanl_fasta')
 LANL_TN93OUTPUT_CSV=config.get('lanl_tn93output_csv')
-HXB2_FASTA = config.get('hxb2_fasta')
+HXB2_FASTA=config.get('hxb2_fasta')
+HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
 
 
 def update_status(status, status_file):
@@ -110,7 +111,8 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn, prefix):
 
 
 def create_filter_list(tn93_fn, filter_list_fn, prefix):
-    #tail -n+2 OUTPUT_TN93_FN | awk -F , '{print 1"\n"2}' | sort -u > USER_FILTER_LIST
+    # tail -n+2 OUTPUT_TN93_FN | awk -F , '{print 1"\n"2}' | sort -u >
+    # USER_FILTER_LIST
     with open(filter_list_fn, 'w') as f:
 
         ids = lambda x : [prefix + '_' + x[0], prefix + '_' + x[1]]
@@ -128,16 +130,15 @@ def create_filter_list(tn93_fn, filter_list_fn, prefix):
 def annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn):
 
     # Read hxb2 links
-    hxb2_fh     = open(hxb2_links_fn)
-    hxb2_reader = csv.reader(hxb2_fh, delimiter=',', quotechar='|')
-    hxb2_reader.__next__()
-    hxb2_links  = [row[0].strip() for row in hxb2_reader]
-    hxb2_fh.close()
+    with open(hxb2_links_fn) as hxb2_fh:
+        hxb2_reader = csv.reader(hxb2_fh, delimiter=',', quotechar='|')
+        hxb2_reader.__next__()
+        hxb2_links  = [row[0].strip() for row in hxb2_reader]
 
     # Load hivcluster json
-    hivcluster_fh = open(hivcluster_json_fn)
-    hivcluster_json = json.loads(hivcluster_fh.read())
-    hivcluster_fh.close()
+    with open(hivcluster_json_fn) as hivcluster_fh:
+        hivcluster_json = json.loads(hivcluster_fh.read())
+
     nodes = hivcluster_json.get('Nodes')
 
     #for each link in hxb2, get id in json object and add attribute
@@ -152,6 +153,31 @@ def annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn):
     return
 
 
+def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
+
+    # Read hxb2 from generate lanl file
+    with open(lanl_hxb2_fn) as lanl_hxb2_fh:
+        lanl_hxb2_reader = csv.reader(lanl_hxb2_fh, delimiter=',', quotechar='|')
+        lanl_hxb2_reader.__next__()
+        #filter hxb2 links based on threshold
+        lanl_hxb2_links = list(filter(lambda x: x[2]<threshold, lanl_hxb2_reader))
+        lanl_hxb2_links = [l[0] for l in lanl_hxb2_links]
+
+    # Load hivcluster json
+    with open(lanl_hivcluster_json_fn) as lanl_hivcluster_json_fh:
+        lanl_json = json.loads(lanl_hivcluster_json_fh.read())
+
+    nodes = lanl_json.get('Nodes')
+
+    #for each link in hxb2, get id in json object and add attribute
+    ids = filter(lambda x: x['id'] in lanl_hxb2_links, nodes)
+    [id.update({'hxb2_linked': True}) for id in ids]
+
+    #Save nodes to file
+    with open(lanl_hivcluster_json_fn, 'w') as json_fh:
+        json.dump(lanl_json, json_fh)
+
+    return
 
 def hivtrace(input, threshold, min_overlap, compare_to_lanl,
              status_file, prefix):
@@ -176,12 +202,6 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     OUTPUT_USERTOLANL_TN93_FN=input+'_usertolanl.tn93output.csv'
     USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=input+'_user_filter.csv'
-
-    ##Ensure status file is empty
-    #try:
-    #   open(status_file, 'w').close()
-    #except OSError:
-    #   pass
 
     # PHASE 1
     update_status("Aligning", status_file)
@@ -223,9 +243,9 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
 
     output_cluster_json_fh.close()
 
-    # TODO: Add hxb2_link attribute to each node that is shown to be linked by way of PHASE 3b
-    # Get nodes from hivclustercsv, annotate with output from HXB2_LINKED_OUTPUT_FASTA_FN
-    #annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
+    # Add hxb2_link attribute to each node that is shown to be linked by way of
+    # PHASE 3b
+    annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
 
     if compare_to_lanl:
 
@@ -255,7 +275,9 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
       lanl_output_cluster_json_fh.close()
 
 
-    #TODO: Add hxb2_link attribute to each lanl node that is shown to be linked based off a supplied file, but based on the user supplied threshold.
+    # Add hxb2_link attribute to each lanl node that is shown to be linked based
+    # off a supplied file, but based on the user supplied threshold.
+    lanl_annotate_with_hxb2(HXB2_LINKED_LANL, USER_LANL_TN93OUTPUT, threshold)
 
     update_status("Completed", status_file)
 

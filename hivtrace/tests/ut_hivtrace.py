@@ -64,7 +64,7 @@ class TestHIVTrace(unittest.TestCase):
 
   def tearDown(self):
       #Remove all files
-      subprocess.check_call(['git', 'checkout', '-f', self.fn])
+      subprocess.check_call(['git', 'checkout', '-f', './res/*'])
       return
 
   #def test_rename_duplicates(self):
@@ -106,15 +106,42 @@ class TestHIVTrace(unittest.TestCase):
 
   #  return
 
-  def test_annotate_with_hxb2(self):
-    hxb2_links_fn=self.fn+'_USER.HXB2LINKED.CSV'
-    hivcluster_json_fn=self.fn+'_USER.TRACE.JSON'
-    hivtrace.annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn)
+  #def test_annotate_with_hxb2(self):
+  #  hxb2_links_fn=self.fn+'_USER.HXB2LINKED.CSV'
+  #  hivcluster_json_fn=self.fn+'_USER.TRACE.JSON'
+  #  hivtrace.annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn)
 
-    with open(hivcluster_json_fn) as json_fh:
-      hivcluster_json = json.loads(json_fh.read())
-    nodes = hivcluster_json.get('Nodes')
-    test_subjects = ['testid_3', 'testid_5']
+  #  with open(hivcluster_json_fn) as json_fh:
+  #    hivcluster_json = json.loads(json_fh.read())
+  #  nodes = hivcluster_json.get('Nodes')
+  #  test_subjects = ['testid_3', 'testid_5']
+
+  #   Ensure test subjects have hxb2 attribute
+  #  test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
+  #  [self.assertTrue(node.get('hxb2_linked')) for node in test_subject_nodes]
+
+  #   Ensure the others have not been discriminated
+  #  non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
+  #  [self.assertFalse(node.get('hxb2_linked')) for node in non_test_subject_nodes]
+
+  #  return
+
+  def test_lanl_annotate_with_hxb2(self):
+
+    HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
+    LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
+    DISTANCE_THRESHOLD = '.015'
+
+    hivtrace.lanl_annotate_with_hxb2(HXB2_LINKED_LANL,
+                                     LANL_OUTPUT_CLUSTER_JSON,
+                                     DISTANCE_THRESHOLD)
+
+    with open(LANL_OUTPUT_CLUSTER_JSON) as json_fh:
+      lanl_hivcluster_json = json.loads(json_fh.read())
+
+    nodes = lanl_hivcluster_json.get('Nodes')
+
+    test_subjects = ['B_FR_K03455_1983']
 
     # Ensure test subjects have hxb2 attribute
     test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
@@ -147,7 +174,6 @@ class TestHIVTrace(unittest.TestCase):
   #  self.assertTrue(len(hxb2) == 2)
 
   #  return
-
 
 if __name__ == '__main__':
   unittest.main()
