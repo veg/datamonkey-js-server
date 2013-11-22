@@ -1,1 +1,380 @@
-{"Multiple sequences": {"Followup, days": null, "Subjects with": 0}, "Network Summary": {"Clusters": 2, "Nodes": 5, "Edges": 3, "Sequences used to make links": 5}, "Directed Edges": {"Count": 0, "Reasons for unresolved directions": {"Missing dates": 3}}, "Edges": [{"directed": false, "target": 1, "support": 0.0, "source": 0, "length": 0.0101121, "sequences": ["testid_2", "testid_3"], "removed": false}, {"directed": false, "target": 4, "support": 0.0, "source": 3, "length": 0.00230851, "sequences": ["testid_4", "testid_5"], "removed": false}, {"directed": false, "target": 1, "support": 0.0, "source": 2, "length": 0.0146112, "sequences": ["testid", "testid_3"], "removed": false}], "Degrees": {"rho": 6.741657365453795, "Distribution": [4, 1], "Model": "Yule", "fitted": [0.8516685221760777, 0.110011136113623], "rho CI": [1.457751736250405, 798.9933640071333]}, "Cluster sizes": [3, 2], "Nodes": [{"cluster": 1, "edi": null, "baseline": null, "id": "testid_2", "attributes": []}, {"cluster": 1, "edi": null, "baseline": null, "id": "testid_3", "attributes": []}, {"baseline": null, "hxb2_linked": true, "edi": null, "cluster": 1, "attributes": [], "id": "B_FR_K03455_1983"}, {"cluster": 2, "edi": null, "baseline": null, "id": "B_CH_AF077689_9999", "attributes": []}, {"baseline": null, "edi": null, "cluster": 2, "attributes": [], "id": "B_FR_K03455_1983"}], "HIV Stages": {"Chronic": 5, "E-1": 0, "E-3": 0, "E-2": 0, "A-1": 0, "A-3": 0, "A-2": 0}}
+{
+    "Cluster sizes": [
+        6, 
+        7
+    ], 
+    "Degrees": {
+        "Distribution": [
+            0, 
+            7, 
+            3, 
+            0, 
+            1, 
+            2
+        ], 
+        "Model": "Negative Binomial", 
+        "fitted": null, 
+        "rho": null, 
+        "rho CI": null
+    }, 
+    "Directed Edges": {
+        "Count": 0, 
+        "Reasons for unresolved directions": {
+            "Missing dates": 20
+        }
+    }, 
+    "Edges": [
+        {
+            "directed": false, 
+            "length": 1.07407e-16, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462131_9999", 
+                "TEST.FASTA_testid_3"
+            ], 
+            "source": 0, 
+            "support": 0.0, 
+            "target": 2
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0101121, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462131_9999", 
+                "TEST.FASTA_testid_2"
+            ], 
+            "source": 0, 
+            "support": 0.0, 
+            "target": 3
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0101121, 
+            "removed": false, 
+            "sequences": [
+                "TEST.FASTA_testid_2", 
+                "TEST.FASTA_testid_3"
+            ], 
+            "source": 3, 
+            "support": 0.0, 
+            "target": 2
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00230851, 
+            "removed": false, 
+            "sequences": [
+                "TEST.FASTA_testid_4", 
+                "TEST.FASTA_testid_5"
+            ], 
+            "source": 8, 
+            "support": 0.0, 
+            "target": 7
+        }, 
+        {
+            "directed": false, 
+            "length": 0.000334431, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462194_9999", 
+                "TEST.FASTA_testid"
+            ], 
+            "source": 1, 
+            "support": 0.0, 
+            "target": 5
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00697151, 
+            "removed": false, 
+            "sequences": [
+                "02AG_US_JX460010_2007", 
+                "TEST.FASTA_testid_4"
+            ], 
+            "source": 12, 
+            "support": 0.0, 
+            "target": 8
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0149482, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462194_9999", 
+                "TEST.FASTA_testid_3"
+            ], 
+            "source": 1, 
+            "support": 0.0, 
+            "target": 2
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0146112, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462131_9999", 
+                "TEST.FASTA_testid"
+            ], 
+            "source": 0, 
+            "support": 0.0, 
+            "target": 5
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0146112, 
+            "removed": false, 
+            "sequences": [
+                "TEST.FASTA_testid", 
+                "TEST.FASTA_testid_3"
+            ], 
+            "source": 5, 
+            "support": 0.0, 
+            "target": 2
+        }, 
+        {
+            "directed": false, 
+            "length": -0.0, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462061_9999", 
+                "TEST.FASTA_testid_2"
+            ], 
+            "source": 4, 
+            "support": 0.0, 
+            "target": 3
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00230851, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462106_9999", 
+                "TEST.FASTA_testid_5"
+            ], 
+            "source": 6, 
+            "support": 0.0, 
+            "target": 7
+        }, 
+        {
+            "directed": false, 
+            "length": -0.0, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462106_9999", 
+                "TEST.FASTA_testid_4"
+            ], 
+            "source": 6, 
+            "support": 0.0, 
+            "target": 8
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00246964, 
+            "removed": false, 
+            "sequences": [
+                "02AG_US_HQ610090_9999", 
+                "TEST.FASTA_testid_4"
+            ], 
+            "source": 10, 
+            "support": 0.0, 
+            "target": 8
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00773645, 
+            "removed": false, 
+            "sequences": [
+                "02AG_US_JX460010_2007", 
+                "TEST.FASTA_testid_5"
+            ], 
+            "source": 12, 
+            "support": 0.0, 
+            "target": 7
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00335102, 
+            "removed": false, 
+            "sequences": [
+                "02AG_US_JF320295_2006", 
+                "TEST.FASTA_testid_5"
+            ], 
+            "source": 9, 
+            "support": 0.0, 
+            "target": 7
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00462366, 
+            "removed": false, 
+            "sequences": [
+                "02AG_US_JF320295_2006", 
+                "TEST.FASTA_testid_4"
+            ], 
+            "source": 9, 
+            "support": 0.0, 
+            "target": 8
+        }, 
+        {
+            "directed": false, 
+            "length": 0.0101121, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462061_9999", 
+                "TEST.FASTA_testid_3"
+            ], 
+            "source": 4, 
+            "support": 0.0, 
+            "target": 2
+        }, 
+        {
+            "directed": false, 
+            "length": 0.000493057, 
+            "removed": false, 
+            "sequences": [
+                "02AG_US_HQ610090_9999", 
+                "TEST.FASTA_testid_5"
+            ], 
+            "source": 10, 
+            "support": 0.0, 
+            "target": 7
+        }, 
+        {
+            "directed": false, 
+            "length": -0.0, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462218_9999", 
+                "TEST.FASTA_testid_5"
+            ], 
+            "source": 11, 
+            "support": 0.0, 
+            "target": 7
+        }, 
+        {
+            "directed": false, 
+            "length": 0.00230851, 
+            "removed": false, 
+            "sequences": [
+                "02AG_GB_GQ462218_9999", 
+                "TEST.FASTA_testid_4"
+            ], 
+            "source": 11, 
+            "support": 0.0, 
+            "target": 8
+        }
+    ], 
+    "HIV Stages": {
+        "A-1": 0, 
+        "A-2": 0, 
+        "A-3": 0, 
+        "Chronic": 13, 
+        "E-1": 0, 
+        "E-2": 0, 
+        "E-3": 0
+    }, 
+    "Multiple sequences": {
+        "Followup, days": null, 
+        "Subjects with": 0
+    }, 
+    "Network Summary": {
+        "Clusters": 3, 
+        "Edges": 20, 
+        "Nodes": 13, 
+        "Sequences used to make links": 13
+    }, 
+    "Nodes": [
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "02AG_GB_GQ462131_9999"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "02AG_GB_GQ462194_9999"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "TEST.FASTA_testid_3"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "TEST.FASTA_testid_2"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "02AG_GB_GQ462061_9999"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 1, 
+            "edi": null, 
+            "id": "TEST.FASTA_testid"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "02AG_GB_GQ462106_9999"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "TEST.FASTA_testid_5"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "TEST.FASTA_testid_4"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "02AG_US_JF320295_2006"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "02AG_US_HQ610090_9999"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "02AG_GB_GQ462218_9999"
+        }, 
+        {
+            "attributes": [], 
+            "baseline": null, 
+            "cluster": 2, 
+            "edi": null, 
+            "id": "02AG_US_JX460010_2007"
+        }
+    ]
+}
