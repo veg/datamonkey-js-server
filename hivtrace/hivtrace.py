@@ -29,6 +29,7 @@ import shutil
 import argparse
 import csv
 import os
+import uuid
 from itertools import chain
 import json
 
@@ -51,44 +52,16 @@ def update_status(status, status_file):
     with open(status_file, 'a') as status_f:
         status_f.write(status + '\n')
 
-def rename_duplicates(fasta_fn):
-
-    # Create a tmp file
-    copy_fn = fasta_fn + '.tmp'
-
-    with open(copy_fn, 'w') as copy_f:
-        with open(fasta_fn) as fasta_f:
-
-            #Create a counter dictionary
-            lines = fasta_f.readlines()
-            ids = filter(lambda x: x.startswith('>'), lines)
-            id_dict = {}
-            [id_dict.update({id.strip() : 0}) for id in ids]
-            ids = id_dict
-
-            #Change names based on counter
-            for line in lines:
-                line = line.strip()
-                if line.startswith('>'):
-                    if line in ids.keys():
-                        ids[line] += 1
-                        if ids[line] > 1:
-                            line = line + '_' + str(ids[line])
-                copy_f.write(line + '\n')
-
-    #Overwrite existing file
-    shutil.move(copy_fn, fasta_fn)
-
+def flag_duplicates(fasta_fn):
     return
 
-def concatenate_data(output, reference_fn, pairwise_fn, user_fn, prefix):
-
+def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
     #cp LANL_TN93OUTPUT_CSV USER_LANL_TN93OUTPUT
     shutil.copyfile(reference_fn, output)
 
     with open(output, 'a') as f:
         fwriter = csv.writer(f, delimiter=',', quotechar='|')
-        prependid = lambda x : [x[0], prefix + '_' + x[1], x[2]]
+        prependid = lambda x : [x[0], x[1], x[2]]
         # Read pairwise results
         #tail -n+2 OUTPUT_USERTOLANL_TN93_FN >> USER_LANL_TN93OUTPUT
         with open(pairwise_fn) as pairwise_f:
@@ -99,7 +72,7 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn, prefix):
 
         # Read user_results, preprend ids
         #tail -n+2 OUTPUT_TN93_FN >> USER_LANL_TN93OUTPUT
-        prependuid = lambda x : [prefix + '_' + x[0], prefix + '_' + x[1], x[2]]
+        prependuid = lambda x : [x[0], x[1], x[2]]
         with open(user_fn) as user_f:
             ureader = csv.reader(user_f, delimiter=',', quotechar='|')
             ureader.__next__()
@@ -110,12 +83,12 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn, prefix):
     return
 
 
-def create_filter_list(tn93_fn, filter_list_fn, prefix):
+def create_filter_list(tn93_fn, filter_list_fn) :
     # tail -n+2 OUTPUT_TN93_FN | awk -F , '{print 1"\n"2}' | sort -u >
     # USER_FILTER_LIST
     with open(filter_list_fn, 'w') as f:
 
-        ids = lambda x : [prefix + '_' + x[0], prefix + '_' + x[1]]
+        ids = lambda x : [x[0], x[1]]
 
         with open(tn93_fn) as tn93_f:
             tn93reader = csv.reader(tn93_f, delimiter=',', quotechar='|')
@@ -159,6 +132,7 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
     with open(lanl_hxb2_fn) as lanl_hxb2_fh:
         lanl_hxb2_reader = csv.reader(lanl_hxb2_fh, delimiter=',', quotechar='|')
         lanl_hxb2_reader.__next__()
+
         #filter hxb2 links based on threshold
         lanl_hxb2_links = list(filter(lambda x: x[2]<threshold, lanl_hxb2_reader))
         lanl_hxb2_links = [l[0] for l in lanl_hxb2_links]
@@ -179,8 +153,57 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
 
     return
 
+def id_to_attributes(fasta_fn, attribute_map):
+    ''' Change id to uuid '''
+    id_dict={}
+
+    # Just keep it in memory
+    ATTRIBUTE_FILE = fasta_fn + '.attr'
+
+    # Create a tmp file
+    copy_fn = fasta_fn + '.tmp'
+
+    # The attribute filed in hivclustercsv is unsatisfactory
+    # Create dictionary from ids with each getting a new uuid
+    # [{'uuid': {'a1': '', 'a2': '', ... , 'a3': ''}}, ...]
+    with open(copy_fn, 'w') as copy_f:
+        with open(fasta_fn) as fasta_f:
+            lines = fasta_f.readlines()
+            for line in lines:
+                ids = filter(lambda x: x.startswith('>'), lines)
+                if line.startswith('>'):
+                    oldid = line.strip('\n>')
+                    newid = str(uuid.uuid4())
+                    line = line.replace(oldid, newid)
+
+                    #Parse just the filename from fasta_fn
+                    source=os.path.basename(fasta_fn)
+                    attr = [source]
+                    attr.extend(oldid.split('_'))
+                    id_dict.update({newid : dict(zip(attribute_map, attr))})
+                copy_f.write(line)
+
+    #Overwrite existing file
+    shutil.move(copy_fn, fasta_fn)
+    return id_dict
+
+def annotate_attributes(trace_json_fn, attributes):
+    trace_json_cp_fn = trace_json_fn + '.tmp'
+
+    with open(trace_json_fn) as json_fh:
+        trace_json = json.loads(json_fh.read())
+        nodes = trace_json.get('Nodes')
+        [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
+        with open(trace_json_cp_fn, 'w') as copy_f:
+            json.dump(trace_json, copy_f)
+
+    shutil.move(trace_json_cp_fn, trace_json_fn)
+
+    return
+
+
 def hivtrace(input, threshold, min_overlap, compare_to_lanl,
-             status_file, prefix):
+             status_file):
 
     #Convert to Python
     REFERENCE='HXB2_prrt'
@@ -212,8 +235,10 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     subprocess.check_call([PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN])
 
     # Ensure unique ids
-    # TODO:Ensure that we report changes to the user
-    rename_duplicates(OUTPUT_FASTA_FN)
+    # Just warn of duplicates (by giving them an attribute)
+    # rename_duplicates(OUTPUT_FASTA_FN)
+    attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
+    id_dict = id_to_attributes(OUTPUT_FASTA_FN, attribute_map)
 
     # PHASE 3
     update_status("TN93 Analysis", status_file)
@@ -247,9 +272,13 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     # PHASE 3b
     annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
 
+    annotate_attributes(OUTPUT_CLUSTER_JSON, id_dict)
+
     if compare_to_lanl:
 
       # PHASE 5
+      #lanl_id_dict = id_to_attributes(LANL_FASTA, attribute_map)
+
       update_status("Public Database TN93 Analysis", status_file)
       subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
                              threshold, '-a', AMBIGUITY_HANDLING,
@@ -259,26 +288,29 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
       #Perform concatenation
       #This is where reference annotation becomes an issue
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
-                       OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN, prefix)
+                       OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN)
 
       # Create a list from TN93 csv for hivnetworkcsv filter
-      create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST, prefix)
+      create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
       # PHASE 6
       update_status("Public Database HIV Network Analysis", status_file)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
 
+
       subprocess.check_call([PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
                             threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
                             'report', '-k', USER_FILTER_LIST],
                             stdout=lanl_output_cluster_json_fh)
-      lanl_output_cluster_json_fh.close()
 
+      lanl_output_cluster_json_fh.close()
 
     # Add hxb2_link attribute to each lanl node that is shown to be linked based
     # off a supplied file, but based on the user supplied threshold.
-    lanl_annotate_with_hxb2(HXB2_LINKED_LANL, USER_LANL_TN93OUTPUT, threshold)
+    #lanl_annotate_with_hxb2(HXB2_LINKED_LANL, USER_LANL_TN93OUTPUT, threshold)
 
+    # Adapt ids to attributes
+    #annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
     update_status("Completed", status_file)
 
 
