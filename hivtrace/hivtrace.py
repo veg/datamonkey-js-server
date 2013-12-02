@@ -54,6 +54,11 @@ def update_status(status, status_file):
         status_f.write(status + '\n')
 
 def rename_duplicates(fasta_fn):
+    """
+    Renames duplicate ids in the user supplied FASTA file by appending a
+    counter after the duplicate id
+    """
+
     # Create a tmp file
     copy_fn = fasta_fn + '.tmp'
 
@@ -79,10 +84,16 @@ def rename_duplicates(fasta_fn):
 
     #Overwrite existing file
     shutil.move(copy_fn, fasta_fn)
-
     return
 
 def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
+    """
+    Concatenates data from the output of
+    1) The user tn93 analysis output
+    2) The lanl file tn93 output
+    3) The lanl file with user as a reference tn93 output
+    """
+
     #cp LANL_TN93OUTPUT_CSV USER_LANL_TN93OUTPUT
     shutil.copyfile(reference_fn, output)
 
@@ -111,6 +122,11 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
 
 
 def create_filter_list(tn93_fn, filter_list_fn) :
+    """
+    Creates a CSV filter list that hivclustercsv will use to only return
+    clusters that contain ids from the user supplied FASTA file
+    """
+
     # tail -n+2 OUTPUT_TN93_FN | awk -F , '{print 1"\n"2}' | sort -u >
     # USER_FILTER_LIST
     with open(filter_list_fn, 'w') as f:
@@ -128,6 +144,10 @@ def create_filter_list(tn93_fn, filter_list_fn) :
 
 
 def annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn):
+
+    """
+    Annotates the output of hivclustercsv with results from HXB2 tn93 analysis
+    """
 
     # Read hxb2 links
     with open(hxb2_links_fn) as hxb2_fh:
@@ -155,6 +175,11 @@ def annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn):
 
 def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
 
+
+    """
+    Annotates the output of hivclustercsv with results from HXB2 tn93 analysis
+    """
+
     # Read hxb2 from generate lanl file
     with open(lanl_hxb2_fn) as lanl_hxb2_fh:
         lanl_hxb2_reader = csv.reader(lanl_hxb2_fh, delimiter=',', quotechar='|')
@@ -172,6 +197,7 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
 
     #for each link in hxb2, get id in json object and add attribute
     ids = filter(lambda x: x['id'] in lanl_hxb2_links, nodes)
+
     [id.update({'hxb2_linked': True}) for id in ids]
 
     #Save nodes to file
@@ -181,7 +207,10 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
     return
 
 def id_to_attributes(csv_fn, attribute_map):
-    ''' Parse attributes from id '''
+    '''
+    Parse attributes from id and return them in a dictionary format
+    '''
+
     id_dict={}
 
     # Create a tmp file
@@ -205,6 +234,10 @@ def id_to_attributes(csv_fn, attribute_map):
     return id_dict
 
 def annotate_attributes(trace_json_fn, attributes):
+    '''
+    Annotate attributes created from id_to_attributes to hivclustecsv results
+    for easy parsing in JavaScript
+    '''
 
     trace_json_cp_fn = trace_json_fn + '.tmp'
 
@@ -223,6 +256,20 @@ def annotate_attributes(trace_json_fn, attributes):
 def hivtrace(input, threshold, min_overlap, compare_to_lanl,
              status_file):
 
+    """
+    PHASE 1)  Pad sequence alignment to HXB2 length with bealign
+    PHASE 2)  Convert resulting bam file back to FASTA format
+    PHASE 2b) Rename any duplicates in FASTA file
+    PHASE 3)  Do a tn93 analysis on the supplied FASTA file alone
+    PHASE 3b) Flag potential HXB2 sequences
+    PHASE 4)  Run hivclustercsv to return clustering information in json format
+    PHASE 4b) Do all attribute annotations to the results from (4)
+    PHASE 5)  Run tn93 against LANL if user elects to
+    PHASE 5b) Flag any potential HXB2 sequences
+    PHASE 5c) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
+    PHASE 6)  Run hivclustercsv to return clustering information in json format
+
+    """
     #Convert to Python
     REFERENCE='HXB2_prrt'
     SCORE_MATRIX='HIV_BETWEEN_F'
@@ -249,7 +296,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
 
     # PHASE 1
     update_status("Aligning", status_file)
-    subprocess.check_call([PYTHON, BEALIGN, '-r', REFERENCE, '-m', SCORE_MATRIX, '-R', input, BAM_FN], stdout=DEVNULL)
+    subprocess.check_call([PYTHON, BEALIGN, '-r', REFERENCE, '-m', SCORE_MATRIX,
+                           '-R', input, BAM_FN], stdout=DEVNULL)
 
     # PHASE 2
     update_status("Converting to FASTA", status_file)
@@ -277,8 +325,7 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
                            threshold, '-a', AMBIGUITY_HANDLING, '-l',
                            min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
-                           OUTPUT_FASTA_FN],
-                           stdout=tn93_hxb2_fh)
+                           OUTPUT_FASTA_FN], stdout=tn93_hxb2_fh)
     tn93_hxb2_fh.close()
 
     # PHASE 4
