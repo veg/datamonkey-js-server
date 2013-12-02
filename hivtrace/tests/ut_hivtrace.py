@@ -64,21 +64,24 @@ class TestHIVTrace(unittest.TestCase):
 
 
   def tearDown(self):
-      #Remove all files
-      subprocess.check_call(['git', 'checkout', '-f', './res/*'])
+      #Reset all test files and remove generated files
+      devnull = open(os.devnull, 'w')
+      subprocess.check_call(['git', 'clean', '-f', './res/'], stdout=devnull)
+      subprocess.check_call(['git', 'checkout', '-f', './res/*'], stdout=devnull)
+      devnull.close()
+
       return
 
-  #TODO
-  #def test_flag_duplicates(self):
-  #  hivtrace.rename_duplicates(self.fn)
+  def test_flag_duplicates(self):
+    hivtrace.rename_duplicates(self.fn)
 
-  #  #Check ids
-  #  with open(self.fn, 'r') as fasta_f:
-  #    ids = filter(lambda x: x.startswith('>'), fasta_f.readlines())
+    #Check ids
+    with open(self.fn, 'r') as fasta_f:
+      ids = filter(lambda x: x.startswith('>'), fasta_f.readlines())
 
-  #  self.assertTrue('>testid_6\n' in ids)
+    self.assertTrue('>Z|JP|K03455|2036|6\n' in ids)
 
-  #  return
+    return
 
   def test_concatenate_data(self):
     hivtrace.concatenate_data(self.user_lanl_tn93output,
@@ -92,65 +95,65 @@ class TestHIVTrace(unittest.TestCase):
       self.assertTrue(length == 787243)
     return
 
-  #def test_filter_list(self):
-  #  OUTPUT_TN93_FN=self.fn+'_user.tn93output.csv'
-  #  USER_FILTER_LIST=self.fn+'_user_filter.csv'
-  #  hivtrace.create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
+  def test_filter_list(self):
+    OUTPUT_TN93_FN=self.fn+'_USER.TN93OUTPUT.CSV'
+    USER_FILTER_LIST=self.fn+'_USER_FILTER.CSV'
+    hivtrace.create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
 
-  #  #Check that file exists and that there are five ids named correctly
-  #  with open(USER_FILTER_LIST, 'r') as filter_list:
-  #    lines = filter_list.readlines()
-  #    length = len(lines)
-  #    self.assertTrue(length == 5)
-  #  return
+    #Check that file exists and that there are five ids named correctly
+    with open(USER_FILTER_LIST, 'r') as filter_list:
+      lines = filter_list.readlines()
+      length = len(lines)
+      self.assertTrue(length == 5)
+    return
 
-  #def test_annotate_with_hxb2(self):
-  #  hxb2_links_fn=self.fn+'_USER.HXB2LINKED.CSV'
-  #  hivcluster_json_fn=self.fn+'_USER.TRACE.JSON'
-  #  hivtrace.annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn)
+  def test_annotate_with_hxb2(self):
+    hxb2_links_fn=self.fn+'_USER.HXB2LINKED.CSV'
+    hivcluster_json_fn=self.fn+'_USER.TRACE.JSON'
+    hivtrace.annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn)
 
-  #  with open(hivcluster_json_fn) as json_fh:
-  #    hivcluster_json = json.loads(json_fh.read())
-  #  nodes = hivcluster_json.get('Nodes')
-  #  test_subjects = ['testid_3', 'testid_5']
+    with open(hivcluster_json_fn) as json_fh:
+      hivcluster_json = json.loads(json_fh.read())
+    nodes = hivcluster_json.get('Nodes')
+    test_subjects = ['testid_3', 'testid_5']
 
-  #  # Ensure test subjects have hxb2 attribute
-  #  test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
-  #  [self.assertTrue(node.get('hxb2_linked')) for node in test_subject_nodes]
+    # Ensure test subjects have hxb2 attribute
+    test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
+    [self.assertTrue(node.get('hxb2_linked')) for node in test_subject_nodes]
 
-  #  # Ensure the others have not been discriminated
-  #  non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
-  #  [self.assertFalse(node.get('hxb2_linked')) for node in non_test_subject_nodes]
+    # Ensure the others have not been discriminated
+    non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
+    [self.assertFalse(node.get('hxb2_linked')) for node in non_test_subject_nodes]
 
-  #  return
+    return
 
-  #def test_lanl_annotate_with_hxb2(self):
+  def test_lanl_annotate_with_hxb2(self):
 
-  #  HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
-  #  LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
-  #  DISTANCE_THRESHOLD = '.015'
+    HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
+    LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
+    DISTANCE_THRESHOLD = '.015'
 
-  #  hivtrace.lanl_annotate_with_hxb2(HXB2_LINKED_LANL,
-  #                                   LANL_OUTPUT_CLUSTER_JSON,
-  #                                   DISTANCE_THRESHOLD)
+    hivtrace.lanl_annotate_with_hxb2(HXB2_LINKED_LANL,
+                                     LANL_OUTPUT_CLUSTER_JSON,
+                                     DISTANCE_THRESHOLD)
 
-  #  with open(LANL_OUTPUT_CLUSTER_JSON) as json_fh:
-  #    lanl_hivcluster_json = json.loads(json_fh.read())
+    with open(LANL_OUTPUT_CLUSTER_JSON) as json_fh:
+      lanl_hivcluster_json = json.loads(json_fh.read())
 
-  #  nodes = lanl_hivcluster_json.get('Nodes')
+    nodes = lanl_hivcluster_json.get('Nodes')
 
-  #  test_subjects = ['B_FR_K03455_1983']
+    test_subjects = ['B_FR_K03455_1983']
 
-  #  # Ensure test subjects have hxb2 attribute
-  #  test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
-  #  [self.assertTrue(node.get('hxb2_linked')) for node in test_subject_nodes]
+    # Ensure test subjects have hxb2 attribute
+    test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
+    [self.assertTrue(node.get('hxb2_linked')) for node in test_subject_nodes]
 
-  #  # Ensure the others have not been discriminated
-  #  non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
-  #  [self.assertFalse(node.get('hxb2_linked')) for node in non_test_subject_nodes]
+    # Ensure the others have not been discriminated
+    non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
+    [self.assertFalse(node.get('hxb2_linked')) for node in non_test_subject_nodes]
 
-  #  return
+    return
 
   def test_attribute_parse(self):
 

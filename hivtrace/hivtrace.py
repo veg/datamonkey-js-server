@@ -48,6 +48,7 @@ HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
 DEFAULT_DELIMITER=config.get('default_delimiter')
 
 
+
 def update_status(status, status_file):
     with open(status_file, 'a') as status_f:
         status_f.write(status + '\n')
@@ -243,13 +244,16 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=input+'_user_filter.csv'
 
+
+    DEVNULL = open(os.devnull, 'w')
+
     # PHASE 1
     update_status("Aligning", status_file)
-    subprocess.check_call([PYTHON, BEALIGN, '-r', REFERENCE, '-m', SCORE_MATRIX, '-R', input, BAM_FN])
+    subprocess.check_call([PYTHON, BEALIGN, '-r', REFERENCE, '-m', SCORE_MATRIX, '-R', input, BAM_FN], stdout=DEVNULL)
 
     # PHASE 2
     update_status("Converting to FASTA", status_file)
-    subprocess.check_call([PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN])
+    subprocess.check_call([PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN], stdout=DEVNULL)
 
     # Ensure unique ids
     # Just warn of duplicates (by giving them an attribute)
@@ -300,7 +304,7 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
       subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
                              threshold, '-a', AMBIGUITY_HANDLING,
                              '-f', OUTPUT_FORMAT, '-l', min_overlap, '-s',
-                             OUTPUT_FASTA_FN, LANL_FASTA])
+                             OUTPUT_FASTA_FN, LANL_FASTA], stdout=DEVNULL)
 
       #Perform concatenation
       #This is where reference annotation becomes an issue
@@ -331,6 +335,7 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
       # Adapt ids to attributes
       annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
 
+    DEVNULL.close()
     update_status("Completed", status_file)
 
 
