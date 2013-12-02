@@ -34,6 +34,7 @@ import unittest
 import os
 import json
 import re
+import csv
 
 CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../../config.json'
 config = json.loads(open(CONFIG_PATH).read())
@@ -91,18 +92,18 @@ class TestHIVTrace(unittest.TestCase):
       self.assertTrue(length == 787243)
     return
 
-  def test_filter_list(self):
-    OUTPUT_TN93_FN=self.fn+'_user.tn93output.csv'
-    USER_FILTER_LIST=self.fn+'_user_filter.csv'
-    hivtrace.create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
+  #def test_filter_list(self):
+  #  OUTPUT_TN93_FN=self.fn+'_user.tn93output.csv'
+  #  USER_FILTER_LIST=self.fn+'_user_filter.csv'
+  #  hivtrace.create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
 
-    #Check that file exists and that there are five ids named correctly
-    with open(USER_FILTER_LIST, 'r') as filter_list:
-      lines = filter_list.readlines()
-      length = len(lines)
-      self.assertTrue(length == 5)
-    return
+  #  #Check that file exists and that there are five ids named correctly
+  #  with open(USER_FILTER_LIST, 'r') as filter_list:
+  #    lines = filter_list.readlines()
+  #    length = len(lines)
+  #    self.assertTrue(length == 5)
+  #  return
 
   #def test_annotate_with_hxb2(self):
   #  hxb2_links_fn=self.fn+'_USER.HXB2LINKED.CSV'
@@ -153,19 +154,17 @@ class TestHIVTrace(unittest.TestCase):
 
   def test_attribute_parse(self):
 
-    output_fasta_fn=self.fn+'_OUTPUT.FASTA'
+    output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
-    id_dict = hivtrace.id_to_attributes(output_fasta_fn, attribute_map)
+    id_dict = hivtrace.id_to_attributes(output_tn93_fn, attribute_map)
 
     #Test that file ids have been changed
-    with open(output_fasta_fn, 'r') as fasta_f:
-      ids = filter(lambda x: x.startswith('>'), fasta_f.readlines())
-      ids = [id.strip('\n>') for id in ids]
-      regex = re.compile('^[a-f0-9]{8}-?[a-f0-9]{4}-?4[a-f0-9]{3}-?[89ab][a-f0-9]{3}-?[a-f0-9]{12}\Z', re.I)
-      [self.assertTrue(regex.match(id) is not None) for id in ids]
-
-    #Test that each id in id_dict exists for id in file
-    self.assertEqual(set(list(id_dict.keys())), set(ids))
+    with open(output_tn93_fn, 'r') as output_tn93_f:
+      preader = csv.reader(output_tn93_f, delimiter=',', quotechar='|')
+      preader.__next__()
+      ids = set([item for row in preader for item in row[:2]])
+      #Test that each id in id_dict exists for id in file
+      self.assertEqual(set(list(id_dict.keys())), set(ids))
 
     return
 
@@ -173,14 +172,13 @@ class TestHIVTrace(unittest.TestCase):
 
     output_fasta_fn=self.fn+'_OUTPUT.FASTA'
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
-    #print(id_dict)
-    id_dict = {'72c55d53-0a93-4536-83ee-07998bbd9a1b': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
-               '5fd907bf-93af-4a21-944c-560d9d8ec99d': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
-               '81b851f8-8b91-46ba-92d9-5e739a46ae12': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
-               '3f607c45-82b4-4532-84bb-9199f2cd89ef': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
-               '68a02ffd-0d25-46ab-9278-eef5d95117aa': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
-               '156c414b-5b75-4b4d-8aee-1dc676810b0b': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
-               '6b6b261d-49c3-4ad8-a36f-b4bf3ada97cd': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'}}
+    id_dict = {'Z|JP|K03455|2036': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
+               'Z|JP|K03455|2036|7': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
+               'Z|JP|K03455|2036|2': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
+               'Z|JP|K03455|2036|3': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
+               'Z|JP|K03455|2036|4': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
+               'Z|JP|K03455|2036|5': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'},
+               'Z|JP|K03455|2036|6': {'COUNTRY': 'JP', 'SOURCE': 'TEST.FASTA_output.fasta', 'YEAR_OF_SAMPLING': '2036', 'ACCESSION_NUMBER': 'K03455', 'SUBTYPE': 'Z'}}
 
     hivtrace.annotate_attributes(self.hivcluster_json_fn, id_dict)
 
@@ -188,32 +186,30 @@ class TestHIVTrace(unittest.TestCase):
     with open(self.hivcluster_json_fn) as json_fh:
       hivtrace_json = json.loads(json_fh.read())
       nodes = hivtrace_json.get('Nodes')
-      #[self.assertTrue(node['attributes'] is dict) for node in nodes]
       [self.assertTrue(type(node['attributes']) is dict) for node in nodes]
     return
 
+  def test_whole_stack(self):
+    self.compare_to_lanl = True
+    self.status_file=self.fn+'_status'
+    #run the whole thing and make sure it completed via the status file
+    hivtrace.hivtrace(self.fn, self.distance_threshold, self.min_overlap,
+                  self.compare_to_lanl, self.status_file)
 
-  #def test_whole_stack(self):
-  #  self.compare_to_lanl = True
-  #  self.status_file=self.fn+'_status'
-  #  #run the whole thing and make sure it completed via the status file
-  #  hivtrace.hivtrace(self.fn, self.distance_threshold, self.min_overlap,
-  #                self.compare_to_lanl, self.status_file)
+    #read status file and ensure that it has all steps
+    with open(self.status_file, 'r') as status_file:
+      statuses = [s.strip() for s in status_file.readlines()]
 
-  #  #read status file and ensure that it has all steps
-  #  with open(self.status_file, 'r') as status_file:
-  #    statuses = [s.strip() for s in status_file.readlines()]
+    #assert that we went through all the steps
+    self.assertTrue(set(statuses) == set(self.steps))
 
-  #  #assert that we went through all the steps
-  #  self.assertTrue(set(statuses) == set(self.steps))
+    #check to make sure that there was at least one hxb2
+    with open(self.hxb2_linked_fn, 'r') as hxb2_fh:
+      hxb2 = [s.strip() for s in hxb2_fh.readlines()]
 
-  #  #check to make sure that there was at least one hxb2
-  #  with open(self.hxb2_linked_fn, 'r') as hxb2_fh:
-  #    hxb2 = [s.strip() for s in hxb2_fh.readlines()]
+    self.assertTrue(len(hxb2) == 2)
 
-  #  self.assertTrue(len(hxb2) == 2)
-
-  #  return
+    return
 
 if __name__ == '__main__':
   unittest.main()

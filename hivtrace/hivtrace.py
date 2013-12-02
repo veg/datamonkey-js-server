@@ -29,7 +29,6 @@ import shutil
 import argparse
 import csv
 import os
-import uuid
 from itertools import chain
 import json
 
@@ -46,13 +45,40 @@ LANL_FASTA=config.get('lanl_fasta')
 LANL_TN93OUTPUT_CSV=config.get('lanl_tn93output_csv')
 HXB2_FASTA=config.get('hxb2_fasta')
 HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
+DEFAULT_DELIMITER=config.get('default_delimiter')
 
 
 def update_status(status, status_file):
     with open(status_file, 'a') as status_f:
         status_f.write(status + '\n')
 
-def flag_duplicates(fasta_fn):
+def rename_duplicates(fasta_fn):
+    # Create a tmp file
+    copy_fn = fasta_fn + '.tmp'
+
+    with open(copy_fn, 'w') as copy_f:
+        with open(fasta_fn) as fasta_f:
+
+            #Create a counter dictionary
+            lines = fasta_f.readlines()
+            ids = filter(lambda x: x.startswith('>'), lines)
+            id_dict = {}
+            [id_dict.update({id.strip() : 0}) for id in ids]
+            ids = id_dict
+
+            #Change names based on counter
+            for line in lines:
+                line = line.strip()
+                if line.startswith('>'):
+                    if line in ids.keys():
+                        ids[line] += 1
+                        if ids[line] > 1:
+                            line = line + DEFAULT_DELIMITER + str(ids[line])
+                copy_f.write(line + '\n')
+
+    #Overwrite existing file
+    shutil.move(copy_fn, fasta_fn)
+
     return
 
 def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
@@ -153,41 +179,32 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
 
     return
 
-def id_to_attributes(fasta_fn, attribute_map):
-    ''' Change id to uuid '''
+def id_to_attributes(csv_fn, attribute_map):
+    ''' Parse attributes from id '''
     id_dict={}
 
-    # Just keep it in memory
-    ATTRIBUTE_FILE = fasta_fn + '.attr'
-
     # Create a tmp file
-    copy_fn = fasta_fn + '.tmp'
+    copy_fn = csv_fn + '.tmp'
 
     # The attribute filed in hivclustercsv is unsatisfactory
-    # Create dictionary from ids with each getting a new uuid
-    # [{'uuid': {'a1': '', 'a2': '', ... , 'a3': ''}}, ...]
-    with open(copy_fn, 'w') as copy_f:
-        with open(fasta_fn) as fasta_f:
-            lines = fasta_f.readlines()
-            for line in lines:
-                ids = filter(lambda x: x.startswith('>'), lines)
-                if line.startswith('>'):
-                    oldid = line.strip('\n>')
-                    newid = str(uuid.uuid4())
-                    line = line.replace(oldid, newid)
+    # Create dictionary from ids
+    # [{'id': {'a1': '', 'a2': '', ... , 'a3': ''}}, ...]
+    with open(csv_fn) as csv_f:
+        preader = csv.reader(csv_f, delimiter=',', quotechar='|')
+        preader.__next__()
+        rows = set([item for row in preader for item in row[:2]])
+        #Create unique id list from rows
+        for id in rows:
+            #Parse just the filename from fasta_fn
+            source=os.path.basename(csv_fn)
+            attr = [source]
+            attr.extend(id.split(DEFAULT_DELIMITER))
+            id_dict.update({id : dict(zip(attribute_map, attr))})
 
-                    #Parse just the filename from fasta_fn
-                    source=os.path.basename(fasta_fn)
-                    attr = [source]
-                    attr.extend(oldid.split('_'))
-                    id_dict.update({newid : dict(zip(attribute_map, attr))})
-                copy_f.write(line)
-
-    #Overwrite existing file
-    shutil.move(copy_fn, fasta_fn)
     return id_dict
 
 def annotate_attributes(trace_json_fn, attributes):
+
     trace_json_cp_fn = trace_json_fn + '.tmp'
 
     with open(trace_json_fn) as json_fh:
@@ -236,9 +253,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
 
     # Ensure unique ids
     # Just warn of duplicates (by giving them an attribute)
-    # rename_duplicates(OUTPUT_FASTA_FN)
+    rename_duplicates(OUTPUT_FASTA_FN)
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
-    id_dict = id_to_attributes(OUTPUT_FASTA_FN, attribute_map)
 
     # PHASE 3
     update_status("TN93 Analysis", status_file)
@@ -248,6 +264,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
                            min_overlap, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN],
                            stdout=tn93_fh)
     tn93_fh.close()
+
+    id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map)
 
     # PHASE 3b
     # Flag HXB2 linked sequences
@@ -277,7 +295,6 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     if compare_to_lanl:
 
       # PHASE 5
-      #lanl_id_dict = id_to_attributes(LANL_FASTA, attribute_map)
 
       update_status("Public Database TN93 Analysis", status_file)
       subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
@@ -289,6 +306,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
       #This is where reference annotation becomes an issue
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
                        OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN)
+
+      lanl_id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map)
 
       # Create a list from TN93 csv for hivnetworkcsv filter
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
@@ -305,12 +324,13 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
 
       lanl_output_cluster_json_fh.close()
 
-    # Add hxb2_link attribute to each lanl node that is shown to be linked based
-    # off a supplied file, but based on the user supplied threshold.
-    #lanl_annotate_with_hxb2(HXB2_LINKED_LANL, USER_LANL_TN93OUTPUT, threshold)
+      # Add hxb2_link attribute to each lanl node that is shown to be linked based
+      # off a supplied file, but based on the user supplied threshold.
+      #lanl_annotate_with_hxb2(HXB2_LINKED_LANL, USER_LANL_TN93OUTPUT, threshold)
 
-    # Adapt ids to attributes
-    #annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
+      # Adapt ids to attributes
+      annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
+
     update_status("Completed", status_file)
 
 
