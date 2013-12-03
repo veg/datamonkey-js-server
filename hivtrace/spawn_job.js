@@ -29,40 +29,45 @@
 
 var spawn = require('child_process').spawn,
     fs = require('fs'),
-    config = require('../config.js'),
+    config = require('../config.json'),
     util = require('util'),
     Tail = require('tail').Tail,
     EventEmitter = require('events').EventEmitter;
 
 
-var DoHivClusterAnalysis = function () {};
+var DoHivTraceAnalysis = function () {};
 
-util.inherits(DoHivClusterAnalysis, EventEmitter);
+util.inherits(DoHivTraceAnalysis, EventEmitter);
 
 /**
  * Once the job has been scheduled, we need to watch the files that it
  * sends updates to.
  */
-DoHivClusterAnalysis.prototype.status_watcher = function () {
+DoHivTraceAnalysis.prototype.status_watcher = function () {
   self = this;
   tail = new Tail(self.status_fn);
   tail.on("line", function(data) {
     // If data reports error, report back to user
     if(data == 'Completed') {
       var results = {};
-      self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'cluster_results', cb : function (err) {
+      console.log(self.output_cluster_output);
+      self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'trace_results', cb : function (err) {
         if(!self.lanl_compare) {
           if (err) throw err;
           self.emit('completed');
         } else {
-          self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_cluster_results', cb : function (err) {
+          console.log(self.lanl_output_cluster_output);
+          self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
             if (err) throw err;
             self.emit('completed');
           }});
         }
       }});
     } else if (data == 'error') {
-      self.emit('error', {error: "There was an unexpected error while processing, please try again or report the issue to bitcore@ucsd.edu"});
+      // There was an error while performing x. 
+      self.emit('error', {error: "There was an unexpected error while" +
+                                  " processing, please try again or report" +
+                                  " the issue to bitcore@ucsd.edu"});
     } else {
       if (data == "HIV Network Analysis") {
         //Send TN93 Summary
@@ -80,17 +85,19 @@ DoHivClusterAnalysis.prototype.status_watcher = function () {
  * The job is executed as specified in ./hivcluster/README
  * Emit events that are being listened for by ./server.js
  */
-DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
+DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
 
   var self = this;
 
   //TODO: MAKE ALL FILENAMES READABLE BY BOTH SHELL SCRIPT AND JAVASCRIPT
-  var cluster_output_suffix='_user.cluster.json',
-      lanl_cluster_output_suffix='_lanl_user.cluster.json',
+  var cluster_output_suffix='_user.trace.json',
+      lanl_cluster_output_suffix='_lanl_user.trace.json',
       tn93_json_suffix='_user.tn93output.json';
 
   self.id = hiv_cluster_params.filename;
   self.filepath = config.output_dir + hiv_cluster_params.filename;
+  self.hivtrace = config.hivtrace;
+  self.python = config.python;
   self.distance_threshold = hiv_cluster_params.distance_threshold;
   self.min_overlap = hiv_cluster_params.min_overlap;
   self.status_stack = hiv_cluster_params.status_stack;
@@ -102,16 +109,15 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 
   // qsub_submit.sh
   var qsub_submit = function () {
+
     var qsub =  spawn('qsub', 
-                         ['-v','fn='+self.filepath+
+                         ['-v',
+                          'fn='+self.filepath+
+                          ',python='+self.python+
+                          ',hivtrace='+self.hivtrace+
                           ',dt='+self.distance_threshold+
                           ',mo='+self.min_overlap+ 
-                          ',comparelanl='+self.lanl_compare+
-                          ',od='+config.output_dir+ 
-                          ',bealign='+config.bealign+ 
-                          ',bam2msa='+config.bam2msa+ 
-                          ',tn93dist='+config.tn93dist+ 
-                          ',hivnetworkcsv='+config.hivnetworkcsv,
+                          ',comparelanl='+self.lanl_compare,
                           '-o', config.output_dir,
                           '-e', config.output_dir, 
                           config.qsub_script], 
@@ -119,7 +125,7 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
-      //console.log('stderr: ' + data);
+      console.log('stderr: ' + data);
     });
 
     qsub.stdout.on('data', function (data) {
@@ -152,5 +158,4 @@ DoHivClusterAnalysis.prototype.start = function (hiv_cluster_params) {
 
 }
 
-exports.DoHivClusterAnalysis = DoHivClusterAnalysis;
-
+exports.DoHivTraceAnalysis = DoHivTraceAnalysis;
