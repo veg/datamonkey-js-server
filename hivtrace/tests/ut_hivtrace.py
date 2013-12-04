@@ -35,14 +35,12 @@ import os
 import json
 import re
 import csv
-
-CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../../config.json'
-config = json.loads(open(CONFIG_PATH).read())
+import argparse
 
 class TestHIVTrace(unittest.TestCase):
 
   def setUp(self):
-    self.fn   = config.get('test_output_dir') + 'TEST.FASTA'
+    self.fn   = './res/TEST.FASTA'
     self.user_lanl_tn93output=self.fn+'_USERLANL.TN93OUTPUT.CSV'
     self.lanl_tn93output_csv= config.get('lanl_tn93output_csv')
     self.output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
@@ -215,5 +213,17 @@ class TestHIVTrace(unittest.TestCase):
     return
 
 if __name__ == '__main__':
+  parser = argparse.ArgumentParser(description='HIV TRACE')
+  parser.add_argument('-c', '--config', help='Path to alternate config file')
+  args = parser.parse_args()
+
+  if(args.config):
+    CONFIG_PATH = args.config
+  else:
+    CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../../config.json'
+
+  config = json.loads(open(CONFIG_PATH).read())
+
+
   unittest.main()
 
