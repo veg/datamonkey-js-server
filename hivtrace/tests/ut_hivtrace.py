@@ -25,24 +25,30 @@
 #  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import sys
+import os
+sys.path.append(os.path.realpath(__file__) + '../')
 sys.path.append('../')
 
 
 import hivtrace
 import subprocess
 import unittest
-import os
 import json
 import re
 import csv
 import argparse
+import testconfig
 
 class TestHIVTrace(unittest.TestCase):
 
   def setUp(self):
+
+    CONFIG_PATH = testconfig.config['hivtrace']['config_file']
+
+    self.config = json.loads(open(CONFIG_PATH).read())
     self.fn   = './res/TEST.FASTA'
     self.user_lanl_tn93output=self.fn+'_USERLANL.TN93OUTPUT.CSV'
-    self.lanl_tn93output_csv= config.get('lanl_tn93output_csv')
+    self.lanl_tn93output_csv= self.config.get('lanl_tn93output_csv')
     self.output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
     self.output_usertolanl_tn93_fn=self.fn+'_USERTOLANL.TN93OUTPUT.CSV'
     self.hxb2_linked_fn = self.fn+'_user.hxb2linked.csv'
@@ -71,7 +77,7 @@ class TestHIVTrace(unittest.TestCase):
       return
 
   def test_flag_duplicates(self):
-    hivtrace.rename_duplicates(self.fn)
+    hivtrace.rename_duplicates(self.fn, self.config.get('default_delimiter'))
 
     #Check ids
     with open(self.fn, 'r') as fasta_f:
@@ -128,7 +134,7 @@ class TestHIVTrace(unittest.TestCase):
 
   def test_lanl_annotate_with_hxb2(self):
 
-    HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
+    HXB2_LINKED_LANL=self.config.get('hxb2_linked_lanl')
     LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
     DISTANCE_THRESHOLD = '.015'
 
@@ -157,7 +163,7 @@ class TestHIVTrace(unittest.TestCase):
 
     output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
-    id_dict = hivtrace.id_to_attributes(output_tn93_fn, attribute_map)
+    id_dict = hivtrace.id_to_attributes(output_tn93_fn, attribute_map, self.config.get('default_delimiter'))
 
     #Test that file ids have been changed
     with open(output_tn93_fn, 'r') as output_tn93_f:
@@ -191,11 +197,13 @@ class TestHIVTrace(unittest.TestCase):
     return
 
   def test_whole_stack(self):
+
     self.compare_to_lanl = True
     self.status_file=self.fn+'_status'
+
     #run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(self.fn, self.distance_threshold, self.min_overlap,
-                  self.compare_to_lanl, self.status_file)
+                  self.compare_to_lanl, self.status_file, self.config)
 
     #read status file and ensure that it has all steps
     with open(self.status_file, 'r') as status_file:
@@ -213,17 +221,4 @@ class TestHIVTrace(unittest.TestCase):
     return
 
 if __name__ == '__main__':
-  parser = argparse.ArgumentParser(description='HIV TRACE')
-  parser.add_argument('-c', '--config', help='Path to alternate config file')
-  args = parser.parse_args()
-
-  if(args.config):
-    CONFIG_PATH = args.config
-  else:
-    CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../../config.json'
-
-  config = json.loads(open(CONFIG_PATH).read())
-
-
   unittest.main()
-
