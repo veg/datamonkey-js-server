@@ -32,28 +32,11 @@ import os
 from itertools import chain
 import json
 
-CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../config.json'
-config = json.loads(open(CONFIG_PATH).read())
-
-#These should come from config
-PYTHON=config.get('python')
-BEALIGN=config.get('bealign')
-BAM2MSA=config.get('bam2msa')
-TN93DIST=config.get('tn93dist')
-HIVNETWORKCSV=config.get('hivnetworkcsv')
-LANL_FASTA=config.get('lanl_fasta')
-LANL_TN93OUTPUT_CSV=config.get('lanl_tn93output_csv')
-HXB2_FASTA=config.get('hxb2_fasta')
-HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
-DEFAULT_DELIMITER=config.get('default_delimiter')
-
-
-
 def update_status(status, status_file):
     with open(status_file, 'a') as status_f:
         status_f.write(status + '\n')
 
-def rename_duplicates(fasta_fn):
+def rename_duplicates(fasta_fn, delimiter):
     """
     Renames duplicate ids in the user supplied FASTA file by appending a
     counter after the duplicate id
@@ -79,7 +62,7 @@ def rename_duplicates(fasta_fn):
                     if line in ids.keys():
                         ids[line] += 1
                         if ids[line] > 1:
-                            line = line + DEFAULT_DELIMITER + str(ids[line])
+                            line = line + delimiter + str(ids[line])
                 copy_f.write(line + '\n')
 
     #Overwrite existing file
@@ -206,7 +189,7 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
 
     return
 
-def id_to_attributes(csv_fn, attribute_map):
+def id_to_attributes(csv_fn, attribute_map, delimiter):
     '''
     Parse attributes from id and return them in a dictionary format
     '''
@@ -228,7 +211,7 @@ def id_to_attributes(csv_fn, attribute_map):
             #Parse just the filename from fasta_fn
             source=os.path.basename(csv_fn)
             attr = [source]
-            attr.extend(id.split(DEFAULT_DELIMITER))
+            attr.extend(id.split(delimiter))
             id_dict.update({id : dict(zip(attribute_map, attr))})
 
     return id_dict
@@ -254,7 +237,7 @@ def annotate_attributes(trace_json_fn, attributes):
 
 
 def hivtrace(input, threshold, min_overlap, compare_to_lanl,
-             status_file):
+             status_file, config):
 
     """
     PHASE 1)  Pad sequence alignment to HXB2 length with bealign
@@ -270,6 +253,18 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     PHASE 6)  Run hivclustercsv to return clustering information in json format
 
     """
+    #These should come from config
+    PYTHON=config.get('python')
+    BEALIGN=config.get('bealign')
+    BAM2MSA=config.get('bam2msa')
+    TN93DIST=config.get('tn93dist')
+    HIVNETWORKCSV=config.get('hivnetworkcsv')
+    LANL_FASTA=config.get('lanl_fasta')
+    LANL_TN93OUTPUT_CSV=config.get('lanl_tn93output_csv')
+    HXB2_FASTA=config.get('hxb2_fasta')
+    HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
+    DEFAULT_DELIMITER=config.get('default_delimiter')
+
     #Convert to Python
     REFERENCE='HXB2_prrt'
     SCORE_MATRIX='HIV_BETWEEN_F'
@@ -305,7 +300,7 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
 
     # Ensure unique ids
     # Just warn of duplicates (by giving them an attribute)
-    rename_duplicates(OUTPUT_FASTA_FN)
+    rename_duplicates(OUTPUT_FASTA_FN, DEFAULT_DELIMITER)
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
 
     # PHASE 3
@@ -317,7 +312,7 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
                            stdout=tn93_fh)
     tn93_fh.close()
 
-    id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map)
+    id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
 
     # PHASE 3b
     # Flag HXB2 linked sequences
@@ -358,7 +353,7 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
                        OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN)
 
-      lanl_id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map)
+      lanl_id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
 
       # Create a list from TN93 csv for hivnetworkcsv filter
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
@@ -393,6 +388,14 @@ def main():
     parser.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     parser.add_argument('-m', '--minoverlap', help='Minimum Overlap')
     parser.add_argument('-c', '--compare', help='Compare to LANL', action='store_true')
+    parser.add_argument('--config', help='Path to alternate config file')
+
+    if(args.config):
+        CONFIG_PATH = args.config
+    else:
+        CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../../config.json'
+
+    config = json.loads(open(CONFIG_PATH).read())
 
     args = parser.parse_args()
 
@@ -403,7 +406,8 @@ def main():
     COMPARE_TO_LANL=args.compare
     STATUS_FILE=FN+'_status'
 
-    hivtrace(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, ID)
+    hivtrace(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, ID, config)
 
 if __name__ == "__main__":
     main()
+
