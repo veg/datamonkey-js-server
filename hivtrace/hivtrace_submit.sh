@@ -32,8 +32,9 @@ MIN_OVERLAP=$mo
 COMPARE_TO_LANL=$comparelanl
 HIVTRACE=$hivtrace
 PYTHON=$python
+STATUS_FILE=$fn"_status"
 
-trap 'echo "error" >> $STATUS_FILE ; do_cleanup failed; exit' ERR
+trap 'echo "Error" >> $STATUS_FILE ; do_cleanup failed; exit' ERR
 
 #Call PYTHON SCRIPT
 if [ $COMPARE_TO_LANL = true ]; then

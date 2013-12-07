@@ -50,24 +50,20 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
     // If data reports error, report back to user
     if(data == 'Completed') {
       var results = {};
-      console.log(self.output_cluster_output);
       self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'trace_results', cb : function (err) {
         if(!self.lanl_compare) {
           if (err) throw err;
           self.emit('completed');
         } else {
-          console.log(self.lanl_output_cluster_output);
           self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
             if (err) throw err;
             self.emit('completed');
           }});
         }
       }});
-    } else if (data == 'error') {
+    } else if (data.indexOf('Error: ') != -1) {
       // There was an error while performing x. 
-      self.emit('error', {error: "There was an unexpected error while" +
-                                  " processing, please try again or report" +
-                                  " the issue to bitcore@ucsd.edu"});
+      self.emit('error', {error: data});
     } else {
       if (data == "HIV Network Analysis") {
         //Send TN93 Summary

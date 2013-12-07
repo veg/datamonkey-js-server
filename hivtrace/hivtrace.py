@@ -212,6 +212,11 @@ def id_to_attributes(csv_fn, attribute_map, delimiter):
             source=os.path.basename(csv_fn)
             attr = [source]
             attr.extend(id.split(delimiter))
+
+            #Check for malformed id
+            if(len(attr) < len(attribute_map)):
+                return ValueError('Malformed id in FASTA file ID: ' + id)
+
             id_dict.update({id : dict(zip(attribute_map, attr))})
 
     return id_dict
@@ -227,7 +232,7 @@ def annotate_attributes(trace_json_fn, attributes):
     with open(trace_json_fn) as json_fh:
         trace_json = json.loads(json_fh.read())
         nodes = trace_json.get('Nodes')
-        [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
+        #[node.update({'attributes' : attributes[node['id']]}) for node in nodes]
         with open(trace_json_cp_fn, 'w') as copy_f:
             json.dump(trace_json, copy_f)
 
@@ -313,6 +318,9 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     tn93_fh.close()
 
     id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
+    if type(id_dict) is ValueError:
+        update_status("Error: " + id_dict.args[0], status_file)
+        raise id_dict
 
     # PHASE 3b
     # Flag HXB2 linked sequences
@@ -390,10 +398,12 @@ def main():
     parser.add_argument('-c', '--compare', help='Compare to LANL', action='store_true')
     parser.add_argument('--config', help='Path to alternate config file')
 
+    args = parser.parse_args()
+
     if(args.config):
         CONFIG_PATH = args.config
     else:
-        CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../../config.json'
+        CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../config.json'
 
     config = json.loads(open(CONFIG_PATH).read())
 
@@ -406,7 +416,7 @@ def main():
     COMPARE_TO_LANL=args.compare
     STATUS_FILE=FN+'_status'
 
-    hivtrace(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, ID, config)
+    hivtrace(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config)
 
 if __name__ == "__main__":
     main()
