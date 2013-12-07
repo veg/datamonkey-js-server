@@ -232,7 +232,8 @@ def annotate_attributes(trace_json_fn, attributes):
     with open(trace_json_fn) as json_fh:
         trace_json = json.loads(json_fh.read())
         nodes = trace_json.get('Nodes')
-        #[node.update({'attributes' : attributes[node['id']]}) for node in nodes]
+        [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
+        #TODO Raise error if cannot annotate
         with open(trace_json_cp_fn, 'w') as copy_f:
             json.dump(trace_json, copy_f)
 
