@@ -47,6 +47,7 @@ class TestHIVTrace(unittest.TestCase):
 
     self.config = json.loads(open(CONFIG_PATH).read())
     self.fn   = './res/TEST.FASTA'
+    self.malformed_ids_fn   = './res/INPUT.FASTA'
     self.user_lanl_tn93output=self.fn+'_USERLANL.TN93OUTPUT.CSV'
     self.lanl_tn93output_csv= self.config.get('lanl_tn93output_csv')
     self.output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
@@ -65,7 +66,6 @@ class TestHIVTrace(unittest.TestCase):
     self.min_overlap        = '500'
     self.ambiguity_handling = 'AVERAGE'
     self.hivcluster_json_fn=self.fn+'_USER.TRACE.JSON'
-
 
   def tearDown(self):
       #Reset all test files and remove generated files
@@ -172,6 +172,14 @@ class TestHIVTrace(unittest.TestCase):
       ids = set([item for row in preader for item in row[:2]])
       #Test that each id in id_dict exists for id in file
       self.assertEqual(set(list(id_dict.keys())), set(ids))
+
+    return
+
+  def test_attribute_parse_with_malformed_ids(self):
+
+    output_tn93_fn=self.malformed_ids_fn+'_USER.TN93OUTPUT.CSV'
+    attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
+    self.assertTrue(type(hivtrace.id_to_attributes(output_tn93_fn, attribute_map, self.config.get('default_delimiter'))) is ValueError)
 
     return
 

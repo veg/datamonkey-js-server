@@ -56,12 +56,14 @@ io.sockets.on('connection', function (socket) {
     // On errors, report to datamonkey-js
     trace_analysis.on('error', function(error) {
       socket.emit('script error', error);
+      socket.disconnect();
     });
 
     // When the analysis completes, return the results to datamonkey.
     trace_analysis.on('completed', function(results) {
       // Send trace and graph information
       socket.emit('completed', results);
+      socket.disconnect();
     });
 
     // Report the torque job id back to datamonkey
