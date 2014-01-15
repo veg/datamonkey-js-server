@@ -257,8 +257,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     PHASE 5b) Flag any potential HXB2 sequences
     PHASE 5c) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
     PHASE 6)  Run hivclustercsv to return clustering information in json format
-
     """
+
     #These should come from config
     PYTHON=config.get('python')
     BEALIGN=config.get('bealign')
@@ -291,7 +291,6 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     OUTPUT_USERTOLANL_TN93_FN=input+'_usertolanl.tn93output.csv'
     USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=input+'_user_filter.csv'
-
 
     DEVNULL = open(os.devnull, 'w')
 

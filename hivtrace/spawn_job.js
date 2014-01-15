@@ -49,6 +49,7 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
   tail.on("line", function(data) {
     // If data reports error, report back to user
     if(data == 'Completed') {
+
       var results = {};
       self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'trace_results', cb : function (err) {
         if(!self.lanl_compare) {
@@ -61,6 +62,9 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
           }});
         }
       }});
+
+      self.emit('dispatch file', {id : self.id, fn : self.tn93_results, type : 'tn93_results', cb : function (err) {}});
+      
     } else if (data.indexOf('Error: ') != -1) {
       // There was an error while performing x. 
       self.emit('error', {error: data});
@@ -88,7 +92,9 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   //TODO: MAKE ALL FILENAMES READABLE BY BOTH SHELL SCRIPT AND JAVASCRIPT
   var cluster_output_suffix='_user.trace.json',
       lanl_cluster_output_suffix='_lanl_user.trace.json',
-      tn93_json_suffix='_user.tn93output.json';
+      tn93_json_suffix='_user.tn93output.json',
+      tn93_csv_suffix='_user.tn93output.csv';
+      tn93_lanl_csv_suffix='_user.tn93output.csv';
 
   self.id = hiv_cluster_params.filename;
   self.filepath = config.output_dir + hiv_cluster_params.filename;
@@ -102,6 +108,8 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   self.output_cluster_output = self.filepath + cluster_output_suffix;
   self.lanl_output_cluster_output = self.filepath + lanl_cluster_output_suffix;
   self.tn93_stdout = self.filepath + tn93_json_suffix;
+  self.tn93_results = self.filepath + tn93_csv_suffix;
+  self.tn93_lanl_results = self.filepath + tn93_csv_suffix;
 
   // qsub_submit.sh
   var qsub_submit = function () {
