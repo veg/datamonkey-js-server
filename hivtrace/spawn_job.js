@@ -52,7 +52,6 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
 
       var results = {};
       self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'trace_results', cb : function (err) {
-      //self.emit('dispatch file', {id : self.id, fn : self.tn93_results, type : 'tn93_results', cb : function (err) {}});
         if(!self.lanl_compare) {
           if (err) throw err;
           self.emit('completed');
@@ -64,6 +63,7 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
         }
       }});
 
+      self.emit('dispatch file', {id : self.id, fn : self.tn93_results, type : 'tn93_results', cb : function (err) {}});
       
     } else if (data.indexOf('Error: ') != -1) {
       // There was an error while performing x. 
