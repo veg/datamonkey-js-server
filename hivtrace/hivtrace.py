@@ -214,8 +214,8 @@ def id_to_attributes(csv_fn, attribute_map, delimiter):
             attr.extend(id.split(delimiter))
 
             #Check for malformed id
-            if(len(attr) < len(attribute_map)):
-                return ValueError('Malformed id in FASTA file ID: ' + id)
+            #if(len(attr) < len(attribute_map)):
+            #    return ValueError('Malformed id in FASTA file ID: ' + id)
 
             id_dict.update({id : dict(zip(attribute_map, attr))})
 
