@@ -223,7 +223,7 @@ def id_to_attributes(csv_fn, attribute_map, delimiter):
 
 def annotate_attributes(trace_json_fn, attributes):
     '''
-    Annotate attributes created from id_to_attributes to hivclustecsv results
+    Annotate attributes created from id_to_attributes to hivclustercsv results
     for easy parsing in JavaScript
     '''
 
@@ -232,10 +232,13 @@ def annotate_attributes(trace_json_fn, attributes):
     with open(trace_json_fn) as json_fh:
         trace_json = json.loads(json_fh.read())
         nodes = trace_json.get('Nodes')
-        [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
-        #TODO Raise error if cannot annotate
-        with open(trace_json_cp_fn, 'w') as copy_f:
-            json.dump(trace_json, copy_f)
+        try:
+          [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
+          #TODO Raise error if cannot annotate
+          with open(trace_json_cp_fn, 'w') as copy_f:
+              json.dump(trace_json, copy_f)
+        except:
+          return
 
     shutil.move(trace_json_cp_fn, trace_json_fn)
 
