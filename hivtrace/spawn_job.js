@@ -52,18 +52,19 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
 
       var results = {};
       self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'trace_results', cb : function (err) {
-        if(!self.lanl_compare) {
-          if (err) throw err;
-          self.emit('completed');
-        } else {
-          self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
+        self.emit('dispatch file', {id : self.id, fn : self.tn93_results, type : 'tn93_results', cb : function (err) {
+          if(!self.lanl_compare) {
             if (err) throw err;
             self.emit('completed');
-          }});
-        }
+          } else {
+            self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
+              if (err) throw err;
+              self.emit('completed');
+            }});
+          }
+        }});      
       }});
 
-      self.emit('dispatch file', {id : self.id, fn : self.tn93_results, type : 'tn93_results', cb : function (err) {}});
       
     } else if (data.indexOf('Error: ') != -1) {
       // There was an error while performing x. 
