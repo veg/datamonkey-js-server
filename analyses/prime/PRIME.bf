@@ -1,28 +1,28 @@
-fscanf  			(stdin,"String", _in_FilePath);
-fscanf  			(stdin,"Number", _in_GeneticCodeTable);
-fscanf  			(stdin,"Number", _fel_test_type);
-fscanf  			(stdin,"Number", _qcap_propset);
-fscanf  			(stdin,"Number", _qcap_metric);
-fscanf  			(stdin,"Number", _tree_mode);
+fscanf(stdin,"String", _in_FilePath);
+fscanf(stdin,"Number", _in_GeneticCodeTable);
+fscanf(stdin,"Number", _fel_test_type);
+fscanf(stdin,"Number", _qcap_propset);
+fscanf(stdin,"Number", _qcap_metric);
+fscanf(stdin,"Number", _tree_mode);
 
 
-skipCodeSelectionStep    = 1;
-LoadFunctionLibrary			("chooseGeneticCode.def");
-ApplyGeneticCodeTable (_in_GeneticCodeTable);
+skipCodeSelectionStep = 1;
+LoadFunctionLibrary("chooseGeneticCode.def");
+ApplyGeneticCodeTable(_in_GeneticCodeTable);
 
-ExecuteAFile			("../Shared/globals.ibf");
-ExecuteAFile			("../Shared/GrabBag.bf");
+ExecuteAFile("../Shared/globals.ibf");
+ExecuteAFile("../Shared/GrabBag.bf");
 
-timer = Time (0);
+timer = Time(0);
 
-baseFilePath  		= "spool/"+_in_FilePath;
+baseFilePath = "spool/"+_in_FilePath;
 
-intermediateHTML	= baseFilePath + ".progress";
-_felRawResultFile         	= baseFilePath + ".out";
-timeStamp           = baseFilePath + ".time";
-codonFit           	= baseFilePath + ".codonFit";
+intermediateHTML = baseFilePath + ".progress";
+_felRawResultFile = baseFilePath + ".out";
+timeStamp = baseFilePath + ".time";
+codonFit = baseFilePath + ".codonFit";
 
-fscanf (intermediateHTML, "Raw", status_updates);
+fscanf(intermediateHTML, "Raw", status_updates);
 status_updates = Eval (status_updates);
 
 GLOBAL_FPRINTF_REDIRECT = intermediateHTML;
@@ -39,7 +39,7 @@ for (file_id = 1; file_id <= fileCount; file_id += 1) {
 
 freqType = 3;
 modelDesc = "012345";
-ExecuteAFile ("QCAP.mdl"); 
+ExecuteAFile("QCAP.mdl"); 
 
 /******************************************************************************************************/
 // A LOOONG SETUP PREAMBLE, STANDARD FOR FEL/SLAC etc       
