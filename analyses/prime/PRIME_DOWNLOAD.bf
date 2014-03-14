@@ -1,19 +1,26 @@
 RequireVersion("2.11");
 
-fscanf(stdin,"String", _in_FilePath);
-fscanf(stdin,"Number", treeMode);
+fscanf(stdin, "String", _in_FilePath);
+fscanf(stdin, "Number", treeMode);
 
-ExecuteAFile("../Shared/globals.ibf");
-ExecuteAFile("../Shared/GrabBag.bf");
+ExecuteAFile("../../shared/globals.ibf");
+ExecuteAFile("../../shared/GrabBag.bf");
+
+// Get base file name of in_FilePath
+fn_array = splitFilePath(_in_FilePath);
+filename = fn_array["FILENAME"] + fn_array["EXTENSION"];
 
 rootOn = "";
-GetURL(dataFileString,BASE_URL_PREFIX+MANGLED_PREFIX+"/"+_in_FilePath);
-analysisSpecRaw = _getRawTreeSplits (_in_FilePath, "treeMode", "rootOn");
+fscanf(_in_FilePath, "String", dataFileString);
 
-baseFilePath = "spool/"+_in_FilePath;
+baseFilePath = "spool/" + filename;
+
+// Move inFile to alignmentData path
 alignmentData = baseFilePath + ".seq";
-treeData = baseFilePath + ".trees";
-
 fprintf(alignmentData, CLEAR_FILE, dataFileString);
+
+// Write the tree splits to the tree data file
+analysisSpecRaw = _getRawTreeSplits(_in_FilePath, "treeMode", "rootOn");
+treeData = baseFilePath + ".trees";
 fprintf(treeData, CLEAR_FILE, analysisSpecRaw);
 

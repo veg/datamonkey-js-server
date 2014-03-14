@@ -19,5 +19,6 @@
   "ambiguity_handling"     : "average",
   "test_output_dir"        : "/home/sweaver/datamonkey/datamonkey-server-prime/hivtrace/tests/res/",
   "default_delimiter"      : "|",
-  "script_basepath"        : "/home/sweaver/datamonkey/datamonkey-server-prime/analyses/"
+  "script_basepath"        : "/home/sweaver/datamonkey/datamonkey-server-prime/analyses/",
+  "prime_output_dir"       : "/home/sweaver/datamonkey/datamonkey-server-prime/analyses/prime/spool/"
 }

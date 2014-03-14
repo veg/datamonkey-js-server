@@ -27,10 +27,12 @@
 
 */
 
-var spawn_job = require('./spawn_prime.js');
+var spawn_job = require('./spawn_prime.js'),
+    config = require('../config.json'),
+    fs = require('fs');
 
 // Pass socket to PRIME job
-var PrimeAnalysis = function (socket, params) {
+var PrimeAnalysis = function (socket, stream, params) {
   // Setup Analysis
   var prime_analysis = new spawn_job.DoPrimeAnalysis();
 
@@ -69,7 +71,13 @@ var PrimeAnalysis = function (socket, params) {
   });
 
   // Setup has been completed, run the job with the parameters from datamonkey
-  prime_analysis.start(params);
+  console.log(params);
+  fs.writeFile(config.prime_output_dir + params.filename, 
+               stream, function (err) {
+    if (err) throw err;
+    prime_analysis.start(params.job);
+  });
+
 
 }
 

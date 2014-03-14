@@ -221,8 +221,6 @@ function defineIfNeeded (_parName, _parValue)
 
 /*---------------------------------------------------------*/
 /* restore values of global parameters */
-   
-
 function restoreGlobalParameters (_paramStash)
 {
 	_stashKeys = Rows(_paramStash);
@@ -236,7 +234,6 @@ function restoreGlobalParameters (_paramStash)
 /*---------------------------------------------------------*/
 /* take a string row/column matrix and turn it into an AVL of 
    the form avl["matrix entry"] = 1 for each matrix entry */
-   
 function stringMatrixToAVL (_theList&)
 {
 	_gb_dim = Rows(_theList)*Columns(_theList);
@@ -250,7 +247,6 @@ function stringMatrixToAVL (_theList&)
 
 /*---------------------------------------------------------*/
 /* take an avl indexed by 0..N-1 and convert to a row matrix */
-   
 function avlToMatrix (_theList&)
 {
 	_gb_dim = Abs(_theList);
@@ -266,7 +262,6 @@ function avlToMatrix (_theList&)
 /*---------------------------------------------------------*/
 /* report a string version of an a/b ratio, handling the cases
    of a and/or b = 0 */
-   
 function _standardizeRatio (_num, _denom)
 {
 	if (_denom != 0)
@@ -289,7 +284,6 @@ function _standardizeRatio (_num, _denom)
 
 /*---------------------------------------------------------*/
 /* copy branch lengths */
-   
 function _copyBranchLengths (_treeID1, _treeID2, _op, _suffix)
 {
 	ExecuteCommands ("_gb_dim=BranchName("+_treeID2+",-1);");
@@ -311,7 +305,6 @@ function _copyBranchLengths (_treeID1, _treeID2, _op, _suffix)
 /* convert a number into a 5 letter string 
    for initializing stdin lists */
 /*---------------------------------------------*/
-   
 function _mapNumberToString (n)
 {
 	if (n>=10000) {
@@ -333,9 +326,7 @@ function _mapNumberToString (n)
 /*---------------------------------------------*/
 /* return HTML code for the datamonkey job ID
 /*---------------------------------------------*/
-   
-function _makeJobIDHTML (fileName)
-{
+function _makeJobIDHTML (fileName) {
 	return "<DIV Class='RepClassSM'><b>Job ID:</b>"+
 		   fileName+
 		   " <a href='"+
@@ -349,20 +340,17 @@ function _makeJobIDHTML (fileName)
 }
 
 /*------------------------------------------------------------------------------------------*/
-
-function _getTreeLink (fileName,mode,reroot)
+function _getTreeLink(fileName,mode,reroot)
 {
-	if (Abs(reroot))
-	{
+	if (Abs(reroot)) {
 		reroot = "-" + reroot;
 	}
+  fprintf(stdout, BASE_CGI_URL_STRING + "wrapHyPhyBF.pl?file=splits&mode=1&arguments=" + fileName + "-" + mode + reroot);
 	return BASE_CGI_URL_STRING + "wrapHyPhyBF.pl?file=splits&mode=1&arguments=" + fileName + "-" + mode + reroot;
 	
 }
 
-
 /*------------------------------------------------------------------------------------------*/
-
 function _getLongModelName (modelDesc)
 {
 	longShanks = "";
@@ -447,7 +435,7 @@ function _generateModelName (dataType, modelDesc, rvChoice, modelDescString&)
 
 function _getRawTreeSplits (fileName, mode&, rootOn&)
 {
-	GetURL                          (analysisSpecRaw, _getTreeLink (fileName,mode,rootOn));
+	GetURL(analysisSpecRaw, _getTreeLink(fileName,mode,rootOn));
 	if (Abs (analysisSpecRaw) == 0)
 	{
 		mode      = 0;

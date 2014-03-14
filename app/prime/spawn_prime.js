@@ -49,35 +49,12 @@ DoPrimeAnalysis.prototype.status_watcher = function () {
   tail.on("line", function(data) {
     // If data reports error, report back to user
     if(data == 'Completed') {
-
+      self.emit('completed');
       var results = {};
-      self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'trace_results', cb : function (err) {
-        self.emit('dispatch file', {id : self.id, fn : self.tn93_results, type : 'tn93_results', cb : function (err) {
-          if(!self.lanl_compare) {
-            if (err) throw err;
-            self.emit('completed');
-          } else {
-            self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
-              if (err) throw err;
-              self.emit('completed');
-            }});
-          }
-        }});      
-      }});
-
-      
     } else if (data.indexOf('Error: ') != -1) {
       // There was an error while performing x. 
       self.emit('error', {error: data});
-    } else {
-      if (data == "HIV Network Analysis") {
-        //Send TN93 Summary
-        fs.readFile(self.tn93_stdout, function(err, data) {
-          self.emit('tn93 summary', {summary: String(data)});
-        }) 
-      }
-      self.emit('status update', {status_update: data});
-    }
+    }   
   });
 }
 
@@ -89,14 +66,17 @@ DoPrimeAnalysis.prototype.status_watcher = function () {
 DoPrimeAnalysis.prototype.start = function (prime_params) {
 
   var self = this;
-  self.id = prime_params.filename;
-  self.treemode = prime_params.treemode;
-  self.genetic_code = prime_params.genetic_code;
-  self.posterior_p = prime_params.posterior_p;
-  self.filepath = config.output_dir + prime_params.filename;
+  self.id = prime_params.msa.upload_id + '_' + prime_params.analysis._id;
+  self.treemode = prime_params.analysis.treemode;
+  self.genetic_code = prime_params.analysis.genetic_code;
+  self.posterior_p = prime_params.analysis.posterior_p;
+  self.filepath = config.prime_output_dir + self.id;
   self.status_fn = self.filepath + '_status';
   self.prime = config.prime;
   self.status_stack = prime_params.status_stack;
+
+  //Write contents to filename
+  fs.writeFile(self.filepath, prime_params.msa.contents)
 
   // qsub_submit.sh
   var qsub_submit = function () {
@@ -105,9 +85,9 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
                           'fn='+self.filepath+
                           ',treemode='+self.treemode+
                           ',genetic_code='+self.genetic_code+
-                          ',posterior_p='+self.posterior_p+
+                          ',posterior_p='+self.posterior_p,
                           config.script_basepath + 'prime/prime_submit.sh'], 
-                          { cwd: config.output_dir });
+                          { cwd: config.prime_output_dir });
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
@@ -131,15 +111,13 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
 
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
-  var do_prime = function(prime_params) {
-    fs.writeFile(self.filepath, 
-                 prime_params.file_contents, function (err) {
-      if (err) throw err;
-      self.emit('status update', {status_update: self.status_stack[0]});
-      qsub_submit();
-    });
+  var do_prime = function(stream, prime_params) {
+    self.emit('status update', {status_update: self.status_stack[0]});
+    qsub_submit();
   }
+
   do_prime(prime_params);
+
 }
 
 exports.DoPrimeAnalysis = DoPrimeAnalysis;

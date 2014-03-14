@@ -45,16 +45,16 @@ io.sockets.on('connection', function (socket) {
   socket.emit('connected', { hello: 'Ready to serve' });
 
   // A job has been spawned by datamonkey, let's go to work
-  socket.on('spawn', function (params) {
-    console.log(params);
+  ss(socket).on('spawn', function (stream, params) {
+    console.log('called spawn');
     //Check param type
-    if(params.type) {
-      switch(params.type) {
+    if(params.job.type) {
+      switch(params.job.type) {
         case 'hivtrace':
-          hivtrace.HIVTraceAnalysis(socket, params);
+          hivtrace.HIVTraceAnalysis(socket, stream, params);
           break;
         case 'prime':
-          prime.PrimeAnalysis(socket, params);
+          prime.PrimeAnalysis(socket, stream, params);
           break;
         default:
           socket.emit('error', 'type not recognized');
