@@ -214,8 +214,8 @@ def id_to_attributes(csv_fn, attribute_map, delimiter):
             attr.extend(id.split(delimiter))
 
             #Check for malformed id
-            if(len(attr) < len(attribute_map)):
-                return ValueError('Malformed id in FASTA file ID: ' + id)
+            #if(len(attr) < len(attribute_map)):
+            #    return ValueError('Malformed id in FASTA file ID: ' + id)
 
             id_dict.update({id : dict(zip(attribute_map, attr))})
 
@@ -223,7 +223,7 @@ def id_to_attributes(csv_fn, attribute_map, delimiter):
 
 def annotate_attributes(trace_json_fn, attributes):
     '''
-    Annotate attributes created from id_to_attributes to hivclustecsv results
+    Annotate attributes created from id_to_attributes to hivclustercsv results
     for easy parsing in JavaScript
     '''
 
@@ -232,9 +232,13 @@ def annotate_attributes(trace_json_fn, attributes):
     with open(trace_json_fn) as json_fh:
         trace_json = json.loads(json_fh.read())
         nodes = trace_json.get('Nodes')
-        #[node.update({'attributes' : attributes[node['id']]}) for node in nodes]
-        with open(trace_json_cp_fn, 'w') as copy_f:
-            json.dump(trace_json, copy_f)
+        try:
+          [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
+          #TODO Raise error if cannot annotate
+          with open(trace_json_cp_fn, 'w') as copy_f:
+              json.dump(trace_json, copy_f)
+        except:
+          return
 
     shutil.move(trace_json_cp_fn, trace_json_fn)
 
@@ -256,8 +260,8 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     PHASE 5b) Flag any potential HXB2 sequences
     PHASE 5c) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
     PHASE 6)  Run hivclustercsv to return clustering information in json format
-
     """
+
     #These should come from config
     PYTHON=config.get('python')
     BEALIGN=config.get('bealign')
@@ -290,7 +294,6 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     OUTPUT_USERTOLANL_TN93_FN=input+'_usertolanl.tn93output.csv'
     USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=input+'_user_filter.csv'
-
 
     DEVNULL = open(os.devnull, 'w')
 

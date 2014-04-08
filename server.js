@@ -30,6 +30,7 @@
 var config = require('./config.json'),
     io = require('socket.io').listen(config.port),
     fs = require('fs'),
+    path = require('path'),
     spawn_job = require('./hivtrace/spawn_job.js'),
     ss = require('socket.io-stream');
 
@@ -81,7 +82,7 @@ io.sockets.on('connection', function (socket) {
     // Send file
     trace_analysis.on('dispatch file', function(params) {
       var stream = ss.createStream();
-      ss(socket).emit('send file', stream, { id : params.id, type: params.type });
+      ss(socket).emit('send file', stream, { id : params.id, fn : path.basename(params.fn), type: params.type });
       fs.createReadStream(params.fn).pipe(stream);
       socket.once('file saved', function () {
         params.cb();
