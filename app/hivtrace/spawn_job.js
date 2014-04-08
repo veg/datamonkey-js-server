@@ -57,12 +57,12 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
             if (err) throw err;
             self.emit('completed');
           } else {
-            self.emit('dispatch file', {id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
+            self.emit('dispatch file', { id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
               if (err) throw err;
               self.emit('completed');
             }});
           }
-        }});      
+        }});
       }});
 
       

@@ -10,8 +10,8 @@ skipCodeSelectionStep = 1;
 LoadFunctionLibrary("chooseGeneticCode.def");
 ApplyGeneticCodeTable(_in_GeneticCodeTable);
 
-ExecuteAFile("../Shared/globals.ibf");
-ExecuteAFile("../Shared/GrabBag.bf");
+ExecuteAFile("../../shared/globals.ibf");
+ExecuteAFile("../../shared/GrabBag.bf");
 
 timer = Time(0);
 
@@ -333,7 +333,5 @@ function _felReceiveAJob (verbose) {
         _MLES [_thisParameter] = FEL._felSiteLF_MLE_VALUES[_thisParameter];
     }
     ((FEL._felUniqueSitePatternResults[finishedSitePattern])[finishedTestName])["MLES"] = _MLES;
-    
     return _fromID;
 } 
-

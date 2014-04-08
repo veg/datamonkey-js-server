@@ -35,9 +35,6 @@ var config = require('./config.json'),
     prime = require('./prime/prime.js'),
     ss = require('socket.io-stream');
 
-
-//io.set('log level', 1);
-    
 // For every new connection...
 io.sockets.on('connection', function (socket) {
 
@@ -46,7 +43,6 @@ io.sockets.on('connection', function (socket) {
 
   // A job has been spawned by datamonkey, let's go to work
   ss(socket).on('spawn', function (stream, params) {
-    console.log('called spawn');
     //Check param type
     if(params.job.type) {
       switch(params.job.type) {
@@ -71,3 +67,5 @@ io.sockets.on('connection', function (socket) {
     io.sockets.emit('user disconnected');
   });
 });
+
+

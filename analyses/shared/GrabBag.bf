@@ -1,7 +1,6 @@
 /*---------------------------------------------------------*/
 /* Turn the keys of an AVL into a string for labeling 
    chart rows */
-   
 function avlToLabels (_gb_anAVL,_gb_prefix,_gb_delim)
 {
 	_gb_resString = "";
@@ -340,19 +339,7 @@ function _makeJobIDHTML (fileName) {
 }
 
 /*------------------------------------------------------------------------------------------*/
-function _getTreeLink(fileName,mode,reroot)
-{
-	if (Abs(reroot)) {
-		reroot = "-" + reroot;
-	}
-  fprintf(stdout, BASE_CGI_URL_STRING + "wrapHyPhyBF.pl?file=splits&mode=1&arguments=" + fileName + "-" + mode + reroot);
-	return BASE_CGI_URL_STRING + "wrapHyPhyBF.pl?file=splits&mode=1&arguments=" + fileName + "-" + mode + reroot;
-	
-}
-
-/*------------------------------------------------------------------------------------------*/
-function _getLongModelName (modelDesc)
-{
+function _getLongModelName (modelDesc) {
 	longShanks = "";
 	ExecuteAFile (BASE_CLUSTER_DIR	+ "Analyses/Shared/ProteinModels/modellist.ibf");
 	for (k = 0; k < Abs(modelList); k=k+1)
@@ -376,7 +363,7 @@ function _getLongModelName (modelDesc)
 
 }
 
-function _generateModelName (dataType, modelDesc, rvChoice, modelDescString&)
+function _generateModelName(dataType, modelDesc, rvChoice, modelDescString&)
 {
 	if (dataType)
 	{
@@ -432,21 +419,6 @@ function _generateModelName (dataType, modelDesc, rvChoice, modelDescString&)
 }
 
 /*------------------------------------------------------------------------------------------*/
-
-function _getRawTreeSplits (fileName, mode&, rootOn&)
-{
-	GetURL(analysisSpecRaw, _getTreeLink(fileName,mode,rootOn));
-	if (Abs (analysisSpecRaw) == 0)
-	{
-		mode      = 0;
-		rootOn    = "";
-		GetURL      (analysisSpecRaw, _getTreeLink (fileName,0,0));
-	}
-	return analysisSpecRaw;
-}
-
-/*------------------------------------------------------------------------------------------*/
-	
 function _determineBreakpointPlacement ()
 {
 	bppMap = {};

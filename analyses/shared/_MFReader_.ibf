@@ -1,5 +1,5 @@
-sscanf				(analysisSpecRaw,"Lines",analysisSpec);
-fileCount 			= 0+analysisSpec[0];
+sscanf(analysisSpecRaw,"Lines",analysisSpec);
+fileCount = 0+analysisSpec[0];
 
 mySplits 			= {};
 myTrees  			= {};
@@ -28,7 +28,7 @@ for (_k2 = 0; _k2 < fileCount; _k2 = _k2 + 1)
 		{
 			_r2 = (0+_pos[1])$3*3-1;					
 		}
-		mySplits[_k2]		 					 = Format(_r1,10,0)+"-"+Format(_r2,10,0);	
+		mySplits[_k2] = Format(_r1,10,0)+"-"+Format(_r2,10,0);	
 	}
 	myTrees [_k2]  = analysisSpec[2+2*_k2];
 }
@@ -37,12 +37,12 @@ for (_k2 = 0; _k2 < fileCount; _k2 = _k2 + 1)
 treeStrings			 = {};
 codonsByPartition    = {};
 
-DataSet 	ds_0 = ReadFromString (dataFileString);
+//fprintf(stdout, dataFileString);
+DataSet ds_0 = ReadFromString (dataFileString);
 
 /*------------------------------------------------------------------------*/
 
-for (fileID = 1; fileID <= fileCount; fileID = fileID + 1)
-{
+for (fileID = 1; fileID <= fileCount; fileID = fileID + 1) {
 	DataSetFilter filteredData = CreateFilter (ds_0,3,mySplits[fileID-1],,GeneticCodeExclusions);
 	Export 		  (baseFPath,filteredData);
 	

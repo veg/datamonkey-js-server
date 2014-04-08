@@ -29,10 +29,12 @@
 
 var spawn_job = require('./spawn_prime.js'),
     config = require('../config.json'),
-    fs = require('fs');
+    fs = require('fs'),
+    ss = require('socket.io-stream');
 
 // Pass socket to PRIME job
 var PrimeAnalysis = function (socket, stream, params) {
+
   // Setup Analysis
   var prime_analysis = new spawn_job.DoPrimeAnalysis();
 
@@ -61,9 +63,10 @@ var PrimeAnalysis = function (socket, stream, params) {
   });
 
   // Send file
-  prime_analysis.on('dispatch file', function(params) {
+  prime_analysis.on('progress file', function(params) {
     var stream = ss.createStream();
-    ss(socket).emit('send file', stream, { id : params.id, fn : path.basename(params.fn), type: params.type });
+    ss(socket).emit('progress file', stream, {id : params.id });
+    console.log(params.fn);
     fs.createReadStream(params.fn).pipe(stream);
     socket.once('file saved', function () {
       params.cb();
@@ -71,13 +74,12 @@ var PrimeAnalysis = function (socket, stream, params) {
   });
 
   // Setup has been completed, run the job with the parameters from datamonkey
-  console.log(params);
-  fs.writeFile(config.prime_output_dir + params.filename, 
-               stream, function (err) {
+  stream.pipe(fs.createWriteStream(config.prime_output_dir + params.job.analysis._id));
+
+  stream.on('end', function(err) {
     if (err) throw err;
     prime_analysis.start(params.job);
   });
-
 
 }
 

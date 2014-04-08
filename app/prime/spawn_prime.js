@@ -44,17 +44,22 @@ util.inherits(DoPrimeAnalysis, EventEmitter);
  * sends updates to.
  */
 DoPrimeAnalysis.prototype.status_watcher = function () {
+
   self = this;
-  tail = new Tail(self.status_fn);
-  tail.on("line", function(data) {
-    // If data reports error, report back to user
-    if(data == 'Completed') {
-      self.emit('completed');
-      var results = {};
-    } else if (data.indexOf('Error: ') != -1) {
-      // There was an error while performing x. 
-      self.emit('error', {error: data});
-    }   
+  fs.openSync(self.progress_fn, 'w')
+  fs.watch(self.progress_fn, function(e, filename) { 
+    console.log(e);
+    fs.readFile(self.progress_fn, 'utf8', function (err,data) {
+      if(data) {
+        try {
+          new_status = JSON.parse(data)
+          if(new_status) {
+            self.emit('status update', new_status);
+          }
+        } catch(e) {
+        }
+      }
+    });
   });
 }
 
@@ -66,28 +71,33 @@ DoPrimeAnalysis.prototype.status_watcher = function () {
 DoPrimeAnalysis.prototype.start = function (prime_params) {
 
   var self = this;
-  self.id = prime_params.msa.upload_id + '_' + prime_params.analysis._id;
+  self.id = prime_params.analysis._id;
+  self.msaid = prime_params.msa._id;
   self.treemode = prime_params.analysis.treemode;
-  self.genetic_code = prime_params.analysis.genetic_code;
+  self.genetic_code = 0;
   self.posterior_p = prime_params.analysis.posterior_p;
   self.filepath = config.prime_output_dir + self.id;
-  self.status_fn = self.filepath + '_status';
+  self.status_fn = self.filepath + '.status';
+  self.progress_fn = self.filepath + '.progress';
   self.prime = config.prime;
   self.status_stack = prime_params.status_stack;
 
-  //Write contents to filename
-  fs.writeFile(self.filepath, prime_params.msa.contents)
-
   // qsub_submit.sh
   var qsub_submit = function () {
+
     var qsub =  spawn('qsub', 
-                         ['-v',
+                         [
+                          '-d', 
+                          config.script_basepath + 'prime',
+                          '-v',
                           'fn='+self.filepath+
+                          ',sfn='+self.status_fn+
                           ',treemode='+self.treemode+
                           ',genetic_code='+self.genetic_code+
+                          ',msaid='+self.msaid+
                           ',posterior_p='+self.posterior_p,
-                          config.script_basepath + 'prime/prime_submit.sh'], 
-                          { cwd: config.prime_output_dir });
+                          './prime_submit.sh'], 
+                          { cwd : config.script_basepath + 'prime'});
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
@@ -121,3 +131,4 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
 }
 
 exports.DoPrimeAnalysis = DoPrimeAnalysis;
+
