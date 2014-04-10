@@ -1,4 +1,6 @@
 #!/bin/bash
+#PBS -l nodes=30:ppn=8
+
 export PATH=/usr/local/bin:$PATH
 
 FN=$fn

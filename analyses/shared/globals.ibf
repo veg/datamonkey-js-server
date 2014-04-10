@@ -1,4 +1,4 @@
 BASE_URL_PREFIX			   = "http://datamonkey-dev:4000/";
-BASE_CGI_URL_STRING		 = BASE_URL_PREFIX+"cgi-bin/datamonkey/";
+BASE_CGI_URL_STRING		   = BASE_URL_PREFIX+"cgi-bin/datamonkey/";
 MANGLED_PREFIX			   = "uploads";
 BASE_CLUSTER_DIR		   = "/home/datamonkey/datamonkey-server-prime/";
