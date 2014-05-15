@@ -1,7 +1,10 @@
-var spawnjob = require('./spawn_job.js');
+var spawn_job = require('./spawn_job.js'),
+    config = require('../config.json'),
+    fs = require('fs'),
+    ss = require('socket.io-stream');
 
 // Pass socket to HIV Trace job
-var HIVTraceAnalysis = function (socket) {
+var HIVTraceAnalysis = function (socket, stream, params) {
   // Setup Analysis
   var trace_analysis = new spawn_job.DoHivTraceAnalysis();
 
@@ -38,13 +41,17 @@ var HIVTraceAnalysis = function (socket) {
   // Send file
   trace_analysis.on('dispatch file', function(params) {
     var stream = ss.createStream();
-    ss(socket).emit('send file', stream, { id : params.id, fn : path.basename(params.fn), type: params.type });
-    fs.createReadStream(params.fn).pipe(stream);
-    socket.once('file saved', function () {
+    ss(socket).emit('server file', stream, params);
+    fs.createReadStream(params.fp).pipe(stream);
+    socket.once('server file saved', function () {
       params.cb();
     });
   });
 
+
   // Setup has been completed, run the job with the parameters from datamonkey
-  trace_analysis.start(hiv_trace_params);
+  stream.pipe(fs.createWriteStream(config.output_dir + params._id));
+  trace_analysis.start(params);
 }
+
+exports.HIVTraceAnalysis = HIVTraceAnalysis;

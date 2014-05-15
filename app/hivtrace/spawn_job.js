@@ -31,6 +31,7 @@ var spawn = require('child_process').spawn,
     fs = require('fs'),
     config = require('../config.json'),
     util = require('util'),
+    path = require('path'),
     Tail = require('tail').Tail,
     EventEmitter = require('events').EventEmitter;
 
@@ -51,18 +52,16 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
     if(data == 'Completed') {
 
       var results = {};
-      self.emit('dispatch file', {id : self.id, fn : self.output_cluster_output, type : 'trace_results', cb : function (err) {
-        self.emit('dispatch file', {id : self.id, fn : self.tn93_results, type : 'tn93_results', cb : function (err) {
-          if(!self.lanl_compare) {
+      self.emit('dispatch file', {id : self.id, fn: path.basename(self.output_cluster_output), fp : self.output_cluster_output, type : 'trace_results', cb : function (err) {
+        if(!self.lanl_compare) {
+          if (err) throw err;
+          self.emit('completed');
+        } else {
+          self.emit('dispatch file', { id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
             if (err) throw err;
             self.emit('completed');
-          } else {
-            self.emit('dispatch file', { id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
-              if (err) throw err;
-              self.emit('completed');
-            }});
-          }
-        }});
+          }});
+        }
       }});
 
       
@@ -76,7 +75,7 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
           self.emit('tn93 summary', {summary: String(data)});
         }) 
       }
-      self.emit('status update', {status_update: data});
+      self.emit('status update', data);
     }
   });
 }
@@ -89,16 +88,14 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
 DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
 
   var self = this;
-
-  //TODO: MAKE ALL FILENAMES READABLE BY BOTH SHELL SCRIPT AND JAVASCRIPT
   var cluster_output_suffix='_user.trace.json',
       lanl_cluster_output_suffix='_lanl_user.trace.json',
       tn93_json_suffix='_user.tn93output.json',
       tn93_csv_suffix='_user.tn93output.csv';
       tn93_lanl_csv_suffix='_user.tn93output.csv';
 
-  self.id = hiv_cluster_params.filename;
-  self.filepath = config.output_dir + hiv_cluster_params.filename;
+  self.id = hiv_cluster_params._id;
+  self.filepath = config.output_dir + hiv_cluster_params._id;
   self.hivtrace = config.hivtrace;
   self.python = config.python;
   self.distance_threshold = hiv_cluster_params.distance_threshold;
@@ -151,12 +148,8 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_hivcluster = function(hiv_cluster_params) {
-    fs.writeFile(self.filepath, 
-                 hiv_cluster_params.file_contents, function (err) {
-      if (err) throw err;
-      self.emit('status update', {status_update: self.status_stack[0]});
-      qsub_submit();
-    });
+    self.emit('status update', {status_update: self.status_stack[0]});
+    qsub_submit();
   }
 
   do_hivcluster(hiv_cluster_params);
