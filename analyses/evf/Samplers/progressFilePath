@@ -1,0 +1,16 @@
+<DIV CLASS = 'RepClassSM'>Obtaining profile likeihood bounds...</DIV><DIV CLASS = 'RepClassSM'>Doing Latin hypercube sampling...</DIV><DIV CLASS='RepClassSM'><br>Computing likelihood weights (this may take a while)...<DIV CLASS = 'RepClassSM'>Obtaining profile likeihood bounds...</DIV><DIV CLASS = 'RepClassSM'>Doing Latin hypercube sampling...</DIV><DIV CLASS='RepClassSM'><br>Computing likelihood weights (this may take a while)...<DIV CLASS = 'RepClassSM'>Obtaining profile likeihood bounds...</DIV><DIV CLASS = 'RepClassSM'>Doing Latin hypercube sampling...</DIV><DIV CLASS='RepClassSM'><br>Computing likelihood weights (this may take a while)...<br>33.33% evaluations done. Estimated remaining time: 22.00 seconds 
+<br>66.67% evaluations done. Estimated remaining time:  9.50 seconds 
+<br>100.00% evaluations done. Estimated remaining time:  0.00 seconds 
+<br>Estimated effective sample size: 2339.66
+
+<br>100/1000 samples drawn. Estimated remaining time: 81.00 seconds 
+<br>200/1000 samples drawn. Estimated remaining time: 72.00 seconds 
+<br>300/1000 samples drawn. Estimated remaining time: 65.33 seconds 
+<br>400/1000 samples drawn. Estimated remaining time: 55.50 seconds 
+<br>500/1000 samples drawn. Estimated remaining time: 46.00 seconds 
+<br>600/1000 samples drawn. Estimated remaining time: 36.67 seconds 
+<br>700/1000 samples drawn. Estimated remaining time: 27.43 seconds 
+<br>800/1000 samples drawn. Estimated remaining time: 16.75 seconds 
+<br>900/1000 samples drawn. Estimated remaining time:  7.67 seconds 
+<br>1000/1000 samples drawn. Estimated remaining time:  0.00 seconds 
+<br>Obtaining site-by-site positive selection estimates for each replicate...</DIV>

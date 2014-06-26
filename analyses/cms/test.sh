@@ -1,0 +1,1 @@
+(echo upload.1976370865258.1; echo 0; echo 012345; echo 2; echo 1; echo 1; echo 0; echo 0; echo 0; echo 0) | /usr/bin/mpirun -np 33 /opt/hyphy/HYPHY/HYPHYMPIMP BASEPATH=/opt/hyphy/HYPHY `pwd`/ModelSelectorCodon.bf

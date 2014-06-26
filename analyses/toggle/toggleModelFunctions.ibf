@@ -1,0 +1,537 @@
+/* functions */
+
+function KWeightsCalc ( EFV ) {
+
+	kweights = { 21, 3 };	
+	for ( i = 0; i < 21; i = i + 1 ) {
+		sumS1 = 0;
+		sumS2 = 0;
+		sumS3 = 0;
+		jshift = 0;
+		for ( j = 0; j < 64; j = j + 1 ) {
+			if ( _Genetic_Code [ j ] != 10 ) {
+				if ( _Genetic_Code [ j ] == i ) { /* weight on consensus aa class */
+					sumS1 = sumS1 + EFV [ j-jshift ];
+				}
+				else {
+					if ( OneStepStates [ j ][ i ] == 1 ) {
+						sumS2 = sumS2 + EFV [ j-jshift ];
+					}  	
+					else {
+						sumS3 = sumS3 + EFV [ j-jshift ];
+					}
+				}
+			}
+			else {
+				jshift = jshift + 1;
+			}
+		}
+		kweights [ i ][ 0 ] = sumS1;
+		kweights [ i ][ 1 ] = sumS2;
+		kweights [ i ][ 2 ] = sumS3;
+	}
+	return kweights;
+}
+
+function GeneticCodeStuff ( CODE_TABLE ) 
+{
+	dummy = ApplyGeneticCodeTable ( CODE_TABLE );
+	ModelMatrixDimension = 64;
+	for ( h = 0; h < 64; h = h + 1 ) {
+		if ( _Genetic_Code[ h ] == 10 ) {
+			ModelMatrixDimension = ModelMatrixDimension - 1;
+		}
+	}
+	/* count number of alternate codons per aa and fill matrix */
+	NumberAlternateCodons = { 21, 1 };
+	for ( a = 0; a < 21; a = a + 1 ) {
+		countAlternates = 0;
+		for ( h = 0; h < 64; h = h + 1 ) {
+			if ( _Genetic_Code [ h ] != 10 ) {
+				if ( a == _Genetic_Code [ h ] ) {
+					countAlternates = countAlternates + 1;
+				}	
+			}	
+		}
+		NumberAlternateCodons [ a ] = countAlternates;
+	}
+	
+	/* set up an array of amino acid and integers coding the 0,1 and > 1 step codons for each amino acid */
+	OneStepStates = { 64, 21 };
+	/* Initialise with > 1 */
+	for ( k = 0; k < 64; k = k + 1 ) {
+		for ( j = 0; j < 21; j = j + 1 ) {
+			OneStepStates [ k ][ j ] = 9;
+		}
+	} 
+	
+	NumberOneStepCodons = { 21, 1 };
+	for ( a = 0; a < 21; a = a + 1 ) {
+		AlternateCodons = { NumberAlternateCodons [ a ], 1 };
+		countg = 0;
+		for ( g = 0; g < 64; g = g + 1 ) {
+			if  ( ( _Genetic_Code [ g ] == a ) && ( _Genetic_Code [ g ] != 10 ) ) {
+				AlternateCodons [ countg ] = g;
+				countg = countg + 1;
+			}
+		}
+		for ( k = 0; k < NumberAlternateCodons [ a ]; k = k + 1 ) {
+			codonindex = AlternateCodons [ k ];
+			for ( j = 0; j < 64; j = j + 1 ) {
+				if ( _Genetic_Code [ j ] != 10 ) {
+					if ( _Genetic_Code [ j ] == a ) {
+						OneStepStates [ j ][ a ] = 0;
+					}
+					else {
+						if ( codonindex > j ) {
+							diff = codonindex-j;
+						}
+						else {
+							diff = j-codonindex;
+						}
+						if ( ( codonindex$4 == j$4 ) || ( ( ( diff%4 ) == 0 ) && ( codonindex$16==j$16 )) || (diff%16==0) )  { 
+							OneStepStates [ j ][ a ] = 1;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	for ( a = 0; a < 21; a = a + 1 ) {
+		countOneStep = 0;
+		for ( j = 0; j< 64; j = j + 1 ) {
+			if ( OneStepStates [ j ][ a ] == 1 ) {
+				countOneStep = countOneStep + 1;
+			}
+		}
+		NumberOneStepCodons [ a ] = countOneStep;
+	}
+	return 0;
+}
+
+function CodonFrequencies ( nucFreqMatrix, mSize ) 
+{
+	PIStop = 1.0;
+	result = { mSize, 1 };
+	hshift = 0;
+	for ( h = 0; h < 64; h = h + 1 )	{
+		first = h$16;
+		second = h%16$4;
+		third = h%4;
+		if ( _Genetic_Code[ h ] == 10 ) {
+			hshift = hshift + 1;
+			PIStop = PIStop - nucFreqMatrix[first][0]*nucFreqMatrix[second][1]*nucFreqMatrix[third][2];
+		}
+		else {
+			result[ h-hshift ][0] = nucFreqMatrix[first][0]*nucFreqMatrix[second][1]*nucFreqMatrix[third][2];
+		}
+	}
+	return result*( 1.0/PIStop );
+}
+
+function ComputeConsensusAA ( fSites, datasetID ) 
+{
+	/* fprintf ( SCREENOUT, "\n", "*** Calculating Consensus Amino Acid Sequence ***\n" );	*/
+	ConsensusAAMatrix = { fSites, 2 };
+	count = 0;
+	for ( i = 0; i < fSites; i = i + 1 ) { 
+		ExecuteCommands ( "DataSetFilter filter = CreateFilter (" + datasetID + ", 1, ( (siteIndex)==count ) || ( (siteIndex)==count+1) || ((siteIndex)==count+2) );" );
+		HarvestFrequencies ( ConsensusCodonFrequencies, filter, 3, 3, 0 ); 
+		largest = 0.0;
+		rememberEqual = 0; 
+		countAA = 0;
+		for ( j = 0; j < 64; j = j + 1 ) { 
+			if ( ConsensusCodonFrequencies [ j ] == 1 ) {
+				ConsensusAAMatrix [ i ][ 0 ] = i; 
+				ConsensusAAMatrix [ i ][ 1 ] = _Genetic_Code [ j ]; 
+			}
+			else { 
+				if ( ( ConsensusCodonFrequencies [ j ] < 1 ) && ( ConsensusCodonFrequencies [ j ] > 0 ) ) { 
+					countAA = countAA + 1; 
+					if ( ( ConsensusCodonFrequencies [ j ] == largest ) ) { 
+						rememberEqual = rememberEqual + 1;
+					}
+					if ( ( ConsensusCodonFrequencies [ j ] > largest ) ) { 
+						largest = ConsensusCodonFrequencies [ j ]; 
+						target = j;
+					}
+				}
+			}
+		}
+		if ( largest > 0 ) { 
+			ConsensusAAMatrix [ i ][ 0 ] = i;
+			ConsensusAAMatrix [ i ][ 1 ] = _Genetic_Code [ target ];
+		}
+		rememberEqual = rememberEqual+1; 
+		if ( ( rememberEqual == countAA ) && ( countAA != 0 ) ) { 
+			RandomAAMatrix = { countAA, 1 };
+			incAA = 0;
+			for ( j = 0; j < 64; j = j + 1 ) {
+				if ( ( ConsensusCodonFrequencies [ j ] > 0 ) ) {
+					RandomAAMatrix [ incAA ] = j;  
+					incAA = incAA + 1;
+				}
+			}
+			randomJ = RandomAAMatrix [ Random ( 0, countAA ) ]; 
+			ConsensusAAMatrix [ i ][ 0 ] = i;
+			ConsensusAAMatrix [ i ][ 1 ] = _Genetic_Code [ randomJ ];
+		}
+		count = count + 3; 
+	}
+	return 0;
+}
+
+
+function PopulateModelMatrixAA_GYNull ( mSize, i, EFV ) 
+{
+	hshift = 0;
+	vshift = 0;
+	ExecuteCommands ( "AATransMatrix"+i+" = { mSize, mSize };" ); 
+	for ( h = 0; h < 64; h = h + 1 ) {
+		if ( _Genetic_Code [ h ] == 10 ) {
+			hshift = hshift + 1; 
+			continue;
+		}
+		vshift = hshift;
+		for ( v = h + 1; v < 64; v = v + 1 ) {
+			diff = v-h;
+			if ( _Genetic_Code [ v ] == 10 ) {
+				vshift = vshift + 1; 
+				continue;
+			}
+			if ( ( h$4 == v$4 ) || ( ( ( diff%4 ) == 0 ) && ( h$16==v$16 )) || (diff%16==0) )  { 
+				if ( h$4 == v$4 )	{ 
+					transition = v%4;
+					transition2 = h%4;
+					nucPositionInCodon = 2;
+				}
+				else {
+					if ( diff%16 == 0 ) { 
+						transition = v$16;
+						transition2 = h$16;
+						nucPositionInCodon = 0;
+					}
+					else { 
+						transition = v%16$4; 
+						transition2 = h%16$4;
+						nucPositionInCodon = 1;
+					}
+				}	
+				if ( _Genetic_Code [ h ] == _Genetic_Code[ v ] ) { /* synonymous mutations */
+					if ( ( _Genetic_Code [ h ] == i ) || ( _Genetic_Code [ v ] == i ) ) {  /* synonymous within toggle state gets k1 multiplier on target codon frequency */
+						if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+							ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*away*/
+							ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+						}
+						else { /* transition */
+							ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*away*/
+							ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+						}
+					}
+					else {
+						if ( ( OneStepStates [ h ][ i ] == 1 ) || ( OneStepStates [ v ][ i ] == 1 ) ) { /* one step states get (1-k1)*k2 multipliers on target codon frequencies*/
+							if ( ( OneStepStates [ h ][ i ] == 1 ) && ( OneStepStates [ v ][ i ] == 1 ) )  {
+								if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+									ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+								}
+								else { /* transition */
+									ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+								}
+							}
+							else {
+								if ( OneStepStates [ h ][ i ] == 1 ) { /* one step state codon is on horizontal, therefore horizontal target gets multiplier */
+									if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									}
+									else { /* transition */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									}
+								}
+								if ( OneStepStates [ v ][ i ] == 1 ) { /* one step state codon is on vertical, therefore vertical target gets multiplier */
+									if ( Abs ( transition-transition2) % 2 ) { /* transversion */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+									}	
+									else { /* transition */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" );  
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+									}
+								}
+							}
+						}
+						else { /* target codons are multiple steps from toggle state */
+							if ( Abs ( transition-transition2) % 2 ) { 
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+							}
+							else {
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+							}
+						}
+					}
+				} /* end of synonymous subs */
+				else { /* non synonymous */
+					if ( ( _Genetic_Code [ h ] != i ) && ( _Genetic_Code [ v ] != i ) ) { /* not a toggle state */
+						if ( ( OneStepStates [ h ][ i ] == 1 ) || ( OneStepStates [ v ][ i ] == 1 ) ) { /* one step states get (1-k1)*k2 multipliers on target codon frequencies */
+							if ( ( OneStepStates [ h ][ i ] == 1 ) && ( OneStepStates [ v ][ i ] == 1 ) ) { /* vert and h get multiplier */
+								if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+									ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c*t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" );  
+									ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c*t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+								}
+								else { /* transition */
+									ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c*t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c*t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+								}
+							}
+							else {
+								if ( OneStepStates [ h ][ i ] == 1 ) { /* one step state codon is on horizontal, therefore horizontal target gets multiplier */
+									if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c*t*kappa*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c*t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									}
+									else { /* transition */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c*t*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c*t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									}
+								}
+								if ( OneStepStates [ v ][ i ] == 1 ) { /* one step state codon is on vertical, therefore vertical target gets multiplier */
+									if ( Abs ( transition-transition2) % 2 ) { /* transversion */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c*t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c*t*kappa*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+									}	
+									else { /* transition */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c*t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" );  
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c*t*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+									}
+								}
+							}
+						}
+						else { /* target codons are multiple steps from toggle state */
+							if ( Abs ( transition-transition2) % 2 ) { 
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c*t*kappa*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c*t*kappa*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+							}
+							else {
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c*t*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c*t*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+							}
+						}
+					}
+					else { /* non-syn to/away from toggle state */
+						if ( _Genetic_Code [ h ] == i ) { /* consensus is on horizontal */
+							if ( Abs ( transition-transition2) % 2 ) { 
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := rho*t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); /*away*/
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := rho*t*kappa*" + EFV [h-hshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+							}
+							else {
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := rho*t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); /*away*/
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := rho*t*" + EFV [h-hshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+							}
+						}
+						if ( _Genetic_Code [ v ] == i ) { /* consensus is on vertical */
+							if ( Abs ( transition-transition2) % 2 ) { 
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := rho*t*kappa*" + EFV [v-vshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := rho*t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); /*away*/
+							}
+							else {
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := rho*t*" + EFV [v-vshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" );  /*to*/
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := rho*t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); /*away*/
+							}
+						}
+					}
+				} /* end of non-syn */
+			} /* end of if one nucleotide mutation */
+		}
+	}
+	return 0;
+}
+
+function PopulateModelMatrixAA_GYAlt ( mSize, i, EFV ) 
+{
+	hshift = 0;
+	vshift = 0;
+	ExecuteCommands ( "AATransMatrix"+i+" = { mSize, mSize };" ); 
+	for ( h = 0; h < 64; h = h + 1 ) {
+		if ( _Genetic_Code [ h ] == 10 ) {
+			hshift = hshift + 1; 
+			continue;
+		}
+		vshift = hshift;
+		for ( v = h + 1; v < 64; v = v + 1 ) {
+			diff = v-h;
+			if ( _Genetic_Code [ v ] == 10 ) {
+				vshift = vshift + 1; 
+				continue;
+			}
+			if ( ( h$4 == v$4 ) || ( ( ( diff%4 ) == 0 ) && ( h$16==v$16 )) || (diff%16==0) )  { 
+				if ( h$4 == v$4 )	{ 
+					transition = v%4;
+					transition2 = h%4;
+					nucPositionInCodon = 2;
+				}
+				else {
+					if ( diff%16 == 0 ) { 
+						transition = v$16;
+						transition2 = h$16;
+						nucPositionInCodon = 0;
+					}
+					else { 
+						transition = v%16$4; 
+						transition2 = h%16$4;
+						nucPositionInCodon = 1;
+					}
+				}	
+				if ( _Genetic_Code [ h ] == _Genetic_Code[ v ] ) { /* synonymous mutations */
+					if ( ( _Genetic_Code [ h ] == i ) || ( _Genetic_Code [ v ] == i ) ) {  /* synonymous within toggle state gets k1 multiplier on target codon frequency */
+						if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+							ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*away*/
+							ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+						}
+						else { /* transition */
+							ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*away*/
+							ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+						}
+					}
+					else {
+						if ( ( OneStepStates [ h ][ i ] == 1 ) || ( OneStepStates [ v ][ i ] == 1 ) ) { /* one step states get (1-k1)*k2 multipliers on target codon frequencies*/
+							if ( ( OneStepStates [ h ][ i ] == 1 ) && ( OneStepStates [ v ][ i ] == 1 ) )  {
+								if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+									ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+								}
+								else { /* transition */
+									ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+								}
+							}
+							else {
+								if ( OneStepStates [ h ][ i ] == 1 ) { /* one step state codon is on horizontal, therefore horizontal target gets multiplier */
+									if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									}
+									else { /* transition */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									}
+								}
+								if ( OneStepStates [ v ][ i ] == 1 ) { /* one step state codon is on vertical, therefore vertical target gets multiplier */
+									if ( Abs ( transition-transition2) % 2 ) { /* transversion */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+									}	
+									else { /* transition */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" );  
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+									}
+								}
+							}
+						}
+						else { /* target codons are multiple steps from toggle state */
+							if ( Abs ( transition-transition2) % 2 ) { 
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*kappa*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*kappa*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+							}
+							else {
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := t*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := t*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+							}
+						}
+					}
+				} /* end of synonymous subs */
+				else { /* non synonymous */
+					if ( ( _Genetic_Code [ h ] != i ) && ( _Genetic_Code [ v ] != i ) ) { /* not a toggle state */
+						if ( ( OneStepStates [ h ][ i ] == 1 ) || ( OneStepStates [ v ][ i ] == 1 ) ) { /* one step states get (1-k1)*k2 multipliers on target codon frequencies */
+							if ( ( OneStepStates [ h ][ i ] == 1 ) && ( OneStepStates [ v ][ i ] == 1 ) ) { /* vert and h get multiplier */
+								if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+									ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c_alt*t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" );  
+									ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c_alt*t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+								}
+								else { /* transition */
+									ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c_alt*t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c_alt*t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+								}
+							}
+							else {
+								if ( OneStepStates [ h ][ i ] == 1 ) { /* one step state codon is on horizontal, therefore horizontal target gets multiplier */
+									if ( Abs ( transition-transition2) % 2 ) {  /* transversion */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c_alt*t*kappa*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c_alt*t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									}
+									else { /* transition */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c_alt*t*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c_alt*t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+									}
+								}
+								if ( OneStepStates [ v ][ i ] == 1 ) { /* one step state codon is on vertical, therefore vertical target gets multiplier */
+									if ( Abs ( transition-transition2) % 2 ) { /* transversion */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c_alt*t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); 
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c_alt*t*kappa*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+									}	
+									else { /* transition */
+										ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c_alt*t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" );  
+										ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c_alt*t*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" ); 
+									}
+								}
+							}
+						}
+						else { /* target codons are multiple steps from toggle state */
+							if ( Abs ( transition-transition2) % 2 ) { 
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c_alt*t*kappa*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c_alt*t*kappa*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+							}
+							else {
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := c_alt*t*" + EFV [v-vshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := c_alt*t*" + EFV [h-hshift] + "*((1-k1)*(1-k2))/" + kweights [ i ][ 2 ] + ";" );
+							}
+						}
+					}
+					else { /* non-syn to/away from toggle state */
+						if ( _Genetic_Code [ h ] == i ) { /* consensus is on horizontal */
+							if ( Abs ( transition-transition2) % 2 ) { 
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := rho_alt*t*kappa*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); /*away*/
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := rho_alt*t*kappa*" + EFV [h-hshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+							}
+							else {
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := rho_alt*t*" + EFV [v-vshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); /*away*/
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := rho_alt*t*" + EFV [h-hshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+							}
+						}
+						if ( _Genetic_Code [ v ] == i ) { /* consensus is on vertical */
+							if ( Abs ( transition-transition2) % 2 ) { 
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := rho_alt*t*kappa*" + EFV [v-vshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" ); /*to*/
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := rho_alt*t*kappa*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); /*away*/
+							}
+							else {
+								ExecuteCommands ( "AATransMatrix"+i+"[ h-hshift ][ v-vshift ] := rho_alt*t*" + EFV [v-vshift] + "*(k1)/" + kweights [ i ][ 0 ] + ";" );  /*to*/
+								ExecuteCommands ( "AATransMatrix"+i+"[ v-vshift ][ h-hshift ] := rho_alt*t*" + EFV [h-hshift] + "*(((1-k1)*k2))/" + kweights [ i ][ 1 ] + ";" ); /*away*/
+							}
+						}
+					}
+				} /* end of non-syn */
+			} /* end of if one nucleotide mutation */
+		}
+	}
+	return 0;
+}
+
+function ReceiveJobs ( null )	/*Modified from NielsenYang.bf */
+{
+	
+	MPIReceive (-1, fromNode, result_String);
+	timer2     = MPINodeState[fromNode-1][1];
+	
+	MPINodeState[fromNode-1][0] = 0;
+	MPINodeState[fromNode-1][1] = 0;
+	
+	ExecuteCommands (result_String);
+	return fromNode;
+}
+
+/* end of functions */
