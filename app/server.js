@@ -43,9 +43,11 @@ io.sockets.on('connection', function (socket) {
 
   // A job has been spawned by datamonkey, let's go to work
   ss(socket).on('spawn', function (stream, params) {
-    //Check param type
+
     if(params.job.type) {
+
       switch(params.job.type) {
+
         case 'hivtrace':
           hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
           break;
@@ -55,11 +57,14 @@ io.sockets.on('connection', function (socket) {
         default:
           socket.emit('error', 'type not recognized');
           socket.disconnect();
+
       }
+
     } else {
       socket.emit('error', 'analysis type not supplied');
       socket.disconnect();
     }
+
   });
   
   // Log which user disconnected

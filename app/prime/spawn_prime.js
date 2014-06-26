@@ -34,9 +34,7 @@ var spawn = require('child_process').spawn,
     Tail = require('tail').Tail,
     EventEmitter = require('events').EventEmitter;
 
-
 var DoPrimeAnalysis = function () {};
-
 util.inherits(DoPrimeAnalysis, EventEmitter);
 
 /**
@@ -44,11 +42,10 @@ util.inherits(DoPrimeAnalysis, EventEmitter);
  * sends updates to.
  */
 DoPrimeAnalysis.prototype.status_watcher = function () {
-
   self = this;
   fs.openSync(self.progress_fn, 'w')
   fs.watch(self.progress_fn, function(e, filename) { 
-    console.log(e);
+    //console.log(e);
     fs.readFile(self.progress_fn, 'utf8', function (err,data) {
       if(data) {
         try {
@@ -101,7 +98,7 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
-      console.log('stderr: ' + data);
+      //console.log('stderr: ' + data);
     });
 
     qsub.stdout.on('data', function (data) {
@@ -131,4 +128,3 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
 }
 
 exports.DoPrimeAnalysis = DoPrimeAnalysis;
-

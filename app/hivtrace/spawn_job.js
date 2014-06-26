@@ -37,7 +37,6 @@ var spawn = require('child_process').spawn,
 
 
 var DoHivTraceAnalysis = function () {};
-
 util.inherits(DoHivTraceAnalysis, EventEmitter);
 
 /**
@@ -57,14 +56,12 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
           if (err) throw err;
           self.emit('completed');
         } else {
-          self.emit('dispatch file', { id : self.id, fn : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
+          self.emit('dispatch file', { id : self.id, fn : path.basename(self.lanl_output_cluster_output), fp : self.lanl_output_cluster_output, type : 'lanl_trace_results', cb : function (err) {
             if (err) throw err;
             self.emit('completed');
           }});
         }
       }});
-
-      
     } else if (data.indexOf('Error: ') != -1) {
       // There was an error while performing x. 
       self.emit('error', {error: data});
@@ -112,7 +109,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   // qsub_submit.sh
   var qsub_submit = function () {
 
-    var qsub =  spawn('qsub', 
+    var qsub =  spawn('qsub',
                          ['-v',
                           'fn='+self.filepath+
                           ',python='+self.python+

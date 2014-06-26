@@ -7,6 +7,7 @@ hpout
 
 #Ignore spool
 spool/
+app/node_modules/
 
 # Compiled Object files
 *.slo

@@ -395,7 +395,7 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
 def main():
     parser = argparse.ArgumentParser(description='HIV TRACE')
 
-    parser.add_argument('-i', '--input', help='Input CSV file with inferred genetic links (or stdin if omitted). Must be a CSV file with three columns: ID1,ID2,distance.')
+    parser.add_argument('-i', '--input', help='FASTA file')
     parser.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     parser.add_argument('-m', '--minoverlap', help='Minimum Overlap')
     parser.add_argument('-c', '--compare', help='Compare to LANL', action='store_true')
