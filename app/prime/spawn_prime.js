@@ -45,13 +45,12 @@ DoPrimeAnalysis.prototype.status_watcher = function () {
   self = this;
   fs.openSync(self.progress_fn, 'w')
   fs.watch(self.progress_fn, function(e, filename) { 
-    //console.log(e);
     fs.readFile(self.progress_fn, 'utf8', function (err,data) {
       if(data) {
         try {
           new_status = JSON.parse(data)
           if(new_status) {
-            self.emit('status update', new_status);
+            self.emit('status update', {'phase': self.status_stack[1], 'msg': new_status});
           }
         } catch(e) {
         }
@@ -119,7 +118,7 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_prime = function(stream, prime_params) {
-    self.emit('status update', {status_update: self.status_stack[0]});
+    self.emit('status update', {'phase': self.status_stack[0], 'msg': ''});
     qsub_submit();
   }
 

@@ -21,3 +21,8 @@ app/node_modules/
 *.lai
 *.la
 *.a
+*.sh.*
+*Test*
+*Full model*
+__pycache__
+config.json

@@ -47,7 +47,6 @@ io.sockets.on('connection', function (socket) {
     if(params.job.type) {
 
       switch(params.job.type) {
-
         case 'hivtrace':
           hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
           break;
@@ -61,8 +60,10 @@ io.sockets.on('connection', function (socket) {
       }
 
     } else {
+
       socket.emit('error', 'analysis type not supplied');
       socket.disconnect();
+
     }
 
   });

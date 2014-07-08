@@ -72,7 +72,7 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
           self.emit('tn93 summary', {summary: String(data)});
         }) 
       }
-      self.emit('status update', data);
+      self.emit('status update', {'phase' : data, 'msg': data} );
     }
   });
 }
@@ -145,7 +145,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_hivcluster = function(hiv_cluster_params) {
-    self.emit('status update', {status_update: self.status_stack[0]});
+    self.emit('status update', {status_update: {'phase' : self.status_stack[0], 'msg' : self.status_stack[0]}});
     qsub_submit();
   }
 
