@@ -128,8 +128,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
     });
 
     qsub.stdout.on('data', function (data) {
-      // Could not start job
-      self.emit('job created',{'torque_id': String(data).replace(/\n$/, '')});
+      //self.emit('job created', {'torque_id': String(data).replace(/\n$/, '')} );
     });
 
     qsub.on('close', function (code) {
@@ -145,7 +144,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_hivcluster = function(hiv_cluster_params) {
-    self.emit('status update', {status_update: {'phase' : self.status_stack[0], 'msg' : self.status_stack[0]}});
+    self.emit('status update', {'phase' : self.status_stack[0], 'msg' : self.status_stack[0]});
     qsub_submit();
   }
 

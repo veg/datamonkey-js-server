@@ -101,7 +101,6 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
     });
 
     qsub.stdout.on('data', function (data) {
-      // Could not start job
       self.emit('job created', {'torque_id': String(data).replace(/\n$/, '')} );
     });
 
