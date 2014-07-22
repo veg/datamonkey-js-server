@@ -50,6 +50,12 @@ DoPrimeAnalysis.prototype.status_watcher = function () {
         try {
           new_status = JSON.parse(data)
           if(new_status) {
+
+            fs.writeFile('/home/sweaver/prime/' + self.id + '' + new Date().getTime() + '.progress.json', data, function (err) {
+              if (err) throw err;
+                //console.log('It\'s saved!');
+            });
+
             self.emit('status update', {'phase': self.status_stack[1], 'msg': new_status});
           }
         } catch(e) {
@@ -65,6 +71,8 @@ DoPrimeAnalysis.prototype.status_watcher = function () {
  * Emit events that are being listened for by ./server.js
  */
 DoPrimeAnalysis.prototype.start = function (prime_params) {
+
+  console.log(prime_params);
 
   var self = this;
   self.id = prime_params.analysis._id;

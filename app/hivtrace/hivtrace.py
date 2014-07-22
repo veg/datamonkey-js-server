@@ -245,8 +245,8 @@ def annotate_attributes(trace_json_fn, attributes):
     return
 
 
-def hivtrace(input, threshold, min_overlap, compare_to_lanl,
-             status_file, config):
+def hivtrace(input, reference, ambiguities, threshold, min_overlap,
+             compare_to_lanl, status_file, config, fraction=1.0):
 
     """
     PHASE 1)  Pad sequence alignment to HXB2 length with bealign
@@ -275,11 +275,11 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     DEFAULT_DELIMITER=config.get('default_delimiter')
 
     #Convert to Python
-    REFERENCE='HXB2_prrt'
+    #REFERENCE='HXB2_prrt'
     SCORE_MATRIX='HIV_BETWEEN_F'
     OUTPUT_FORMAT='csv'
     SEQUENCE_ID_FORMAT='plain'
-    AMBIGUITY_HANDLING='average'
+    #AMBIGUITY_HANDLING='average'
 
     BAM_FN=input+'_output.bam'
     OUTPUT_FASTA_FN=input+'_output.fasta'
@@ -299,7 +299,7 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
 
     # PHASE 1
     update_status("Aligning", status_file)
-    subprocess.check_call([PYTHON, BEALIGN, '-r', REFERENCE, '-m', SCORE_MATRIX,
+    subprocess.check_call([PYTHON, BEALIGN, '-r', reference , '-m', SCORE_MATRIX,
                            '-R', input, BAM_FN], stdout=DEVNULL)
 
     # PHASE 2
@@ -314,10 +314,18 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     # PHASE 3
     update_status("TN93 Analysis", status_file)
     tn93_fh = open(JSON_TN93_FN, 'w')
-    subprocess.check_call([TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
-                           threshold, '-a', AMBIGUITY_HANDLING, '-l',
-                           min_overlap, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN],
-                           stdout=tn93_fh)
+
+    if(ambiguities != 'resolve'):
+        subprocess.check_call([TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
+                               threshold, '-a', ambiguities, '-l',
+                               min_overlap, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN],
+                               stdout=tn93_fh)
+    else:
+        subprocess.check_call([TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
+                               threshold, '-a', ambiguities, '-l',
+                               min_overlap, '-g', fraction, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN],
+                               stdout=tn93_fh)
+
     tn93_fh.close()
 
     id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
@@ -328,10 +336,18 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
     # PHASE 3b
     # Flag HXB2 linked sequences
     tn93_hxb2_fh = open(JSON_HXB2_TN93_FN, 'w')
-    subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
-                           threshold, '-a', AMBIGUITY_HANDLING, '-l',
-                           min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
-                           OUTPUT_FASTA_FN], stdout=tn93_hxb2_fh)
+
+    if ambiguities != 'resolve':
+        subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
+                               threshold, '-a', ambiguities, '-l',
+                               min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
+                               OUTPUT_FASTA_FN], stdout=tn93_hxb2_fh)
+    else:
+        subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
+                               threshold, '-a', ambiguities, '-g', fraction, '-l',
+                               min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
+                               OUTPUT_FASTA_FN], stdout=tn93_hxb2_fh)
+
     tn93_hxb2_fh.close()
 
     # PHASE 4
@@ -354,10 +370,19 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
       # PHASE 5
 
       update_status("Public Database TN93 Analysis", status_file)
-      subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
-                             threshold, '-a', AMBIGUITY_HANDLING,
-                             '-f', OUTPUT_FORMAT, '-l', min_overlap, '-s',
-                             OUTPUT_FASTA_FN, LANL_FASTA], stdout=DEVNULL)
+
+      if ambiguities != 'resolve':
+          subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
+                                 threshold, '-a', ambiguities,
+                                 '-f', OUTPUT_FORMAT, '-l', min_overlap, '-s',
+                                 OUTPUT_FASTA_FN, LANL_FASTA], stdout=DEVNULL)
+      else:
+          subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
+                                 threshold, '-a', ambiguities,
+                                 '-f', OUTPUT_FORMAT, '-g', fraction, '-l',
+                                 min_overlap, '-s', OUTPUT_FASTA_FN,
+                                 LANL_FASTA], stdout=DEVNULL)
+
 
       #Perform concatenation
       #This is where reference annotation becomes an issue
@@ -393,11 +418,14 @@ def hivtrace(input, threshold, min_overlap, compare_to_lanl,
 
 
 def main():
-    parser = argparse.ArgumentParser(description='HIV TRACE')
 
+    parser = argparse.ArgumentParser(description='HIV TRACE')
     parser.add_argument('-i', '--input', help='FASTA file')
+    parser.add_argument('-a', '--ambiguities', help='handle ambiguous nucleotides using the specified strategy')
+    parser.add_argument('-r', '--reference', help='reference to align to')
     parser.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     parser.add_argument('-m', '--minoverlap', help='Minimum Overlap')
+    parser.add_argument('-g', '--fraction', help='Fraction')
     parser.add_argument('-c', '--compare', help='Compare to LANL', action='store_true')
     parser.add_argument('--config', help='Path to alternate config file')
 
@@ -414,13 +442,14 @@ def main():
 
     FN=args.input
     ID=os.path.basename(FN)
+    REFERENCE =args.reference
+    AMBIGUITY_HANDLING=args.ambiguities.lower()
     DISTANCE_THRESHOLD=args.threshold
     MIN_OVERLAP=args.minoverlap
     COMPARE_TO_LANL=args.compare
+    FRACTION=args.fraction
     STATUS_FILE=FN+'_status'
-
-    hivtrace(FN, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config)
+    hivtrace(FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION)
 
 if __name__ == "__main__":
     main()
-
