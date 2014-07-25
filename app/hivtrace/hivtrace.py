@@ -31,6 +31,7 @@ import csv
 import os
 from itertools import chain
 import json
+import logging
 
 def update_status(status, status_file):
     with open(status_file, 'a') as status_f:
@@ -253,12 +254,10 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
     PHASE 2)  Convert resulting bam file back to FASTA format
     PHASE 2b) Rename any duplicates in FASTA file
     PHASE 3)  Do a tn93 analysis on the supplied FASTA file alone
-    PHASE 3b) Flag potential HXB2 sequences
     PHASE 4)  Run hivclustercsv to return clustering information in json format
     PHASE 4b) Do all attribute annotations to the results from (4)
     PHASE 5)  Run tn93 against LANL if user elects to
-    PHASE 5b) Flag any potential HXB2 sequences
-    PHASE 5c) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
+    PHASE 5b) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
     PHASE 6)  Run hivclustercsv to return clustering information in json format
     """
 
@@ -299,12 +298,15 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
 
     # PHASE 1
     update_status("Aligning", status_file)
-    subprocess.check_call([PYTHON, BEALIGN, '-r', reference , '-m', SCORE_MATRIX,
-                           '-R', input, BAM_FN], stdout=DEVNULL)
+    bealign_process = [PYTHON, BEALIGN, '-r', reference , '-m', SCORE_MATRIX, '-R', input, BAM_FN]
+    subprocess.check_call(bealign_process, stdout=DEVNULL)
+    logging.debug(' '.join(bealign_process))
 
     # PHASE 2
     update_status("Converting to FASTA", status_file)
-    subprocess.check_call([PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN], stdout=DEVNULL)
+    bam_process = [PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN]
+    subprocess.check_call(bam_process, stdout=DEVNULL)
+    logging.debug(' '.join(bam_process))
 
     # Ensure unique ids
     # Just warn of duplicates (by giving them an attribute)
@@ -315,16 +317,19 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
     update_status("TN93 Analysis", status_file)
     tn93_fh = open(JSON_TN93_FN, 'w')
 
+
     if(ambiguities != 'resolve'):
-        subprocess.check_call([TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
+        tn93_process = [TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
                                threshold, '-a', ambiguities, '-l',
-                               min_overlap, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN],
-                               stdout=tn93_fh)
+                               min_overlap, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
+
     else:
-        subprocess.check_call([TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
+        tn93_process = [TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
                                threshold, '-a', ambiguities, '-l',
-                               min_overlap, '-g', fraction, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN],
-                               stdout=tn93_fh)
+                               min_overlap, '-g', fraction, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
+
+    subprocess.check_call(tn93_process,stdout=tn93_fh)
+    logging.debug(' '.join(tn93_process))
 
     tn93_fh.close()
 
@@ -333,37 +338,39 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
         update_status("Error: " + id_dict.args[0], status_file)
         raise id_dict
 
-    # PHASE 3b
-    # Flag HXB2 linked sequences
-    tn93_hxb2_fh = open(JSON_HXB2_TN93_FN, 'w')
+    ## PHASE 3b
+    ## Flag HXB2 linked sequences
+    #tn93_hxb2_fh = open(JSON_HXB2_TN93_FN, 'w')
 
-    if ambiguities != 'resolve':
-        subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
-                               threshold, '-a', ambiguities, '-l',
-                               min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
-                               OUTPUT_FASTA_FN], stdout=tn93_hxb2_fh)
-    else:
-        subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
-                               threshold, '-a', ambiguities, '-g', fraction, '-l',
-                               min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
-                               OUTPUT_FASTA_FN], stdout=tn93_hxb2_fh)
+    #if ambiguities != 'resolve':
+    #    subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
+    #                           threshold, '-a', ambiguities, '-l',
+    #                           min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
+    #                           OUTPUT_FASTA_FN], stdout=tn93_hxb2_fh)
+    #else:
+    #    subprocess.check_call([TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
+    #                           threshold, '-a', ambiguities, '-g', fraction, '-l',
+    #                           min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
+    #                           OUTPUT_FASTA_FN], stdout=tn93_hxb2_fh)
 
-    tn93_hxb2_fh.close()
+    #tn93_hxb2_fh.close()
 
     # PHASE 4
     update_status("HIV Network Analysis", status_file)
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
-    subprocess.check_call([PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
-                           threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
-                           'report'], stdout=output_cluster_json_fh)
 
+    hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
+                               threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
+                               'report']
+
+    subprocess.check_call(hivnetworkcsv_process, stdout=output_cluster_json_fh)
+    logging.debug(' '.join(hivnetworkcsv_process))
     output_cluster_json_fh.close()
 
     # Add hxb2_link attribute to each node that is shown to be linked by way of
     # PHASE 3b
-    annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
-
-    annotate_attributes(OUTPUT_CLUSTER_JSON, id_dict)
+    #annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
+    #annotate_attributes(OUTPUT_CLUSTER_JSON, id_dict)
 
     if compare_to_lanl:
 
@@ -372,18 +379,23 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
       update_status("Public Database TN93 Analysis", status_file)
 
       if ambiguities != 'resolve':
-          subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
+          lanl_tn93_process = [TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
                                  threshold, '-a', ambiguities,
                                  '-f', OUTPUT_FORMAT, '-l', min_overlap, '-s',
-                                 OUTPUT_FASTA_FN, LANL_FASTA], stdout=DEVNULL)
+                                 OUTPUT_FASTA_FN, LANL_FASTA]
       else:
-          subprocess.check_call([TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
-                                 threshold, '-a', ambiguities,
-                                 '-f', OUTPUT_FORMAT, '-g', fraction, '-l',
-                                 min_overlap, '-s', OUTPUT_FASTA_FN,
-                                 LANL_FASTA], stdout=DEVNULL)
+          lanl_tn93_process = [TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
+                               threshold, '-a', ambiguities,
+                               '-f', OUTPUT_FORMAT, '-g', fraction, '-l',
+                               min_overlap, '-s', OUTPUT_FASTA_FN,
+                               LANL_FASTA]
 
 
+      subprocess.check_call(lanl_tn93_process, stdout=DEVNULL)
+      logging.debug(' '.join(lanl_tn93_process))
+
+
+      # PHASE 5b
       #Perform concatenation
       #This is where reference annotation becomes an issue
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
@@ -397,12 +409,12 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
       # PHASE 6
       update_status("Public Database HIV Network Analysis", status_file)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
+      lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
+                                    threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
+                                    'report', '-k', USER_FILTER_LIST]
 
-
-      subprocess.check_call([PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
-                            threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
-                            'report', '-k', USER_FILTER_LIST],
-                            stdout=lanl_output_cluster_json_fh)
+      subprocess.check_call(lanl_hivnetworkcsv_process, stdout=lanl_output_cluster_json_fh)
+      logging.debug(' '.join(lanl_hivnetworkcsv_process))
 
       lanl_output_cluster_json_fh.close()
 

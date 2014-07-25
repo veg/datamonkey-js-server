@@ -38,6 +38,9 @@ import re
 import csv
 import argparse
 import testconfig
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 class TestHIVTrace(unittest.TestCase):
 
@@ -53,6 +56,12 @@ class TestHIVTrace(unittest.TestCase):
     self.output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
     self.output_usertolanl_tn93_fn=self.fn+'_USERTOLANL.TN93OUTPUT.CSV'
     self.hxb2_linked_fn = self.fn+'_user.hxb2linked.csv'
+
+    self.no_compare_steps = [ 'Aligning',
+      'Converting to FASTA',
+      'TN93 Analysis',
+      'HIV Network Analysis',
+      'Completed']
 
     self.steps = [ 'Aligning',
       'Converting to FASTA',
@@ -223,13 +232,30 @@ class TestHIVTrace(unittest.TestCase):
     #assert that we went through all the steps
     self.assertTrue(set(statuses) == set(self.steps))
 
-    #check to make sure that there was at least one hxb2
-    with open(self.hxb2_linked_fn, 'r') as hxb2_fh:
-      hxb2 = [s.strip() for s in hxb2_fh.readlines()]
+    return
 
-    self.assertTrue(len(hxb2) == 2)
+  def test_env(self):
+
+    self.compare_to_lanl = True
+
+    self.env_fn   = './res/HIV1_ALL_2013_env_DNA.fasta'
+    self.status_file=self.env_fn+'_status'
+    self.reference='HXB2_env'
+
+    #run the whole thing and make sure it completed via the status file
+    hivtrace.hivtrace(self.env_fn, self.reference, self.ambiguities,
+                      self.distance_threshold, self.min_overlap,
+                      False, self.status_file, self.config, '0.015')
+
+    #read status file and ensure that it has all steps
+    with open(self.status_file, 'r') as status_file:
+      statuses = [s.strip() for s in status_file.readlines()]
+
+    #assert that we went through all the steps
+    self.assertTrue(set(statuses) == set(self.no_compare_steps))
 
     return
 
 if __name__ == '__main__':
   unittest.main()
+
