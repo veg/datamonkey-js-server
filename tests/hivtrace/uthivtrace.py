@@ -81,10 +81,10 @@ class TestHIVTrace(unittest.TestCase):
 
   def tearDown(self):
       #Reset all test files and remove generated files
-      devnull = open(os.devnull, 'w')
-      subprocess.check_call(['git', 'clean', '-f', './res/'], stdout=devnull)
-      subprocess.check_call(['git', 'checkout', '-f', './res/*'], stdout=devnull)
-      devnull.close()
+      #devnull = open(os.devnull, 'w')
+      #subprocess.check_call(['git', 'clean', '-f', './res/'], stdout=devnull)
+      #subprocess.check_call(['git', 'checkout', '-f', './res/*'], stdout=devnull)
+      #devnull.close()
       return
 
   def test_flag_duplicates(self):
@@ -103,6 +103,18 @@ class TestHIVTrace(unittest.TestCase):
                               self.lanl_tn93output_csv,
                               self.output_usertolanl_tn93_fn,
                               self.output_tn93_fn)
+
+    #Check that there are five test_ids
+    with open(self.user_lanl_tn93output, 'r') as fasta_f:
+      length = len(fasta_f.readlines())
+      self.assertTrue(length == 787243)
+    return
+
+  def test_annotate_lanl(self):
+    self.fn   = './res/INPUT.FASTA'
+    LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
+    hivtrace.annotate_lanl(LANL_OUTPUT_CLUSTER_JSON,
+                              self.config.get('lanl_fasta'))
 
     #Check that there are five test_ids
     with open(self.user_lanl_tn93output, 'r') as fasta_f:
@@ -217,6 +229,7 @@ class TestHIVTrace(unittest.TestCase):
 
   def test_whole_stack(self):
 
+    self.fn   = './res/INPUT.FASTA'
     self.compare_to_lanl = True
     self.status_file=self.fn+'_status'
 

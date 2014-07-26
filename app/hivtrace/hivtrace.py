@@ -32,6 +32,7 @@ import os
 from itertools import chain
 import json
 import logging
+from Bio import SeqIO
 
 def update_status(status, status_file):
     with open(status_file, 'a') as status_f:
@@ -82,12 +83,12 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
     shutil.copyfile(reference_fn, output)
 
     with open(output, 'a') as f:
-        fwriter = csv.writer(f, delimiter=',', quotechar='|')
+        fwriter = csv.writer(f, delimiter=',')
         prependid = lambda x : [x[0], x[1], x[2]]
         # Read pairwise results
         #tail -n+2 OUTPUT_USERTOLANL_TN93_FN >> USER_LANL_TN93OUTPUT
         with open(pairwise_fn) as pairwise_f:
-            preader = csv.reader(pairwise_f, delimiter=',', quotechar='|')
+            preader = csv.reader(pairwise_f, delimiter=',')
             preader.__next__()
             rows = [prependid(row) for row in preader]
             fwriter.writerows(rows)
@@ -96,7 +97,7 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
         #tail -n+2 OUTPUT_TN93_FN >> USER_LANL_TN93OUTPUT
         prependuid = lambda x : [x[0], x[1], x[2]]
         with open(user_fn) as user_f:
-            ureader = csv.reader(user_f, delimiter=',', quotechar='|')
+            ureader = csv.reader(user_f, delimiter=',')
             ureader.__next__()
             rows = [prependuid(row) for row in ureader]
             fwriter.writerows(rows)
@@ -236,6 +237,30 @@ def annotate_attributes(trace_json_fn, attributes):
         try:
           [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
           #TODO Raise error if cannot annotate
+          with open(trace_json_cp_fn, 'w') as copy_f:
+              json.dump(trace_json, copy_f)
+        except:
+          return
+
+    shutil.move(trace_json_cp_fn, trace_json_fn)
+
+    return
+
+def annotate_lanl(trace_json_fn, lanl_file):
+    '''
+    Annotate attributes created from id_to_attributes to hivclustercsv results
+    for easy parsing in JavaScript
+    '''
+
+    trace_json_cp_fn = trace_json_fn + '.tmp'
+    lanl = SeqIO.parse(open(lanl_file, 'r'), 'fasta')
+    lanl_ids = [r.id for r in lanl]
+
+    with open(trace_json_fn) as json_fh:
+        trace_json = json.loads(json_fh.read())
+        nodes = trace_json.get('Nodes')
+        try:
+          [node.update({'is_lanl' : str(node["id"] in lanl_ids).lower() }) for node in nodes]
           with open(trace_json_cp_fn, 'w') as copy_f:
               json.dump(trace_json, copy_f)
         except:
@@ -401,7 +426,7 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
                        OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN)
 
-      lanl_id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
+      #lanl_id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
 
       # Create a list from TN93 csv for hivnetworkcsv filter
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
@@ -423,7 +448,10 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
       #lanl_annotate_with_hxb2(HXB2_LINKED_LANL, USER_LANL_TN93OUTPUT, threshold)
 
       # Adapt ids to attributes
-      annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
+      #annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
+
+      #Annotate LANL nodes with id
+      annotate_lanl(LANL_OUTPUT_CLUSTER_JSON, LANL_FASTA)
 
     DEVNULL.close()
     update_status("Completed", status_file)
