@@ -147,11 +147,11 @@ class TestHIVTrace(unittest.TestCase):
 
     # Ensure test subjects have hxb2 attribute
     test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
-    [self.assertTrue(node.get('hxb2_linked')) for node in test_subject_nodes]
+    [self.assertTrue(node.get('hxb2_linked'), 'true') for node in test_subject_nodes]
 
     # Ensure the others have not been discriminated
     non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
-    [self.assertFalse(node.get('hxb2_linked')) for node in non_test_subject_nodes]
+    [self.assertEqual(node.get('hxb2_linked'), 'false') for node in non_test_subject_nodes]
 
     return
 
