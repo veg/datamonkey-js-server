@@ -147,7 +147,7 @@ class TestHIVTrace(unittest.TestCase):
 
     # Ensure test subjects have hxb2 attribute
     test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
-    [self.assertTrue(node.get('hxb2_linked'), 'true') for node in test_subject_nodes]
+    [self.assertEqual(node.get('hxb2_linked'), 'true') for node in test_subject_nodes]
 
     # Ensure the others have not been discriminated
     non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
@@ -157,9 +157,10 @@ class TestHIVTrace(unittest.TestCase):
 
   def test_lanl_annotate_with_hxb2(self):
 
+    self.fn = './res/INPUT.FASTA'
     HXB2_LINKED_LANL=self.config.get('hxb2_linked_lanl')
     LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
-    DISTANCE_THRESHOLD = '.015'
+    DISTANCE_THRESHOLD = '.025'
 
     hivtrace.lanl_annotate_with_hxb2(HXB2_LINKED_LANL,
                                      LANL_OUTPUT_CLUSTER_JSON,
@@ -170,16 +171,15 @@ class TestHIVTrace(unittest.TestCase):
 
     nodes = lanl_hivcluster_json.get('Nodes')
 
-    test_subjects = ['B_FR_K03455_1983']
+    test_subjects = ['B|JP|D21166|-']
 
     # Ensure test subjects have hxb2 attribute
     test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
-    print(test_subject_nodes)
-    [self.assertTrue(node.get('hxb2_linked')) for node in test_subject_nodes]
+    [self.assertEqual(node.get('hxb2_linked'), 'true') for node in test_subject_nodes]
 
     # Ensure the others have not been discriminated
     non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
-    [self.assertFalse(node.get('hxb2_linked')) for node in non_test_subject_nodes]
+    [self.assertEqual(node.get('hxb2_linked'), 'false') for node in non_test_subject_nodes]
 
     return
 
@@ -237,7 +237,7 @@ class TestHIVTrace(unittest.TestCase):
     #run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(self.fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      self.compare_to_lanl, self.status_file, self.config, '0.015')
+                      self.compare_to_lanl, self.status_file, self.config, '0.025')
 
     #read status file and ensure that it has all steps
     with open(self.status_file, 'r') as status_file:

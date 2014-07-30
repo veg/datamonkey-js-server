@@ -168,12 +168,12 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
 
     # Read hxb2 from generate lanl file
     with open(lanl_hxb2_fn) as lanl_hxb2_fh:
-        lanl_hxb2_reader = csv.reader(lanl_hxb2_fh, delimiter=',', quotechar='|')
+        lanl_hxb2_reader = csv.reader(lanl_hxb2_fh, delimiter=',')
         lanl_hxb2_reader.__next__()
 
         #filter hxb2 links based on threshold
-        lanl_hxb2_links = list(filter(lambda x: x[2]<threshold, lanl_hxb2_reader))
-        lanl_hxb2_links = [l[0] for l in lanl_hxb2_links]
+        lanl_hxb2_links = list(filter(lambda x: float(x[2]) < float(threshold), lanl_hxb2_reader))
+        lanl_hxb2_links = [l[1] for l in lanl_hxb2_links]
 
     # Load hivcluster json
     with open(lanl_hivcluster_json_fn) as lanl_hivcluster_json_fh:
@@ -182,9 +182,9 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
     nodes = lanl_json.get('Nodes')
 
     #for each link in hxb2, get id in json object and add attribute
-    ids = filter(lambda x: x['id'] in lanl_hxb2_links, nodes)
-
-    [id.update({'hxb2_linked': True}) for id in ids]
+    ids = list(filter(lambda x: x['id'] in lanl_hxb2_links, nodes))
+    [id.update({'hxb2_linked': 'true'}) for id in ids]
+    print(ids)
 
     #Save nodes to file
     with open(lanl_hivcluster_json_fn, 'w') as json_fh:
@@ -450,6 +450,7 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
       # Add hxb2_link attribute to each lanl node that is shown to be linked based
       # off a supplied file, but based on the user supplied threshold.
       annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, LANL_OUTPUT_CLUSTER_JSON)
+      lanl_annotate_with_hxb2(HXB2_LINKED_LANL, LANL_OUTPUT_CLUSTER_JSON, threshold)
 
       # Adapt ids to attributes
       #annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
