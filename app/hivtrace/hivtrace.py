@@ -24,6 +24,7 @@
 #  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 #  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+import redis
 import subprocess
 import shutil
 import argparse
@@ -34,9 +35,31 @@ import json
 import logging
 from Bio import SeqIO
 
-def update_status(status, status_file):
-    with open(status_file, 'a') as status_f:
-        status_f.write(status + '\n')
+POOL = redis.ConnectionPool(host='192.168.0.2', port=6379, db=0)
+
+def update_status(id, phase, msg = ""):
+
+    my_server = redis.Redis(connection_pool=POOL)
+
+    msg = {
+      'type'  : 'status update',
+      'phase' : phase,
+      'msg'   : msg
+    }
+
+    my_server.publish(id, json.dumps(msg))
+
+def completed(id):
+
+    my_server = redis.Redis(connection_pool=POOL)
+
+    msg = {
+      'type'  : 'completed'
+    }
+
+    my_server.publish(id, json.dumps(msg))
+
+
 
 def rename_duplicates(fasta_fn, delimiter):
     """
@@ -272,7 +295,7 @@ def annotate_lanl(trace_json_fn, lanl_file):
     return
 
 
-def hivtrace(input, reference, ambiguities, threshold, min_overlap,
+def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
              compare_to_lanl, status_file, config, fraction=1.0):
 
     """
@@ -295,18 +318,16 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
     BAM2MSA=config.get('bam2msa')
     TN93DIST=config.get('tn93dist')
     HIVNETWORKCSV=config.get('hivnetworkcsv')
-    LANL_FASTA=config.get('lanl_fasta')
-    LANL_TN93OUTPUT_CSV=config.get('lanl_tn93output_csv')
-    HXB2_FASTA=config.get('hxb2_fasta')
-    HXB2_LINKED_LANL=config.get('hxb2_linked_lanl')
-    DEFAULT_DELIMITER=config.get('default_delimiter')
+    LANL_FASTA= os.path.dirname(os.path.realpath(__file__)) + '/res/LANL.FASTA'
+    LANL_TN93OUTPUT_CSV= os.path.dirname(os.path.realpath(__file__)) + '/res/LANL.TN93OUTPUT.csv'
+    HXB2_FASTA= os.path.dirname(os.path.realpath(__file__)) + '/res/HXB2.FASTA'
+    HXB2_LINKED_LANL= os.path.dirname(os.path.realpath(__file__)) + '/res/LANL.HXB2.RESOLVE.csv'
+    DEFAULT_DELIMITER='|'
 
     #Convert to Python
-    #REFERENCE='HXB2_prrt'
     SCORE_MATRIX='HIV_BETWEEN_F'
     OUTPUT_FORMAT='csv'
     SEQUENCE_ID_FORMAT='plain'
-    #AMBIGUITY_HANDLING='average'
 
     BAM_FN=input+'_output.bam'
     OUTPUT_FASTA_FN=input+'_output.fasta'
@@ -325,13 +346,28 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
     DEVNULL = open(os.devnull, 'w')
 
     # PHASE 1
-    update_status("Aligning", status_file)
+    def std_status_update(msg):
+      print(msg)
+
+    current_status = "Aligning"
+    update_status(id, current_status)
     bealign_process = [PYTHON, BEALIGN, '-r', reference , '-m', SCORE_MATRIX, '-R', input, BAM_FN]
     subprocess.check_call(bealign_process, stdout=DEVNULL)
+    #b_process = subprocess.Popen(bealign_process, stdout=subprocess.PIPE)
+    #stdout = []
+    #while True:
+    #    line = str(b_process.stdout.read())
+    #    stdout.append(line)
+    #    update_status(id, current_status, line)
+    #    print(line)
+    #    #print line,
+    #    if line == '' and p.poll() != None:
+    #        break
+
     logging.debug(' '.join(bealign_process))
 
     # PHASE 2
-    update_status("Converting to FASTA", status_file)
+    update_status(id, "Converting to FASTA")
     bam_process = [PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN]
     subprocess.check_call(bam_process, stdout=DEVNULL)
     logging.debug(' '.join(bam_process))
@@ -342,7 +378,7 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
 
     # PHASE 3
-    update_status("TN93 Analysis", status_file)
+    update_status(id, "TN93 Analysis")
     tn93_fh = open(JSON_TN93_FN, 'w')
 
 
@@ -363,7 +399,7 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
 
     id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
     if type(id_dict) is ValueError:
-        update_status("Error: " + id_dict.args[0], status_file)
+        update_status(id, "Error: " + id_dict.args[0])
         raise id_dict
 
     # PHASE 3b
@@ -383,7 +419,7 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
     logging.debug(' '.join(tn93_process))
 
     # PHASE 4
-    update_status("HIV Network Analysis", status_file)
+    update_status(id, "HIV Network Analysis")
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
 
     hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
@@ -405,7 +441,7 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
 
       # PHASE 5
 
-      update_status("Public Database TN93 Analysis", status_file)
+      update_status(id, "Public Database TN93 Analysis")
 
       if ambiguities != 'resolve':
           lanl_tn93_process = [TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
@@ -436,7 +472,7 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
       # PHASE 6
-      update_status("Public Database HIV Network Analysis", status_file)
+      update_status(id, "Public Database HIV Network Analysis")
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
       lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
                                     threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
@@ -459,7 +495,7 @@ def hivtrace(input, reference, ambiguities, threshold, min_overlap,
       annotate_lanl(LANL_OUTPUT_CLUSTER_JSON, LANL_FASTA)
 
     DEVNULL.close()
-    update_status("Completed", status_file)
+    completed(id)
 
 
 def main():
@@ -473,6 +509,7 @@ def main():
     parser.add_argument('-g', '--fraction', help='Fraction')
     parser.add_argument('-c', '--compare', help='Compare to LANL', action='store_true')
     parser.add_argument('--config', help='Path to alternate config file')
+
 
     args = parser.parse_args()
 
@@ -494,7 +531,7 @@ def main():
     COMPARE_TO_LANL=args.compare
     FRACTION=args.fraction
     STATUS_FILE=FN+'_status'
-    hivtrace(FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION)
+    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION)
 
 if __name__ == "__main__":
     main()

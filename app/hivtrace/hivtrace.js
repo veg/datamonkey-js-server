@@ -29,7 +29,6 @@
 
 
 var spawn_job = require('./spawn_job.js'),
-    config = require('../config.json'),
     fs = require('fs'),
     ss = require('socket.io-stream');
 
@@ -80,7 +79,7 @@ var HIVTraceAnalysis = function (socket, stream, params) {
 
 
   // Setup has been completed, run the job with the parameters from datamonkey
-  stream.pipe(fs.createWriteStream(config.output_dir + params._id));
+  stream.pipe(fs.createWriteStream(__dirname + '/output/' + params._id));
   trace_analysis.start(params);
 }
 

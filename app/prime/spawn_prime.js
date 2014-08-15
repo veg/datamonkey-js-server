@@ -80,7 +80,8 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
   self.treemode = prime_params.analysis.treemode;
   self.genetic_code = 0;
   self.posterior_p = prime_params.analysis.posterior_p;
-  self.filepath = config.prime_output_dir + self.id;
+  self.script_basepath = '../../analyses/'
+  self.filepath = self.script_basepath + 'prime/spool/' + self.id;
   self.status_fn = self.filepath + '.status';
   self.progress_fn = self.filepath + '.progress';
   self.prime = config.prime;
@@ -92,7 +93,7 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
     var qsub =  spawn('qsub', 
                          [
                           '-d', 
-                          config.script_basepath + 'prime',
+                          self.script_basepath + 'prime',
                           '-v',
                           'fn='+self.filepath+
                           ',sfn='+self.status_fn+
@@ -101,7 +102,7 @@ DoPrimeAnalysis.prototype.start = function (prime_params) {
                           ',msaid='+self.msaid+
                           ',posterior_p='+self.posterior_p,
                           './prime_submit.sh'], 
-                          { cwd : config.script_basepath + 'prime'});
+                          { cwd : self.script_basepath + 'prime'});
 
     qsub.stderr.on('data', function (data) {
       // Could not start job

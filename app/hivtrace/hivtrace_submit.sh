@@ -33,10 +33,9 @@ REFERENCE=$reference
 DISTANCE_THRESHOLD=$dt
 MIN_OVERLAP=$mo
 COMPARE_TO_LANL=$comparelanl
-HIVTRACE=$hivtrace
 PYTHON=$python
 STATUS_FILE=$fn"_status"
-
+HIVTRACE=$hivtrace
 
 trap 'echo "Error" >> $STATUS_FILE ; do_cleanup failed; exit' ERR
 

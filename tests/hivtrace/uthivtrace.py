@@ -28,7 +28,6 @@ import sys
 import os
 
 sys.path.append(os.getcwd() + '/../../app/hivtrace/')
-print(os.getcwd() + '/../../app/hivtrace/')
 
 import hivtrace
 import subprocess
@@ -39,6 +38,7 @@ import csv
 import argparse
 import testconfig
 import logging
+import redis
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -88,7 +88,7 @@ class TestHIVTrace(unittest.TestCase):
       return
 
   def test_flag_duplicates(self):
-    hivtrace.rename_duplicates(self.fn, self.config.get('default_delimiter'))
+    hivtrace.rename_duplicates(self.fn, '|')
 
     #Check ids
     with open(self.fn, 'r') as fasta_f:
@@ -114,7 +114,7 @@ class TestHIVTrace(unittest.TestCase):
     self.fn   = './res/INPUT.FASTA'
     LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
     hivtrace.annotate_lanl(LANL_OUTPUT_CLUSTER_JSON,
-                              self.config.get('lanl_fasta'))
+                              '../../app/hivtrace/res/LANL.FASTA')
 
     #Check that there are five test_ids
     with open(self.user_lanl_tn93output, 'r') as fasta_f:
@@ -158,7 +158,7 @@ class TestHIVTrace(unittest.TestCase):
   def test_lanl_annotate_with_hxb2(self):
 
     self.fn = './res/INPUT.FASTA'
-    HXB2_LINKED_LANL=self.config.get('hxb2_linked_lanl')
+    HXB2_LINKED_LANL='../../app/hivtrace/res/LANL.HXB2.csv'
     LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
     DISTANCE_THRESHOLD = '.025'
 
@@ -171,7 +171,7 @@ class TestHIVTrace(unittest.TestCase):
 
     nodes = lanl_hivcluster_json.get('Nodes')
 
-    test_subjects = ['B|JP|D21166|-']
+    test_subjects = ['B|JP|D21166|-', 'B_CH_AF077691_9999' ]
 
     # Ensure test subjects have hxb2 attribute
     test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
@@ -187,7 +187,7 @@ class TestHIVTrace(unittest.TestCase):
 
     output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
-    id_dict = hivtrace.id_to_attributes(output_tn93_fn, attribute_map, self.config.get('default_delimiter'))
+    id_dict = hivtrace.id_to_attributes(output_tn93_fn, attribute_map, '|')
 
     #Test that file ids have been changed
     with open(output_tn93_fn, 'r') as output_tn93_f:
@@ -231,11 +231,13 @@ class TestHIVTrace(unittest.TestCase):
   def test_whole_stack(self):
 
     self.fn   = './res/INPUT.FASTA'
+    self.id   = os.path.basename(self.fn)
     self.compare_to_lanl = True
     self.status_file=self.fn+'_status'
 
+
     #run the whole thing and make sure it completed via the status file
-    hivtrace.hivtrace(self.fn, self.reference, self.ambiguities,
+    hivtrace.hivtrace(self.id, self.fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
                       self.compare_to_lanl, self.status_file, self.config, '0.025')
 
@@ -253,11 +255,12 @@ class TestHIVTrace(unittest.TestCase):
     self.compare_to_lanl = True
 
     self.env_fn   = './res/HIV1_ALL_2013_env_DNA.fasta'
+    self.id   = os.path.basename(self.env_fn)
     self.status_file=self.env_fn+'_status'
     self.reference='HXB2_env'
 
     #run the whole thing and make sure it completed via the status file
-    hivtrace.hivtrace(self.env_fn, self.reference, self.ambiguities,
+    hivtrace.hivtrace(self.id, self.env_fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
                       False, self.status_file, self.config, '0.015')
 

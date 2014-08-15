@@ -33,7 +33,9 @@ var spawn = require('child_process').spawn,
     util = require('util'),
     path = require('path'),
     Tail = require('tail').Tail,
-    EventEmitter = require('events').EventEmitter;
+    EventEmitter = require('events').EventEmitter,
+    redis = require('redis');
+
 
 
 var DoHivTraceAnalysis = function () {};
@@ -44,13 +46,18 @@ util.inherits(DoHivTraceAnalysis, EventEmitter);
  * sends updates to.
  */
 DoHivTraceAnalysis.prototype.status_watcher = function () {
-  self = this;
-  tail = new Tail(self.status_fn);
-  tail.on("line", function(data) {
-    // If data reports error, report back to user
-    if(data == 'Completed') {
 
-      var results = {};
+  self = this;
+
+  self.subscriber.on('message', function(channel, message) { 
+
+    var redis_packet = JSON.parse(message);
+
+    if(redis_packet.type != 'completed') {
+
+      self.emit(redis_packet.type, redis_packet); 
+
+    } else {
       self.emit('dispatch file', {id : self.id, fn: path.basename(self.output_cluster_output), fp : self.output_cluster_output, type : 'trace_results', cb : function (err) {
         if(!self.lanl_compare) {
           if (err) throw err;
@@ -62,19 +69,15 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
           }});
         }
       }});
-    } else if (data.indexOf('Error: ') != -1) {
-      // There was an error while performing x. 
-      self.emit('error', {error: data});
-    } else {
-      if (data == "HIV Network Analysis") {
-        //Send TN93 Summary
-        fs.readFile(self.tn93_stdout, function(err, data) {
-          self.emit('tn93 summary', {summary: String(data)});
-        }) 
-      }
-      self.emit('status update', {'phase' : data, 'msg': data} );
     }
   });
+
+  //    if (data == "HIV Network Analysis") {
+  //      //Send TN93 Summary
+  //      fs.readFile(self.tn93_stdout, function(err, data) {
+  //        self.emit('tn93 summary', {summary: String(data)});
+  //      }) 
+  //    }
 }
 
 /**
@@ -85,15 +88,18 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
 DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
 
   var self = this;
+
   var cluster_output_suffix='_user.trace.json',
       lanl_cluster_output_suffix='_lanl_user.trace.json',
       tn93_json_suffix='_user.tn93output.json',
       tn93_csv_suffix='_user.tn93output.csv';
       tn93_lanl_csv_suffix='_user.tn93output.csv';
 
+  self.output_dir  = __dirname + '/output/';
+  self.qsub_script = __dirname + '/hivtrace_submit.sh';
+  self.filepath = self.output_dir + hiv_cluster_params._id;
+  self.hivtrace = __dirname + '/hivtrace.py';
   self.id = hiv_cluster_params._id;
-  self.filepath = config.output_dir + hiv_cluster_params._id;
-  self.hivtrace = config.hivtrace;
   self.python = config.python;
   self.distance_threshold = hiv_cluster_params.distance_threshold;
   self.ambiguity_handling = hiv_cluster_params.ambiguity_handling;
@@ -108,6 +114,8 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   self.tn93_stdout = self.filepath + tn93_json_suffix;
   self.tn93_results = self.filepath + tn93_csv_suffix;
   self.tn93_lanl_results = self.filepath + tn93_csv_suffix;
+  self.subscriber = redis.createClient();
+  self.subscriber.subscribe(self.id);
 
   // qsub_submit.sh
   var qsub_submit = function () {
@@ -123,10 +131,10 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
                           ',reference='+self.reference+
                           ',mo='+self.min_overlap+ 
                           ',comparelanl='+self.lanl_compare,
-                          '-o', config.output_dir,
-                          '-e', config.output_dir, 
-                          config.qsub_script], 
-                          { cwd: config.output_dir });
+                          '-o', self.output_dir,
+                          '-e', self.output_dir, 
+                          self.qsub_script], 
+                          { cwd: self.output_dir });
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
