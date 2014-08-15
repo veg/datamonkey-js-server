@@ -28,7 +28,7 @@
 */
 
 var spawn_job = require('./spawn_prime.js'),
-    config = require('../config.json'),
+    config = require('../../config.json'),
     fs = require('fs'),
     ss = require('socket.io-stream');
 

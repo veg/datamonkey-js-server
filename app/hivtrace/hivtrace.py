@@ -516,7 +516,7 @@ def main():
     if(args.config):
         CONFIG_PATH = args.config
     else:
-        CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../config.json'
+        CONFIG_PATH = os.path.dirname(os.path.realpath(__file__)) + '/../../config.json'
 
     config = json.loads(open(CONFIG_PATH).read())
 

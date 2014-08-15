@@ -1,9 +1,0 @@
-{
-  "port"                   : 7010,
-  "redis-port"             : 6379,
-  "hivnetworkcsv"          : "/home/sweaver/bin/hivcluster/HIVClustering/bin/hivnetworkcsv",
-  "tn93dist"               : "/home/sweaver/bin/hivcluster/TN93/tn93",
-  "bealign"                : "/home/sweaver/bin/hivcluster/bin/bealign",
-  "bam2msa"                : "/home/sweaver/bin/hivcluster/bin/bam2msa",
-  "python"                 : "/home/sweaver/bin/hivcluster/bin/python3.2"
-}

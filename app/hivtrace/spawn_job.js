@@ -29,7 +29,7 @@
 
 var spawn = require('child_process').spawn,
     fs = require('fs'),
-    config = require('../config.json'),
+    config = require('../../config.json'),
     util = require('util'),
     path = require('path'),
     Tail = require('tail').Tail,

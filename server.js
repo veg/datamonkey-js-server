@@ -31,8 +31,8 @@ var config = require('./config.json'),
     io = require('socket.io').listen(config.port),
     fs = require('fs'),
     path = require('path'),
-    hivtrace = require('./hivtrace/hivtrace.js'),
-    prime = require('./prime/prime.js'),
+    hivtrace = require('./app/hivtrace/hivtrace.js'),
+    prime = require('./app/prime/prime.js'),
     ss = require('socket.io-stream');
 
 // For every new connection...
