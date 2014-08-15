@@ -4,10 +4,16 @@ hpout
 *.log
 *.out
 *.log.*
+tags
 
 #Ignore spool
 spool/
 app/node_modules/
+app/hivtrace/output
+app/hivtrace/res/LANL.FASTA
+app/hivtrace/res/LANL.UNALIGNED.FASTA
+
+*node_modules*
 
 # Compiled Object files
 *.slo
