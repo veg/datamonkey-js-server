@@ -232,3 +232,32 @@ function ApplyGeneticCodeTable (myModelType)
 	}
 	return  myModelType;
 }
+
+/*----------------------------------------------------------------------------------------------------------*/
+
+function CountSenseCodons (code) {
+    sense_count = 0;
+    for (_idx = 0; _idx < 64; _idx += 1) {
+        if (IsStop (_idx, code) == 0) {
+            sense_count += 1;
+        }
+    }
+    return sense_count;
+}
+
+/*----------------------------------------------------------------------------------------------------------*/
+
+function IsStop (codon, code)
+
+/* 
+	given: 
+		 codon (a number between 0 and 63 in AAA...TTT encoding)
+		 code (the genetic code)
+		 
+	returns 
+		 whether or not the codon is a stop codon
+*/		 
+
+{
+	return code[codon] == 10;
+}
