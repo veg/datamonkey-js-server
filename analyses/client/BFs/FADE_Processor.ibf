@@ -1,0 +1,254 @@
+resName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + ".php";
+fprintf			(resName, CLEAR_FILE,"<!DOCTYPE HTML><html><head><meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1'><meta http-equiv='refresh' content='60'>",
+				"<title>Almost there...</title></head><body>Generating a FADE report...this page will refresh in a minute (or you can try sooner).");
+
+ExecuteAFile    ("../Shared/HyPhyGlobals.ibf");
+ExecuteAFile    ("../Shared/OutputsFADE.bf");
+ExecuteAFile    ("../Shared/ReadDelimitedFiles.bf");
+LoadFunctionLibrary     ("chooseGeneticCode", {"0": "Universal"}); 
+// for _alphabeticalAAOrdering
+
+
+sscanf (rawIn,REWIND,"Raw",
+        fadeResults);
+
+fadeResults = Eval (fadeResults);
+
+
+fprintf (stdout, "<?php
+include('../php/global_include.php');
+DM_print_header ('FADE analysis results',
+				 '',
+				 \"
+		<LINK REL=STYLESHEET TYPE='text/css' HREF='http://www.datamonkey.org/css/bootstrap/css/bootstrap.css' media='screen'>
+  	    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <script src='http://d3js.org/d3.v3.min.js'></script>
+        <script src='http://code.jquery.com/jquery.js'></script>
+        <script src='http://www.datamonkey.org/css/bootstrap/js/bootstrap.js'></script>
+        <script src='`BASEL_URL_STRING`js/FADE.js'></script>
+        <LINK REL=STYLESHEET TYPE='text/css' media='screen' href='`BASEL_URL_STRING`css/FADE.css'>
+\");
+DM_print_html_head_bootstrap ('`filePrefix`',
+    array(array('FADE results as a .csv file',
+          array (
+");
+
+for (r = 0; r < 20; r+=1) {
+    if (r) { fprintf (stdout, ","); };
+    fprintf (stdout, "array('Results for target ", _alphabeticalAAOrdering[r], "','",BASEL_URL_STRING,"cgi-bin/datamonkey/wrapHyPhyBF.pl?file=fade_csv&mode=1&arguments=",filePrefix,"-",
+    _alphabeticalAAOrdering[r] + "')");
+}
+
+fprintf (stdout, "    ))));\n
+?>
+
+<div class='page-header'>
+    <h2>FADE analysis results</h2>
+</div>
+    <div class = 'row'>
+        <div class = 'span11'>
+        <div class='accordion' id='data_info_box'>
+          <div class='accordion-group'>
+            <div class='accordion-heading'>
+              <a class='accordion-toggle label label-info' data-toggle='collapse' data-parent='#data_info_box' href='#collapseOne'>
+                Analysis overview
+              </a>
+            </div>
+            <div id='collapseOne' class='accordion-body collapse in'>
+              <div class='accordion-inner'>            
+                <dl class='dl-horizontal' id = 'summary_div'>
+            
+                </dl>
+               </div>
+            </div>
+          </div>
+         </div>
+
+        <div class='accordion' id='property_plot'>
+          <div class='accordion-group'>
+            <div class='accordion-heading'>
+              <a class='accordion-toggle label label-info' data-toggle='collapse' data-parent='#property_plot' href='#property_plot_collapse'>
+                Property importance plot
+              </a>
+            </div>
+            <div id='property_plot_collapse' class='accordion-body collapse out'>
+              <div class='accordion-inner'>            
+                <svg id = 'property_plot_svg'>
+                </svg>
+				  <div class='btn-group' data-toggle='buttons-checkbox' id = 'property_selector' >
+                    <button type='button' class='btn btn-small active' data-property-id = '1' id = 'show_property1'>A</button>
+                    <button type='button' class='btn btn-small' data-property-id = '2' id = 'show_property2'>C</button>
+                    <button type='button' class='btn btn-small' data-property-id = '3' id = 'show_property3'>D</button>
+                    <button type='button' class='btn btn-small' data-property-id = '4' id = 'show_property4'>E</button>
+                    <button type='button' class='btn btn-small' data-property-id = '5' id = 'show_property5'>F</button>
+					<button type='button' class='btn btn-small' data-property-id = '6' id = 'show_property6'>G</button>
+                    <button type='button' class='btn btn-small' data-property-id = '7' id = 'show_property7'>H</button>
+                    <button type='button' class='btn btn-small' data-property-id = '8' id = 'show_property8'>I</button>
+                    <button type='button' class='btn btn-small' data-property-id = '9' id = 'show_property9'>K</button>
+                    <button type='button' class='btn btn-small' data-property-id = '10' id = 'show_property10'>L</button>
+					<button type='button' class='btn btn-small' data-property-id = '11' id = 'show_property11'>M</button>
+                    <button type='button' class='btn btn-small' data-property-id = '12' id = 'show_property12'>N</button>
+                    <button type='button' class='btn btn-small' data-property-id = '13' id = 'show_property13'>P</button>
+                    <button type='button' class='btn btn-small' data-property-id = '14' id = 'show_property14'>Q</button>
+                    <button type='button' class='btn btn-small' data-property-id = '15' id = 'show_property15'>R</button>
+					<button type='button' class='btn btn-small' data-property-id = '16' id = 'show_property16'>S</button>
+                    <button type='button' class='btn btn-small' data-property-id = '17' id = 'show_property17'>T</button>
+                    <button type='button' class='btn btn-small' data-property-id = '18' id = 'show_property18'>V</button>
+                    <button type='button' class='btn btn-small' data-property-id = '19' id = 'show_property19'>W</button>
+                    <button type='button' class='btn btn-small' data-property-id = '20' id = 'show_property20'>Y</button>
+                </div>
+               </div>
+            </div>
+          </div>
+         </div>
+                 
+         <div class='accordion' id='property_table'>
+          <div class='accordion-group'>
+            <div class='accordion-heading'>
+              <a class='accordion-toggle label label-info' data-toggle='collapse' data-parent='#property_plot' href='#property_table_collapse'>
+                Site-by-site analysis of directional evolution.
+              </a>
+            </div>
+            <div id='property_table_collapse' class='accordion-body collapse in'>
+              <div class='accordion-inner'>            
+                <table id = 'prime_table' class = 'table table-condensed'>
+                <caption id = 'total_sites_found'>
+                    <small>
+                       <span class='badge'></span> sites found: 
+					   <span class='badge badge-important'></span> amino acid targets.
+                    </small>                
+                    </caption>
+                <thead>
+        
+                </thead>
+                <tbody>
+        
+                </tbody>
+                </table>
+               </div>
+            </div>
+          </div>
+         </div>
+           
+        </div>
+        <div class = 'span1'>
+            <form class='form-inline affix' id = 'filter_on_pvalue'>
+              <div class='input-append input-prepend'>
+                <div class='btn-group'>
+                    <button class='btn dropdown-toggle' data-toggle='dropdown' id = 'pq_selector'>
+                      Posterior
+                      <span class='caret'></span>
+                    </button>
+                    <ul class='dropdown-menu'>
+                        <li><a href='#' id='set-p-value'>Posterior</a></li>
+                        <li><a href='#' id='set-q-value'>BF</a></li>
+                    </ul>
+                  </div>
+                <input class = 'input-mini' id = 'pvalue' type='text' value = '0.9'>
+                <button type='submit' class='btn btn-info' >Filter</button>
+              </div>
+             
+                
+            </form>  
+        </div>
+
+        <div id='site_rate_display' class='modal hide fade' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' aria-hidden='true'>
+          <div class='modal-header'>
+            <button type='button' class='close' data-dismiss='modal' aria-hidden='true'></button>
+            <h3 id='site_rate_display_header'></h3>
+          </div>
+          <div class='modal-body'>
+            <div class = 'container' id = 'site_info'>
+                 <table id = 'site_info_table' class = 'table table-condensed'>
+                 <thead>
+        
+                </thead>
+                <tbody>
+        
+                </tbody>
+                </table>
+           </div>         
+            </div>
+         <div class='modal-footer'>
+            <button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button>
+          </div>
+          </div>
+
+    </div>
+");
+
+branchesTested = splitOnRegExp(fadeResults["BRANCHES_TESTED"],";");
+
+summary = _makeDataDescriptionTM_bootstrap (slacDBID,fadeResults["TREE_MODE"], fadeResults["TREE_LENGTHS"]);
+summary ["FADE analysis settings"] = {
+"2" : fadeResults["MODEL_INFO"] + " baseline model fitted", 
+"1": fadeResults ["GRID_DESCRIPTION"],
+"0": "Directional model applied to " + Abs (branchesTested) + " branches" };
+
+fprintf (stdout, _matrixToJSArray ("fade_results", fadeResults["FADE"],
+    "data_summary = " + summary + ";\n"+
+    "cutoff = 0.9;
+    set_handlers('`filePrefix`');
+    initial_display ();"
+    ));
+
+
+fprintf (stdout, "<?php
+DM_print_html_foot_bootstrap ();
+?>");
+
+defaultP = 0.9;
+
+_CheckDBID (slacDBID,"FADE_RESULTS",FADE_ResultTable);
+
+rc = Rows    (fadeResults["FADE"]);
+cc = Columns (fadeResults["FADE"]);
+
+_ExecuteSQL (slacDBID, "PRAGMA journal_mode = OFF"); 
+
+DataSet theAlignment = ReadDataFile (BASE_CLUSTER_ACCESS_PATH + filePrefix);
+DataSetFilter filter = CreateFilter ( theAlignment, 1);
+
+GetDataInfo (siteMap, filter);
+
+
+for (r = 0; r < rc; r += 1) {
+    record = {"SITE": (fadeResults["FADE"])[r][0]};
+	for (c = 1; c < cc; c+=1) {
+	    record ["ATTRIBUTE"] = (fadeResults["HEADERS"])[c];
+	    record ["VALUE"]     = (fadeResults["FADE"])[r][c];
+	    _InsertRecord (slacDBID,"FADE_RESULTS", record);
+	}
+    aa_counts = {};
+    for (q = 0; q < filter.species; q+=1) {
+        GetDataInfo (char, filter, q, siteMap[r]);
+        total = +char;
+        if (total > 0 && total < Rows (char)) {
+            char = char["_MATRIX_ELEMENT_VALUE_*(1+_MATRIX_ELEMENT_ROW_)"];
+            char = char[char["_MATRIX_ELEMENT_VALUE_"]];
+            for (c = 0; c < Columns (char); c+=1) {
+               aa_counts [_alphabeticalAAOrdering[char[c]-1]] += 1/total;
+            }
+        }
+    }
+    record ["ATTRIBUTE"] = "COUNTS";
+    record ["VALUE"]     = aa_counts;
+    _InsertRecord (slacDBID,"FADE_RESULTS", record);
+}
+
+FADE_SummaryTable = {};
+FADE_SummaryTable ["COL_KEY"] 	 = "STRING";
+FADE_SummaryTable ["COL_VALUE"]  = "STRING";
+
+_CheckDBID 		  (slacDBID,"FADE_SUMMARY",FADE_SummaryTable);
+
+record = {};
+record ["COL_KEY"] = "posterior";record ["COL_VALUE"] = defaultP;_InsertRecord (slacDBID,"FADE_SUMMARY", record);
+record ["COL_KEY"] = "TreeLengths";record ["COL_VALUE"] = ""+fadeResults["TREE_LENGTHS"];_InsertRecord (slacDBID,"FADE_SUMMARY", record);
+record ["COL_KEY"] = "TreeMode"; record ["COL_VALUE"] = fadeResults["TREE_MODE"];_InsertRecord (slacDBID,"FADE_SUMMARY", record);
+
+record ["COL_KEY"] = "Selected";record ["COL_VALUE"] = count_properties (slacDBID, _property_count, "Prob[bias>1]", defaultP);
+_InsertRecord (slacDBID,"FADE_SUMMARY", record);
+
+record ["COL_KEY"] = "Model"; record ["COL_VALUE"] = fadeResults["MODEL_INFO"];
+_InsertRecord (slacDBID,"FADE_SUMMARY", record);

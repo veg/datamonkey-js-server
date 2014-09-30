@@ -1,0 +1,31 @@
+modelList = {};
+
+index = 3;
+/* BLOSUM62 */
+modelList [index] = {};
+(modelList [index])["Name"]		= "BLOSUM62";
+(modelList [index])["Description"] 	= "Default BLAST BLOSUM62 matrix";
+(modelList [index])["File"]            	= "BLOSUM62";
+
+index = 0;
+/* HIV-1 5% */
+modelList [index] = {};
+(modelList [index])["Name"]		= "HIV 5%";
+(modelList [index])["Description"] 	= "Empirically derived 5% divergence HIV matrix";
+(modelList [index])["File"]            	= "HIV_5";
+
+index = 1;
+/* HIV-1 25% */
+modelList [index] = {};
+(modelList [index])["Name"]		= "HIV 25%";
+(modelList [index])["Description"]	= "Empirically derived 25% divergence HIV matrix";
+(modelList [index])["File"]            	= "HIV_25";
+
+index = 2;
+/* HIV-1 50% */
+modelList [index] = {};
+(modelList [index])["Name"]		= "HIV 50%";
+(modelList [index])["Description"] 	= "Empirically derived 50% divergence HIV matrix";
+(modelList [index])["File"]            	= "HIV_50";
+
+

@@ -1,0 +1,406 @@
+resName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + ".php";
+fprintf			(resName, CLEAR_FILE,"<!DOCTYPE HTML><html><head><meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1'><meta http-equiv='refresh' content='60'>",
+				"<title>Almost there...</title></head><body>Generating a PRIME report...this page will refresh in a minute (or you can try sooner).");
+
+ExecuteAFile    ("../Shared/HyPhyGlobals.ibf");
+ExecuteAFile    ("../Shared/OutputsPRIME.bf");
+ExecuteAFile    ("../Shared/ReadDelimitedFiles.bf");
+
+
+sscanf (rawIn,REWIND,"Raw",primeResults);
+
+
+
+fprintf (stdout, "<?php
+include('../php/global_include.php');
+DM_print_header ('PRIME analysis results',
+				 '',
+				 \"
+		<LINK REL=STYLESHEET TYPE='text/css' HREF='http://www.datamonkey.org/css/bootstrap/css/bootstrap.css' media='screen'>
+  	    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+        <script src='http://d3js.org/d3.v3.min.js'></script>
+        <script src='http://code.jquery.com/jquery.js'></script>
+        <script src='http://www.datamonkey.org/css/bootstrap/js/bootstrap.js'></script>
+        <script src='`BASEL_URL_STRING`js/PRIME.js'></script>
+        <LINK REL=STYLESHEET TYPE='text/css' media='screen' href='`BASEL_URL_STRING`css/PRIME.css'>
+\");
+DM_print_html_head_bootstrap ('`filePrefix`',array(array('PRIME results as a .csv file','`BASEL_URL_STRING`cgi-bin/datamonkey/wrapHyPhyBF.pl?file=prime_csv&mode=1&arguments=`filePrefix`')));
+?>
+
+<div class='page-header'>
+    <h2>PRIME analysis results</h2>
+</div>
+    <div class = 'row'>
+        <div class = 'span9'>
+        <div class='accordion' id='data_info_box'>
+          <div class='accordion-group'>
+            <div class='accordion-heading'>
+              <a class='accordion-toggle label label-info' data-toggle='collapse' data-parent='#data_info_box' href='#collapseOne'>
+                Analysis overview
+              </a>
+            </div>
+            <div id='collapseOne' class='accordion-body collapse in'>
+              <div class='accordion-inner'>            
+                <dl class='dl-horizontal' id = 'summary_div'>
+            
+                </dl>
+               </div>
+            </div>
+          </div>
+         </div>
+
+        <div class='accordion' id='property_plot'>
+          <div class='accordion-group'>
+            <div class='accordion-heading'>
+              <a class='accordion-toggle label label-info' data-toggle='collapse' data-parent='#property_plot' href='#property_plot_collapse'>
+                Property importance plot
+              </a>
+            </div>
+            <div id='property_plot_collapse' class='accordion-body collapse out'>
+              <div class='accordion-inner'>            
+                <svg id = 'property_plot_svg'>
+                </svg>
+                <div class='btn-group' data-toggle='buttons-checkbox' id = 'property_selector'>
+                    <button type='button' class='btn btn-small active' data-property-id = '1' id = 'show_property1'>Property 1</button>
+                    <button type='button' class='btn btn-small active' data-property-id = '2' id = 'show_property2'>Property 2</button>
+                    <button type='button' class='btn btn-small active' data-property-id = '3' id = 'show_property3'>Property 3</button>
+                    <button type='button' class='btn btn-small active' data-property-id = '4' id = 'show_property4'>Property 4</button>
+                    <button type='button' class='btn btn-small active' data-property-id = '5' id = 'show_property5'>Property 5</button>
+                </div>
+               </div>
+            </div>
+          </div>
+         </div>
+                 
+         <div class='accordion' id='property_table'>
+          <div class='accordion-group'>
+            <div class='accordion-heading'>
+              <a class='accordion-toggle label label-info' data-toggle='collapse' data-parent='#property_plot' href='#property_table_collapse'>
+                Site-by-site analysis of property importance.
+              </a>
+            </div>
+            <div id='property_table_collapse' class='accordion-body collapse in'>
+              <div class='accordion-inner'>            
+                <table id = 'prime_table' class = 'table table-condensed'>
+                <caption id = 'total_sites_found'>
+                    <small>
+                    <span class='badge'></span> sites found: 
+                    <span class='badge badge-success'></span> conserved properties, and 
+                    <span class='badge badge-important'></span> changing properties.
+                    </small>
+                </caption>
+                <thead>
+        
+                </thead>
+                <tbody>
+        
+                </tbody>
+                </table>
+               </div>
+            </div>
+          </div>
+         </div>
+           
+        </div>
+        <div class = 'span3'>
+            <form class='form-inline affix' id = 'filter_on_pvalue'>
+              <div class='input-append input-prepend'>
+                <div class='btn-group'>
+                    <button class='btn dropdown-toggle' data-toggle='dropdown' id = 'pq_selector'>
+                      p-value
+                      <span class='caret'></span>
+                    </button>
+                    <ul class='dropdown-menu'>
+                        <li><a href='#' id='set-p-value'>p-value</a></li>
+                        <li><a href='#' id='set-q-value'>q-value</a></li>
+                    </ul>
+                  </div>
+                <input class = 'input-mini' id = 'pvalue' type='text' value = '0.05'>
+                <button type='submit' class='btn btn-info' >Filter</button>
+              </div>
+             
+                
+            </form>  
+        </div>
+
+        <div id='site_rate_display' class='modal hide fade' tabindex='-1' role='dialog' aria-labelledby='myModalLabel' aria-hidden='true'>
+          <div class='modal-header'>
+            <button type='button' class='close' data-dismiss='modal' aria-hidden='true'></button>
+            <h3 id='site_rate_display_header'></h3>
+          </div>
+          <div class='modal-body'>
+            <div class = 'row'>
+                <svg id = 'exch_matrix'>
+                </svg>
+            </div>         
+            </div>
+         <div class='modal-footer'>
+            <button class='btn' data-dismiss='modal' aria-hidden='true'>Close</button>
+          </div>
+          </div>
+
+    </div>
+");
+
+primeResults = Eval(primeResults);
+_result          = jsonProcessor (primeResults);
+_property_count = _result["PROPERTY_COUNT"];
+
+fprintf (stdout, _matrixToJSArray ("prime_headers",   _result["RENDER_HEADERS"],""));
+fprintf (stdout, _matrixToJSArray ("prime_headers_q", _result["RENDER_HEADERS_Q"],""));
+
+summary = _makeDataDescriptionTM_bootstrap ((slacDBID,(primeResults["SETTINGS"])["TREE_MODE"], (primeResults["SETTINGS"])["TREE_LENGTHS"]));
+summary ["Prime analysis settings"] = {"0" : _result ["PROPERTIES"] + " properties used", "1": _result ["TYPE"] + " test run"};
+
+fprintf (stdout, _matrixToJSArray ("prime_results", _result["MATRIX"],
+    "data_summary = " + summary + ";\n"+
+    "cutoff = 0.05;_property_count="+_property_count+";
+    set_handlers('`filePrefix`');
+    initial_display ();"
+    ));
+
+
+fprintf (stdout, "<?php
+DM_print_html_foot_bootstrap ();
+?>");
+
+
+defaultP = 0.05;
+
+_CheckDBID (slacDBID,"PRIME_RESULTS",PRIME_ResultTable);
+
+rc = Rows    (_result["MATRIX"]);
+cc = Columns (_result["MATRIX"]) - _property_count;
+
+for (r = 0; r < rc; r += 1) {
+    record = {"Codon": (_result["MATRIX"])[r][0]};
+	for (c = 1; c < cc; c+=1) {
+	    record ["ATTRIBUTE"] = (_result["HEADERS"])[c];
+	    record ["VALUE"] = (_result["MATRIX"])[r][c];
+	    _InsertRecord (slacDBID,"PRIME_RESULTS", record);
+	}
+}
+
+PRIME_SummaryTable = {};
+PRIME_SummaryTable ["COL_KEY"] 	 = "STRING";
+PRIME_SummaryTable ["COL_VALUE"]  = "STRING";
+
+_CheckDBID 		  (slacDBID,"PRIME_SUMMARY",PRIME_SummaryTable);
+
+record = {};
+record ["COL_KEY"] = "pvalue";record ["COL_VALUE"] = defaultP;_InsertRecord (slacDBID,"PRIME_SUMMARY", record);
+record ["COL_KEY"] = "TreeLengths";record ["COL_VALUE"] = ""+(primeResults["SETTINGS"])["TREE_LENGTHS"];_InsertRecord (slacDBID,"PRIME_SUMMARY", record);
+record ["COL_KEY"] = "Conserved";record ["COL_VALUE"] = count_properties (slacDBID, _property_count, "Conserved", defaultP);_InsertRecord (slacDBID,"PRIME_SUMMARY", record);
+record ["COL_KEY"] = "Modified"; record ["COL_VALUE"] = count_properties (slacDBID, _property_count, "Modified", defaultP);_InsertRecord (slacDBID,"PRIME_SUMMARY", record);
+record ["COL_KEY"] = "PropertySet"; record ["COL_VALUE"] = _result ["PROPERTIES"];_InsertRecord (slacDBID,"PRIME_SUMMARY", record);
+record ["COL_KEY"] = "TreeMode"; record ["COL_VALUE"] = (primeResults["SETTINGS"])["TYPE"];_InsertRecord (slacDBID,"PRIME_SUMMARY", record);
+record ["COL_KEY"] = "PropertyCount"; record ["COL_VALUE"] = _property_count;_InsertRecord (slacDBID,"PRIME_SUMMARY", record);
+record ["COL_KEY"] = "PropertiesMatrix";record ["COL_VALUE"] = (primeResults["SETTINGS"])["Multipliers"];_InsertRecord (slacDBID,"PRIME_SUMMARY", record);
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------
+function jsonProcessor (_fel_results) {
+    _result = {};
+
+    assert (Abs(_fel_results["SETTINGS"]) >= 3, "Missing analysis settings: " + _fel_results["SETTINGS"]);
+
+    _result ["PROPERTIES"] = (_fel_results["SETTINGS"])["Properties"];
+    _result ["TYPE"] =  (_fel_results["SETTINGS"])["Metric"];
+
+    /*_is_positive_selection_test = Abs (_fel_results["NULL SETTINGS"]) >= 3;
+    if (_is_positive_selection_test) {
+        fprintf (stdout, "[Positive selection testing results]\n"); 
+    } else {
+        fprintf (stdout, "[Individual component testing results]\n"); 
+    }*/
+
+    _site_count = Abs (_fel_results) - 1 - _is_positive_selection_test;
+
+    //fprintf (stdout, "[Loaded information on ", _site_count, " sites]\n");
+
+    assert (_site_count > 0, "No information about individual tested sites");
+
+    _test_names = {0,0};
+    _test_count = 0;
+
+    _multipliers = (_fel_results["SETTINGS"])["Multipliers"];
+    assert (Abs(_multipliers) > 0, "Missing rate matrix information");
+
+
+    for (_site = 0; _site < _site_count; _site += 1) {
+        _site_info = _fel_results[_site];
+    
+        if (_site_info ["CONSTANT"] == 1) {
+            continue;
+        }   
+
+        if (Rows(_test_names) == 0) { // get test names
+            _test_names = _sortStrings(Rows (_site_info));
+            _test_count = Rows(_test_names);
+            _variable_names = Rows(((_site_info["Full model"])["MLES"]));
+            _q_values =  {_site_count*_test_count,2}["(_MATRIX_ELEMENT_COLUMN_==1)*_MATRIX_ELEMENT_ROW_+(_MATRIX_ELEMENT_COLUMN_==0)"];
+            _result ["PROPERTY_COUNT"] = _test_count-1;
+            _resultColumns  = 3+Columns(_variable_names)+2*_test_count-2; 
+                /* site 
+                   LogL
+                   DF
+                   MLE for each variable under the full model
+                   individual test 
+                */
+            
+            _headerNames = {1, _resultColumns};
+            _renderHeaderNames = {2, 2*(_test_count)};
+            _renderHeaderNames [0][0] = "Codon";
+            _renderHeaderNames [1][0] = "Codon";
+            _renderHeaderNames [0][1] = "t";
+            _renderHeaderNames [1][1] = "Tree length scaler (synonymous rate)";
+            _renderHeaderNamesQ = _renderHeaderNames;
+            
+    /*{"Codon","t","&alpha;<sub>1</sub>","p<sub>1</sub>","&alpha;<sub>2</sub>","p<sub>2</sub>","&alpha;<sub>3</sub>","p<sub>3</sub>","&alpha;<sub>4</sub>","p<sub>4</sub>","&alpha;<sub>5</sub>","p<sub>5</sub>"}
+    {"Codon index", "Tree length scaler (synonymous rate)", "Weight of property 1", "p-value for the LRT test that &alpha;<sub>1</sub> &ne; 0",
+                                                            "Weight of property 2", "p-value for the LRT test that &alpha;<sub>2</sub> &ne; 0",
+                                                            "Weight of property 3", "p-value for the LRT test that &alpha;<sub>3</sub> &ne; 0",
+                                                            "Weight of property 4", "p-value for the LRT test that &alpha;<sub>4</sub> &ne; 0",
+                                                            "Weight of property 5", "p-value for the LRT test that &alpha;<sub>5</sub> &ne; 0"}*/
+            
+            
+            _headerNames[0] = "Site";
+            _headerNames[1] = "LogL";
+            _headerNames[2] = "ParamCount"; _slider = 3;
+            for (_column_count = 0; _column_count < Columns(_variable_names); _column_count += 1) {
+                _headerNames[_slider] = _variable_names[_column_count];
+                _slider += 1;
+            }
+            _slider2 = 2;
+            for (_column_count = 0; _column_count < _test_count; _column_count += 1) {
+                if (_test_names[_column_count] == "Full model") {
+                    continue;
+                }
+                _renderHeaderNames[0][_slider2] = "&alpha;<sub>" + (_column_count) + "</sub>";
+                _renderHeaderNames[0][_slider2+1] = "p<sub>" + (_column_count) + "</sub>";
+                _renderHeaderNames[1][_slider2] = "Weight of property " + (_column_count) + "</sub>. Values &gt;0 indicate conservation, and values &lt; 0 suggest adaptation.";
+                _renderHeaderNames[1][_slider2+1] = "Corrected p-value for the LRT test that &alpha;<sub>" + (_column_count) + "</sub> &ne; 0";
+                _renderHeaderNamesQ[0][_slider2] = "&alpha;<sub>" + (_column_count) + "</sub>";
+                _renderHeaderNamesQ[0][_slider2+1] = "q<sub>" + (_column_count) + "</sub>";
+                _renderHeaderNamesQ[1][_slider2] = "Weight of property " + (_column_count) + "</sub>. Values &gt;0 indicate conservation, and values &lt; 0 suggest adaptation.";
+                _renderHeaderNamesQ[1][_slider2+1] = "q-value (False Discovery Rate) for the LRT test that &alpha;<sub>" + (_column_count) + "</sub> &ne; 0";
+                _headerNames[_slider] = "Corrected p-value for " + _test_names[_column_count];
+                _slider += 1;
+                _slider2 += 2;
+            }
+        
+            _resultMatrix = {_site_count, _resultColumns};
+            for (_k = 0; _k  < _site_count; _k += 1) {
+                _resultMatrix [_k][0] = _k + 1;
+            }
+        
+        }
+    
+    
+        ((_site_info["Full model"])["MLES"])["set_variable_values"][""];
+        _numeric = {};
+        _multipliers["compute_multiplers"][""];
+    
+        _fullModelLogL = (_site_info["Full model"])["LogL"];
+        _fullModelDF   = (_site_info["Full model"])["DF"];
+    
+         _resultMatrix [_site][1] = _fullModelLogL;
+         _resultMatrix [_site][2] = _fullModelDF;
+     
+     
+        _test_pvalues = {_test_count, 2}["_MATRIX_ELEMENT_ROW_"];
+        _slider = 3;
+        for (_column_count = 0; _column_count < Columns(_variable_names); _column_count += 1) {
+            _resultMatrix[_site][_slider] = ((_site_info["Full model"])["MLES"])[_variable_names[_column_count]];
+            _slider += 1;
+        }
+    
+        for (_aTest = 0; _aTest < _test_count; _aTest += 1) {
+            if (_test_names[_aTest] != "Full model") {
+                _testModelLogL = (_site_info[_test_names[_aTest]])["LogL"];
+                _testModelDF = (_site_info[_test_names[_aTest]])["DF"];
+                if (_is_positive_selection_test) {
+                    _test_pvalues [_aTest][0] = 1-CChi2 (2*(_fullModelLogL-_testModelLogL), 4);
+                } else {
+                    _test_pvalues [_aTest][0] = 1-CChi2 (2*(_fullModelLogL-_testModelLogL), _fullModelDF-_testModelDF);            
+                }
+            } else {
+                _test_pvalues [_aTest][0] = 1;
+            }
+            _idx = (_test_count)*_site+_aTest;
+            _q_values [_idx][1] = _idx;
+            _q_values [_idx][0] = _test_pvalues [_aTest][0];
+        }
+    
+        _test_results_corrected = holm_multiple_testing_correction(_test_pvalues, _test_count-1) % 1;
+        
+        for (_aTest = 0; _aTest < _test_count; _aTest += 1) {
+            if (_test_names[_aTest] != "Full model") {
+                _resultMatrix[_site][_slider] = _test_results_corrected[_aTest][0];
+                _slider += 1;
+            }
+        }
+    }
+    
+        
+    _q_values = behjamini_hochberg_fdr (_q_values, (_test_count-1)*_site_count) % 1;
+    for (_site = 0; _site < _site_count; _site += 1) {
+        _slider = Columns (_resultMatrix) - _test_count + 1;
+        for (_aTest = 0; _aTest < _test_count; _aTest += 1) {
+                if (_test_names[_aTest] != "Full model") {
+                    _resultMatrix[_site][_slider] = _q_values[(_test_count)*_site+_aTest][0];
+                    _slider += 1;
+                }
+            }
+        }
+    
+    _result ["HEADERS"]        = _headerNames;
+    _result ["RENDER_HEADERS"] = _renderHeaderNames;
+    _result ["RENDER_HEADERS_Q"] = _renderHeaderNamesQ;
+    _result ["MATRIX"]  = _resultMatrix;
+    return _result;
+}
+
+
+//------------------------------------------------------------------------------
+
+function set_variable_values (key, value) {
+    ExecuteCommands (key + " = " + value);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+
+function compute_multiplers (key, value) {
+    _numeric [key] = Eval (value);
+    
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+
+function max_value (key, value) {
+    _max = Max (value, _max);
+    return 0;
+}
+
+//------------------------------------------------------------------------------
+
+function holm_multiple_testing_correction (_test_pvalues, test_count) {
+    _test_pvalues = _test_pvalues % 0;
+    for (test_id = 0; test_id < test_count; test_id += 1) {
+        _test_pvalues [test_id][0] = Min(1,_test_pvalues [test_id][0] * (test_count-test_id));
+    }
+    return _test_pvalues;
+}
+
+//------------------------------------------------------------------------------
+
+function behjamini_hochberg_fdr (_test_pvalues, test_count) {
+    _test_pvalues = _test_pvalues % 0;
+    for (test_id = 0; test_id < test_count; test_id += 1) {
+        _test_pvalues [test_id][0] = Min(1,_test_pvalues [test_id][0] * (test_count/(test_id+1)));
+    }
+    return _test_pvalues;
+}
+
