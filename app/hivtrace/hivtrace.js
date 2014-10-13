@@ -62,9 +62,9 @@ var HIVTraceAnalysis = function (socket, stream, params) {
   });
 
   // Report tn93 summary back to datamonkey
-  trace_analysis.on('tn93 summary', function(torque_id) {
+  trace_analysis.on('tn93 summary', function(tn93) {
     // Send trace and graph information
-    socket.emit('tn93 summary', torque_id);
+    socket.emit('tn93 summary', tn93);
   });
 
   // Send file

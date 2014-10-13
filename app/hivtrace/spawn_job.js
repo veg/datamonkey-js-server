@@ -50,14 +50,12 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
   self = this;
 
   self.subscriber.on('message', function(channel, message) { 
-
     var redis_packet = JSON.parse(message);
 
     if(redis_packet.type != 'completed') {
-
       self.emit(redis_packet.type, redis_packet); 
-
     } else {
+
       self.emit('dispatch file', {id : self.id, fn: path.basename(self.output_cluster_output), fp : self.output_cluster_output, type : 'trace_results', cb : function (err) {
         if(!self.lanl_compare) {
           if (err) throw err;
@@ -95,12 +93,12 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
       tn93_csv_suffix='_user.tn93output.csv';
       tn93_lanl_csv_suffix='_user.tn93output.csv';
 
+  self.python = config.python;
   self.output_dir  = __dirname + '/output/';
   self.qsub_script = __dirname + '/hivtrace_submit.sh';
   self.filepath = self.output_dir + hiv_cluster_params._id;
   self.hivtrace = __dirname + '/hivtrace.py';
   self.id = hiv_cluster_params._id;
-  self.python = config.python;
   self.distance_threshold = hiv_cluster_params.distance_threshold;
   self.ambiguity_handling = hiv_cluster_params.ambiguity_handling;
   self.fraction = hiv_cluster_params.fraction;

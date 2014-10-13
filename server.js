@@ -33,6 +33,7 @@ var config = require('./config.json'),
     path = require('path'),
     hivtrace = require('./app/hivtrace/hivtrace.js'),
     prime = require('./app/prime/prime.js'),
+    busted = require('./app/busted/busted.js'),
     ss = require('socket.io-stream');
 
 // For every new connection...
@@ -52,6 +53,9 @@ io.sockets.on('connection', function (socket) {
           break;
         case 'prime':
           prime.PrimeAnalysis(socket, stream, params);
+          break;
+        case 'busted':
+          busted.BustedAnalysis(socket, stream, params.job);
           break;
         default:
           socket.emit('error', 'type not recognized');
