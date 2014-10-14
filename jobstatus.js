@@ -25,10 +25,13 @@ function returnJobStatus(job_id) {
         qstat = spawn('qstat', [job_id]),
         status = {
             C:'Completed',
-            E:'Error',
-            H:'Hold',
+            E:'Exiting',
+            H:'Held',
             Q:'Queued',
-            R:'Running'
+            R:'Running',
+            T:'Transit',
+            W:'Waiting',
+            S:'Suspended'
         };
 
     // If the job exists, check and return its status. If it is complete, stop
