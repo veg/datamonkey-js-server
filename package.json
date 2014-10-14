@@ -6,6 +6,7 @@
     "dependencies": {
         "socket.io"        : "*",
         "socket.io-stream" : "*",
-        "tail"             : "*"
+        "tail"             : "*",
+        "should"           : "*"
     }
 }

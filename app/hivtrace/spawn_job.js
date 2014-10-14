@@ -48,7 +48,6 @@ util.inherits(DoHivTraceAnalysis, EventEmitter);
 DoHivTraceAnalysis.prototype.status_watcher = function () {
 
   self = this;
-
   self.subscriber.on('message', function(channel, message) { 
     var redis_packet = JSON.parse(message);
 
@@ -69,13 +68,6 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
       }});
     }
   });
-
-  //    if (data == "HIV Network Analysis") {
-  //      //Send TN93 Summary
-  //      fs.readFile(self.tn93_stdout, function(err, data) {
-  //        self.emit('tn93 summary', {summary: String(data)});
-  //      }) 
-  //    }
 }
 
 /**
