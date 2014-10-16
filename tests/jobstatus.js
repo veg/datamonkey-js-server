@@ -55,7 +55,5 @@ describe('job status', function() {
         }
       });
     });
-
-
   });
 });
