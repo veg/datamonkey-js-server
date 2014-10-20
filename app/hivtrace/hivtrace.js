@@ -69,12 +69,12 @@ var HIVTraceAnalysis = function (socket, stream, params) {
 
   // Send file
   trace_analysis.on('dispatch file', function(params) {
-    var stream = ss.createStream();
-    ss(socket).emit('server file', stream, params);
-    fs.createReadStream(params.fp).pipe(stream);
-    socket.once('server file saved', function () {
-      params.cb();
+
+    fs.readFile(params.fp, function(err, buffer){
+      socket.emit('server file', { buffer: buffer, params: params });
+      params.cb();    
     });
+
   });
 
 
