@@ -54,7 +54,6 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
     if(redis_packet.type != 'completed') {
       self.emit(redis_packet.type, redis_packet); 
     } else {
-
       self.emit('dispatch file', {id : self.id, fn: path.basename(self.output_cluster_output), fp : self.output_cluster_output, type : 'trace_results', cb : function (err) {
         if(!self.lanl_compare) {
           if (err) throw err;

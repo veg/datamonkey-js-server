@@ -32,7 +32,8 @@ var spawn = require('child_process').spawn,
     config = require('../../config.json'),
     util = require('util'),
     Tail = require('tail').Tail,
-    EventEmitter = require('events').EventEmitter;
+    EventEmitter = require('events').EventEmitter,
+    JobStatus = require(__dirname + '/../../lib/jobstatus.js').JobStatus;
 
 var DoBustedAnalysis = function () {};
 util.inherits(DoBustedAnalysis, EventEmitter);
@@ -42,41 +43,24 @@ util.inherits(DoBustedAnalysis, EventEmitter);
  * sends updates to.
  */
 DoBustedAnalysis.prototype.status_watcher = function () {
-  self = this;
 
-  // Update progress
-  fs.openSync(self.progress_fn, 'w')
-  fs.watch(self.progress_fn, function(e, filename) { 
-    fs.readFile(self.progress_fn, 'utf8', function (err,data) {
-      if(data) {
-        self.emit('status update', {'phase': self.status_stack[1], 'msg': data});
-      }
-    });
+  var self = this;
+
+  var job_status = new JobStatus(self.torque_id);
+
+  job_status.watch(function(error, status) {
+    if(status == 'completed' || status == 'exiting') {
+      fs.readFile(self.results_fn, 'utf8', function (err,data) {
+        self.emit('completed', {'results' : data});
+      });
+    } else {
+      fs.readFile(self.progress_fn, 'utf8', function (err,data) {
+        if(data) {
+          self.emit('status update', {'phase': status, 'index': 1, 'msg': data});
+        }
+      });
+    }
   });
-
-  while (!self.job_completed) {
-
-    // Check qstat to see if job is completed
-    var qstat =  spawn('qstat', [self.torque_id] );
-
-    qstat.stderr.on('data', function (data) {
-      // Could not start job
-      console.log(data.toString());
-      self.job_completed = true;
-      self.emit('completed');
-    });
-
-    qstat.stdout.on('data', function (data) {
-      var re = /(\s)+/g;
-      var job_status = data.toString().split("\n")[2].replace(re, " ").split(" ")[4];
-      if(job_status == 'C') {
-        self.job_completed = true;
-        //TODO: submit completion
-        self.emit('completed');
-      }
-
-    });
-  }
 }
 
 /**
@@ -95,7 +79,7 @@ DoBustedAnalysis.prototype.start = function (busted_params) {
   self.status_fn = self.filepath + '.status';
   self.progress_fn = self.filepath + '.progress';
   self.tree_fn = self.filepath + '.tre';
-  self.progress_fn = self.filepath + '.progress';
+  self.results_fn = self.filepath + '.BUSTED.json';
   self.busted = config.busted;
   self.status_stack = busted_params.status_stack;
   self.genetic_code = "1";
@@ -106,6 +90,9 @@ DoBustedAnalysis.prototype.start = function (busted_params) {
   fs.writeFile(self.tree_fn, busted_params.analysis.tagged_nwk_tree, function (err) {
     if (err) throw err;
   });
+
+  // Ensure the progress file exists
+  fs.openSync(self.progress_fn, 'w');
 
   // qsub_submit.sh
   var qsub_submit = function () {
@@ -126,7 +113,7 @@ DoBustedAnalysis.prototype.start = function (busted_params) {
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
-      console.log('stderr: ' + data);
+      // console.log('stderr: ' + data);
     });
 
     qsub.stdout.on('data', function (data) {
@@ -148,7 +135,7 @@ DoBustedAnalysis.prototype.start = function (busted_params) {
   // local filesystem, then spawn the job.
   var do_busted = function(stream, busted_params) {
     self.emit('status update', {'phase': self.status_stack[0], 'msg': ''});
-    qsub_submit();
+    setTimeout(qsub_submit, 3000);
   }
 
   do_busted(busted_params);
@@ -156,3 +143,4 @@ DoBustedAnalysis.prototype.start = function (busted_params) {
 }
 
 exports.DoBustedAnalysis = DoBustedAnalysis;
+
