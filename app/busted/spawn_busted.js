@@ -29,6 +29,7 @@
 
 var spawn = require('child_process').spawn,
     fs = require('fs'),
+    path = require('path'),
     config = require('../../config.json'),
     util = require('util'),
     Tail = require('tail').Tail,
@@ -54,7 +55,8 @@ DoBustedAnalysis.prototype.status_watcher = function () {
         self.emit('completed', {'results' : data});
       });
     } else {
-      fs.readFile(self.progress_fn, 'utf8', function (err,data) {
+      fs.readFile(self.progress_fn, 'utf8', function (err, data) {
+        console.log(data);
         if(data) {
           self.emit('status update', {'phase': status, 'index': 1, 'msg': data});
         }
@@ -68,16 +70,16 @@ DoBustedAnalysis.prototype.status_watcher = function () {
  * The job is executed as specified in ./busted/README
  * Emit events that are being listened for by ./server.js
  */
-DoBustedAnalysis.prototype.start = function (busted_params) {
+DoBustedAnalysis.prototype.start = function (fn, busted_params) {
 
   var self = this;
+  self.filepath = fn;
+  self.output_dir  = path.dirname(self.filepath);
+  self.qsub_script = __dirname + '/busted_submit.sh';
   self.id = busted_params.analysis._id;
   self.msaid = busted_params.msa._id;
-  self.output_dir  = __dirname + '/output/';
-  self.qsub_script = __dirname + '/busted_submit.sh';
-  self.filepath = self.output_dir + self.id;
   self.status_fn = self.filepath + '.status';
-  self.progress_fn = self.filepath + '.progress';
+  self.progress_fn = self.filepath + '.BUSTED.progress';
   self.tree_fn = self.filepath + '.tre';
   self.results_fn = self.filepath + '.BUSTED.json';
   self.busted = config.busted;
@@ -112,8 +114,7 @@ DoBustedAnalysis.prototype.start = function (busted_params) {
                           { cwd : self.output_dir});
 
     qsub.stderr.on('data', function (data) {
-      // Could not start job
-      // console.log('stderr: ' + data);
+
     });
 
     qsub.stdout.on('data', function (data) {
@@ -135,7 +136,7 @@ DoBustedAnalysis.prototype.start = function (busted_params) {
   // local filesystem, then spawn the job.
   var do_busted = function(stream, busted_params) {
     self.emit('status update', {'phase': self.status_stack[0], 'msg': ''});
-    setTimeout(qsub_submit, 3000);
+    setTimeout(qsub_submit, 0000);
   }
 
   do_busted(busted_params);
