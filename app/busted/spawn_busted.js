@@ -80,8 +80,8 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
   self.msaid = busted_params.msa._id;
   self.status_fn = self.filepath + '.status';
   self.progress_fn = self.filepath + '.BUSTED.progress';
-  self.tree_fn = self.filepath + '.tre';
   self.results_fn = self.filepath + '.BUSTED.json';
+  self.tree_fn = self.filepath + '.tre';
   self.busted = config.busted;
   self.status_stack = busted_params.status_stack;
   self.genetic_code = "1";
@@ -107,6 +107,7 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
                           ',pfn='+self.progress_fn+
                           ',treemode='+self.treemode+
                           ',genetic_code='+self.genetic_code+
+                          ',cwd='+__dirname+
                           ',msaid='+self.msaid,
                           '-o', self.output_dir,
                           '-e', self.output_dir, 
