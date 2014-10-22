@@ -87,6 +87,7 @@ class TestHIVTrace(unittest.TestCase):
       devnull.close()
       return
 
+
   def test_flag_duplicates(self):
     hivtrace.rename_duplicates(self.fn, '|')
 
@@ -226,20 +227,24 @@ class TestHIVTrace(unittest.TestCase):
       hivtrace_json = json.loads(json_fh.read())
       nodes = hivtrace_json.get('Nodes')
       [self.assertTrue(type(node['attributes']) is dict) for node in nodes]
+
     return
 
-  def test_whole_stack(self):
+  def test_hivtrace_stack(self):
 
-    self.fn   = './res/INPUT.FASTA'
-    self.id   = os.path.basename(self.fn)
-    self.compare_to_lanl = True
-    self.status_file=self.fn+'_status'
+    fn   = './res/INPUT.FASTA'
+    id   = os.path.basename(self.fn)
+    compare_to_lanl = True
+    status_file=self.fn+'_status'
 
 
-    #run the whole thing and make sure it completed via the status file
-    hivtrace.hivtrace(self.id, self.fn, self.reference, self.ambiguities,
+    ##run the whole thing and make sure it completed via the status file
+    hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      self.compare_to_lanl, self.status_file, self.config, '0.025')
+                      compare_to_lanl, status_file, self.config, '0.025')
+
+
+    self.assertTrue(True)
 
     ##read status file and ensure that it has all steps
     #with open(self.status_file, 'r') as status_file:
@@ -250,20 +255,23 @@ class TestHIVTrace(unittest.TestCase):
 
     return
 
+
+
   def test_env(self):
 
-    self.compare_to_lanl = True
-
-    self.env_fn   = './res/HIV1_ALL_2013_env_DNA.fasta'
-    self.id   = os.path.basename(self.env_fn)
-    self.status_file=self.env_fn+'_status'
-    self.reference='HXB2_env'
+    compare_to_lanl = True
+    env_fn   = './res/HIV1_ALL_2013_env_DNA.fasta'
+    id   = os.path.basename(env_fn)
+    status_file=env_fn+'_status'
+    reference='HXB2_env'
 
     #run the whole thing and make sure it completed via the status file
-    hivtrace.hivtrace(self.id, self.env_fn, self.reference, self.ambiguities,
+    hivtrace.hivtrace(id, env_fn, reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      False, self.status_file, self.config, '0.015')
+                      False, status_file, self.config, '0.015')
 
+
+    self.assertTrue(True)
     ##read status file and ensure that it has all steps
     #with open(self.status_file, 'r') as status_file:
     #  statuses = [s.strip() for s in status_file.readlines()]

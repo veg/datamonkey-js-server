@@ -207,7 +207,7 @@ def lanl_annotate_with_hxb2(lanl_hxb2_fn, lanl_hivcluster_json_fn, threshold):
     #for each link in hxb2, get id in json object and add attribute
     ids = list(filter(lambda x: x['id'] in lanl_hxb2_links, nodes))
     [id.update({'hxb2_linked': 'true'}) for id in ids]
-    print(ids)
+    #print(ids)
 
     #Save nodes to file
     with open(lanl_hivcluster_json_fn, 'w') as json_fh:
@@ -346,9 +346,6 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     DEVNULL = open(os.devnull, 'w')
 
     # PHASE 1
-    def std_status_update(msg):
-      print(msg)
-
     current_status = "Aligning"
     update_status(id, current_status)
     bealign_process = [PYTHON, BEALIGN, '-r', reference , '-m', SCORE_MATRIX, '-R', input, BAM_FN]
