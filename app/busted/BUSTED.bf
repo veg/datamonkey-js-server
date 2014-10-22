@@ -1,5 +1,5 @@
 RequireVersion ("2.1320140810");
-OPTIMIZATION_TIME_HARD_LIMIT=1;
+//OPTIMIZATION_TIME_HARD_LIMIT=1;
 
 _BUSTED_timers  = {3,1};
 busted.taskTimerStart (2);
@@ -57,7 +57,6 @@ _BUSTED_json    = {"fits" : {},
                   };
                   
 
-
 codon_data_info = utility.promptForGeneticCodeAndAlignment ("codon_data", "codon_filter");
 codon_data_info["json"] = codon_data_info["file"] + ".BUSTED.json";
 progress_file = codon_data_info["file"] + ".BUSTED.progress";
@@ -104,6 +103,7 @@ gtr_lengths ["busted._aux.free_lengths"][""];
 
 OPTIMIZATION_PRECISION = 0.001;
 Optimize (busted.MLE_HA, busted.LF);
+io.spoolLF ("busted.LF", codon_data_info["file"], None);
 busted_positive_class = busted.checkForPS (busted.model_definitions);
 io.reportProgressMessage ("BUSTED", "Log(L) = " + busted.MLE_HA[1][0] + ". Unrestricted class omega = " + busted_positive_class["omega"] + " (weight = " + busted_positive_class["weight"] + ")");
 
@@ -142,6 +142,7 @@ if (busted_positive_class["omega"] < 1 || busted_positive_class["weight"] < 1e-8
     busted.constrainTheModel (busted.model_definitions);
     (_BUSTED_json ["profiles"])["constrained"] = busted.computeSiteLikelihoods ("busted.LF");;
     Optimize (busted.MLE_H0, busted.LF);
+    io.spoolLF ("busted.LF", codon_data_info["file"], "null");
     (_BUSTED_json ["profiles"])["optimized null"] = busted.computeSiteLikelihoods ("busted.LF");;
     io.reportProgressMessage ("BUSTED", "Log(L) = " + busted.MLE_H0[1][0]);
     busted.LRT = busted.runLRT (busted.MLE_HA[1][0], busted.MLE_H0[1][0]);
@@ -179,11 +180,9 @@ busted.taskTimerStop (2);
 (_BUSTED_json ["timers"])["constrained"] = _BUSTED_timers[1];
 
 GLOBAL_FPRINTF_REDIRECT = "";
-
 USE_JSON_FOR_MATRIX = 1;
 fprintf (codon_data_info["json"], CLEAR_FILE, _BUSTED_json);
 USE_JSON_FOR_MATRIX = 0;
-
 
 //------------------------------------------------------------------------------ 
 // HELPER FUNCTIONS FROM HTHIS POINT ON
