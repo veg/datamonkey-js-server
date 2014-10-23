@@ -54,12 +54,12 @@ DoBustedAnalysis.prototype.status_watcher = function () {
       fs.readFile(self.results_fn, 'utf8', function (err, data) {
         if(err) {
 	  console.log('script error');
-          self.emit('script error', {'error_msg' : 'unable to read results file'});
+          self.emit('script error', {'error' : 'unable to read results file'});
         } else{
           if(data) {
             self.emit('completed', {'results' : data});
           } else {
-            self.emit('script error', {'error_msg': 'job seems to have completed, but no results found'});
+            self.emit('script error', {'error': 'job seems to have completed, but no results found'});
           }
         }
 	});
