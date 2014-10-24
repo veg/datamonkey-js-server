@@ -35,9 +35,7 @@ import json
 import logging
 from Bio import SeqIO
 
-POOL = redis.ConnectionPool(host='192.168.0.2', port=6379, db=0)
-
-def update_status(id, phase, msg = ""):
+def update_status(id, phase, POOL, msg = ""):
 
     my_server = redis.Redis(connection_pool=POOL)
 
@@ -49,7 +47,7 @@ def update_status(id, phase, msg = ""):
 
     my_server.publish(id, json.dumps(msg))
 
-def completed(id):
+def completed(id, POOL):
 
     my_server = redis.Redis(connection_pool=POOL)
 
@@ -296,7 +294,7 @@ def annotate_lanl(trace_json_fn, lanl_file):
 
 
 def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
-             compare_to_lanl, status_file, config, fraction=1.0):
+             compare_to_lanl, status_file, config, fraction, POOL):
 
     """
     PHASE 1)  Pad sequence alignment to HXB2 length with bealign
@@ -347,7 +345,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     # PHASE 1
     current_status = "Aligning"
-    update_status(id, current_status)
+    update_status(id, current_status, POOL)
     bealign_process = [PYTHON, BEALIGN, '-r', reference , '-m', SCORE_MATRIX, '-R', input, BAM_FN]
     subprocess.check_call(bealign_process, stdout=DEVNULL)
     #b_process = subprocess.Popen(bealign_process, stdout=subprocess.PIPE)
@@ -364,7 +362,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     logging.debug(' '.join(bealign_process))
 
     # PHASE 2
-    update_status(id, "Converting to FASTA")
+    update_status(id, "Converting to FASTA", POOL)
     bam_process = [PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN]
     subprocess.check_call(bam_process, stdout=DEVNULL)
     logging.debug(' '.join(bam_process))
@@ -375,7 +373,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
 
     # PHASE 3
-    update_status(id, "TN93 Analysis")
+    update_status(id, "TN93 Analysis", POOL)
     tn93_fh = open(JSON_TN93_FN, 'w')
 
 
@@ -396,7 +394,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
     if type(id_dict) is ValueError:
-        update_status(id, "Error: " + id_dict.args[0])
+        update_status(id, "Error: " + id_dict.args[0], POOL)
         raise id_dict
 
     # PHASE 3b
@@ -416,7 +414,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     logging.debug(' '.join(tn93_process))
 
     # PHASE 4
-    update_status(id, "HIV Network Analysis")
+    update_status(id, "HIV Network Analysis", POOL)
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
 
     hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
@@ -438,7 +436,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
       # PHASE 5
 
-      update_status(id, "Public Database TN93 Analysis")
+      update_status(id, "Public Database TN93 Analysis", POOL)
 
       if ambiguities != 'resolve':
           lanl_tn93_process = [TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
@@ -469,7 +467,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
       # PHASE 6
-      update_status(id, "Public Database HIV Network Analysis")
+      update_status(id, "Public Database HIV Network Analysis", POOL)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
       lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
                                     threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
@@ -492,7 +490,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       annotate_lanl(LANL_OUTPUT_CLUSTER_JSON, LANL_FASTA)
 
     DEVNULL.close()
-    completed(id)
+    completed(id, POOL)
 
 
 def main():
@@ -528,7 +526,8 @@ def main():
     COMPARE_TO_LANL=args.compare
     FRACTION=args.fraction
     STATUS_FILE=FN+'_status'
-    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION)
+    POOL = redis.ConnectionPool(host=config.get('redis_host'), port=config.get('redis_port'), db=0)
+    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION, POOL)
 
 if __name__ == "__main__":
     main()

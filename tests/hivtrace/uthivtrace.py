@@ -56,6 +56,7 @@ class TestHIVTrace(unittest.TestCase):
     self.output_tn93_fn=self.fn+'_USER.TN93OUTPUT.CSV'
     self.output_usertolanl_tn93_fn=self.fn+'_USERTOLANL.TN93OUTPUT.CSV'
     self.hxb2_linked_fn = self.fn+'_user.hxb2linked.csv'
+    self.POOL = redis.ConnectionPool(host=self.config.get('redis_host'), port=self.config.get('redis_port'), db=0)
 
     self.no_compare_steps = [ 'Aligning',
       'Converting to FASTA',
@@ -87,6 +88,10 @@ class TestHIVTrace(unittest.TestCase):
       devnull.close()
       return
 
+
+  def test_redis_connection(self):
+    hivtrace.update_status(self.fn, 'Aligning', self.POOL)
+    return
 
   def test_flag_duplicates(self):
     hivtrace.rename_duplicates(self.fn, '|')
@@ -241,17 +246,10 @@ class TestHIVTrace(unittest.TestCase):
     ##run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      compare_to_lanl, status_file, self.config, '0.025')
+                      compare_to_lanl, status_file, self.config, '0.025', self.POOL)
 
 
     self.assertTrue(True)
-
-    ##read status file and ensure that it has all steps
-    #with open(self.status_file, 'r') as status_file:
-    #  statuses = [s.strip() for s in status_file.readlines()]
-
-    ##assert that we went through all the steps
-    #self.assertTrue(set(statuses) == set(self.steps))
 
     return
 
@@ -268,16 +266,10 @@ class TestHIVTrace(unittest.TestCase):
     #run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, env_fn, reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      False, status_file, self.config, '0.015')
+                      False, status_file, self.config, '0.015', self.POOL)
 
 
     self.assertTrue(True)
-    ##read status file and ensure that it has all steps
-    #with open(self.status_file, 'r') as status_file:
-    #  statuses = [s.strip() for s in status_file.readlines()]
-
-    ##assert that we went through all the steps
-    #self.assertTrue(set(statuses) == set(self.no_compare_steps))
 
     return
 
