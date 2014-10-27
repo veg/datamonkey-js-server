@@ -316,7 +316,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     BAM2MSA=config.get('bam2msa')
     TN93DIST=config.get('tn93dist')
     HIVNETWORKCSV=config.get('hivnetworkcsv')
-    LANL_FASTA= os.path.dirname(os.path.realpath(__file__)) + '/res/LANL.FASTA'
+    LANL_FASTA=config.get('lanl_fasta')
     LANL_TN93OUTPUT_CSV= os.path.dirname(os.path.realpath(__file__)) + '/res/LANL.TN93OUTPUT.csv'
     HXB2_FASTA= os.path.dirname(os.path.realpath(__file__)) + '/res/HXB2.FASTA'
     HXB2_LINKED_LANL= os.path.dirname(os.path.realpath(__file__)) + '/res/LANL.HXB2.RESOLVE.csv'

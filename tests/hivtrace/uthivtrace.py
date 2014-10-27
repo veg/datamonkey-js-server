@@ -117,15 +117,18 @@ class TestHIVTrace(unittest.TestCase):
     return
 
   def test_annotate_lanl(self):
+
     self.fn   = './res/INPUT.FASTA'
     LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
+
     hivtrace.annotate_lanl(LANL_OUTPUT_CLUSTER_JSON,
-                              '../../app/hivtrace/res/LANL.FASTA')
+                              './res/LANL.truncated.FASTA')
 
     #Check that there are five test_ids
-    with open(self.user_lanl_tn93output, 'r') as fasta_f:
-      length = len(fasta_f.readlines())
-      self.assertTrue(length == 787243)
+    with open(LANL_OUTPUT_CLUSTER_JSON, 'r') as fasta_f:
+      # Parse each node and check if is_lanl exists
+      results = json.loads(fasta_f.read())
+      [self.assertTrue("is_lanl" in node) for node in results["Nodes"]]
     return
 
   def test_filter_list(self):
