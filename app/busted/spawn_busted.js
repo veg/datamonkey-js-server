@@ -51,19 +51,34 @@ DoBustedAnalysis.prototype.status_watcher = function () {
 
   job_status.watch(function(error, status) {
     if(status == 'completed' || status == 'exiting') {
-      fs.readFile(self.results_fn, 'utf8', function (err,data) {
-        self.emit('completed', {'results' : data});
-      });
+      fs.readFile(self.results_fn, 'utf8', function (err, data) {
+        if(err) {
+	  console.log('script error');
+          self.emit('script error', {'error' : 'unable to read results file'});
+        } else{
+          if(data) {
+            self.emit('completed', {'results' : data});
+          } else {
+            self.emit('script error', {'error': 'job seems to have completed, but no results found'});
+          }
+        }
+	});
     } else {
       fs.readFile(self.progress_fn, 'utf8', function (err, data) {
-        console.log(data);
-        if(data) {
-          self.emit('status update', {'phase': status, 'index': 1, 'msg': data});
-        }
-      });
-    }
-  });
+       if(err) {
+         console.log('error reading progress file ' + self.progress_fn + '. error: ' + err);
+         return;
+       }
+       if(data) {
+         self.emit('status update', {'phase': status, 'index': 1, 'msg': data});
+       } else {
+	 console.log('read progress file, but no data');
+       }
+     });
+   }
+ });
 }
+
 
 /**
  * Submits a job to TORQUE by spawning qsub_submit.sh

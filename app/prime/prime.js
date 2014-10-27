@@ -44,7 +44,7 @@ var PrimeAnalysis = function (socket, stream, params) {
   });
 
   // On errors, report to datamonkey-js
-  prime_analysis.on('error', function(error) {
+  prime_analysis.on('script error', function(error) {
     socket.emit('script error', error);
     socket.disconnect();
   });
