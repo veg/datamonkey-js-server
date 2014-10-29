@@ -53,7 +53,7 @@ describe('busted jobrunner', function() {
 
     // On errors, report to datamonkey-js
     busted_analysis.on('error', function(error) {
-      done();
+      done(error);
     });
 
     // When the analysis completes, return the results to datamonkey.
@@ -63,7 +63,6 @@ describe('busted jobrunner', function() {
 
     // Report the torque job id back to datamonkey
     busted_analysis.on('job created', function(torque_id) {
-      console.log(torque_id);
     });
 
     // Send file
@@ -76,3 +75,5 @@ describe('busted jobrunner', function() {
   });
 
 });
+
+

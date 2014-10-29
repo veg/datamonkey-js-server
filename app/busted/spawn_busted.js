@@ -51,12 +51,26 @@ DoBustedAnalysis.prototype.status_watcher = function () {
 
   job_status.watch(function(error, status) {
     if(status == 'completed' || status == 'exiting') {
+
       fs.readFile(self.results_fn, 'utf8', function (err,data) {
-        self.emit('completed', {'results' : data});
+        // Check if there was an error
+        if(!data) {
+          //Open stderr file for job
+          console.log(self.std_err);
+          fs.readFile(self.std_err, 'utf8', function (err,data) {
+            if(err) {
+              self.emit('error', {'error': 'Something went horribly wrong. Please contact support@datamonkey.org if the issue continues.'});
+            } else {
+              self.emit('error', {'error': data});
+            }
+          });
+        } else {
+          self.emit('completed', {'results' : data});
+        }
       });
+
     } else {
       fs.readFile(self.progress_fn, 'utf8', function (err, data) {
-        console.log(data);
         if(data) {
           self.emit('status update', {'phase': status, 'index': 1, 'msg': data});
         }
@@ -75,7 +89,8 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
   var self = this;
   self.filepath = fn;
   self.output_dir  = path.dirname(self.filepath);
-  self.qsub_script = __dirname + '/busted_submit.sh';
+  self.qsub_script_name = 'busted_submit.sh';
+  self.qsub_script = __dirname + '/' + self.qsub_script_name;
   self.id = busted_params.analysis._id;
   self.msaid = busted_params.msa._id;
   self.status_fn = self.filepath + '.status';
@@ -86,6 +101,7 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
   self.status_stack = busted_params.status_stack;
   self.genetic_code = "1";
   self.torque_id = "unk";
+  self.std_err = "unk";
   self.job_completed = false;
 
   // Write tree to a file
@@ -120,6 +136,7 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
 
     qsub.stdout.on('data', function (data) {
       self.torque_id = String(data).replace(/\n$/, '');
+      self.std_err = self.output_dir + '/' + self.qsub_script_name + '.e' + String(self.torque_id).replace('.master','');
       self.emit('job created', { 'torque_id': self.torque_id });
     });
 
