@@ -51,12 +51,10 @@ DoBustedAnalysis.prototype.status_watcher = function () {
 
   job_status.watch(function(error, status) {
     if(status == 'completed' || status == 'exiting') {
-
       fs.readFile(self.results_fn, 'utf8', function (err,data) {
         // Check if there was an error
         if(!data) {
           //Open stderr file for job
-          console.log(self.std_err);
           fs.readFile(self.std_err, 'utf8', function (err,data) {
             if(err) {
               self.emit('error', {'error': 'Something went horribly wrong. Please contact support@datamonkey.org if the issue continues.'});

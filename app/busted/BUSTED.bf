@@ -1,5 +1,5 @@
 RequireVersion ("2.1320141020");
-//OPTIMIZATION_TIME_HARD_LIMIT=1;
+OPTIMIZATION_TIME_HARD_LIMIT=1;
 
 _BUSTED_timers  = {3,1};
 busted.taskTimerStart (2);
@@ -59,6 +59,8 @@ _BUSTED_json    = {"fits" : {},
 
 codon_data_info = utility.promptForGeneticCodeAndAlignment ("codon_data", "codon_filter");
 codon_data_info["json"] = codon_data_info["file"] + ".BUSTED.json";
+progress_file = codon_data_info["file"] + ".BUSTED.progress";
+
 io.reportProgressMessage ("BUSTED", "Loaded an MSA with " + codon_data_info["sequences"] + " sequences and " + codon_data_info["sites"] + " codons from '" + codon_data_info["file"] + "'");
 
 codon_frequencies     = utility.defineFrequencies ("codon_filter");
@@ -67,6 +69,7 @@ tree_definition 	  = utility.loadAnnotatedTopology ();
 busted.selected_branches = busted.io.selectBranchesToTest (tree_definition);
 _BUSTED_json ["test set"] = Join (",",Rows(busted.selected_branches));
 
+GLOBAL_FPRINTF_REDIRECT = progress_file;
 io.reportProgressMessage ("BUSTED", "Selected " + Abs (busted.selected_branches) + " branches as the test (foreground) set: " + Join (",", Rows (busted.selected_branches)));
 
 busted.model_definitions = busted.io.define_bsrel_models  ("FG","BG", codon_frequencies);
@@ -182,6 +185,7 @@ busted.taskTimerStop (2);
 (_BUSTED_json ["timers"])["unconstrained"] = _BUSTED_timers[0];
 (_BUSTED_json ["timers"])["constrained"] = _BUSTED_timers[1];
 
+GLOBAL_FPRINTF_REDIRECT = "";
 USE_JSON_FOR_MATRIX = 1;
 fprintf (codon_data_info["json"], CLEAR_FILE, _BUSTED_json);
 USE_JSON_FOR_MATRIX = 0;
