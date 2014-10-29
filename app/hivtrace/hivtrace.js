@@ -43,7 +43,7 @@ var HIVTraceAnalysis = function (socket, stream, params) {
   });
 
   // On errors, report to datamonkey-js
-  trace_analysis.on('error', function(error) {
+  trace_analysis.on('script error', function(error) {
     socket.emit('script error', error);
     socket.disconnect();
   });

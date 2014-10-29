@@ -44,8 +44,7 @@ var BustedAnalysis = function (socket, stream, params) {
   });
 
   // On errors, report to datamonkey-js
-  busted_analysis.on('error', function(error) {
-    console.log(error);
+  busted_analysis.on('script error', function(error) {
     socket.emit('script error', error);
     socket.disconnect();
   });
