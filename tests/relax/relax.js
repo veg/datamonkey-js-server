@@ -29,12 +29,12 @@
 
 var fs = require('fs');
 
-var spawn_job = require(__dirname + '/../../app/busted/spawn_busted.js');
+var spawn_job = require(__dirname + '/../../app/relax/spawn_relax.js');
 var should  = require('should');
 
-describe('busted jobrunner', function() {
+describe('relax jobrunner', function() {
 
-  var fn = __dirname + '/res/5446bc0d355080301f18a8c6';
+  var fn = __dirname + '/res/Flu.fasta';
   var params_file = __dirname + '/res/params.json';
 
 
@@ -45,33 +45,37 @@ describe('busted jobrunner', function() {
     var params = JSON.parse(fs.readFileSync(params_file));
 
     // Setup Analysis
-    var busted_analysis = new spawn_job.DoBustedAnalysis();
+    var relax_analysis = new spawn_job.DoRelaxAnalysis();
 
     // On status updates, report to datamonkey-js
-    busted_analysis.on('status update', function(status_update) {
+    relax_analysis.on('status update', function(status_update) {
+      console.log(status_update);
     });
 
     // On errors, report to datamonkey-js
-    busted_analysis.on('script error', function(error) {
-      throw new Error(error.error);
+    relax_analysis.on('script error', function(error) {
+      console.log(error);
       done(error);
     });
 
     // When the analysis completes, return the results to datamonkey.
-    busted_analysis.on('completed', function(results) {
+    relax_analysis.on('completed', function(results) {
+      console.log(results);
       done();
     });
 
     // Report the torque job id back to datamonkey
-    busted_analysis.on('job created', function(torque_id) {
+    relax_analysis.on('job created', function(torque_id) {
+      console.log(torque_id);
     });
 
     // Send file
-    busted_analysis.on('progress file', function(params) {
+    relax_analysis.on('progress file', function(params) {
+      console.log(params);
     });
 
     // Setup has been completed, run the job with the parameters from datamonkey
-    busted_analysis.start(fn, params);
+    relax_analysis.start(fn, params);
 
   });
 

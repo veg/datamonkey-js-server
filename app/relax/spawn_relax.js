@@ -36,25 +36,30 @@ var spawn = require('child_process').spawn,
     EventEmitter = require('events').EventEmitter,
     JobStatus = require(__dirname + '/../../lib/jobstatus.js').JobStatus;
 
-var DoBustedAnalysis = function () {};
-util.inherits(DoBustedAnalysis, EventEmitter);
+var DoRelaxAnalysis = function () {};
+util.inherits(DoRelaxAnalysis, EventEmitter);
 
 /**
  * Once the job has been scheduled, we need to watch the files that it
  * sends updates to.
  */
-DoBustedAnalysis.prototype.status_watcher = function () {
+DoRelaxAnalysis.prototype.status_watcher = function () {
 
   var self = this;
-
   var job_status = new JobStatus(self.torque_id);
 
   job_status.watch(function(error, status) {
-
     if(status == 'completed' || status == 'exiting') {
       fs.readFile(self.results_fn, 'utf8', function (err, data) {
         if(err) {
-          self.emit('script error', {'error' : 'unable to read results file'});
+          // Check stderr
+          fs.readFile(self.std_err, 'utf8', function (err, stack_trace) {
+            if(err) {
+            self.emit('script error', {'error' : 'unable to read results file'});
+            } else {
+              self.emit('script error', {'error' : stack_trace});
+            }
+          });
         } else{
           if(data) {
             self.emit('completed', {'results' : data});
@@ -62,7 +67,7 @@ DoBustedAnalysis.prototype.status_watcher = function () {
             self.emit('script error', {'error': 'job seems to have completed, but no results found'});
           }
         }
-	});
+	    });
     } else {
       fs.readFile(self.progress_fn, 'utf8', function (err, data) {
        if(err) {
@@ -70,7 +75,7 @@ DoBustedAnalysis.prototype.status_watcher = function () {
          return;
        }
        if(data) {
-         self.emit('status update', {'phase': status, 'index': 1, 'msg': data});
+         self.emit('status update', {'phase' : status, 'index': 1, 'msg': data});
        } else {
 	      console.log('read progress file, but no data');
        }
@@ -79,34 +84,33 @@ DoBustedAnalysis.prototype.status_watcher = function () {
  });
 }
 
-
 /**
  * Submits a job to TORQUE by spawning qsub_submit.sh
- * The job is executed as specified in ./busted/README
+ * The job is executed as specified in ./relax/README
  * Emit events that are being listened for by ./server.js
  */
-DoBustedAnalysis.prototype.start = function (fn, busted_params) {
+DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
 
   var self = this;
   self.filepath = fn;
   self.output_dir  = path.dirname(self.filepath);
-  self.qsub_script_name = 'busted_submit.sh';
+  self.qsub_script_name = 'relax.sh';
   self.qsub_script = __dirname + '/' + self.qsub_script_name;
-  self.id = busted_params.analysis._id;
-  self.msaid = busted_params.msa._id;
+  self.id = relax_params.analysis._id;
+  self.msaid = relax_params.msa._id;
   self.status_fn = self.filepath + '.status';
-  self.progress_fn = self.filepath + '.BUSTED.progress';
-  self.results_fn = self.filepath + '.BUSTED.json';
+  self.progress_fn = self.filepath + '.RELAX.progress';
+  self.results_fn = self.filepath + '.RELAX.json';
   self.tree_fn = self.filepath + '.tre';
-  self.busted = config.busted;
-  self.status_stack = busted_params.status_stack;
+  self.relax = config.relax;
+  self.status_stack = relax_params.status_stack;
   self.genetic_code = "1";
   self.torque_id = "unk";
   self.std_err = "unk";
   self.job_completed = false;
 
   // Write tree to a file
-  fs.writeFile(self.tree_fn, busted_params.analysis.tagged_nwk_tree, function (err) {
+  fs.writeFile(self.tree_fn, relax_params.analysis.tagged_nwk_tree, function (err) {
     if (err) throw err;
   });
 
@@ -115,6 +119,7 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
 
   // qsub_submit.sh
   var qsub_submit = function () {
+    console.log('submitting job');
 
     var qsub =  spawn('qsub', 
                          ['-v',
@@ -132,7 +137,7 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
                           { cwd : self.output_dir});
 
     qsub.stderr.on('data', function (data) {
-
+      console.log(data);
     });
 
     qsub.stdout.on('data', function (data) {
@@ -153,14 +158,15 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
 
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
-  var do_busted = function(stream, busted_params) {
+  var do_relax = function(stream, relax_params) {
     self.emit('status update', {'phase': self.status_stack[0], 'msg': ''});
-    setTimeout(qsub_submit, 0000);
+    qsub_submit();
   }
 
-  do_busted(busted_params);
+  console.log('starting job');
+  do_relax(relax_params);
 
 }
 
-exports.DoBustedAnalysis = DoBustedAnalysis;
+exports.DoRelaxAnalysis = DoRelaxAnalysis;
 

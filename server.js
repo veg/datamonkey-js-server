@@ -34,6 +34,7 @@ var config = require('./config.json'),
     hivtrace = require('./app/hivtrace/hivtrace.js'),
     prime = require('./app/prime/prime.js'),
     busted = require('./app/busted/busted.js'),
+    relax = require('./app/relax/relax.js'),
     ss = require('socket.io-stream');
 
 // For every new connection...
@@ -57,6 +58,9 @@ io.sockets.on('connection', function (socket) {
           break;
         case 'busted':
           busted.BustedAnalysis(socket, stream, params.job);
+          break;
+        case 'relax':
+          relax.RelaxAnalysis(socket, stream, params.job);
           break;
         default:
           socket.emit('error', 'type not recognized');
