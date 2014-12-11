@@ -97,6 +97,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   self.min_overlap = hiv_cluster_params.min_overlap;
   self.status_stack = hiv_cluster_params.status_stack;
   self.lanl_compare = hiv_cluster_params.lanl_compare;
+  self.strip_drams = hiv_cluster_params.strip_drams;
   self.status_fn = self.filepath+'_status';
   self.output_cluster_output = self.filepath + cluster_output_suffix;
   self.lanl_output_cluster_output = self.filepath + lanl_cluster_output_suffix;
@@ -120,6 +121,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
                           ',reference='+self.reference+
                           ',mo='+self.min_overlap+ 
                           ',comparelanl='+self.lanl_compare,
+                          ',comparelanl='+self.strip_drams,
                           '-o', self.output_dir,
                           '-e', self.output_dir, 
                           self.qsub_script], 

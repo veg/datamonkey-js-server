@@ -30,6 +30,7 @@ import os
 sys.path.append(os.getcwd() + '/../../app/hivtrace/')
 
 import hivtrace
+import strip_drams
 import subprocess
 import unittest
 import json
@@ -88,10 +89,10 @@ class TestHIVTrace(unittest.TestCase):
       devnull.close()
       return
 
-
   def test_redis_connection(self):
     hivtrace.update_status(self.fn, 'Aligning', self.POOL)
     return
+
 
   def test_flag_duplicates(self):
     hivtrace.rename_duplicates(self.fn, '|')
@@ -238,25 +239,49 @@ class TestHIVTrace(unittest.TestCase):
 
     return
 
-  def test_hivtrace_stack(self):
+  def test_hivtrace_lanl(self):
 
     fn   = './res/INPUT.FASTA'
     id   = os.path.basename(self.fn)
     compare_to_lanl = True
     status_file=self.fn+'_status'
-
+    strip_drams = 'lewis'
 
     ##run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      compare_to_lanl, status_file, self.config, '0.025', self.POOL)
+                      compare_to_lanl, strip_drams, status_file,
+                      self.config, '0.025', self.POOL)
 
 
+    # Read output json
     self.assertTrue(True)
 
     return
 
+  def test_hivtrace_without_lanl(self):
 
+    fn   = './res/INPUT.FASTA'
+    id   = os.path.basename(self.fn)
+    compare_to_lanl = False
+    status_file=self.fn+'_status'
+    hivcluster_json_fn = fn+'_user.trace.json'
+    strip_drams = 'wheeler'
+
+    ##run the whole thing and make sure it completed via the status file
+    hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
+                      self.distance_threshold, self.min_overlap,
+                      compare_to_lanl, strip_drams, status_file,
+                      self.config, '0.025', self.POOL)
+
+
+    cluster_json = json.loads(open(hivcluster_json_fn).read())
+    [self.assertTrue("removed" in edge) for edge in cluster_json["Edges"]]
+
+    # Read output json
+    self.assertTrue(True)
+
+    return
 
   def test_env(self):
 
@@ -265,14 +290,51 @@ class TestHIVTrace(unittest.TestCase):
     id   = os.path.basename(env_fn)
     status_file=env_fn+'_status'
     reference='HXB2_env'
+    strip_drams = False
 
     #run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, env_fn, reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      False, status_file, self.config, '0.015', self.POOL)
+                      False, strip_drams, status_file, self.config,
+                      '0.015', self.POOL)
 
 
     self.assertTrue(True)
+
+  def test_strip_drams(self):
+
+    pol_fn    = './res/HIV1_ALL_2013_pol_DNA.fasta'
+    outfile   = './res/HIV1_ALL_2013_pol_DNA.drams_stripped.fasta'
+    dram_type = 'lewis'
+
+    stripped_fasta = strip_drams.strip_drams(pol_fn, dram_type)
+
+    stripped_seq_dict = {}
+    for line in stripped_fasta.split('\n'):
+        if ">" in line:
+            seq_id = line.rstrip()
+            stripped_seq_dict.update({seq_id:''})
+        else:
+            stripped_seq_dict[seq_id] = stripped_seq_dict[seq_id] + line.rstrip()
+
+
+    PR_set = set([30,32,33,46,47,48,50,54,76,82,84,88,90])
+    RT_set = set([41,62,65,67,69,70,74,75,77,100,103,106,108,115,116,151,181,184,188,190,210,215,219,225,236])
+
+    # Open outfile and compare to original file, ensure sites are stripped
+    f = open(pol_fn, 'r')
+    original_fasta = f.read()
+
+    seq_dict = {}
+    for line in original_fasta.split('\n'):
+        if '>' in line:
+            seq_id = line.rstrip()
+            seq_dict.update({seq_id:''})
+        else:
+            seq_dict[seq_id] = seq_dict[seq_id] + line.rstrip()
+
+    for key in stripped_seq_dict:
+        assert(len(seq_dict[key]) - len(stripped_seq_dict[key]) == ((len(PR_set) + len(RT_set)) * 3))
 
     return
 

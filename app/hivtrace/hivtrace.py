@@ -1,7 +1,7 @@
 #!/bin/python
 #  Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 #
-#  Copyright (C) 2013
+#  Copyright (C) 2014
 #  Sergei L Kosakovsky Pond (spond@ucsd.edu)
 #  Steven Weaver (sweaver@ucsd.edu)
 #
@@ -27,6 +27,7 @@
 import redis
 import subprocess
 import shutil
+import strip_drams as sd
 import argparse
 import csv
 import os
@@ -294,9 +295,10 @@ def annotate_lanl(trace_json_fn, lanl_file):
 
 
 def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
-             compare_to_lanl, status_file, config, fraction, POOL):
+             compare_to_lanl, strip_drams, status_file, config, fraction, POOL):
 
     """
+    PHASE 0)  Strip Drams
     PHASE 1)  Pad sequence alignment to HXB2 length with bealign
     PHASE 2)  Convert resulting bam file back to FASTA format
     PHASE 2b) Rename any duplicates in FASTA file
@@ -343,21 +345,21 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     DEVNULL = open(os.devnull, 'w')
 
+    # Phase 0
+    if strip_drams:
+
+        stripped_fasta = sd.strip_drams(input, strip_drams)
+
+        # Write file back to input
+        outfile = open(str(input),'w')
+        outfile.write(stripped_fasta)
+        outfile.close()
+
     # PHASE 1
     current_status = "Aligning"
     update_status(id, current_status, POOL)
     bealign_process = [PYTHON, BEALIGN, '-r', reference , '-m', SCORE_MATRIX, '-R', input, BAM_FN]
     subprocess.check_call(bealign_process, stdout=DEVNULL)
-    #b_process = subprocess.Popen(bealign_process, stdout=subprocess.PIPE)
-    #stdout = []
-    #while True:
-    #    line = str(b_process.stdout.read())
-    #    stdout.append(line)
-    #    update_status(id, current_status, line)
-    #    print(line)
-    #    #print line,
-    #    if line == '' and p.poll() != None:
-    #        break
 
     logging.debug(' '.join(bealign_process))
 
@@ -531,3 +533,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
