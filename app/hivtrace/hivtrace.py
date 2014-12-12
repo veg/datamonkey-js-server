@@ -295,7 +295,7 @@ def annotate_lanl(trace_json_fn, lanl_file):
 
 
 def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
-             compare_to_lanl, strip_drams, status_file, config, fraction, POOL):
+             compare_to_lanl, status_file, config, fraction, POOL, strip_drams=False):
 
     """
     PHASE 0)  Strip Drams
@@ -347,7 +347,6 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     # Phase 0
     if strip_drams:
-
         stripped_fasta = sd.strip_drams(input, strip_drams)
 
         # Write file back to input
@@ -504,6 +503,10 @@ def main():
     parser.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     parser.add_argument('-m', '--minoverlap', help='Minimum Overlap')
     parser.add_argument('-g', '--fraction', help='Fraction')
+    parser.add_argument('-s', '--strip_drams', help="Read in an aligned Fasta file (HIV prot/rt sequences) and remove \
+                                                     DRAM (drug resistance associated mutation) codon sites. It will output a new alignment \
+                                                     with these sites removed. It requires input/output file names along with the list of \
+                                                     DRAM sites to remove: 'lewis' or 'wheeler'.")
     parser.add_argument('-c', '--compare', help='Compare to LANL', action='store_true')
     parser.add_argument('--config', help='Path to alternate config file')
 
@@ -527,11 +530,14 @@ def main():
     MIN_OVERLAP=args.minoverlap
     COMPARE_TO_LANL=args.compare
     FRACTION=args.fraction
+    STRIP_DRAMS = args.strip_drams
     STATUS_FILE=FN+'_status'
     POOL = redis.ConnectionPool(host=config.get('redis_host'), port=config.get('redis_port'), db=0)
-    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION, POOL)
+
+    if STRIP_DRAMS != 'wheeler' and STRIP_DRAMS != 'lewis':
+        STRIP_DRAMS = False
+
+    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION, POOL, strip_drams=STRIP_DRAMS)
 
 if __name__ == "__main__":
     main()
-
-

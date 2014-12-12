@@ -250,8 +250,8 @@ class TestHIVTrace(unittest.TestCase):
     ##run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      compare_to_lanl, strip_drams, status_file,
-                      self.config, '0.025', self.POOL)
+                      compare_to_lanl, status_file, self.config,
+                      '0.025', self.POOL, strip_drams=strip_drams)
 
 
     # Read output json
@@ -266,13 +266,13 @@ class TestHIVTrace(unittest.TestCase):
     compare_to_lanl = False
     status_file=self.fn+'_status'
     hivcluster_json_fn = fn+'_user.trace.json'
-    strip_drams = 'wheeler'
+    strip_drams_type = 'wheeler'
 
     ##run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      compare_to_lanl, strip_drams, status_file,
-                      self.config, '0.025', self.POOL)
+                      compare_to_lanl, status_file, self.config, '0.025', self.POOL,
+                      strip_drams=strip_drams_type)
 
 
     cluster_json = json.loads(open(hivcluster_json_fn).read())
