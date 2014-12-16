@@ -84,8 +84,8 @@ class TestHIVTrace(unittest.TestCase):
   def tearDown(self):
       #Reset all test files and remove generated files
       devnull = open(os.devnull, 'w')
-      subprocess.check_call(['git', 'clean', '-f', './res/'], stdout=devnull)
-      subprocess.check_call(['git', 'checkout', '-f', './res/*'], stdout=devnull)
+      #subprocess.check_call(['git', 'clean', '-f', './res/'], stdout=devnull)
+      #subprocess.check_call(['git', 'checkout', '-f', './res/*'], stdout=devnull)
       devnull.close()
       return
 
@@ -146,6 +146,7 @@ class TestHIVTrace(unittest.TestCase):
     return
 
   def test_annotate_with_hxb2(self):
+
     hxb2_links_fn=self.fn+'_USER.HXB2LINKED.CSV'
     hivcluster_json_fn=self.fn+'_USER.TRACE.JSON'
     hivtrace.annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn)
@@ -281,7 +282,36 @@ class TestHIVTrace(unittest.TestCase):
     # Read output json
     self.assertTrue(True)
 
+    #TODO: Ensure HXB2 sequences were stripped
+
     return
+
+  def test_strip_reference_sequences(self):
+
+    fn   = './res/TEST_WITH_REFERENCE_CONTAMINANTS.fa'
+    id   = os.path.basename(self.fn)
+    compare_to_lanl = False
+    status_file=self.fn+'_status'
+    hivcluster_json_fn = fn+'_user.trace.json'
+    strip_drams_type = 'wheeler'
+
+    ##run the whole thing and make sure it completed via the status file
+    hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
+                      self.distance_threshold, self.min_overlap,
+                      compare_to_lanl, status_file, self.config, '0.025', self.POOL,
+                      strip_drams=strip_drams_type)
+
+
+    cluster_json = json.loads(open(hivcluster_json_fn).read())
+    [self.assertTrue("removed" in edge) for edge in cluster_json["Edges"]]
+
+    # Read output json
+    self.assertTrue(True)
+
+    #TODO: Ensure HXB2 sequences were stripped
+
+    return
+
 
   def test_env(self):
 

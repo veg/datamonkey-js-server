@@ -293,6 +293,37 @@ def annotate_lanl(trace_json_fn, lanl_file):
 
     return
 
+def strip_reference_sequences(input, reference_fn, TN93DIST, threshold, ambiguities, min_overlap):
+
+    tn93_ref_fn = input+'_user.reference.json'
+    tn93_ref_fh = open(tn93_ref_fn , 'w')
+
+    output_fn=input+'_user.reference.csv'
+    OUTPUT_FORMAT='csv'
+
+    tn93_process =  [TN93DIST, '-o', output_fn, '-t',
+                               threshold, '-a', ambiguities, '-g', '1', '-l',
+                               min_overlap, '-f', OUTPUT_FORMAT, '-s', reference_fn,
+                               input]
+
+    subprocess.check_call(tn93_process, stdout=tn93_ref_fh)
+    tn93_ref_fh.close()
+
+    # Make new FASTA file without reference sequences
+    with open(tn93_ref_fn) as json_fh:
+        trace_json = json.loads(json_fh.read())
+        nodes = trace_json.get('Nodes')
+        import pdb
+        pdb.set_trace()
+
+        # Filter nodes that are reference positive
+        [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
+
+    shutil.move(trace_json_cp_fn, trace_json_fn)
+
+
+    logging.debug(' '.join(tn93_process))
+
 
 def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
              compare_to_lanl, status_file, config, fraction, POOL, strip_drams=False):
@@ -302,15 +333,24 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     PHASE 1)  Pad sequence alignment to HXB2 length with bealign
     PHASE 2)  Convert resulting bam file back to FASTA format
     PHASE 2b) Rename any duplicates in FASTA file
-    PHASE 3)  Do a tn93 analysis on the supplied FASTA file alone
-    PHASE 3b) Flag potential HXB2 sequences
-    PHASE 4)  Run hivclustercsv to return clustering information in json format
-    PHASE 4b) Do all attribute annotations to the results from (4)
-    PHASE 5)  Run tn93 against LANL if user elects to
-    PHASE 5b) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
-    PHASE 5c) Flag any potential HXB2 sequences
-    PHASE 6)  Run hivclustercsv to return clustering information in json format
+    PHASE 3)  Remove HXB2 and NL43 sequences
+    PHASE 4)  tn93 analysis on the supplied FASTA file alone
+    #PHASE 4b) Flag potential HXB2 sequences
+    PHASE 5)  Run hivclustercsv to return clustering information in json format
+    PHASE 5b) Attribute annotations to results from (4)
+    PHASE 6)  Run tn93 against LANL if user elects to
+    PHASE 6b) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
+    PHASE 6c) Flag any potential HXB2 sequences
+    PHASE 7)  Run hivclustercsv to return clustering information in json format
     """
+
+    # Declare reference file
+    resource_dir =  os.path.dirname(os.path.realpath(__file__)) + '/res/'
+
+    reference_files = {
+        'HXB2_prrt'   : resource_dir + 'HXB2_2253_3869.fa',
+        'NL4-3_prrt'  : resource_dir + 'pNL43_2253_3869.fa'
+    }
 
     #These should come from config
     PYTHON=config.get('python')
@@ -319,9 +359,15 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     TN93DIST=config.get('tn93dist')
     HIVNETWORKCSV=config.get('hivnetworkcsv')
     LANL_FASTA=config.get('lanl_fasta')
-    LANL_TN93OUTPUT_CSV= os.path.dirname(os.path.realpath(__file__)) + '/res/LANL.TN93OUTPUT.csv'
-    HXB2_FASTA= os.path.dirname(os.path.realpath(__file__)) + '/res/HXB2.FASTA'
-    HXB2_LINKED_LANL= os.path.dirname(os.path.realpath(__file__)) + '/res/LANL.HXB2.RESOLVE.csv'
+    LANL_TN93OUTPUT_CSV= resource_dir + 'LANL.TN93OUTPUT.csv'
+
+    if reference in reference_files.keys():
+        REFERENCE_FASTA = reference_files[reference]
+    else:
+        REFERENCE_FASTA = None
+
+    # TODO: We may not need this anymore
+    HXB2_LINKED_LANL=  resource_dir + 'LANL.HXB2.RESOLVE.csv'
     DEFAULT_DELIMITER='|'
 
     #Convert to Python
@@ -333,7 +379,6 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     OUTPUT_FASTA_FN=input+'_output.fasta'
     OUTPUT_TN93_FN=input+'_user.tn93output.csv'
     JSON_TN93_FN=input+'_user.tn93output.json'
-    JSON_HXB2_TN93_FN=input+'_user.hxb2linked.json'
     HXB2_LINKED_OUTPUT_FASTA_FN=input+'_user.hxb2linked.csv'
     OUTPUT_CLUSTER_JSON=input+'_user.trace.json'
     STATUS_FILE=input+'_status'
@@ -374,6 +419,12 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     attribute_map = ('SOURCE', 'SUBTYPE', 'COUNTRY', 'ACCESSION_NUMBER', 'YEAR_OF_SAMPLING')
 
     # PHASE 3
+    # Strip HXB2 and NL43 linked sequences
+    if REFERENCE_FASTA:
+        strip_reference_sequences(input, REFERENCE_FASTA, TN93DIST, threshold, ambiguities, min_overlap)
+
+
+    # PHASE 4
     update_status(id, "TN93 Analysis", POOL)
     tn93_fh = open(JSON_TN93_FN, 'w')
 
@@ -398,23 +449,22 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
         update_status(id, "Error: " + id_dict.args[0], POOL)
         raise id_dict
 
-    # PHASE 3b
-    # Flag HXB2 linked sequences
-    tn93_hxb2_fh = open(JSON_HXB2_TN93_FN, 'w')
+    ## PHASE 4b
+    ## Flag HXB2 linked sequences
+    #tn93_hxb2_fh = open(JSON_HXB2_TN93_FN, 'w')
 
-    tn93_process =  [TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
-                               threshold, '-a', ambiguities, '-g', '1', '-l',
-                               min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_FASTA,
-                               OUTPUT_FASTA_FN]
+    #tn93_process =  [TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
+    #                           threshold, '-a', ambiguities, '-g', '1', '-l',
+    #                           min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_NL43_FASTA,
+    #                           OUTPUT_FASTA_FN]
 
-    if reference == 'HXB2_prrt':
-        subprocess.check_call(tn93_process, stdout=tn93_hxb2_fh)
+    #if reference == 'HXB2_prrt':
+    #    subprocess.check_call(tn93_process, stdout=tn93_hxb2_fh)
 
-    tn93_hxb2_fh.close()
+    #tn93_hxb2_fh.close()
+    #logging.debug(' '.join(tn93_process))
 
-    logging.debug(' '.join(tn93_process))
-
-    # PHASE 4
+    # PHASE 5
     update_status(id, "HIV Network Analysis", POOL)
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
 
@@ -426,16 +476,16 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     logging.debug(' '.join(hivnetworkcsv_process))
     output_cluster_json_fh.close()
 
-    # Add hxb2_link attribute to each node that is shown to be linked by way of
-    # PHASE 3b
-    if reference == 'HXB2_prrt':
-        annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
+    ## Add hxb2_link attribute to each node that is shown to be linked by way of
+    ## PHASE 5b
+    #if reference == 'HXB2_prrt':
+    #    annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
 
     #annotate_attributes(OUTPUT_CLUSTER_JSON, id_dict)
 
     if compare_to_lanl:
 
-      # PHASE 5
+      # PHASE 6
 
       update_status(id, "Public Database TN93 Analysis", POOL)
 
@@ -456,7 +506,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       logging.debug(' '.join(lanl_tn93_process))
 
 
-      # PHASE 5b
+      # PHASE 6b
       #Perform concatenation
       #This is where reference annotation becomes an issue
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
@@ -467,7 +517,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       # Create a list from TN93 csv for hivnetworkcsv filter
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
-      # PHASE 6
+      # PHASE 7
       update_status(id, "Public Database HIV Network Analysis", POOL)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
       lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
@@ -479,10 +529,10 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
       lanl_output_cluster_json_fh.close()
 
-      # Add hxb2_link attribute to each lanl node that is shown to be linked based
-      # off a supplied file, but based on the user supplied threshold.
-      annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, LANL_OUTPUT_CLUSTER_JSON)
-      lanl_annotate_with_hxb2(HXB2_LINKED_LANL, LANL_OUTPUT_CLUSTER_JSON, threshold)
+      ## Add hxb2_link attribute to each lanl node that is shown to be linked based
+      ## off a supplied file, but based on the user supplied threshold.
+      #annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, LANL_OUTPUT_CLUSTER_JSON)
+      #lanl_annotate_with_hxb2(HXB2_LINKED_LANL, LANL_OUTPUT_CLUSTER_JSON, threshold)
 
       # Adapt ids to attributes
       #annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
