@@ -310,14 +310,9 @@ def strip_reference_sequences(input, reference_fn, TN93DIST, threshold, ambiguit
     tn93_ref_fh.close()
 
     # Make new FASTA file without reference sequences
-    with open(tn93_ref_fn) as json_fh:
-        trace_json = json.loads(json_fh.read())
-        nodes = trace_json.get('Nodes')
+    with open(output_fn) as output_fn:
         import pdb
         pdb.set_trace()
-
-        # Filter nodes that are reference positive
-        [node.update({'attributes' : attributes[node['id']]}) for node in nodes]
 
     shutil.move(trace_json_cp_fn, trace_json_fn)
 
@@ -390,14 +385,6 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     DEVNULL = open(os.devnull, 'w')
 
-    # Phase 0
-    if strip_drams:
-        stripped_fasta = sd.strip_drams(input, strip_drams)
-
-        # Write file back to input
-        outfile = open(str(input),'w')
-        outfile.write(stripped_fasta)
-        outfile.close()
 
     # PHASE 1
     current_status = "Aligning"
@@ -422,6 +409,15 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     # Strip HXB2 and NL43 linked sequences
     if REFERENCE_FASTA:
         strip_reference_sequences(input, REFERENCE_FASTA, TN93DIST, threshold, ambiguities, min_overlap)
+
+    # Phase 0
+    if strip_drams:
+        stripped_fasta = sd.strip_drams(input, strip_drams)
+
+        # Write file back to input
+        outfile = open(str(input),'w')
+        outfile.write(stripped_fasta)
+        outfile.close()
 
 
     # PHASE 4
