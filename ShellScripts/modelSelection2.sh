@@ -7,5 +7,10 @@ rm -rf $ABS_DIR/Analyses/ModelSelection/spool/$1.progress
 STR=`beomap -np 21`
 echo $STR
 
-(echo $1; echo $2) |  mpirun -map $STR /opt/hyphy/HYPHY/HYPHYMPI USEPATH=`pwd`/dump/ $ABS_DIR/Analyses/ModelSelection/ModelSelection.bf
+# Beowulf MPI
+# (echo $1; echo $2) |  mpirun -map $STR /opt/hyphy/HYPHY/HYPHYMPI USEPATH=`pwd`/dump/ $ABS_DIR/Analyses/ModelSelection/ModelSelection.bf
 #> $ABS_DIR/Analyses/ModelSelection/hpout
+
+# OpenMPI
+(echo $1; echo $2) |  mpirun -hostfile $HOSTFILE /opt/hyphy/HYPHY/HYPHYOPENMPI USEPATH=`pwd`/dump/ $ABS_DIR/Analyses/ModelSelection/ModelSelection.bf
+> $ABS_DIR/Analyses/ModelSelection/hpout

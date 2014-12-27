@@ -12,6 +12,10 @@ rm -f  $ABS_DIR/Analyses/FEL/spool/$1*out
 #default p-value    : a number between 0 and 1
 #fel or ifel: 0 - FEL; 1 - IFEL
 
-
 #(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6) | /usr/local/bin/HYPHYMPI 61 /Analyses/FEL/FEL.bf > Analyses/FEL/hpout 2>&1 &
-(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6) | mpirun -np 61 -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI USEPATH=$ABS_DIR/Analyses/FEL/ $ABS_DIR/Analyses/FEL/FEL.bf  >  $ABS_DIR/Analyses/FEL/hpout 2>&1 & 
+
+#Beowulf MPI
+#(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6) | mpirun -np 61 -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI USEPATH=$ABS_DIR/Analyses/FEL/ $ABS_DIR/Analyses/FEL/FEL.bf  >  $ABS_DIR/Analyses/FEL/hpout 2>&1 & 
+
+#OpenMPI
+(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6) | mpirun -np 61 -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI USEPATH=$ABS_DIR/Analyses/FEL/ $ABS_DIR/Analyses/FEL/FEL.bf  >  $ABS_DIR/Analyses/FEL/hpout 2>&1 & 
