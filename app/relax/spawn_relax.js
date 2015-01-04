@@ -104,6 +104,7 @@ DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
   self.tree_fn = self.filepath + '.tre';
   self.relax = config.relax;
   self.status_stack = relax_params.status_stack;
+  self.analysis_type = relax_params.analysis_type;
   self.genetic_code = "1";
   self.torque_id = "unk";
   self.std_err = "unk";
@@ -129,6 +130,7 @@ DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
                           ',pfn='+self.progress_fn+
                           ',treemode='+self.treemode+
                           ',genetic_code='+self.genetic_code+
+                          ',analysis_type='+self.analysis_type+
                           ',cwd='+__dirname+
                           ',msaid='+self.msaid,
                           '-o', self.output_dir,
