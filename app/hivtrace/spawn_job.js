@@ -170,6 +170,8 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
       do_hivcluster(hiv_cluster_params);
     });
 
+  } else {
+    do_hivcluster(hiv_cluster_params);
   }
 
 }
