@@ -2,7 +2,7 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
-  Copyright (C) 2013
+  Copyright (C) 2015
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -81,8 +81,9 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   var cluster_output_suffix='_user.trace.json',
       lanl_cluster_output_suffix='_lanl_user.trace.json',
       tn93_json_suffix='_user.tn93output.json',
-      tn93_csv_suffix='_user.tn93output.csv';
-      tn93_lanl_csv_suffix='_user.tn93output.csv';
+      tn93_csv_suffix='_user.tn93output.csv',
+      tn93_lanl_csv_suffix='_user.tn93output.csv',
+      custom_reference_suffix='_custom_reference.fas';
 
   self.python = config.python;
   self.output_dir  = __dirname + '/output/';
@@ -106,6 +107,8 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   self.tn93_lanl_results = self.filepath + tn93_csv_suffix;
   self.subscriber = redis.createClient();
   self.subscriber.subscribe(self.id);
+  self.custom_reference_fn='';
+
 
   // qsub_submit.sh
   var qsub_submit = function () {
@@ -121,9 +124,10 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
                           ',reference='+self.reference+
                           ',mo='+self.min_overlap+ 
                           ',comparelanl='+self.lanl_compare+
-                          ',strip_drams='+self.strip_drams,
+                          ',strip_drams='+self.strip_drams+
+                          ',custom_reference_fn='+self.custom_reference_fn,
                           '-o', self.output_dir,
-                          '-e', self.output_dir, 
+                          '-e', self.output_dir,
                           self.qsub_script], 
                           { cwd: self.output_dir });
 
@@ -149,11 +153,24 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_hivcluster = function(hiv_cluster_params) {
+
     self.emit('status update', {'phase' : self.status_stack[0], 'msg' : self.status_stack[0]});
     qsub_submit();
+
   }
 
-  do_hivcluster(hiv_cluster_params);
+  if(hiv_cluster_params.reference == 'Custom') {
+
+    self.custom_reference_fn = self.filepath + custom_reference_suffix;
+    self.custom_reference = hiv_cluster_params.custom_reference;
+
+    // Check if reference is custom, and write to a file if so.
+    fs.writeFile(self.custom_reference_fn, self.custom_reference, function (err) {
+      self.reference = self.custom_reference_fn;
+      do_hivcluster(hiv_cluster_params);
+    });
+
+  }
 
 }
 

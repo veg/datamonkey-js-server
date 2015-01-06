@@ -1,7 +1,7 @@
 #!/bin/python
 #  Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 #
-#  Copyright (C) 2014
+#  Copyright (C) 2015
 #  Sergei L Kosakovsky Pond (spond@ucsd.edu)
 #  Steven Weaver (sweaver@ucsd.edu)
 #
@@ -310,12 +310,18 @@ def strip_reference_sequences(input, reference_fn, TN93DIST, threshold, ambiguit
     tn93_ref_fh.close()
 
     # Make new FASTA file without reference sequences
-    with open(output_fn) as output_fn:
-        import pdb
-        pdb.set_trace()
+    with open(output_fn) as output_fh:
+        lines = output_fh.readlines()
+        to_strip = [line.split(',')[0].strip() for line in lines[1:]]
 
-    shutil.move(trace_json_cp_fn, trace_json_fn)
+    input_file = list(SeqIO.parse(open(input, 'r'), 'fasta'))
+    print(to_strip)
 
+    #Filter sequences to strip
+    stripped = list(filter(lambda x: x.id not in to_strip, input_file))
+
+    output_handle = open(input, "w")
+    SeqIO.write(stripped, output_handle, "fasta")
 
     logging.debug(' '.join(tn93_process))
 
@@ -330,7 +336,6 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     PHASE 2b) Rename any duplicates in FASTA file
     PHASE 3)  Remove HXB2 and NL43 sequences
     PHASE 4)  tn93 analysis on the supplied FASTA file alone
-    #PHASE 4b) Flag potential HXB2 sequences
     PHASE 5)  Run hivclustercsv to return clustering information in json format
     PHASE 5b) Attribute annotations to results from (4)
     PHASE 6)  Run tn93 against LANL if user elects to
@@ -353,16 +358,25 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     BAM2MSA=config.get('bam2msa')
     TN93DIST=config.get('tn93dist')
     HIVNETWORKCSV=config.get('hivnetworkcsv')
-    LANL_FASTA=config.get('lanl_fasta')
     LANL_TN93OUTPUT_CSV= resource_dir + 'LANL.TN93OUTPUT.csv'
+
+    if strip_drams:
+        if strip_drams == 'wheeler':
+            LANL_FASTA=config.get('lanl_wheeler')
+        elif strip_drams == 'lewis':
+            LANL_FASTA=config.get('lanl_lewis')
+    else:
+        LANL_FASTA=config.get('lanl_fasta')
 
     if reference in reference_files.keys():
         REFERENCE_FASTA = reference_files[reference]
+    elif os.path.isfile(reference):
+        REFERENCE_FASTA = reference
     else:
         REFERENCE_FASTA = None
 
     # TODO: We may not need this anymore
-    HXB2_LINKED_LANL=  resource_dir + 'LANL.HXB2.RESOLVE.csv'
+    HXB2_LINKED_LANL = resource_dir + 'LANL.HXB2.RESOLVE.csv'
     DEFAULT_DELIMITER='|'
 
     #Convert to Python
@@ -408,17 +422,15 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     # PHASE 3
     # Strip HXB2 and NL43 linked sequences
     if REFERENCE_FASTA:
-        strip_reference_sequences(input, REFERENCE_FASTA, TN93DIST, threshold, ambiguities, min_overlap)
+        strip_reference_sequences(OUTPUT_FASTA_FN, REFERENCE_FASTA, TN93DIST, threshold, ambiguities, min_overlap)
 
-    # Phase 0
     if strip_drams:
-        stripped_fasta = sd.strip_drams(input, strip_drams)
+        stripped_fasta = sd.strip_drams(OUTPUT_FASTA_FN, strip_drams)
 
         # Write file back to input
-        outfile = open(str(input),'w')
+        outfile = open(str(OUTPUT_FASTA_FN),'w')
         outfile.write(stripped_fasta)
         outfile.close()
-
 
     # PHASE 4
     update_status(id, "TN93 Analysis", POOL)
@@ -444,21 +456,6 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     if type(id_dict) is ValueError:
         update_status(id, "Error: " + id_dict.args[0], POOL)
         raise id_dict
-
-    ## PHASE 4b
-    ## Flag HXB2 linked sequences
-    #tn93_hxb2_fh = open(JSON_HXB2_TN93_FN, 'w')
-
-    #tn93_process =  [TN93DIST, '-o', HXB2_LINKED_OUTPUT_FASTA_FN, '-t',
-    #                           threshold, '-a', ambiguities, '-g', '1', '-l',
-    #                           min_overlap, '-f', OUTPUT_FORMAT, '-s', HXB2_NL43_FASTA,
-    #                           OUTPUT_FASTA_FN]
-
-    #if reference == 'HXB2_prrt':
-    #    subprocess.check_call(tn93_process, stdout=tn93_hxb2_fh)
-
-    #tn93_hxb2_fh.close()
-    #logging.debug(' '.join(tn93_process))
 
     # PHASE 5
     update_status(id, "HIV Network Analysis", POOL)
@@ -570,13 +567,14 @@ def main():
 
     FN=args.input
     ID=os.path.basename(FN)
-    REFERENCE =args.reference
+    REFERENCE = args.reference
     AMBIGUITY_HANDLING=args.ambiguities.lower()
     DISTANCE_THRESHOLD=args.threshold
     MIN_OVERLAP=args.minoverlap
     COMPARE_TO_LANL=args.compare
     FRACTION=args.fraction
     STRIP_DRAMS = args.strip_drams
+
     STATUS_FILE=FN+'_status'
     POOL = redis.ConnectionPool(host=config.get('redis_host'), port=config.get('redis_port'), db=0)
 

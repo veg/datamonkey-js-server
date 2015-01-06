@@ -1,7 +1,7 @@
 #!/bin/python
 #  Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 #
-#  Copyright (C) 2013
+#  Copyright (C) 2015
 #  Sergei L Kosakovsky Pond (spond@ucsd.edu)
 #  Steven Weaver (sweaver@ucsd.edu)
 #
@@ -242,18 +242,17 @@ class TestHIVTrace(unittest.TestCase):
 
   def test_hivtrace_lanl(self):
 
-    fn   = './res/INPUT.FASTA'
-    id   = os.path.basename(self.fn)
+    fn              = './res/INPUT.FASTA'
+    id              = os.path.basename(self.fn)
     compare_to_lanl = True
-    status_file=self.fn+'_status'
-    strip_drams = 'lewis'
+    status_file     = self.fn+'_status'
+    strip_drams     = 'lewis'
 
-    ##run the whole thing and make sure it completed via the status file
+    #run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
                       compare_to_lanl, status_file, self.config,
                       '0.025', self.POOL, strip_drams=strip_drams)
-
 
     # Read output json
     self.assertTrue(True)
@@ -269,7 +268,7 @@ class TestHIVTrace(unittest.TestCase):
     hivcluster_json_fn = fn+'_user.trace.json'
     strip_drams_type = 'wheeler'
 
-    ##run the whole thing and make sure it completed via the status file
+    #Run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
                       compare_to_lanl, status_file, self.config, '0.025', self.POOL,
@@ -306,9 +305,8 @@ class TestHIVTrace(unittest.TestCase):
     [self.assertTrue("removed" in edge) for edge in cluster_json["Edges"]]
 
     # Read output json
-    self.assertTrue(True)
-
-    #TODO: Ensure HXB2 sequences were stripped
+    known_contaminants = ['B|FR|A04321|1983', '08_BC_HXB2_SABOTAGE|CN|AB078686|2000']
+    [self.assertTrue(not any([k in node for k in known_contaminants])) for node in cluster_json["Nodes"]]
 
     return
 
@@ -325,11 +323,36 @@ class TestHIVTrace(unittest.TestCase):
     #run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, env_fn, reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      False, strip_drams, status_file, self.config,
+                      False, status_file, self.config,
                       '0.015', self.POOL)
 
 
     self.assertTrue(True)
+
+  def test_custom_reference(self):
+
+    compare_to_lanl = True
+    input_fn   = './res/TEST.FASTA'
+    hivcluster_json_fn = input_fn+'_user.trace.json'
+    reference  = './res/TEST_REFERENCE.FASTA'
+    id = os.path.basename(input_fn)
+    status_file = input_fn+'_status'
+    strip_drams = False
+
+    known_contaminants = ['Z|JP|K03455|2036|7']
+
+    #run the whole thing and make sure it completed via the status file
+    hivtrace.hivtrace(id, input_fn, reference, self.ambiguities,
+                      self.distance_threshold, self.min_overlap,
+                      False, status_file, self.config, '0.015', self.POOL)
+
+
+    # Read output json
+    known_contaminants = ['B|FR|A04321|1983', '08_BC_HXB2_SABOTAGE|CN|AB078686|2000']
+    cluster_json = json.loads(open(hivcluster_json_fn).read())
+
+    [self.assertTrue(not any([k in node for k in known_contaminants])) for node in cluster_json["Nodes"]]
+
 
   def test_strip_drams(self):
 
@@ -364,7 +387,8 @@ class TestHIVTrace(unittest.TestCase):
             seq_dict[seq_id] = seq_dict[seq_id] + line.rstrip()
 
     for key in stripped_seq_dict:
-        assert(len(seq_dict[key]) - len(stripped_seq_dict[key]) == ((len(PR_set) + len(RT_set)) * 3))
+        if len(seq_dict[key]) > 999:
+            assert(len(seq_dict[key]) - len(stripped_seq_dict[key]) == ((len(PR_set) + len(RT_set)) * 3))
 
     return
 
