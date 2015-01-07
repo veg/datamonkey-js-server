@@ -15,6 +15,6 @@ RELAX=$CWD/RELAX.bf
 export HYPHY_PATH=$CWD/../../node_modules/hyphy/res/
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
-echo '(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo "3";echo "2";echo "2") | $HYPHY $RELAX'
-(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo "3";echo "2";echo "2") | $HYPHY $RELAX
+echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo "3";echo "2";echo '$ANALYSIS_TYPE') | $HYPHY $RELAX'
+(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo "3";echo "2";echo $ANALYSIS_TYPE) | $HYPHY $RELAX
 echo "Completed" > $STATUS_FILE
