@@ -2,7 +2,7 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
-  Copyright (C) 2013
+  Copyright (C) 2015
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -43,13 +43,15 @@ util.inherits(DoRelaxAnalysis, EventEmitter);
  * Once the job has been scheduled, we need to watch the files that it
  * sends updates to.
  */
+
 DoRelaxAnalysis.prototype.status_watcher = function () {
 
   var self = this;
-  var job_status = new JobStatus(self.torque_id);
+  job_status = new JobStatus(self.torque_id);
 
   job_status.watch(function(error, status) {
     if(status == 'completed' || status == 'exiting') {
+      //clearInterval(job_status.metronome);
       fs.readFile(self.results_fn, 'utf8', function (err, data) {
         if(err) {
           // Check stderr
@@ -75,13 +77,17 @@ DoRelaxAnalysis.prototype.status_watcher = function () {
          return;
        }
        if(data) {
-         self.emit('status update', {'phase' : status, 'index': 1, 'msg': data});
+         if(data != self.current_status) {
+           self.emit('status update', {'phase' : status, 'index': 1, 'msg': data, 'torque_id' : self.torque_id});
+           self.current_status = data;
+         }
        } else {
 	      console.log('read progress file, but no data');
        }
      });
    }
  });
+
 }
 
 /**
@@ -89,6 +95,7 @@ DoRelaxAnalysis.prototype.status_watcher = function () {
  * The job is executed as specified in ./relax/README
  * Emit events that are being listened for by ./server.js
  */
+
 DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
 
   var self = this;
@@ -109,6 +116,7 @@ DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
   self.torque_id = "unk";
   self.std_err = "unk";
   self.job_completed = false;
+  self.current_status = "";
 
   // Write tree to a file
   fs.writeFile(self.tree_fn, relax_params.analysis.tagged_nwk_tree, function (err) {
