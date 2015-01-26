@@ -15,5 +15,6 @@ rm -f  $ABS_DIR/Analyses/MEME/spool/$1*out
 #(echo $1; echo $2; echo $3; echo $4; echo $5;) | mpirun -np 97 -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI USEPATH=$ABS_DIR/Analyses/MEME/ $ABS_DIR/Analyses/MEME/MEME_new.bf >  $ABS_DIR/Analyses/MEME/hpout 2>&1 
 
 # OpenMPI
-(echo $1; echo $2; echo $3; echo $4; echo $5;) | mpirun -nolocal -np 97 -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI USEPATH=$ABS_DIR/Analyses/MEME/ $ABS_DIR/Analyses/MEME/MEME_new.bf >  $ABS_DIR/Analyses/MEME/hpout 2>&1 
+(echo $1; echo $2; echo $3; echo $4; echo $5;) | mpirun -nolocal -np 97 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI USEPATH=$ABS_DIR/Analyses/MEME/ $ABS_DIR/Analyses/MEME/MEME_new.bf >  $ABS_DIR/Analyses/MEME/hpout 2>&1 
 
+#(echo $1; echo $2; echo $3; echo $4; echo $5;) | mpirun -nolocal -np 97 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI USEPATH=$ABS_DIR/Analyses/MEME/ $ABS_DIR/Analyses/MEME/MEME_new.bf

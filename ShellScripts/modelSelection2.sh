@@ -12,5 +12,5 @@ echo $STR
 #> $ABS_DIR/Analyses/ModelSelection/hpout
 
 # OpenMPI
-(echo $1; echo $2) |  mpirun -hostfile $HOSTFILE /opt/hyphy/HYPHY/HYPHYOPENMPI USEPATH=`pwd`/dump/ $ABS_DIR/Analyses/ModelSelection/ModelSelection.bf
+(echo $1; echo $2) |  mpirun -hostfile $HOSTFILE /opt/hyphy/HYPHY/HYPHYMPI USEPATH=`pwd`/dump/ $ABS_DIR/Analyses/ModelSelection/ModelSelection.bf
 > $ABS_DIR/Analyses/ModelSelection/hpout

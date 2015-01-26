@@ -13,4 +13,5 @@ rm -f  $ABS_DIR/Analyses/MEME/spool/$1*out
 
 
 #(echo $1; echo $2; echo $3; echo $4; echo $5;) | mpirun -np 61 -exclude /opt/hyphy/HYPHY/HYPHYMPI -d BASEPATH=/opt/hyphy/HYPHY/ USEPATH=/Analyses/MEME/ /home/datamonkey/datamonkey-server/Analyses/MEME/MEME.bf 
-mpirun -np 61 -exclude $EXCLUDE_NODES /opt/hyphy/HYPHY/HYPHYMPI -d BASEPATH=/opt/hyphy/HYPHY/ USEPATH=$ABS_DIR/Analyses/MEME/ $ABS_DIR/Analyses/MEME/MEME.bf 
+#mpirun -np 61 -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI -d BASEPATH=/opt/hyphy/HYPHY/ USEPATH=$ABS_DIR/Analyses/MEME/ $ABS_DIR/Analyses/MEME/MEME.bf 
+mpirun -np 61 -H n1,n2,n8 /usr/local/bin/HYPHYMPI -d BASEPATH=/opt/hyphy/HYPHY/ USEPATH=$ABS_DIR/Analyses/MEME/ $ABS_DIR/Analyses/MEME/MEME.bf 

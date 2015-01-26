@@ -3,7 +3,9 @@ RequireVersion  ("2.11");
 fscanf  			(stdin,"String", _in_FilePath);
 fscanf  			(stdin,"Number", _in_GeneticCodeTable);
 skipCodeSelectionStep    = 1;
-ExecuteAFile			("../Shared/chooseGeneticCode.def");
+
+LoadFunctionLibrary		("chooseGeneticCode", {"0" : "Universal"});
+//ExecuteAFile			("../Shared/chooseGeneticCode.def");
 ApplyGeneticCodeTable (_in_GeneticCodeTable);
 
 ExecuteAFile			("../Shared/globals.ibf");

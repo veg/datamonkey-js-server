@@ -14,4 +14,5 @@ rm -f $ABS_DIR/Analyses/GARD/spool/$1*out
 # (echo $1; echo $2; echo $3; echo $4; echo $5; echo $6) | mpirun -np 65 -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI  USEPATH=/dev/null $ABS_DIR/Analyses/GARD/GARD.bf  > $ABS_DIR/Analyses/GARD/hpout 2>&1 &
 
 # OpenMPI
-(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6) | mpirun -np 65 -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI  USEPATH=/dev/null $ABS_DIR/Analyses/GARD/GARD.bf  > $ABS_DIR/Analyses/GARD/hpout 2>&1 &
+(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6) | mpirun -np 65 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI  USEPATH=/dev/null $ABS_DIR/Analyses/GARD/GARD.bf  > $ABS_DIR/Analyses/GARD/hpout 2>&1 &
+#(echo $1; echo $2; echo $3; echo $4; echo $5; echo $6) | mpirun -np 65 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI  USEPATH=/dev/null $ABS_DIR/Analyses/GARD/GARD.bf

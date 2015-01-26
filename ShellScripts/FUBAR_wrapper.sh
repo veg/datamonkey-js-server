@@ -17,6 +17,6 @@ BASEPATH=$ABS_DIR/Analyses/FUBAR/
 #(echo $1; echo $4; echo $2; echo 10; echo $3; ) | mpirun -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI ${BASEPATH}FUBAR_Stage4.bf  > $ABS_DIR/Analyses/FUBAR/hpout 2>&1
 
 # OpenMPI
-(echo $1; echo $3;) | mpirun -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI ${BASEPATH}FUBAR_Stage2.bf > $ABS_DIR/Analyses/FUBAR/hpout 2>&1
-(echo $1; echo 10;) | mpirun -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI ${BASEPATH}FUBAR_Stage3.bf > $ABS_DIR/Analyses/FUBAR/hpout 2>&1
-(echo $1; echo $4; echo $2; echo 10; echo $3; ) | mpirun -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI ${BASEPATH}FUBAR_Stage4.bf  > $ABS_DIR/Analyses/FUBAR/hpout 2>&1
+(echo $1; echo $3;) | mpirun -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI ${BASEPATH}FUBAR_Stage2.bf > $ABS_DIR/Analyses/FUBAR/hpout 2>&1
+(echo $1; echo 10;) | mpirun -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI ${BASEPATH}FUBAR_Stage3.bf > $ABS_DIR/Analyses/FUBAR/hpout 2>&1
+(echo $1; echo $4; echo $2; echo 10; echo $3; ) | mpirun -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI ${BASEPATH}FUBAR_Stage4.bf  > $ABS_DIR/Analyses/FUBAR/hpout 2>&1

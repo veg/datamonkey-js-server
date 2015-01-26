@@ -1,9 +1,7 @@
-/* ________________________________________________________________________	*/
-
 function add_discrete_node (node_id, max_parents, sample_size, nlevels)
 {
 	node = {};
-	node["NodeID"] = node_id;
+	node["NodeID"] = ""+node_id;
     node["NodeType"] = 0;
     node["MaxParents"] = max_parents;
 	node["PriorSize"] = sample_size;
@@ -34,12 +32,13 @@ if (doAncestralResample)
 {
 	fprintf					  (stdout, CLEAR_FILE, "Here\n");
 	GetString 				  (lfid, LikelihoodFunction, 0);
+	fprintf					  (stdout, lfid, "\n");
 	ExecuteAFile 			  ("AncestralMapperBGM.bf");
-	fprintf                   (MESSAGE_LOG,"\nHere2\n");
+	fprintf                   (stdout,"\nHere2\n");
 	
 	
 	ancCacheID 				= _buildAncestralCache (lfid, 0, 1);
-    fprintf                    (MESSAGE_LOG, "\nHere3\n");
+    fprintf                    (stdout, "\nHere3\n");
 
 	nbranches 				= nbranches-1;
 	bgm_data_matrix 		= {nbranches, num_nodes};
@@ -53,41 +52,41 @@ if (doAncestralResample)
 			bgm_data_matrix[branch][site] = thisSite[branch];
 		}
 	}
-    fprintf                    (MESSAGE_LOG, "\nHere4\n",bgm_data_matrix,"\n");
+    fprintf                    (stdout, "\nHere4\n",bgm_data_matrix,"\n");
 }
 else
 {
 	num_nodes   			= Columns (bgm_data_matrix);
 }
 
-fprintf (MESSAGE_LOG,"\n", num_nodes, "\n");
+fprintf (stdout,"\n", num_nodes, "\n");
 
 for (k = 0; k < num_nodes; k = k+1)
 {
-	fprintf (MESSAGE_LOG, k, "/", num_nodes, " node made\n");
-	discreteNodes[Abs(discreteNodes)] = add_discrete_node (k, num_parents, 0, 2);
+	fprintf (stdout, k, "/", num_nodes, " node made\n");
+	nodes + add_discrete_node (k, num_parents, 0, 2);
 }
+
 
 BGM_MCMC_BURNIN		= BGM_MCMC_MAXSTEPS $ 10;
 BGM_MCMC_SAMPLES 	= BGM_MCMC_MAXSTEPS $ 1000;
 
-BGM_MCMC_MAXFAILS = 100;
-BGM_MCMC_PROBSWAP = 0.1;
+BGM_MCMC_MAXFAILS   = 100;
+BGM_MCMC_PROBSWAP   = 0.1;
 
 BayesianGraphicalModel gen_bgm = (nodes);
-fprintf              (MESSAGE_LOG, "\nHere5\n");
+fprintf              (stdout, "\nHere5\n");
 
-BGM_OPTIMIZATION_METHOD = 4; // order-MCMC
 
 
 SetParameter 		(gen_bgm, BGM_DATA_MATRIX, 	 bgm_data_matrix);
+BGM_OPTIMIZATION_METHOD = 4; // order-MCMC
 
-fprintf              (MESSAGE_LOG, "\nHere6\n");
+fprintf              (stdout, "\nHere6\n");
 
+Optimize         	 (postp, gen_bgm);
 
-Optimize         	(postp, gen_bgm);
-
-fprintf              (MESSAGE_LOG, "\nHere7\n");
+fprintf              (stdout, "\nHere7\n");
 
 if (doAncestralResample)
 {

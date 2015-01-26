@@ -13,4 +13,4 @@ mkdir $ABS_DIR/Analyses/SCUEAL/spool/$1
 #(echo $1; echo $2;) | mpirun -np $3 -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI $ABS_DIR/Analyses/SCUEAL/SCUEAL.bf > $ABS_DIR/Analyses/SCUEAL/hpout 2>&1 &
 
 # OpenMPI
-(echo $1; echo $2;) | mpirun -np $3 -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI $ABS_DIR/Analyses/SCUEAL/SCUEAL.bf > $ABS_DIR/Analyses/SCUEAL/hpout 2>&1 &
+(echo $1; echo $2;) | mpirun -np $3 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI $ABS_DIR/Analyses/SCUEAL/SCUEAL.bf > $ABS_DIR/Analyses/SCUEAL/hpout 2>&1 &

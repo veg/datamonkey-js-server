@@ -9,4 +9,4 @@ rm -rf $ABS_DIR/Analyses/ModelSelectionP/spool/$1.progress
 #(echo $1;) |  mpirun -np 29 -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI 29 USEPATH=$ABS_DIR/Analyses/ModelSelectionP/ $ABS_DIR/Analyses/ModelSelectionP/ModelSelectionP.bf > $ABS_DIR/Analyses/ModelSelectionP/hpout 2>&1 &
 
 # OpenMPI
-(echo $1;) |  mpirun -np 29 -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI 29 USEPATH=$ABS_DIR/Analyses/ModelSelectionP/ $ABS_DIR/Analyses/ModelSelectionP/ModelSelectionP.bf > $ABS_DIR/Analyses/ModelSelectionP/hpout 2>&1 &
+(echo $1;) |  mpirun -np 29 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI 29 USEPATH=$ABS_DIR/Analyses/ModelSelectionP/ $ABS_DIR/Analyses/ModelSelectionP/ModelSelectionP.bf > $ABS_DIR/Analyses/ModelSelectionP/hpout 2>&1 &

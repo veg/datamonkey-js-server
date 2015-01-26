@@ -11,4 +11,4 @@ rm -f $ABS_DIR/Analyses/BranchSiteREL/spool/$1*out
 #(echo $1; echo $2; echo $3;) | /usr/bin/mpirun -np 33 -exclude $EXCLUDE_NODES /usr/local/bin/HYPHYMPI USEPATH=$ABS_DIR/Analyses/BranchSiteREL/ $ABS_DIR/Analyses/BranchSiteREL/BranchSiteRELTop.bf > $ABS_DIR/Analyses/BranchSiteREL/hpout 2>&1 & 
 
 # Use OpenMPI instead
-(echo $1; echo $2; echo $3;) | mpirun -np 33 -hostfile $HOSTFILE /usr/local/bin/HYPHYOPENMPI USEPATH=$ABS_DIR/Analyses/BranchSiteREL/ $ABS_DIR/Analyses/BranchSiteREL/BranchSiteRELTop.bf > $ABS_DIR/Analyses/BranchSiteREL/hpout 2>&1 & 
+(echo $1; echo $2; echo $3;) | mpirun -np 33 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI USEPATH=$ABS_DIR/Analyses/BranchSiteREL/ $ABS_DIR/Analyses/BranchSiteREL/BranchSiteRELTop.bf > $ABS_DIR/Analyses/BranchSiteREL/hpout 2>&1 & 

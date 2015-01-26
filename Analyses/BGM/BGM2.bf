@@ -40,7 +40,7 @@ function timeStamp (diff)
 function ReceiveJobs (unused)
 {
 	MPIReceive 	  		(-1, fromNode, resultString);	/* listen for messages from any node */
-	howManyDone 		= howManyDone + 1;
+	howManyDone 		+= 1;
 
 	curStamp			= Time(1);
 	soFar				= curStamp-timer;
@@ -56,8 +56,8 @@ function ReceiveJobs (unused)
 	MPINodeState[fromNode-1][0] = 0;	/* set node status to idle */
 	
 	fprintf (MESSAGE_LOG, "Received replicate ", fromNode, " from node ", mpiNode+1, "\n");
-
-	ExecuteCommands ("res = "+resultString+";");
+    
+    res = Eval (resultString);
 
 	rowIndex = 0;
 	if (MPINodeState[fromNode-1][1])
@@ -183,15 +183,14 @@ if (MPI_NODE_COUNT > 0)	/* farm sampling jobs out to cluster via MPI */
 		MPINodeState[mpiNode][1] = 1;
 		fprintf (MESSAGE_LOG, "Sent replicate ", rep, " to node ", mpiNode+1, "\n");
 		MPISend (mpiNode+1, lfEX);				
-		//fprintf ("last.send", CLEAR_FILE, MPI_LAST_SENT_MSG);
+		fprintf ("last.send", CLEAR_FILE, MPI_LAST_SENT_MSG);
 	}
 	
 	
 	/* catch finished jobs here */
 	runningJobs = MPINodeState[-1][0];
-	runningJobs = ((Transpose(runningJobs))*runningJobs)[0];
-	for (rep = 0; rep < runningJobs; rep = rep + 1)
-	{
+	runningJobs = + runningJobs;
+	for (rep = 0; rep < runningJobs; rep += 1) {
 		ReceiveJobs (0);
 	}
 	

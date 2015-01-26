@@ -124,12 +124,13 @@ GetURL 						(dataFileString,BASE_URL_PREFIX+MANGLED_PREFIX+"/"+fileSpec);
 /*
 GetURL 						(analysisSpecRaw,BASE_URL_PREFIX+MANGLED_PREFIX+"/"+fileSpec+".splits");
 */
+
 GetURL                          (analysisSpecRaw, _getTreeLink (fileSpec,1,0));
-if (Abs (analysisSpecRaw) == 0)
-{
-GetURL                          (analysisSpecRaw, _getTreeLink (fileSpec,0,0));
+if (Abs (analysisSpecRaw) == 0) {
+	GetURL                          (analysisSpecRaw, _getTreeLink (fileSpec,0,0));
 }
 
+//fprintf (stdout, analysisSpecRaw, "\n", _getTreeLink (fileSpec,0,0), "\n");
 
 
 baseFilePath  				= "spool/"+fileSpec;
@@ -140,6 +141,8 @@ finalPHP					= baseFilePath + ".out";
 
 fprintf						(datapath, CLEAR_FILE, dataFileString);
 fprintf						(splitspath, analysisSpecRaw);
+
+//fprintf (stdout, analysisSpecRaw, "\n");
 
 ExecuteAFile				("../Shared/_MFReaderAA_.ibf");
 prefix						= "Fitting " + totalJobs + " models to an alignment with " + fileCount + " partitions, "+ ds_0.species + " sequences and " + totalSiteCount + " alignment columns\n";
