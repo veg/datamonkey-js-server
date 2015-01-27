@@ -35,6 +35,7 @@ var config = require('./config.json'),
     prime = require('./app/prime/prime.js'),
     busted = require('./app/busted/busted.js'),
     relax = require('./app/relax/relax.js'),
+    absrel = require('./app/absrel/absrel.js'),
     ss = require('socket.io-stream');
 
 // For every new connection...
@@ -62,17 +63,17 @@ io.sockets.on('connection', function (socket) {
         case 'relax':
           relax.RelaxAnalysis(socket, stream, params.job);
           break;
+        case 'absrel':
+          absrel.aBSRELAnalysis(socket, stream, params.job);
+          break;
         default:
           socket.emit('error', 'type not recognized');
           socket.disconnect();
-
       }
 
     } else {
-
       socket.emit('error', 'analysis type not supplied');
       socket.disconnect();
-
     }
 
   });
@@ -83,4 +84,3 @@ io.sockets.on('connection', function (socket) {
   });
 
 });
-

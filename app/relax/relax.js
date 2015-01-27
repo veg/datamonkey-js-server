@@ -2,7 +2,7 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
-  Copyright (C) 2014
+  Copyright (C) 2015
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -35,51 +35,73 @@ var spawn_job = require('./spawn_relax.js'),
 // Pass socket to relax job
 var RelaxAnalysis = function (socket, stream, params) {
 
-  // Setup Analysis
-  var relax_analysis = new spawn_job.DoRelaxAnalysis();
+  if(params.action == "recheck") {
+    // Check if file exists
+    var fn = __dirname + '/output/' + params.analysis._id;
+    results_fn = fn + '.RELAX.json';
 
-  // On status updates, report to datamonkey-js
-  relax_analysis.on('status update', function(status_update) {
-    socket.emit('status update', status_update);
-  });
+    if (fs.existsSync(results_fn)) {
+      fs.readFile(results_fn, 'utf8', function (err, data) {
+        if(err) {
+          socket.emit('script error', {'error' : 'unable to read results file'});
+          socket.disconnect();
+        } else {
+          socket.emit('completed', {'results' : data});
+          socket.disconnect();
+        }
+      });
+    } else {
+      socket.emit('script error', {'error' : 'unable to read results file'});
+    }
 
-  // On errors, report to datamonkey-js
-  relax_analysis.on('script error', function(error) {
-    socket.emit('script error', error);
-    socket.disconnect();
-  });
+  } else {
+    // Setup Analysis
+    var relax_analysis = new spawn_job.DoRelaxAnalysis();
 
-  // When the analysis completes, return the results to datamonkey.
-  relax_analysis.on('completed', function(results) {
-    // Send trace and graph information
-    socket.emit('completed', results);
-    socket.disconnect();
-  });
-
-  // Report the torque job id back to datamonkey
-  relax_analysis.on('job created', function(torque_id) {
-    // Send trace and graph information
-    socket.emit('job created', torque_id);
-  });
-
-  // Send file
-  relax_analysis.on('progress file', function(params) {
-    var stream = ss.createStream();
-    ss(socket).emit('progress file', stream, {id : params.id });
-    fs.createReadStream(params.fn).pipe(stream);
-    socket.once('file saved', function () {
-      params.cb();
+    // On status updates, report to datamonkey-js
+    relax_analysis.on('status update', function(status_update) {
+      socket.emit('status update', status_update);
     });
-  });
 
-  var fn = __dirname + '/output/' + params.analysis._id;
-  stream.pipe(fs.createWriteStream(fn));
+    // On errors, report to datamonkey-js
+    relax_analysis.on('script error', function(error) {
+      socket.emit('script error', error);
+      socket.disconnect();
+    });
 
-  stream.on('end', function(err) {
-    if (err) throw err;
-    // Pass filename in as opposed to generating it in spawn_relax
-    relax_analysis.start(fn, params);
-  });
+    // When the analysis completes, return the results to datamonkey.
+    relax_analysis.on('completed', function(results) {
+      // Send trace and graph information
+      socket.emit('completed', results);
+      socket.disconnect();
+    });
+
+    // Report the torque job id back to datamonkey
+    relax_analysis.on('job created', function(torque_id) {
+      // Send trace and graph information
+      socket.emit('job created', torque_id);
+    });
+
+    // Send file
+    relax_analysis.on('progress file', function(params) {
+      var stream = ss.createStream();
+      ss(socket).emit('progress file', stream, {id : params.id });
+      fs.createReadStream(params.fn).pipe(stream);
+      socket.once('file saved', function () {
+        params.cb();
+      });
+    });
+
+    var fn = __dirname + '/output/' + params.analysis._id;
+    stream.pipe(fs.createWriteStream(fn));
+
+    stream.on('end', function(err) {
+      if (err) throw err;
+      // Pass filename in as opposed to generating it in spawn_relax
+      relax_analysis.start(fn, params);
+    });
+
+  }
 
 }
 

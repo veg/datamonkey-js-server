@@ -2,7 +2,7 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
-  Copyright (C) 2013
+  Copyright (C) 2015
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -50,7 +50,6 @@ DoBustedAnalysis.prototype.status_watcher = function () {
   var job_status = new JobStatus(self.torque_id);
 
   job_status.watch(function(error, status) {
-
     if(status == 'completed' || status == 'exiting') {
       fs.readFile(self.results_fn, 'utf8', function (err, data) {
         if(err) {
@@ -62,7 +61,7 @@ DoBustedAnalysis.prototype.status_watcher = function () {
             self.emit('script error', {'error': 'job seems to have completed, but no results found'});
           }
         }
-	});
+	    });
     } else {
       fs.readFile(self.progress_fn, 'utf8', function (err, data) {
        if(err) {
@@ -70,7 +69,8 @@ DoBustedAnalysis.prototype.status_watcher = function () {
          return;
        }
        if(data) {
-         self.emit('status update', {'phase': status, 'index': 1, 'msg': data});
+         self.emit('status update', {'phase' : status, 'index': 1, 'msg': data, 'torque_id' : self.torque_id});
+         self.current_status = data;
        } else {
 	      console.log('read progress file, but no data');
        }
@@ -104,6 +104,7 @@ DoBustedAnalysis.prototype.start = function (fn, busted_params) {
   self.torque_id = "unk";
   self.std_err = "unk";
   self.job_completed = false;
+  self.current_status = "";
 
   // Write tree to a file
   fs.writeFile(self.tree_fn, busted_params.analysis.tagged_nwk_tree, function (err) {
