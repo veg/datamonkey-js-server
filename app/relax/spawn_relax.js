@@ -128,8 +128,6 @@ DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
 
   // qsub_submit.sh
   var qsub_submit = function () {
-    console.log('submitting job');
-
     var qsub =  spawn('qsub', 
                          ['-v',
                           'fn='+self.filepath+
@@ -173,10 +171,8 @@ DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
     qsub_submit();
   }
 
-  console.log('starting job');
   do_relax(relax_params);
 
 }
 
 exports.DoRelaxAnalysis = DoRelaxAnalysis;
-
