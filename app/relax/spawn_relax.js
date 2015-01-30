@@ -49,9 +49,9 @@ DoRelaxAnalysis.prototype.status_watcher = function () {
   var self = this;
   job_status = new JobStatus(self.torque_id);
 
-  job_status.watch(function(error, status) {
+  self.metronome_id = job_status.watch(function(error, status) {
     if(status == 'completed' || status == 'exiting') {
-      //clearInterval(job_status.metronome);
+      clearInterval(self.metronome_id);
       fs.readFile(self.results_fn, 'utf8', function (err, data) {
         if(err) {
           // Check stderr
@@ -70,6 +70,8 @@ DoRelaxAnalysis.prototype.status_watcher = function () {
           }
         }
 	    });
+    } else if (status == 'queued') {
+      self.emit('job created', { 'torque_id': self.torque_id });
     } else {
       fs.readFile(self.progress_fn, 'utf8', function (err, data) {
        if(err) {

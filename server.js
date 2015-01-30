@@ -36,13 +36,20 @@ var config = require('./config.json'),
     busted = require('./app/busted/busted.js'),
     relax = require('./app/relax/relax.js'),
     absrel = require('./app/absrel/absrel.js'),
-    ss = require('socket.io-stream');
+    ss = require('socket.io-stream'),
+    JobQueue = require(__dirname + '/lib/jobqueue.js').JobQueue;
 
 // For every new connection...
 io.sockets.on('connection', function (socket) {
 
   // Acknowledge new connection
   socket.emit('connected', { hello: 'Ready to serve' });
+
+  socket.on('job queue', function (jobs) {
+    JobQueue(function(jobs) {
+      socket.emit('job queue', jobs);
+    });
+  });
 
   // A job has been spawned by datamonkey, let's go to work
   ss(socket).on('spawn', function (stream, params) {
@@ -52,19 +59,19 @@ io.sockets.on('connection', function (socket) {
       switch(params.job.type) {
 
         case 'hivtrace':
-          hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
+          new hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
           break;
         case 'prime':
-          prime.PrimeAnalysis(socket, stream, params);
+          new prime.PrimeAnalysis(socket, stream, params);
           break;
         case 'busted':
-          busted.BustedAnalysis(socket, stream, params.job);
+          new busted.BustedAnalysis(socket, stream, params.job);
           break;
         case 'relax':
-          relax.RelaxAnalysis(socket, stream, params.job);
+          new relax.RelaxAnalysis(socket, stream, params.job);
           break;
         case 'absrel':
-          absrel.aBSRELAnalysis(socket, stream, params.job);
+          new absrel.aBSRELAnalysis(socket, stream, params.job);
           break;
         default:
           socket.emit('error', 'type not recognized');
