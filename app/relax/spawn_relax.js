@@ -131,7 +131,9 @@ DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
   // qsub_submit.sh
   var qsub_submit = function () {
     var qsub =  spawn('qsub', 
-                         ['-v',
+                         ['-q',
+                          'datamonkey',
+                          '-v',
                           'fn='+self.filepath+
                           ',tree_fn='+self.tree_fn+
                           ',sfn='+self.status_fn+

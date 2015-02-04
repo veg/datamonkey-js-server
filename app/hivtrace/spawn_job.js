@@ -114,7 +114,9 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   var qsub_submit = function () {
 
     var qsub =  spawn('qsub',
-                         ['-v',
+                         ['-q',
+                          'datamonkey',
+                          '-v',
                           'fn='+self.filepath+
                           ',python='+self.python+
                           ',hivtrace='+self.hivtrace+
