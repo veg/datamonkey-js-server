@@ -1,7 +1,7 @@
 {
     "name"        : "datamonkey-server",
     "description" : "",
-    "version"     : "0.0.1",
+    "version"     : "0.1.0",
     "private"     : true,
     "dependencies": {
         "hyphy"            : "git+https://github.com/stevenweaver/hyphy.git",
@@ -9,6 +9,7 @@
         "socket.io"        : "*",
         "socket.io-stream" : "*",
         "tail"             : "*",
-        "should"           : "*"
+        "should"           : "*",
+        "tar-gz"           : "1.4.2"
     }
 }

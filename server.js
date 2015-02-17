@@ -36,6 +36,7 @@ var config = require('./config.json'),
     busted = require('./app/busted/busted.js'),
     relax = require('./app/relax/relax.js'),
     absrel = require('./app/absrel/absrel.js'),
+    flea = require('./app/flea/flea.js'),
     ss = require('socket.io-stream'),
     JobQueue = require(__dirname + '/lib/jobqueue.js').JobQueue;
 
@@ -58,29 +59,40 @@ io.sockets.on('connection', function (socket) {
 
       switch(params.job.type) {
 
+        case 'flea':
+          new flea.Flea(socket, stream, params.job);
+          break;
+
         case 'hivtrace':
           new hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
           break;
+
         case 'prime':
-          new prime.PrimeAnalysis(socket, stream, params);
+          new prime.PrimeAnalysis(socket, stream, params.job);
           break;
+
         case 'busted':
           new busted.BustedAnalysis(socket, stream, params.job);
           break;
+
         case 'relax':
           new relax.RelaxAnalysis(socket, stream, params.job);
           break;
+
         case 'absrel':
           new absrel.aBSRELAnalysis(socket, stream, params.job);
           break;
+
         default:
           socket.emit('error', 'type not recognized');
           socket.disconnect();
       }
 
     } else {
+
       socket.emit('error', 'analysis type not supplied');
       socket.disconnect();
+
     }
 
   });
