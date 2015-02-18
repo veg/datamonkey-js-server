@@ -52,7 +52,7 @@ aBSRELRunner.prototype.status_watcher = function () {
 
   job_status.watch(function(error, status) {
     if(status == 'completed' || status == 'exiting') {
-      fs.readFile(self.results_fn, 'utf8', function (err, data) {
+      fs.readFile(self.results_json_fn, 'utf8', function (err, data) {
         if(err) {
           // Check stderr
           fs.readFile(self.std_err, 'utf8', function (err, stack_trace) {
