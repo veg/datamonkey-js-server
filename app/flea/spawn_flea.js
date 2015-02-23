@@ -99,7 +99,7 @@ FleaRunner.prototype.status_watcher = function () {
  */
 
 FleaRunner.prototype.start = function (fn, flea_params) {
-
+  
   var self = this;
   self.filepath = fn;
   self.output_dir  = path.dirname(self.filepath);
@@ -128,11 +128,12 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   //Unpack the tar file
   function onError(err) {
     console.error('An error occurred:', err)
-    // TODO: emit script error
   }
 
   function onEnd() {
+
     fs.writeFileSync(self.file_list, '');
+
     // Create list inside filedir
     fs.readdir(self.filedir, function(err, files) {
       // Compare files in directory to file list
@@ -160,55 +161,54 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   // Ensure the progress file exists
   fs.openSync(self.progress_fn, 'w');
 
-  // qsub_submit.sh
-  var qsub_submit = function () {
+  //// qsub_submit.sh
+  //var qsub_submit = function () {
 
-    var qsub =  spawn('qsub', 
-                         ['-v',
-                          'fn='+self.filepath+
-                          ',python='+self.python+
-                          ',pipeline='+self.pipeline+
-                          ',tree_fn='+self.tree_fn+
-                          ',pfn='+self.progress_fn+
-                          ',rfn='+self.results_fn+
-                          ',cwd='+__dirname+
-                          '-o', self.output_dir,
-                          '-e', self.output_dir, 
-                          self.qsub_script], 
-                          { cwd : self.output_dir});
+  //  var qsub =  spawn('qsub', 
+  //                       ['-v',
+  //                        'fn='+self.filepath+
+  //                        ',python='+self.python+
+  //                        ',pipeline='+self.pipeline+
+  //                        ',tree_fn='+self.tree_fn+
+  //                        ',pfn='+self.progress_fn+
+  //                        ',rfn='+self.results_fn+
+  //                        ',cwd='+__dirname+
+  //                        '-o', self.output_dir,
+  //                        '-e', self.output_dir, 
+  //                        self.qsub_script], 
+  //                        { cwd : self.output_dir});
 
-    qsub.stderr.on('data', function (data) {
-      console.log(String(data));
-    });
+  //  qsub.stderr.on('data', function (data) {
+  //    console.log(String(data));
+  //  });
 
-    qsub.stdout.on('data', function (data) {
-      self.torque_id = String(data).replace(/\n$/, '');
-      self.std_err = self.output_dir + '/' + self.qsub_script_name + '.e' + String(self.torque_id).replace('.master','');
-      self.emit('job created', { 'torque_id': self.torque_id });
-      console.log(self.torque_id);
-    });
+  //  qsub.stdout.on('data', function (data) {
+  //    self.torque_id = String(data).replace(/\n$/, '');
+  //    self.std_err = self.output_dir + '/' + self.qsub_script_name + '.e' + String(self.torque_id).replace('.master','');
+  //    self.emit('job created', { 'torque_id': self.torque_id });
+  //  });
 
-    qsub.on('close', function (code) {
-      // Should have received a job id
-      // Write queuing to status
-      console.log(code);
-      if(code == 0) {
-        fs.writeFile(self.status_fn, 
-                     self.status_stack[0], function (err) {
-          self.status_watcher();
-        });
-      } else {
-        self.emit('script error', {'error': 'job could not be spawned to cluster'});
-      }
-    });
+  //  qsub.on('close', function (code) {
+  //    // Should have received a job id
+  //    // Write queuing to status
+  //    if(code == 0) {
+  //      fs.writeFile(self.status_fn, 
+  //                   self.status_stack[0], function (err) {
+  //        self.status_watcher();
+  //      });
+  //    } else {
+  //      self.emit('script error', {'error': 'job could not be spawned to cluster'});
+  //    }
+  //  });
 
-  }
+  //}
 
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_flea = function(stream, flea_params) {
     self.emit('status update', {'phase': self.status_stack[0], 'msg': ''});
-    qsub_submit();
+    self.emit('completed', 'congrats');
+    //qsub_submit();
   }
 
   do_flea(flea_params);
