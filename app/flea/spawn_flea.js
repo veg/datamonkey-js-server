@@ -41,56 +41,6 @@ var spawn = require('child_process').spawn,
 var FleaRunner = function () {};
 util.inherits(FleaRunner, EventEmitter);
 
-/**
- * Once the job has been scheduled, we need to watch the files that it
- * sends updates to.
- */
-
-FleaRunner.prototype.status_watcher = function () {
-
-  var self = this;
-
-  job_status = new JobStatus(self.torque_id);
-
-  job_status.watch(function(error, status) {
-    if(status == 'completed' || status == 'exiting') {
-      fs.readFile(self.results_fn, 'utf8', function (err, data) {
-        if(err) {
-          // Check stderr
-          fs.readFile(self.std_err, 'utf8', function (err, stack_trace) {
-            if(err) {
-            self.emit('script error', {'error' : 'unable to read results file'});
-            } else {
-              self.emit('script error', {'error' : stack_trace});
-            }
-          });
-        } else{
-          if(data) {
-            self.emit('completed', {'results' : data});
-          } else {
-            self.emit('script error', {'error': 'job seems to have completed, but no results found'});
-          }
-        }
-	    });
-    } else {
-      fs.readFile(self.progress_fn, 'utf8', function (err, data) {
-       if(err) {
-         console.log('error reading progress file ' + self.progress_fn + '. error: ' + err);
-         return;
-       }
-       if(data) {
-         if(data != self.current_status) {
-           self.emit('status update', {'phase' : status, 'index': 1, 'msg': data, 'torque_id' : self.torque_id});
-           self.current_status = data;
-         }
-       } else {
-	      console.log('read progress file, but no data');
-       }
-     });
-   }
- });
-
-}
 
 /**
  * Submits a job to TORQUE by spawning qsub_submit.sh
@@ -103,8 +53,6 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   var self = this;
   self.filepath = fn;
   self.output_dir  = path.dirname(self.filepath);
-  self.qsub_script_name = 'flea.sh';
-  self.qsub_script = __dirname + '/' + self.qsub_script_name;
   self.id = flea_params.analysis._id;
   self.filedir =  self.output_dir + '/' + self.id;
   self.file_list = self.filedir + '/files';
@@ -115,6 +63,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   self.tree_fn = self.filepath + '.tre';
   self.python = config.flea_python;
   self.pipeline = config.flea_pipeline;
+  self.flea_config = config.flea_config;
   self.status_stack = flea_params.status_stack;
   self.analysis_type = flea_params.analysis.analysis_type;
   self.msas = flea_params.msas;
@@ -125,91 +74,80 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   self.current_status = "";
 
         
-  //Unpack the tar file
-  function onError(err) {
-    console.error('An error occurred:', err)
-  }
-
-  function onEnd() {
-
-    fs.writeFileSync(self.file_list, '');
-
-    // Create list inside filedir
-    fs.readdir(self.filedir, function(err, files) {
-      // Compare files in directory to file list
-      self.msas.forEach(function(msa) {    
-        // Append to file
-        // Format : PC64_V00_small.fastq V00 20080301
-        if(files.indexOf(msa._id) != -1) {
-          var formatted_visit_date = moment(msa.visit_date).format("YYYYMMDD");
-          var string_to_write = util.format('%s %s %s', msa._id, msa.visit_code, formatted_visit_date);
-          fs.appendFileSync(self.file_list, string_to_write)
-        }
-      });
-    });
-
-  }
-
-  var extractor = tar.Extract({path: self.filedir})
-    .on('error', onError)
-    .on('end', onEnd);
-
-  fs.createReadStream(self.filepath)
-    .on('error', onError)
-    .pipe(extractor);
 
   // Ensure the progress file exists
   fs.openSync(self.progress_fn, 'w');
 
-  //// qsub_submit.sh
-  //var qsub_submit = function () {
+  // env_pipeline.py 
+  var env_pipeline_submit = function () {
 
-  //  var qsub =  spawn('qsub', 
-  //                       ['-v',
-  //                        'fn='+self.filepath+
-  //                        ',python='+self.python+
-  //                        ',pipeline='+self.pipeline+
-  //                        ',tree_fn='+self.tree_fn+
-  //                        ',pfn='+self.progress_fn+
-  //                        ',rfn='+self.results_fn+
-  //                        ',cwd='+__dirname+
-  //                        '-o', self.output_dir,
-  //                        '-e', self.output_dir, 
-  //                        self.qsub_script], 
-  //                        { cwd : self.output_dir});
+    var env_pipeline =  spawn(self.python, 
+                         [ self.pipeline,
+                           '--config', self.flea_config,
+                           self.file_list ],  { cwd : self.filedir } );
 
-  //  qsub.stderr.on('data', function (data) {
-  //    console.log(String(data));
-  //  });
+    env_pipeline.stderr.on('data', function (data) {
+      console.log(String(data));
+      self.emit('status update', {'phase': self.status_stack[0], 'msg': String(data)});
+    });
 
-  //  qsub.stdout.on('data', function (data) {
-  //    self.torque_id = String(data).replace(/\n$/, '');
-  //    self.std_err = self.output_dir + '/' + self.qsub_script_name + '.e' + String(self.torque_id).replace('.master','');
-  //    self.emit('job created', { 'torque_id': self.torque_id });
-  //  });
+    env_pipeline.stdout.on('data', function (data) {
+      console.log(String(data));
+      self.emit('status update', {'phase': self.status_stack[0], 'msg': String(data)});
+    });
 
-  //  qsub.on('close', function (code) {
-  //    // Should have received a job id
-  //    // Write queuing to status
-  //    if(code == 0) {
-  //      fs.writeFile(self.status_fn, 
-  //                   self.status_stack[0], function (err) {
-  //        self.status_watcher();
-  //      });
-  //    } else {
-  //      self.emit('script error', {'error': 'job could not be spawned to cluster'});
-  //    }
-  //  });
+    env_pipeline.on('close', function (code) {
+      self.emit('completed', {'results' : 'done'});
+    });
 
-  //}
+  }
 
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
   var do_flea = function(stream, flea_params) {
+
     self.emit('status update', {'phase': self.status_stack[0], 'msg': ''});
-    self.emit('completed', 'congrats');
-    //qsub_submit();
-  }
+
+    //Unpack the tar file
+    function onError(err) {
+      err = err +   ' : ' + self.filepath;
+      self.emit('script error', err);
+    }
+
+    function onEnd() {
+
+      fs.writeFileSync(self.file_list, '');
+
+      // Create list inside filedir
+      fs.readdir(self.filedir, function(err, files) {
+        // Compare files in directory to file list
+        self.msas.forEach(function(msa, index) {    
+          // Append to file
+          // Format : PC64_V00_small.fastq V00 20080301
+          if(files.indexOf(msa._id + '.fastq') != -1) {
+            var formatted_visit_date = moment(msa.visit_date).format("YYYYMMDD");
+            var string_to_write = util.format('%s %s %s\n', self.filedir + '/' + msa._id + '.fastq', msa.visit_code, formatted_visit_date);
+            fs.appendFileSync(self.file_list, string_to_write)
+          }
+
+          if(index == (self.msas.length - 1)) {
+            env_pipeline_submit();
+          }
+
+        });
+      });
+
+    }
+
+    var extractor = tar.Extract({path: self.filedir})
+      .on('error', onError)
+      .on('end', onEnd);
+
+    fs.createReadStream(self.filepath)
+      .on('error', onError)
+      .pipe(extractor);
+
+    }
 
   do_flea(flea_params);
 
