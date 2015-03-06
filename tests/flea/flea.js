@@ -35,7 +35,7 @@ var spawn_job = require(__dirname + '/../../app/flea/spawn_flea.js'),
 
 describe('flea jobrunner', function() {
 
-  var fn = __dirname + '/res/54ed08600d0d57c90cac18e0.tar';
+  var fn = __dirname + '/res/54f75ea60cb1503c69b83f5e.tar';
   var params_file = __dirname + '/res/params.json';
 
   it('should complete', function(done) {
@@ -79,3 +79,5 @@ describe('flea jobrunner', function() {
   });
 
 });
+
+

@@ -59,6 +59,14 @@ io.sockets.on('connection', function (socket) {
 
       switch(params.job.type) {
 
+        case 'absrel':
+          new absrel.aBSRELAnalysis(socket, stream, params.job);
+          break;
+
+        case 'busted':
+          new busted.BustedAnalysis(socket, stream, params.job);
+          break;
+
         case 'flea':
           new flea.Flea(socket, stream, params.job);
           break;
@@ -71,16 +79,8 @@ io.sockets.on('connection', function (socket) {
           new prime.PrimeAnalysis(socket, stream, params.job);
           break;
 
-        case 'busted':
-          new busted.BustedAnalysis(socket, stream, params.job);
-          break;
-
         case 'relax':
           new relax.RelaxAnalysis(socket, stream, params.job);
-          break;
-
-        case 'absrel':
-          new absrel.aBSRELAnalysis(socket, stream, params.job);
           break;
 
         default:

@@ -28,6 +28,7 @@
 */
 
 var spawn = require('child_process').spawn,
+    Q = require('q'),
     fs = require('fs'),
     tar = require('tar'),
     path = require('path'),
@@ -54,13 +55,10 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   self.filepath = fn;
   self.output_dir  = path.dirname(self.filepath);
   self.id = flea_params.analysis._id;
-  self.filedir =  self.output_dir + '/' + self.id;
+  self.filedir =  self.output_dir + '/' + self.id + '/';
   self.file_list = self.filedir + '/files';
   self.status_fn = self.filepath + '.status';
   self.results_fn= self.filepath + '.flea';
-  self.results_json_fn = self.filepath + '.flea.json';
-  self.progress_fn = self.filepath + '.flea.progress';
-  self.tree_fn = self.filepath + '.tre';
   self.python = config.flea_python;
   self.pipeline = config.flea_pipeline;
   self.flea_config = config.flea_config;
@@ -73,10 +71,15 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   self.job_completed = false;
   self.current_status = "";
 
-        
+  // Results files
+  self.results_dir = self.filedir + '/hyphy_data/results/'
+  self.frequencies_fn = self.results_dir + 'frequencies.json'
+  self.rates_fn = self.results_dir + 'rates.json'
+  self.sequences_fn = self.results_dir + 'sequences.json'
+  self.trees_fn = self.results_dir + 'trees.json'
 
   // Ensure the progress file exists
-  fs.openSync(self.progress_fn, 'w');
+  //fs.openSync(self.progress_fn, 'w');
 
   // env_pipeline.py 
   var env_pipeline_submit = function () {
@@ -87,17 +90,34 @@ FleaRunner.prototype.start = function (fn, flea_params) {
                            self.file_list ],  { cwd : self.filedir } );
 
     env_pipeline.stderr.on('data', function (data) {
-      console.log(String(data));
       self.emit('status update', {'phase': self.status_stack[0], 'msg': String(data)});
     });
 
     env_pipeline.stdout.on('data', function (data) {
-      console.log(String(data));
       self.emit('status update', {'phase': self.status_stack[0], 'msg': String(data)});
     });
 
     env_pipeline.on('close', function (code) {
-      self.emit('completed', {'results' : 'done'});
+      // Read results files and send
+
+      // Save results files 
+      var frequency_promise = Q.nfcall(fs.readFile, self.frenquencies_fn, "utf-8"); 
+      var rates_promise = Q.nfcall(fs.readFile, self.rates_fn, "utf-8"); 
+      var sequences_promise = Q.nfcall(fs.readFile, self.sequences_fn, "utf-8"); 
+      var trees_promise = Q.nfcall(fs.readFile, self.trees_fn, "utf-8"); 
+      console.log(self.frequencies_fn);
+
+      var promises = [ frequency_promise, rates_promise, sequences_promise, trees_promise]; 
+
+      Q.allSettled(promises) 
+      .then(function (results) { 
+          var hyphy_data = {};
+          hyphy_data.frequencies = results[0].value; 
+          hyphy_data.rates = results[1].value; 
+          hyphy_data.sequences = results[2].value; 
+          hyphy_data.trees = results[3].value; 
+          self.emit('completed', {'results' : hyphy_data});
+        }); 
     });
 
   }
