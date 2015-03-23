@@ -51,8 +51,8 @@ aBSRELRunner.prototype.status_watcher = function () {
   job_status = new JobStatus(self.torque_id);
 
   job_status.watch(function(error, status) {
-    if(status == 'completed' || status == 'exiting') {
-      fs.readFile(self.results_fn, 'utf8', function (err, data) {
+    if(status.status == 'completed' || status.status == 'exiting') {
+      fs.readFile(self.results_json_fn, 'utf8', function (err, data) {
         if(err) {
           // Check stderr
           fs.readFile(self.std_err, 'utf8', function (err, stack_trace) {
@@ -78,9 +78,23 @@ aBSRELRunner.prototype.status_watcher = function () {
        }
        if(data) {
          if(data != self.current_status) {
-           self.emit('status update', {'phase' : status, 'index': 1, 'msg': data, 'torque_id' : self.torque_id});
+           self.emit('status update', {'phase' : status.status, 
+                                       'index': 1, 
+                                       'msg': data, 
+                                       'torque_id' : self.torque_id, 
+                                       'ctime' : status.ctime,
+                                       'stime' : status.stime
+                                       });
            self.current_status = data;
          }
+       } else if ( status.status == "queued" ) {
+           self.emit('status update', {'phase' : status.status, 
+                                       'index': 1, 
+                                       'msg': null, 
+                                       'torque_id' : self.torque_id, 
+                                       'ctime' : status.ctime,
+                                       'stime' : status.stime
+                                       });
        } else {
 	      console.log('read progress file, but no data');
        }
