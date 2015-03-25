@@ -1,0 +1,1 @@
+fscanf (stdin, "Matrix", datafile);DataSet ds = ReadDataFile (datafile[0]);DataSetFilter dsf = CreateFilter (ds,1);seqnumber = 0+datafile[1];GetDataInfo (seqMatrix, dsf, seqnumber);fprintf(stdout, seqMatrix);

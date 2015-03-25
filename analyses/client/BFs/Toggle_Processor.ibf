@@ -1,0 +1,161 @@
+/* Toggle model processor script for datamonkey 
+
+Wayne Delport
+April 2010
+
+*/
+
+ExecuteAFile ("../Shared/DescriptiveStatistics.bf");
+ExecuteAFile ("../Shared/OutputsToggle.bf");
+
+sscanf (rawIn,"Number,Number,NMatrix,NMatrix,Number,NMatrix",p_value,treeMode,Toggle_result_matrix,treeLengths,genCodeID,siteMap);
+
+bf_p_value = p_value/20;
+
+skipCodeSelectionStep = 1;
+ExecuteAFile		("../Shared/chooseGeneticCode.def");
+ApplyGeneticCodeTable ( genCodeID );
+
+
+resName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + ".php";
+fprintf			(resName, CLEAR_FILE,"<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'><html><head><meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1'><meta http-equiv='refresh' content='60'>",
+				"<title>Almost there...</title></head><body>Generating a Toggle Selection report...this page will refresh in a minute (or you can try sooner).");
+		
+
+_CheckDBID (slacDBID,"TOGGLE_RESULTS",Toggle_ResultTable);
+record 			= {};
+fields 			= Rows ( Toggle_ResultTable );
+fc				= Columns ( Toggle_result_matrix );
+p				= Rows ( Toggle_result_matrix );
+toggleSelected 	= 0;
+
+
+toggle_summary = {Rows(Toggle_result_matrix)/20, 21};
+aa_per_site = {Rows(Toggle_result_matrix)/20,1};
+sites_per_aa = {20,1};
+
+/*update the databases with results*/
+for ( r = 0; r < p; r = r + 1 ) {
+	if ( r % 20 == 0 ) {
+		siteCounted = 0;
+	}
+	for ( c = 0; c < fc; c = c + 1 ) {
+		record[fields[c]] = Toggle_result_matrix[r][c];
+	}
+	_InsertRecord (slacDBID,"TOGGLE_RESULTS", record);
+	if ( Toggle_result_matrix[r][5] <= bf_p_value ) {
+		toggle_summary[r$20][Toggle_result_matrix[r][1]] = toggle_summary + 1; 
+		aa_per_site [ r$20 ] = aa_per_site [ r$20 ] + 1;
+		sites_per_aa [ r % 20 ] = sites_per_aa [ r % 20 ] + 1;
+		if ( !siteCounted ) {
+			siteCount = siteCount + 1;
+			siteCounted = 1;
+		}
+	}
+}
+aa_dstats = GatherDescriptiveStats ( aa_per_site );
+site_dstats = GatherDescriptiveStats ( sites_per_aa );
+
+
+Toggle_SummaryTable = {};
+Toggle_SummaryTable ["COL_KEY"] = "STRING";
+Toggle_SummaryTable ["COL_VALUE"] = "STRING";
+
+_CheckDBID 		  (slacDBID,"TOGGLE_SUMMARY",Toggle_SummaryTable);
+record = {};
+record ["COL_KEY"] = "PValue";
+record ["COL_VALUE"] = p_value;
+_InsertRecord (slacDBID,"TOGGLE_SUMMARY", record);
+record ["COL_KEY"] = "TreeLengths";
+record ["COL_VALUE"] = ""+treeLengths;
+_InsertRecord (slacDBID,"TOGGLE_SUMMARY", record);
+record ["COL_KEY"] = "ToggleSites";
+record ["COL_VALUE"] = siteCount;
+_InsertRecord (slacDBID,"TOGGLE_SUMMARY", record);
+record ["COL_KEY"] = "TreeMode";
+record ["COL_VALUE"] = treeMode;
+_InsertRecord (slacDBID,"TOGGLE_SUMMARY", record);
+
+fprintf (stdout, "<script type='text/javascript' src='http://www.datamonkey.org/wz_tooltip.js'></script>\n<H1 CLASS='SuccessCap'>Toggle analysis results</H1>\n");
+
+/*get the data and print to file*/
+inFile = BASE_CLUSTER_ACCESS_PATH + filePrefix;
+DataSet ds = ReadDataFile (inFile);
+DataSetFilter filteredData = CreateFilter (ds,1);
+DATA_FILE_PRINT_FORMAT = 6;
+inFile = BASE_OUTPUT_PATH + filePrefix + "_toggle.nex";
+fprintf (inFile, CLEAR_FILE, filteredData);
+
+aaFile = BASE_CLUSTER_ACCESS_PATH + filePrefix + ".aa";
+DataSet ds_aa = ReadDataFile (aaFile);
+DataSetFilter aa_Filter = CreateFilter (ds_aa,1);
+
+/*hack to print fasta file*/
+aaFile = BASE_OUTPUT_PATH + filePrefix + "_toggle.aa.fas";
+fprintf ( aaFile, CLEAR_FILE );
+GetString(seqNames,aa_Filter,-1);
+for ( ii = 0; ii < aa_Filter.species; ii = ii + 1 ) {
+	GetDataInfo (sequenceToPrint, aa_Filter, ii );
+	fprintf ( aaFile, "> ", seqNames [ ii ], "\n", sequenceToPrint, "\n" );
+}
+
+DATA_FILE_PRINT_FORMAT = 6;
+aaFile = BASE_OUTPUT_PATH + filePrefix + "_toggle.aa.nex";
+fprintf (aaFile, CLEAR_FILE, aa_Filter);
+
+
+
+
+jobFileName = BASE_CGI_URL_STRING + "slacreport.pl?file=" + filePrefix + "&task=69&format=";
+fprintf ( stdout, "<DIV CLASS='RepClassCT'><b>Reports</b> <a href='",jobFileName,"0'>[HTML]</a> <a href='",jobFileName,"1'>[CSV]</a> <a href='",filePrefix,"_toggle.nex'>[NEXUS]</a> <a href='",filePrefix,"_toggle.aa.nex'>[NEXUS_AA]</a></DIV>");
+
+fprintf (stdout, _makeJobIDHTML(filePrefix), _makeDataDescriptionTM (slacDBID,treeMode, treeLengths));
+
+
+if ( siteCount > 0 ) {
+
+	shortReportTitles = {{"Codon","LRT","p_value","Toggle_Rate","T_wt","T_l","T_m"}};
+	keyMap = {{"Codon","LRT","p","rho","Tx","Ty","Tz"}};
+	
+	fprintf (stdout, "<DIV CLASS='RepClassSM'>Toggling analysis found ", siteCount, " sites with evidence of toggling between wild type and escape amino acid residues.</DIV>" );	
+	fprintf (stdout, "<DIV CLASS='RepClassSM'>For each amino acid the sites identified as toggling are reported along with estimated site parameters and amino acid profiles.</DIV>" );
+	
+	
+	/*get amino acid profile per site */
+	aa_profile = { filteredData.sites/3, 21 };
+	for ( s = 0; s < filteredData.sites/3; s = s + 1 ) {
+		filterString = "";
+		filterString = filterString + ((s)*3) + "-" + ((s)*3 + 2);
+		DataSetFilter siteCodonFilter = CreateFilter (ds,3,filterString,"","" );
+		HarvestFrequencies(codonSiteProfile,siteCodonFilter,3,3,0);
+		for ( j = 0; j < Rows ( codonSiteProfile ); j = j + 1 ) {
+			if ( codonSiteProfile [ j ] > 0 ) {
+				aa_idx = _Genetic_Code [ j ];
+				aa_profile [ s ][ aa_idx ] = aa_profile [ s ][ aa_idx ] + codonSiteProfile [ j ];
+			}
+		}
+	}
+		
+	for ( aa = 0; aa < 21; aa = aa + 1 ) {
+		_res = _ExecuteSQL( slacDBID, "SELECT Codon,LRT,p,rho,Tx,Ty,Tz FROM TOGGLE_RESULTS WHERE (p<="+bf_p_value+" AND Amino_Acid == "+aa+") ORDER BY Codon" );	
+		selMx = AVL2Matrix (_res, keyMap);
+		
+		if ( Abs(_res) ) {
+			fprintf ( stdout, "<DIV CLASS='RepClassSM'><b>Residue:</b> ", residueMap [ aa ]);
+			fprintf ( stdout, "<p>", PrintToggleASCIITable (selMx, shortReportTitles, 1, 1, aminoacidOrdering[aa], genCodeID), "</DIV>" );
+		}
+	}
+	
+	
+	
+	/*fprintf (stdout, "<DIV CLASS='RepClassSM'><form action='",BASE_CGI_URL_STRING,"slacpvalue.pl' method = 'GET'>Found <b>",siteCount,
+				   "</b> toggling sites (<input type = 'hidden' name = 'file' value = '",
+				   filePrefix,"'><input type = 'text' name = 'pvalue' value = '",
+				   p_value,
+				   "' size = '5'> significance level <input type = 'hidden' value = '1' name = 'task'><input type = 'submit' value = 'Retabulate'>)<p>",PrintToggleASCIITable  (Toggle_result_matrix, togLabelMatrix,doTreeMap),"</form></DIV>");	
+	*/
+}
+else {
+			fprintf (stdout, "<DIV CLASS='RepClassSM'>No evidence of toggling found in the alignment</DIV>");	
+
+}	

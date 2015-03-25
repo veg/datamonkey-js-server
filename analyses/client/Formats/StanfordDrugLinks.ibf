@@ -1,0 +1,52 @@
+drugLinks = {};
+/*NRTI*/
+drugLinks["3TC"] = "http://hivdb.stanford.edu/pages/GRIP/3TC.html";
+drugLinks["FTC"] = "http://hivdb.stanford.edu/pages/GRIP/FTC.html";
+drugLinks["ABC"] = "http://hivdb.stanford.edu/pages/GRIP/ABC.html";
+drugLinks["AZT"] = "http://hivdb.stanford.edu/pages/GRIP/ZDV.html";
+drugLinks["D4T"] = "http://hivdb.stanford.edu/pages/GRIP/d4T.html";
+drugLinks["DDI"] = "http://hivdb.stanford.edu/pages/GRIP/ddI.html";
+drugLinks["TDF"] = "http://hivdb.stanford.edu/pages/GRIP/TDF.html";
+
+/*NNRTI*/
+drugLinks["DLV"] = "http://hivdb.stanford.edu/pages/GRIP/DLV.html";
+drugLinks["EFV"] = "http://hivdb.stanford.edu/pages/GRIP/EFV.html";
+drugLinks["NVP"] = "http://hivdb.stanford.edu/pages/GRIP/NVP.html";
+drugLinks["ETR"] = "http://hivdb.stanford.edu/pages/GRIP/ETR.html";
+
+/*PI*/
+drugLinks["FPV"] = "http://hivdb.stanford.edu/pages/GRIP/APV_FPV.html";
+drugLinks["IDV"] = "http://hivdb.stanford.edu/pages/GRIP/IDV.html";
+drugLinks["NFV"] = "http://hivdb.stanford.edu/pages/GRIP/NFV.html";
+drugLinks["SQV"] = "http://hivdb.stanford.edu/pages/GRIP/SQV.html";
+drugLinks["LPV"] = "http://hivdb.stanford.edu/pages/GRIP/LPV.html";
+drugLinks["ATV"] = "http://hivdb.stanford.edu/pages/GRIP/ATV.html";
+drugLinks["TPV"] = "http://hivdb.stanford.edu/pages/GRIP/TPV.html";
+drugLinks["DRV"] = "http://hivdb.stanford.edu/pages/GRIP/DRV.html";
+
+drugNames = {};
+/*NRTI*/
+drugNames["3TC"] = "Lamivudine";
+drugNames["FTC"] = "Emtricitabine";
+drugNames["ABC"] = "Abacavir";
+drugNames["AZT"] = "Atazanavir";
+drugNames["D4T"] = "Stavudine";
+drugNames["DDI"] = "Didanosine";
+drugNames["TDF"] = "Tenofovir";
+
+/*NNRTI*/
+drugNames["DLV"] = "Delavirdine";
+drugNames["EFV"] = "Efavirenz";
+drugNames["NVP"] = "Etravirine";
+drugNames["ETR"] = "Nevirapine";
+
+/*PI*/
+drugNames["FPV"] = "Fosamprenavir";
+drugNames["IDV"] = "Indinavir";
+drugNames["NFV"] = "Nelfinavir";
+drugNames["SQV"] = "Saquinavir";
+drugNames["LPV"] = "Lopinavir";
+drugNames["ATV"] = "Atazanavir";
+drugNames["TPV"] = "Tipranavir";
+drugNames["DRV"] = "Darunavir";
+

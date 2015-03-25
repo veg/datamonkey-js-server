@@ -1,0 +1,139 @@
+ExecuteAFile ("../Shared/TreeTools.ibf");
+ExecuteAFile ("ProcessorsShared.ibf");
+
+sscanf (rawIn, "Lines", allLines);
+
+SUBTYPING_RESULTS                	= {};
+SUBTYPING_RESULTS ["ID"]       		= "TEXT";
+SUBTYPING_RESULTS ["FILE_INDEX"]    		= "INTEGER";
+SUBTYPING_RESULTS ["RESULT"]   		= "INTEGER";
+SUBTYPING_RESULTS ["SUBTYPE"]   	= "TEXT";
+SUBTYPING_RESULTS ["SIMPLIFIED"]    = "TEXT";
+SUBTYPING_RESULTS ["SUPPORT"]       = "FLOAT";
+SUBTYPING_RESULTS ["REC_SUPPORT"]   = "FLOAT";
+SUBTYPING_RESULTS ["INTRA_REC_SUPPORT"]   
+									= "FLOAT";
+SUBTYPING_RESULTS ["BREAKPOINTS"]   = "TEXT";
+SUBTYPING_RESULTS ["SEQUENCE"]      = "TEXT";
+
+_CheckDBID 		  (slacDBID,"SUBTYPING_RESULTS",SUBTYPING_RESULTS);
+
+seqCount		 =  Columns(allLines)-1;
+
+javaScriptArray = {};
+subtypeToIndex  = {};
+
+
+for (k = 1; k < Columns(allLines) ; k = k + 1)
+{
+	aLine   = allLines[k];
+	fields  = splitStringByTab (aLine);
+	aRecord = {};
+	aRecord ["ID"]    = fields[1];
+	aRecord ["FILE_INDEX"] = fields[0];
+	aRecord ["RESULT"] = Abs(fields) > 3;
+	if (Abs(fields) > 3)
+	{
+		aRecord ["SUBTYPE"] 			= fields[2];
+		aRecord ["SIMPLIFIED"] 			= fields[3];
+		aRecord ["SUPPORT"]       		= fields[4];
+		aRecord ["REC_SUPPORT"]   		= fields[5];
+		aRecord ["INTRA_REC_SUPPORT"]   = fields[6];
+		aRecord ["BREAKPOINTS"]   		= fields[7];
+		aRecord ["SEQUENCE"]      		= fields[8];
+		
+	}
+	else
+	{
+		aRecord ["SIMPLIFIED"] 			= "FAILED";
+	}
+		
+	key = aRecord ["SIMPLIFIED"];
+	if (Abs(subtypeToIndex[key]) == 0)
+	{
+		subtypeToIndex[key] = "" + fields[0];
+	}
+	else
+	{
+		subtypeToIndex[key] = subtypeToIndex[key] + "-" + fields[0];
+	}
+	_InsertRecord (slacDBID,"SUBTYPING_RESULTS", aRecord);
+}
+
+subtypeReport = _ExecuteSQL (slacDBID, "SELECT SIMPLIFIED,COUNT(*) AS NUM FROM SUBTYPING_RESULTS GROUP BY SIMPLIFIED");
+
+ssr = {};
+
+for (k = 0; k < Abs (subtypeReport); k=k+1)
+{
+	ssr [(subtypeReport[k])["SIMPLIFIED"]] = 0+(subtypeReport[k])["NUM"];
+}
+
+
+failed = ssr["FAILED"];
+ssr - "FAILED";
+
+if (Abs (ssr) == 0)
+{
+	fprintf (stdout, "<H1 CLASS='SuccessCap'>SCUEAL subtyping results</H1><div class = 'ErrorTag'>All ", failed, " sequences failed to align with the reference (most likely because they were not homologous to the reference).</DIV>");
+}
+else
+{
+	fprintf (stdout, "<script type='text/javascript' src='http://www.datamonkey.org/js/scueal.js'></script>\n",
+					 "<script type='text/javascript' src='http://www.datamonkey.org/wz_tooltip.js'></script>\n",
+					 "<H1 CLASS='SuccessCap'>SCUEAL subtyping results</H1>");
+	
+	jobFileName = BASE_CGI_URL_STRING + "slacreport.pl?file=" + filePrefix + "&task=50&format=";
+			
+	fprintf (stdout, _makeJobIDHTMLSimple(filePrefix));
+	
+	fprintf (stdout, "<DIV class = 'ErrorTagSM'>Please note that subtype classification results are based on the currently available database sample of HIV diversity, make use of the authoritative <a href = 'http://www.hiv.lanl.gov/content/sequence/HIV/CRFs/CRFs.html'>list of accepted CRFs</a> and can change in the future as our understanding of the HIV subtypes and CRFs evolves.</DIV>");
+	
+	fprintf (stdout, "<DIV class = 'RepClassSM'>SCUEAL screened ", seqCount, " sequences. ");
+	
+	if (failed)
+	{
+		fprintf (stdout, "<br>Of those, ", failed, " failed to align with the reference (most likely because they were not homologous to the reference).");
+	}
+	
+	
+	fprintf (stdout, "<br><i> Download summary table as a <a href='",jobFileName,"2' target = '_blank'>[Tab-separated]</a> file</i>");
+	
+	
+	
+	fprintf (stdout, "\n<form action = '",BASE_CGI_URL_STRING,"wrapHyPhyBF.pl' METHOD = 'GET' id = 'selector_form' onSubmit = \"return prepareScriptArguments();\">\n",
+						"<input type = 'hidden' name = 'file' value = 'scuealExtract'>",
+						"<input type = 'hidden' name = 'mode' value = '1'>",
+						"<input type = 'hidden' id = 'argument_param' name = 'arguments' value ='",filePrefix,"'>");
+	
+	_printAnAVLCB(ssr,"Subtype",subtypeToIndex);
+	
+	fprintf (stdout, "<input type = 'Submit' value = 'Download selected sequences' style = 'background-color:purple; color:white; font-size:12px;'></form>");
+	
+	seqReport = _ExecuteSQL (slacDBID, "SELECT * FROM SUBTYPING_RESULTS WHERE SIMPLIFIED != 'FAILED' ORDER BY FILE_INDEX");
+	
+	fprintf (stdout, "</DIV><DIV class = 'RepClassSM'><b>Sequence report</b>. Download as <a href='",
+						jobFileName,"1' target = '_blank'>[Tab-separated]</a><p>");
+	
+	fprintf (stdout, "<TABLE BORDER = 0><TR class = 'HeaderClassSM'><TH>Sequence</TH><TH>Subtype<span class = 'INFO' onmouseover = \"Tip('Inferred subtype')\">?</span></TH>",
+						"<TH>Confidence<span class = 'INFO' onmouseover = \"Tip('Model averaged support for the inferred subtype')\">?</span></TH>",
+						"<TH>Recombination<span class = 'INFO' onmouseover = \"Tip('Model averaged support that the sequence is a recombinant strain')\">?</span></TH><TH>Intra-subtype recombination<span class = 'INFO' onmouseover = \"Tip('Model averaged support that the sequence is an intra-subtype recombinant strain')\">?</span></TH><TH>Details</TH></TR>\n");
+	
+	for (k = 0; k < Abs ( seqReport) ; k = k+1)
+	{
+		aSequence = seqReport[k];
+		fprintf (stdout, "<TR class = 'TRReport", (k%2)+1,"'>",
+						"<TD>",printALongString(aSequence["ID"],25),"</TD>",
+						"<TD>",printALongString(aSequence["SIMPLIFIED"],20),"</TD>",
+						"<TD>",Format(100*(0+aSequence["SUPPORT"]),5,2),"</TD>",
+						"<TD>",Format(100*(0+aSequence["REC_SUPPORT"]),5,2),"</TD>",
+						"<TD>",Format(100*(0+aSequence["INTRA_REC_SUPPORT"]),5,2),"</TD>",
+						"<TD><a href = '",BASE_CGI_URL_STRING,"wrapHyPhyBF.pl?file=scueal_report&arguments=",filePrefix,"-",aSequence["FILE_INDEX"],
+							"'>[VIEW]</a></TD></TR>\n");
+	
+	}
+	
+	fprintf (stdout, "\n</TABLE></DIV>");
+}
+
+

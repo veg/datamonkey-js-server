@@ -1,0 +1,1281 @@
+/****************************************************
+
+ModelSelectorCodonProcessor.bf
+
+Sergei L Kosakovsky Pond (spond@ucsd.edu)
+May 2007, Feb 2010
+
+This HyPhy batch file is to be used to process
+the output for GA codon model selection runs.
+
+edited by Wayne Delport to process datamonkey codon model selection runs
+
+Jan-Feb 2010
+
+****************************************************/
+
+function	PrintCMS_ASCIITable (dataMatrix, titleMatrix )
+{
+	outString="";
+	outString*8192;
+	if (Rows(dataMatrix))
+	{
+		outString*"<DIV CLASS='RepClassSM'>\n<TABLE BORDER = '0'><TR CLASS='TRReport' style = 'font-size:small'>";
+		nc = Columns(titleMatrix);
+		for (counter1=0; counter1<nc; counter1 = counter1+1)
+		{
+			outString*"<td>";
+			outString*titleMatrix[counter1];
+			outString*"</td>\n";
+		}
+		outString*"</tr>\n";
+		for (counter1=0; counter1<Rows(dataMatrix); counter1 = counter1 + 1)
+		{
+			if (counter1%2)
+			{
+				outString*"\n<tr CLASS='TRReport2' style = 'font-size:x-small'>";
+			}
+			else
+			{
+				outString*"\n<tr CLASS='TRReport1' style = 'font-size:x-small'>";
+			}
+			
+			for (counter2 = 0; counter2 < nc; counter2 = counter2+1)
+			{
+				outString*"\n<td>";
+				outString*Format(dataMatrix[counter1][counter2],-1,-1);
+				outString*"\n</td>\n";
+			}
+			outString*"</tr>\n";
+		}
+		outString*"</TABLE></DIV>\n";	
+	}
+	outString*0;
+	return outString;
+}
+
+/********************************************************************************************************/
+
+
+function rateMatrixToPS (chars,rateMatrix, title, inColor )
+{
+	
+	codon_order = "FLIMVSPTAYHQNKDECWRG";
+	codon_idx   = {};
+	
+	for (k=0; k<=20; k=k+1)
+	{
+		codon_idx[codon_order[k]] = k;
+	}
+	
+	psFigure = "";
+	psFigure * 8192;
+
+	psFigure * _HYPSPageHeader (445,500, "Protein Rate Matrix Plot");
+	psFigure * "\n";
+	psFigure * _HYPSSetFont ("Times-Roman", 12);
+	psFigure * "\n";
+	psFigure * _HYPSTextCommands(0);
+
+	psFigure * "/box {\n0 20 rlineto \n20 0 rlineto \n0 -20 rlineto \nclosepath } def\n 0 30 translate\n";
+	
+	offset = 24;
+	
+	maxVal = Max(rateMatrix["_MATRIX_ELEMENT_VALUE_*(_MATRIX_ELEMENT_VALUE_>=0)"],0);
+	
+	charsToCodonOrder 	= {};
+	
+	for (k=0; k<=20; k=k+1)
+	{
+		charsToCodonOrder[k] = codon_idx[chars[k]];
+	}
+	
+	reordering = {};
+	reordering["A"] = 0;
+	reordering["C"] = 1;
+	reordering["G"] = 2;
+	reordering["I"] = 3;
+	reordering["L"] = 4;
+	reordering["M"] = 5;
+	reordering["P"] = 6;
+	reordering["S"] = 7;
+	reordering["T"] = 8;
+	reordering["V"] = 9;
+	reordering["D"] = 10;
+	reordering["E"] = 11;
+	reordering["N"] = 12;
+	reordering["Q"] = 13;
+	reordering["F"] = 14;
+	reordering["W"] = 15;
+	reordering["Y"] = 16;
+	reordering["H"] = 17;
+	reordering["K"] = 18;
+	reordering["R"] = 19;
+	
+	rk = Rows (reordering);
+	
+	for (h=0; h<20; h=h+1)
+	{
+		h2 = reordering[chars[h]];
+		label = rk[h];
+		psFigure * ("0 setgray\n10 "+(offset+(19-h)*20+6)+" \n("+label+") centertext\n");
+		psFigure * ("0 setgray\n"+(offset+410)+" "+(offset+(19-h)*20+6)+" ("+label+") centertext\n");
+		psFigure * ("0 setgray\n"+(offset+h*20+10)+" 10 ("+label+") centertext\n");
+		psFigure * ("0 setgray\n"+(offset+h*20+10)+" "+(405+offset)+" ("+label+") centertext\n");
+		for (v=0; v<20; v=v+1)
+		{
+			if (h!=v)
+			{
+				v2 = reordering[chars[v]];
+				label2 = chars[v];
+				psFigure * ("newpath\n"+(offset+v2*20)+" "+(offset+(19-h2)*20)+" moveto\n");
+				
+				if ( inColor ) {
+					if (isOneStepSub[charsToCodonOrder[h]][charsToCodonOrder[v]])
+					{
+						gcomp = Sqrt(1-rateMatrix[h][v]/maxVal);
+						psFigure * ("1 "+gcomp+" 0 setrgbcolor\nbox fill\n");
+						if (gcomp>0.5)
+						{
+							psFigure * ("0 setgray\n");
+						}
+						else
+						{
+							psFigure * ("1 setgray\n");				
+						}
+						psFigure * ("\nnewpath\n"+(offset+v2*20+10)+" "+(offset+(19-h2)*20+10)+" 5 0 360 arc\n\nstroke\nclosepath\n");
+					}
+				}
+				else {
+					greyColor = Sqrt(1-rateMatrix[h][v]/maxVal);
+					psFigure * (""+greyColor+" setgray\nbox fill\n");
+					if (isOneStepSub[charsToCodonOrder[h]][charsToCodonOrder[v]])
+					{
+						if (greyColor>0.5)
+						{
+							psFigure * ("0 setgray\n");
+						}
+						else
+						{
+							psFigure * ("1 setgray\n");				
+						}
+						psFigure * ("\nnewpath\n"+(offset+v2*20+10)+" "+(offset+(19-h2)*20+10)+" 5 0 360 arc\n\nstroke\nclosepath\n");
+					}
+				}
+			}
+		}
+	}
+	
+	psFigure * ("\n"+offset+" "+offset+" translate\n0 setgray\nnewpath\n0 0 moveto\n0 400 lineto\n400 400 lineto\n400 0 lineto\n0 0 lineto\nstroke\nclosepath");
+	
+	psFigure * ("\n\nnewpath\n0 200 moveto\n200 200 lineto\n200 400 lineto\nstroke");
+	psFigure * ("\n\nnewpath\n200 120 moveto\n200 200 lineto\n280 200 lineto\n280 120 lineto\nclosepath stroke");
+	psFigure * ("\n\nnewpath\n280 120 moveto\n340 120 lineto\n340 60 lineto\n280 60 lineto\nclosepath stroke");
+	psFigure * ("\n\nnewpath\n340 60 moveto\n400 60 lineto\n400 0 lineto\n340 0 lineto\nclosepath stroke");
+	psFigure * ("\n0 -30 translate\n 225.5 460 (Rate matrix plot for " + title + ") centertext\n 0 -20 translate\n");
+	tableText = {3,1};
+	if ( inColor ) {
+		tableText [0] = "Shading indicates relative substitution rates (red = max, white = 0)";
+	}
+	else {
+		tableText [0] = "Shading indicates relative substitution rates (black = max, white = 0)";
+	}
+	tableText [1] = "Circles show residue pairs that can be exchanged with one nucleotide substitution";
+	tableText [2] = "Amino-acids are grouped into 4 Stanfel classification clusters";
+	psFigure * _HYPSTextTable (400,30,12,tableText,tableText["0"]);
+	psFigure * ("\nshowpage");
+	psFigure * 0;
+	return psFigure;
+}
+
+function 	storeProfile (recp&, string, value)
+{
+	for (h=0; h<Abs(string); h=h+1)
+	{
+		recp[string[h]] = value;
+	}
+	return 0;
+}
+
+function ConvertMatrixToStateVector (theMatrix)
+{
+	vector = {1,stateVectorDimension};
+	for (k = 0; k < 20; k=k+1)
+	{
+		for (k2 = k+1; k2<20; k2=k2+1)
+		{
+			if (matrixToVectorMap[k][k2]>=0)
+			{
+				vector[matrixToVectorMap[k][k2]] = theMatrix[k][k2];
+			}
+		}
+	}
+	return vector;
+}
+
+function 	residueStyle (s,p,c)
+{
+	if (s == 1)
+	{
+		 color = "#B03060";
+		 labelcolor = "#FFFFFF";
+	}
+	if (s == 2)
+	{
+		 color = "#00A86B";
+		 labelcolor = "#000000";
+	}
+	if (s == 3)
+	{
+		 color = "#FF8C00";
+		 labelcolor = "#000000";
+	}
+	if (s == 4)
+	{
+		 color = "#4B0082";
+		 labelcolor = "#FFFFFF";
+	}
+	
+	if (p == 0)
+	{
+		if (c == 0)
+		{
+			shape = "rect";
+		}
+		else
+		{
+			if (c == 1)
+			{
+				shape = "trapezium";
+			}
+			else
+			{
+				shape = "invtrapezium";
+			}
+		}
+	}
+	else
+	{
+		if (c == 0)
+		{
+			shape = "diamond";
+		}
+		else
+		{
+			if (c == 1)
+			{
+				shape = "triangle";
+			}
+			else
+			{
+				shape = "invtriangle";
+			}
+		}	
+	}
+	
+	return " style=\"filled\" color=\"" + color + "\" fontcolor=\"" + labelcolor + "\" shape=\"" + shape + "\"";
+}
+
+/* end functions */
+
+skipCodeSelectionStep = 1;
+ExecuteAFile		("../Shared/chooseGeneticCode.def");
+ApplyGeneticCodeTable ( genCodeID );
+
+ExecuteAFile ("../Shared/GrabBag.bf"); /* need this include to process file paths */
+ExecuteAFile ("../Shared/DBTools.ibf");
+
+ExecuteAFile ("../Shared/_MSCOneStep.ibf"); /* need this include to determine all 1-to-1 substitutions */
+ExecuteAFile ( "../Shared/PostScript.bf" );
+
+lcapFile = "../Shared/LCAP";
+fscanf (lcapFile,"NMatrix,NMatrix,NMatrix,NMatrix,NMatrix", lcap1,lcap2,lcap3,lcap4,lcap5);
+
+/* print a temporary file for display on website. this file will be overwritten by model_processor.pl which takes the stdout from CMS_Processor.ibf > *.php */
+resName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + ".php";
+fprintf			(resName, CLEAR_FILE,"<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'><html><head><meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1'><meta http-equiv='refresh' content='60'>",
+				"<title>Almost there...</title></head><body>Generating a Codel Model Selection report...this page will refresh in a minute (or you can try sooner).");
+
+
+fprintf (stdout, "<script type='text/javascript' src='http://www.datamonkey.org/wz_tooltip.js'></script>\n<H1 CLASS='SuccessCap'>CMS analysis results</H1>\n");
+
+
+/* working here: hacked from GARD processor */
+inFile = BASE_CLUSTER_ACCESS_PATH + filePrefix;
+DataSet ds = ReadDataFile (inFile);
+DataSetFilter filteredData = CreateFilter (ds,1);
+DATA_FILE_PRINT_FORMAT = 6;
+
+inFile = BASE_OUTPUT_PATH + filePrefix + "_cms.nex";
+
+fprintf (inFile, CLEAR_FILE, filteredData);
+
+
+jobFileName = BASE_CGI_URL_STRING + "slacreport.pl?file=" + filePrefix + "&task=55&format=";
+plotFileName = BASE_CGI_URL_STRING + "cms_correlator.pl?file=" + filePrefix;
+fprintf ( stdout, "<DIV CLASS='RepClassCT'><b>Reports</b> <a href='",jobFileName,"0'>[HTML]</a> <a href='",jobFileName,"1'>[CSV]</a> <a href='",plotFileName,"'>[PLOTS]</a> <a href='",filePrefix,"_cms.nex'>[NEXUS]</a></DIV>");
+
+fprintf (stdout, _makeJobIDHTML (filePrefix));
+
+/*
+fprintf (stdout, "<DIV CLASS='RepClassCT'><b>Reports</b> <a href='",jobFileName,"0'>[HTML]</a> <a href='",
+			        jobFileName,"1' target = '_blank'>[CSV]</a> <a href='",jobFileName,"2",
+			        "'>[Plots]</a> <a href='",jobFileName,"3",
+			        "'>[Trees]</a> <a href='",filePrefix,"_gard.nex",
+			        "'>[NEXUS]</a></DIV>");	
+
+*/
+/* end of working here */
+
+/*fprintf ( stdout, rawOut, "\n" );*/
+/* fscanf 			(rawOut, "Raw", detailedFile); */
+
+sscanf (rawIn, "String", aminoacidOrdering); 
+/* read the 0-19 to amino-acid code indexing string */
+
+modelCount 		= 0;  /* how many models have been read */
+credibleModels	= 0;  /* how many models are credible   */
+
+classMatrices 	= {}; /* stores class allocation matrices for each model  */
+rateMatrices  	= {}; /* matrices storing c-AIC and rate estimates */
+AICScores		= {}; /* the c-AIC score for every model */
+rateClasses		= {}; /* how many rate classes are there for each model */
+compressedRates = {};
+
+topNCount		= 10;
+bestScore		= 1e100;
+bestModelID		= 0;
+bestRates		= 0;
+byRateClassRaw	= {}; 
+evidenceRCut	= 0.01; /* smallest evidence ratio against the best model to be 
+						   included in the credible set */
+
+/*-----------------------------------------------------------------------------*/
+
+ fprintf (resName, "<br>[PHASE 1.] Parsing the .details file"); 
+
+/* first pass to determine the best AIC score
+   and to identify the criterion for inclusion in the credible set of models
+*/
+
+maxModelRates = 0;
+
+byBPImprovement   = {};
+byBPRateSplits    = {};
+ScoreProfile      = {};
+
+
+while (!END_OF_FILE)
+{
+	sscanf (rawIn, "NMatrix,NMatrix",classMatrix, rateInfo);
+	
+	/* check for the end-of-file condition */
+	rateCount = Columns(rateInfo);
+	if (rateCount == 0)
+	{
+		break;
+	}
+	
+	modelAIC				   = rateInfo[2];
+	modelRates				   = Columns(rateInfo)-3;
+	meBest					   = 0;
+	if (byBPImprovement[modelRates] == 0)
+	{
+		meBest = 1;
+		if (modelRates == 1)
+		{
+			srBIC	= rateInfo[2];
+			crapLogL = rateInfo[0];
+		}
+	}
+	else
+	{
+		meBest = modelAIC<byBPImprovement[modelRates];
+	}
+	
+	if (meBest)
+	{
+		byBPImprovement[modelRates]	= modelAIC;
+		byBPRateSplits [modelRates] = matrixStats (classMatrix, rateInfo);
+	}
+	
+	byRateClassRaw [modelRates]		= byRateClassRaw[modelRates] + 1;
+	
+	
+	if ( modelRates > maxModelRates ) {
+		maxModelRates = modelRates;
+	}
+	
+	if (modelAIC < bestScore)
+	{
+		bestScore   = modelAIC;	
+		bestLogL	= rateInfo[0];
+		bestModelID = modelCount;
+		bestRates	= modelRates;
+	}
+	
+	ScoreProfile[modelCount]   = modelAIC;
+	modelCount 				   = modelCount + 1;
+	
+}
+
+ScoreProfileM = avlToMatrix ("ScoreProfile"); ScoreProfile = 0;
+
+ratesRead   = avlKeysToMatrix (byRateClassRaw);
+scoreCutoff = bestScore-2*Log(evidenceRCut);
+
+fprintf (resName, "<br><pre>\tRead ", modelCount, " models\n",
+				 "\tBest score = ", bestScore," achieved with ", bestRates, " rates\n",
+				 "\tScore cutoff of ", scoreCutoff, " to be included in the credible set at ", evidenceRCut, " level \n",
+				 "\t", Abs (byRateClassRaw), " different rate counts\n</pre>"
+				 );
+
+
+rawModelCount = modelCount;
+
+
+/* hack to reset END_OF_FILE */
+
+aminoacidOrdering = "" + aminoacidOrdering; 
+sscanf (aminoacidOrdering,"String",k);
+sscanf (rawIn, "String", k); 
+
+/*-----------------------------------------------------------------------------*/
+
+CMS_Summary								= {};
+CMS_Summary	["COL_VALUE"]				= "TEXT";
+CMS_Summary ["COL_KEY"]					= "TEXT";
+_CheckDBID 		  (slacDBID,"CMS_SUMMARY",CMS_Summary);
+
+_InsertRecord (slacDBID, "CMS_SUMMARY", {"COL_KEY":"MODELSPACE","COL_VALUE": Format(modelCount,5,0)});		
+_InsertRecord (slacDBID, "CMS_SUMMARY", {"COL_KEY":"BESTMODELRATES","COL_VALUE": Format(bestRates,4,0)});		
+_InsertRecord (slacDBID, "CMS_SUMMARY", {"COL_KEY":"BESTMODELIC","COL_VALUE": Format(bestScore,5,2)});		
+
+
+/*table to store summary info from credible models */
+CredibleModels_Summary					= {};
+CredibleModels_Summary ["MODEL_IDX"]	= "INTEGER";
+CredibleModels_Summary ["LOGLIKE"]		= "FLOAT";
+CredibleModels_Summary ["PARMS"]		= "INTEGER";
+CredibleModels_Summary ["BIC"]			= "FLOAT";
+CredibleModels_Summary ["NUM_RATES"]	= "INTEGER";
+_CheckDBID 		  (slacDBID,"CREDIBLEMODELS_SUMMARY",CredibleModels_Summary);
+
+/*table to store credible model rate info for plotting */
+CredibleModels_Rates					= {}; 
+CredibleModels_Rates ["MODEL_IDX"]		= "INTEGER";  
+CredibleModels_Rates ["RESIDUE_IDX1"]	= "INTEGER";
+CredibleModels_Rates ["RESIDUE_IDX2"]	= "INTEGER";
+CredibleModels_Rates ["SUBS_RATE"]		= "FLOAT";
+_CheckDBID 		  (slacDBID,"CREDIBLEMODELS_RATES",CredibleModels_Rates);
+
+
+rateClassBICs							= {};
+rateClassBICs ["NUM_RATES"]				= "INTEGER";
+rateClassBICs ["BIC"]					= "FLOAT";
+_CheckDBID 		  (slacDBID,"RATECLASSBICS",rateClassBICs);
+
+CMS_byResidue							= {};
+CMS_byResidue ["RESIDUE_IDX1"]			= "INTEGER";
+CMS_byResidue ["RESIDUE_IDX2"]			= "INTEGER";
+CMS_byResidue ["STANFELCHNG"]			= "INTEGER";
+CMS_byResidue ["POLARITYCHNG"]			= "INTEGER";
+CMS_byResidue ["CHARGECHNG"]			= "INTEGER";
+CMS_byResidue ["CHEMCOMP"]				= "FLOAT";
+CMS_byResidue ["POLARITY"]				= "FLOAT";
+CMS_byResidue ["VOLUME"]				= "FLOAT";
+CMS_byResidue ["ISOELEC"]				= "FLOAT";
+CMS_byResidue ["HYDROP"]				= "FLOAT";
+CMS_byResidue ["CLASS"]					= "INTEGER";
+CMS_byResidue ["BEST_RATE"]				= "FLOAT";
+CMS_byResidue ["MA_RATE"]				= "FLOAT";
+CMS_byResidue ["CLUSTERSUPP"]			= "FLOAT";
+_CheckDBID 		  (slacDBID,"CMS_BYRESIDUE",CMS_byResidue);
+
+
+fprintf (resName, "<br>[PHASE 2.] Building the set of credible models\n"); 
+
+/* remember best BIC for each number of rate classes and distributions of rate classes in the credible set */
+
+csetRateDistro = {maxModelRates,1};
+/*Initialise to a large number for BIC */
+for ( j = 0; j < maxModelRates; j = j + 1 ) {
+	csetRateDistro [ j ] = 1e+26;	
+}
+
+modelCount = 0;
+byRateClass		= {}; 
+
+modelsToAdd     = {};
+recordsToAdd	= {};
+
+while (!END_OF_FILE)
+{
+	sscanf (rawIn, "NMatrix,NMatrix",classMatrix, rateInfo);
+	
+	/* check for the end-of-file condition */
+	rateCount = Columns(rateInfo);
+	if (rateCount == 0)
+	{
+		break;
+	}
+	modelAIC				   		= rateInfo[2];
+	
+	CredibleModels_Summary ["MODEL_IDX"]	= modelCount;
+	CredibleModels_Summary ["LOGLIKE"]		= rateInfo[0];
+	CredibleModels_Summary ["PARMS"]		= rateInfo[1];
+	CredibleModels_Summary ["BIC"]			= modelAIC;
+	CredibleModels_Summary ["NUM_RATES"]	= Columns(rateInfo)-3;
+	
+	
+	modelsToAdd [Abs(modelsToAdd)] = CredibleModels_Summary;
+	if (Abs(modelsToAdd) > 5000)
+	{
+		_InsertMultipleRecords (slacDBID, "CREDIBLEMODELS_SUMMARY", modelsToAdd);
+		modelsToAdd = {};
+	}
+	
+	if (modelAIC <= scoreCutoff) /* model is in the credible set */
+	{
+		if (modelAIC == bestScore)
+		{
+			bestModelID = modelCount;
+			bestNRates  = rateInfo;
+		}
+		
+		AICScores[modelCount] 		= modelAIC; /* array of model AIC scores */
+		qMatrix						= classMatrix;
+		
+		modelRates				   = Columns(rateInfo)-3; /* number of rates */
+		byRateClass [modelRates]   = byRateClass[modelRates] + 1; /* increments the number of models for each rate class count */
+		compressedM 			   = {stateVectorDimension,1};
+		/* stateVectorDimension is the number of valid one-step substitution rates */
+
+		/* array of best AIC for each number of rates, load this to db at end*/
+		if ( modelAIC < csetRateDistro [ modelRates - 1 ] ) {
+			csetRateDistro [ modelRates - 1 ] = modelAIC;
+		}
+
+		/*populate rate matrix arrays for loading to db, and rate files for ps processing*/
+		k3 = 0;
+		for (k=0; k<20; k=k+1)
+		{
+			classMatrix[k][k] = -1;
+			qMatrix    [k][k] = -1;
+			
+			for (k2=k+1; k2<20; k2=k2+1)
+			{
+				if (isOneStepSub[k][k2])
+				{
+					aRecord = {};
+					aRecord ["MODEL_IDX"]			= modelCount;
+					aRecord ["RESIDUE_IDX1"]		= k;
+					aRecord ["RESIDUE_IDX2"]		= k2;
+					aRecord ["SUBS_RATE"]			= rateInfo[3+qMatrix[k][k2]];
+					recordsToAdd[Abs(recordsToAdd)] = aRecord;
+					
+					qMatrix[k][k2]			= rateInfo[3+qMatrix[k][k2]];
+					/* compressed rates only contain non -1 rates : ie those that are 1 nucleotide subs apart*/
+					compressedM[k3]			= qMatrix[k][k2];
+					k3 = k3+1;
+				}
+				else
+				{
+					qMatrix[k][k2]     = -1;
+					classMatrix[k][k2] = -1;
+					classMatrix[k2][k] = -1;
+				}
+				qMatrix[k2][k] = qMatrix[k][k2];
+			}
+		}
+		/*load rates rows to db*/
+		if (Abs(recordsToAdd) > 20000)
+		{
+			_InsertMultipleRecords (slacDBID, "CREDIBLEMODELS_RATES", recordsToAdd);
+			recordsToAdd = {};
+		}
+		compressedRates[modelCount]		    	= compressedM;
+		
+		/* counts the number of substitutions for each rate class */
+		if (modelAIC == bestScore)
+		{
+			bestModelByRate = {};
+			bestCompressedMR    = {stateVectorDimension,1};
+			k3 = 0;
+			for (k=0; k<20; k=k+1)
+			{
+				for (k2=k+1; k2<20; k2=k2+1)
+				{
+					if ( isOneStepSub[k][k2] )
+					{
+						bestCompressedMR[k3] = classMatrix[k][k2];
+						k3 = k3+1;
+					}
+					qMatrix[k2][k] = qMatrix[k][k2];
+				}
+			}
+			for (k=0; k<stateVectorDimension; k=k+1)
+			{
+				bestModelByRate [compressedM[k]] = bestModelByRate [compressedM[k]] + 1;
+			}
+		}
+
+
+		classMatrices[modelCount]   			= classMatrix;
+		rateMatrices[modelCount]				= qMatrix;
+		modelCount 				    			= modelCount + 1;
+		
+		/* print credible models to file */
+		
+		/*fprintf ( credibleModelOutFile, classMatrix, rateInfo );*/
+	}
+}
+
+if (Abs(recordsToAdd))
+{
+	_InsertMultipleRecords (slacDBID, "CREDIBLEMODELS_RATES", recordsToAdd);
+	recordsToAdd = {};
+}
+if (Abs(modelsToAdd))
+{
+	_InsertMultipleRecords (slacDBID, "CREDIBLEMODELS_SUMMARY", modelsToAdd);
+	modelsToAdd = {};
+}
+
+
+
+ratesRead   = avlKeysToMatrix (byRateClass);
+
+fprintf (resName, "<pre>\tFound ", modelCount, " credible models\n",
+				 "\t", Abs (byRateClass), " different rate counts</pre>");
+
+
+/*				 
+fprintf ( bestBICRatesFile, csetRateDistro );
+*/
+
+
+
+for ( k = 0; k < maxModelRates; k = k + 1 ) {
+	rateClassBICs ["NUM_RATES"] = k;
+	rateClassBICs ["BIC"]		= csetRateDistro[k];
+	_InsertRecord (slacDBID, "RATECLASSBICS", rateClassBICs);
+}
+
+bestClassMatrix			= classMatrices[bestModelID];
+bestRateMatrix			= rateMatrices[bestModelID];
+
+/* summary matrix */
+fprintf ( stdout, "\n<DIV class='RepClassSM'><b>Analysis summary</b>",
+				  "<DIV class='HelpfulTips'>If you need help interpreting the results of CMS, see this  <a href='http://www.datam0nk3y.org/hyphy/doku.php?id=cms' style = 'color: white;'>[Tutorial]<a></DIV>",
+				  "<p>Codon model selection procedure has examined <b>", Format(rawModelCount,4,0), "</b> models. The best model (log(L) = <b>", bestLogL,"</b>, mBIC = <b>", Format(bestScore,4,2), "</b>), has <b>", 
+				  Format(bestRates,4,0), "</b> rates. This model provides an improvement of <b>", Format((bestLogL-crapLogL),4,2), "</b> log(L) and <b>", Format((srBIC-bestScore),4,2), "</b> mBIC points over a single rate model, where ",
+				  "all non-synonymous substitutions occur at the same rate.", spoolAICTable(), 
+				 "<p><i>The credible set contains all the models evaluated by the Genetic Algorithm that are within ", Format((-2*Log(evidenceRCut)),4,2), 
+					  " mBIC units of the best model, or equivalently have evidence ratio of at least  ", 
+					  Format(evidenceRCut,4,2) , 
+					  " compared to the best model. This set of models is used for rate estimation by model averaging.</i>",
+				  "</DIV>\n" ); 
+
+
+fprintf (stdout, "<DIV class='RepClassSM'><b>Rate classification summary</b>\n",
+				 "<p>The best model has the following rate class properties. <i>See <a href='",plotFileName,"'>[PLOTS]</a>",
+				 		" for more information, including on correlation between inferred rates and biochemical properties and ",
+				 		" <a href='",jobFileName,"0'>[Rate Details]</a>",
+				 		" for  information about individual substitution rates. </i> <p>"		
+				 		);
+
+/*-----------------------------------------------------------------------------*/
+
+polarity = {};
+charge   = {};
+stanfel	 = {};
+	
+storeProfile ("charge","RHK",1);
+storeProfile ("charge","DE",-1);
+storeProfile ("charge","ANCQGILMFPSTWYV",0);
+	
+storeProfile ("polarity","RNDCQEGHKSTY",1);
+storeProfile ("polarity","AILMFPWV",0);
+	
+storeProfile ("stanfel","ACGILMPSTV",1);
+storeProfile ("stanfel","DENQ",2);
+storeProfile ("stanfel","FWY",3);
+storeProfile ("stanfel","HKR",4);
+
+/*-----------------------------------------------------------------------------*/
+
+fprintf (resName, "<br>[PHASE 3.] Computing a model averaged numerical matrix\n");
+
+scalingFactorSum = 1;
+modelAveragedM	 = {20,20};
+akaikeWeights	 = {modelCount,1};
+
+for (k=0; k<modelCount; k=k+1)
+{
+	akaikeWeight = Exp((bestScore-AICScores[k])*0.5);
+	modelAveragedM = modelAveragedM + rateMatrices[k] * akaikeWeight;
+	akaikeWeights [k] = akaikeWeight;
+}
+
+modelAveragedM = modelAveragedM * (1/(-modelAveragedM[0][0]));
+akaikeWeights  = akaikeWeights*(1/({1,modelCount}["1"]*akaikeWeights)[0]);
+
+/*-----------------------------------------------------------------------------*/
+
+byRate = {Abs(bestModelByRate), 7};
+/* rate value; rate count; mean model averaged rate in class; stanfel changes; polarity changes; charge changes;  */
+
+for (k=0; k<Abs(bestModelByRate); k=k+1)
+{
+	byRate [k][0] = k;
+	byRate [k][1] = bestNRates[k+3];
+	byRate [k][2] = bestModelByRate[bestNRates[k+3]];	
+}
+
+for ( k0 = 0; k0 < 20; k0 = k0 + 1 ) {
+	aa1 = aminoacidOrdering[k0];
+	for ( k1 = k0+1; k1 < 20; k1 = k1 + 1 ) {
+		if (isOneStepSub[k0][k1]) {
+			aa2 = aminoacidOrdering[k1];
+			rv = bestClassMatrix [k0][k1];
+			byRate [rv][3] = byRate [rv][3] + modelAveragedM[k0][k1]/byRate [rv][2];
+			byRate [rv][4] = byRate [rv][4] + (stanfel[aa1]!=stanfel[aa2]);
+			byRate [rv][5] = byRate [rv][5] + (polarity[aa1]!=polarity[aa2]);
+			byRate [rv][6] = byRate [rv][6] + (charge[aa1]!=charge[aa2]);	
+		}
+	}
+}
+
+	
+byRate = byRate % 1;
+theData = {};
+for (k = 0; k < Rows (byRate); k = k + 1)
+{
+	aVec = vectorToAVL(byRate[{{k,2}}][{{k,Columns (byRate)-1}}]);
+	jobFileName = BASE_CGI_URL_STRING + "renderPSImage.pl?file=" + filePrefix + "_cms_" + k;
+	aVec[Abs(aVec)] = "<span><a href='"+jobFileName+"&doDOT=1'><img src='http://www.datamonkey.org/images/png.gif' border = '1'></a>" + 
+					  "<a href='"+jobFileName+"&doDOT=1&doPDF=1'><img src='http://www.datamonkey.org/images/pdf.gif' border = '1'></a></span>";
+	theData [Format(byRate[k][1],4,2)] = aVec;
+}
+
+echoAVLAsTable (theData, {"0":toolTipCode("dN/dSTOOLTIP","Maximum likelihood model estimate<br>for dN/dS from the best model"),
+						  "1":toolTipCode("Rates in ClassTOOLTIP", "How many rates have been allocated <br>to this class in the best model"),
+						  "2":toolTipCode("Mean Model<br>Averaged dN/dSTOOLTIP", "The mean of all model-averaged<br>rate estimates in this class:<br>more robust to noise than any single model"),
+						  "3":toolTipCode("Stanfel class changesTOOLTIP","How many of the substitutions in this class<br>are <b>radical</b> based on the Stanfel classification"),
+						  "4":toolTipCode("Polarity changesTOOLTIP","How many of the substitutions in this class<br>are between residues of different polarity"),
+						  "5":toolTipCode("Charge changesTOOLTIP","How many of the substitutions in this class<br>are between residues of different charge"), 
+						  "6":toolTipCode("PlotTOOLTIP","View a graph representation of this rate class.<br>See the [PLOTS] link above for legend and explanation")}, 
+						  1, 0, 12);
+	
+fprintf ( stdout, "</DIV>" );
+
+
+/* save the best rate matrix strucutral model to file*/
+fileName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + ".struc_matrix";
+fprintf (fileName, CLEAR_FILE, aminoacidOrdering, "\n", bestClassMatrix, CLOSE_FILE);
+
+fileName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + ".ma_matrix";
+fprintf (fileName, CLEAR_FILE, aminoacidOrdering, "\n", modelAveragedM, CLOSE_FILE);
+
+fileName			= BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".ma_matrix.bw.ps";
+fprintf (fileName, CLEAR_FILE, rateMatrixToPS ( aminoacidOrdering, modelAveragedM, "model-averaged model", 0 ) );
+
+fileName			= BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".ma_matrix.col.ps";
+fprintf (fileName, CLEAR_FILE, rateMatrixToPS ( aminoacidOrdering, modelAveragedM, "model-averaged model", 1 ) );
+
+
+
+fprintf (resName, "<br>[PHASE 4.] Computing a 4-category [0-0.1,0.1-0.5,0.5-1,1+] approximation\n");
+
+binByType = {stateVectorDimension,4};
+
+for (k=0; k<modelCount; k=k+1)
+{
+	compressedM = compressedRates[k];
+	myAW		= akaikeWeights  [k];
+	for (aa1=0;aa1<stateVectorDimension;aa1=aa1+1)
+	{
+		if (compressedM[aa1] < 0.1)
+		{
+			binByType [aa1][0] = binByType [aa1][0] + myAW;
+		}
+		else{
+			if (compressedM[aa1] < 0.5)
+			{
+				binByType [aa1][1] = binByType [aa1][1] + myAW;
+			}
+			else{
+				if (compressedM[aa1] < 1.00)
+				{
+					binByType [aa1][2] = binByType [aa1][2] + myAW;
+				}
+				else
+				{
+					binByType [aa1][3] = binByType [aa1][3] + myAW;
+				}
+			}
+		}
+	}
+}
+
+globbedMatrix = {20,20};
+shortToLong   = {stateVectorDimension,1};
+
+k = 0;
+for (aa1=0;aa1<20;aa1=aa1+1)
+{
+	for (aa2=aa1+1;aa2<20;aa2=aa2+1)
+	{
+		if (isOneStepSub[aa1][aa2])
+		{
+			maxV = 0; maxI = 0;
+			for (k2=0; k2<4; k2=k2+1){if (binByType[k][k2]>maxV) {maxV = binByType[k][k2]; maxI = k2;}} 
+			globbedMatrix[aa1][aa2] = maxI; 
+			globbedMatrix[aa2][aa1] = maxI; 
+			shortToLong [k] = aminoacidOrdering[aa1]+aminoacidOrdering[aa2];
+			k=k+1;
+		}
+	}
+}
+
+fName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".4_matrix";
+fprintf ( fName, CLEAR_FILE, aminoacidOrdering, "\n", globbedMatrix, CLOSE_FILE);
+
+
+fprintf (resName, "<br>[PHASE 5.] Computing the list of rates derived from top ",topNCount," models\n");
+
+topNList = ({modelCount,2}["_MATRIX_ELEMENT_ROW_*(_MATRIX_ELEMENT_COLUMN_)+AICScores[_MATRIX_ELEMENT_ROW_]*(_MATRIX_ELEMENT_COLUMN_==0)"])%0;
+
+fName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + "_topModels.csv";
+fprintf (fName,CLEAR_FILE,KEEP_OPEN,"AA1,AA2,Rate,Model_Rank\n");
+for (aa1=0;aa1<20;aa1=aa1+1)
+{
+	for (aa2=aa1+1;aa2<20;aa2=aa2+1)
+	{
+		if (isOneStepSub[aa1][aa2])
+		{
+			for (k=0; k<topNCount; k=k+1)
+			{
+				fprintf (fName,"\n",aminoacidOrdering[aa1],",",aminoacidOrdering[aa2],",",(rateMatrices[topNList[k][1]])[aa1][aa2],",",k+1);
+			}
+		}
+	}
+}
+fprintf (fName,CLOSE_FILE);
+	
+fName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + "_init.models";
+fprintf (fName,CLEAR_FILE,KEEP_OPEN);	
+for (k3=0; k3<topNCount; k3=k3+1)
+{
+	fprintf (fName,ConvertMatrixToStateVector(classMatrices[topNList[k3][1]]),"\n");
+}
+fprintf (fName,CLOSE_FILE);
+
+
+fprintf (resName, "<br>[PHASE 6.] Computing cluster affinity metrics\n");
+
+consensusStructure = {stateVectorDimension,stateVectorDimension}; /* only one step-substitutions */
+bestMatrix = compressedRates[bestModelID];
+consensusStructure = consensusStructure["bestMatrix[_MATRIX_ELEMENT_ROW_]==bestMatrix[_MATRIX_ELEMENT_COLUMN_]"]*akaikeWeights  [bestModelID];
+
+for (k=0; k<modelCount; k=k+1)
+{
+	/*matchCount 	   = ({1,stateVectorDimension}["1"]*(consensusStructure*{stateVectorDimension,1}["1"]))[0];
+	matchCount 	   = (matchCount-stateVectorDimension)/2;
+	fprintf (stdout, k, ":", matchCount, "\n");*/
+		
+	if (k!=bestModelID)
+	{
+		akaikeWeight       = Exp((bestScore-AICScores[k])*0.5);
+		bestMatrix         = compressedRates[k];
+		consensusStructure = consensusStructure + (consensusStructure["bestMatrix[_MATRIX_ELEMENT_ROW_]==bestMatrix[_MATRIX_ELEMENT_COLUMN_]"])*akaikeWeights  [k];
+	}
+}
+	
+clusterSupport = {stateVectorDimension,1};
+	
+for (k = 0; k < stateVectorDimension; k=k+1)
+{
+	myRate = bestCompressedMR[k];
+	for (k2 = 0; k2 < stateVectorDimension; k2 = k2 + 1)
+	{
+		if (k2 != k && myRate == bestCompressedMR[k2])
+		{
+			clusterSupport[k] = clusterSupport[k] + consensusStructure[k][k2];
+		}
+	}
+	bmr = (bestModelByRate[bestNRates[myRate+3]]);
+	if (bmr>1)
+	{
+		clusterSupport[k] = clusterSupport[k]/(bestModelByRate[bestNRates[myRate+3]]-1);
+	}
+}
+
+	
+graphs = {};
+aaByNode ={};
+for (k = 0; k < bestRates; k = k+1)
+{
+	graphs[k] = ""; graphs[k] * 128; graphs[k] * ("subgraph cluster_G"+k+"{label = \"Rate = " + Format(bestNRates[k+3],4,2) + "\" fontsize = \"24\" penwidth=\"0\"; \n\n");
+	aaByNode[k] = {};
+}
+
+	
+k3 = 0;
+for (k=0; k<20; k=k+1)
+{	
+	for (k2=k+1; k2<20; k2 = k2+1)
+	{
+		ratePlug = bestClassMatrix[k][k2];
+		if (ratePlug >=0)
+		{
+			if ((aaByNode[ratePlug])[k] == 0)
+			{
+				(aaByNode[ratePlug])[k] = 1; 
+				graphs[ratePlug] * ("" + aminoacidOrdering[k] + ratePlug + 
+					"[label = \"" + 
+					aminoacidOrdering[k] + 
+					"\"" +
+					residueStyle(stanfel[aminoacidOrdering[k]],polarity[aminoacidOrdering[k]],charge[aminoacidOrdering[k]]) +
+					"];");
+			}
+			if ((aaByNode[ratePlug])[k2] == 0)
+			{
+				(aaByNode[ratePlug])[k2] = 1; 
+				graphs[ratePlug] * ("" + aminoacidOrdering[k2] + ratePlug + 
+					"[label = \"" + 
+					aminoacidOrdering[k2] + 
+					"\"" +
+					residueStyle(stanfel[aminoacidOrdering[k2]],polarity[aminoacidOrdering[k2]],charge[aminoacidOrdering[k2]]) +
+					"];");
+			}
+			if (clusterSupport[k3] < 0.5)
+			{
+				style = "dotted";
+			}
+			else
+			{
+				if (clusterSupport[k3] < .9)
+				{
+					style = "dashed";
+				}				
+				else
+				{
+					style = "solid";
+				}
+			}
+				
+			graphs[ratePlug] * ( aminoacidOrdering[k]  + ratePlug + " -- " + aminoacidOrdering[k2] + ratePlug+ " [style = \""+style+"\" label = \""+Format(modelAveragedM[k][k2],5,2)+"\"];\n");
+				
+			k3 = k3+1;
+		}
+	}
+}
+	
+sortBestRates = {bestRates,2}["_MATRIX_ELEMENT_ROW_"];
+for (k=0; k<bestRates; k=k+1)
+{
+	sortBestRates[k][1]=bestNRates[k+3];
+}
+sortBestRates = sortBestRates % 1;
+	
+//sort the dots by rate value
+
+for (k = 0; k < bestRates; k = k+1)	{
+	k2 = byRate [k][0];
+	graphs[k2] * "}\n\n"; graphs[k2] * 0; 
+	fName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + "_" + k + ".dot";
+	fprintf (fName, CLEAR_FILE, "graph G{remincross = \"true\" rankdir=\"LR\" ratio = \"fill\" size = \"4,4\";\nnode [fontsize=12,width=\".4\", height=\".4\", margin=0];graph[fontsize=14];\n",
+					 graphs[k2],
+					 "\n}");
+	
+}
+
+
+fName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + "_reliability.csv";
+fprintf (fName,CLEAR_FILE,KEEP_OPEN,"AA1,AA2,Structural,Averaged,StanfelChange,PolarityChange,ChargeChange,ChemicalComposition,Polarity,Volume,IsoelectricPoint,Hydropathy");	
+
+
+/* here :	decide how to execute R script and load images for correlations
+			load grpahviz results 
+*/
+
+
+
+aac = 0;
+for (aa1=0;aa1<20;aa1=aa1+1)
+{
+	for (aa2=aa1+1;aa2<20;aa2=aa2+1)
+	{
+		if (isOneStepSub[aa1][aa2])
+		{
+			aal1 = aminoacidOrdering[aa1];
+			aal2 = aminoacidOrdering[aa2];
+			fprintf (fName,"\n",aal1,",",
+						aal2,",",
+						bestRateMatrix[aa1][aa2],",",
+						modelAveragedM[aa1][aa2],",",
+						stanfel[aal1] == stanfel[aal2],",",
+						polarity[aal1] == polarity[aal2],",",
+						charge[aal1] == charge[aal2],",",										 
+						Abs(lcap1[aa1][aa2]),",",
+						Abs(lcap2[aa1][aa2]),",",
+						Abs(lcap3[aa1][aa2]),",",
+						Abs(lcap4[aa1][aa2]),",",
+						Abs(lcap5[aa1][aa2])
+					);
+			
+			CMS_byResidue ["RESIDUE_IDX1"]	= aa1;
+			CMS_byResidue ["RESIDUE_IDX2"]	= aa2;
+			CMS_byResidue ["STANFELCHNG"]	= stanfel[aal1] == stanfel[aal2];
+			CMS_byResidue ["POLARITYCHNG"]	= polarity[aal1] == polarity[aal2];
+			CMS_byResidue ["CHARGECHNG"]	= charge[aal1] == charge[aal2];
+			CMS_byResidue ["CHEMCOMP"]		= Abs(lcap1[aa1][aa2]);
+			CMS_byResidue ["POLARITY"]		= Abs(lcap2[aa1][aa2]);
+			CMS_byResidue ["VOLUME"]		= Abs(lcap3[aa1][aa2]);
+			CMS_byResidue ["ISOELEC"]		= Abs(lcap4[aa1][aa2]);
+			CMS_byResidue ["HYDROP"]		= Abs(lcap5[aa1][aa2]);
+			CMS_byResidue ["CLASS"]			= bestClassMatrix[aa1][aa2] + 1;
+			CMS_byResidue ["BEST_RATE"]		= bestRateMatrix[aa1][aa2];
+			CMS_byResidue ["MA_RATE"]		= modelAveragedM[aa1][aa2];
+			CMS_byResidue ["CLUSTERSUPP"]	= clusterSupport [ aac ];
+			_InsertRecord (slacDBID, "CMS_BYRESIDUE", CMS_byResidue);		
+			aac = aac + 1;
+		}
+	}
+}
+
+fprintf (fName,CLOSE_FILE);
+
+fprintf ( stdout, "<DIV class='RepClassSM'><b>Downloads</b><p>The following GA estimated models are available for download and model fitting within HyPhy. The matrix files provide the matrices only and can be used with AnalyzeCodonData.bf. The batch files assume the datafile has a tree and will fit the model with GTR nucleotide bias corrections.\n" );
+
+ModelTypeString = { { "Custom", "Numeric" } };
+
+BFString = "";
+BFString * 2048;
+BFString * ( "ExecuteAFile (HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"Utility\" + DIRECTORY_SEPARATOR + \"ReadDelimitedFiles.bf\");\n" );
+BFString * ( "ExecuteAFile (HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"Utility\" + DIRECTORY_SEPARATOR + \"GrabBag.bf\");\n" );
+
+BFString * ( "SetDialogPrompt ( \"Please select a codon file for model fitting\" );\n" );
+BFString * ( "fscanf ( PROMPT_FOR_FILE, \"Raw\", dataRaw );\n" );
+BFString * ( "dataFile = LAST_FILE_PATH;\n" );
+BFString * ( "pathParts   = splitFilePath(dataFile);\n" );
+BFString * ( "cwd_prefix  = pathParts[\"DIRECTORY\"];\n" );
+BFString * ( "file_name   = pathParts[\"FILENAME\"];\n" );
+BFString * ( "fileToInclude = HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"TemplateModels\" + DIRECTORY_SEPARATOR + \"chooseGeneticCode.def\";\n" );
+BFString * ( "skipCodeSelectionStep = 1;\n" );
+BFString * ( "ExecuteAFile ( fileToInclude );\n" );
+
+jobFileName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".struc_matrix";
+fscanf ( jobFileName, "Raw", matrix );
+BFString * ( "fprintf ( \"hyphy.matrix.file\", CLEAR_FILE, \"" + matrix + "\" );\n" );
+
+BFString * ( "skipCodeSelectionStep = 0;\n" );
+BFString * ( "_options = {};\n" );
+BFString * ( "_options [\"00\"] = _geneticCodeOptionMatrix [ " + genCodeID + "];\n" );
+BFString * ( "_options [\"01\"] = dataFile;\n" );
+BFString * ( "_options [\"02\"] = \"MG94WAAFREQS\";\n" );
+BFString * ( "_options [\"03\"] = \"" + ModelTypeString[0] + "\";\n" );
+BFString * ( "_options [\"04\"] = cwd_prefix + \"hyphy.matrix.file\";\n" ); 
+BFString * ( "_options [\"05\"] = \"Global\";\n" );
+BFString * ( "_options [\"06\"] = \"012345\";\n" );
+BFString * ( "_options [\"07\"] = \"Y\";\n" );
+BFString * ( "_options [\"08\"] = \"Estimate\";\n" );
+BFString * ( "fileToInclude = HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"AnalyzeCodonData.bf\";\n" );
+BFString * ( "ExecuteAFile ( fileToInclude, _options );\n" );
+BFString * 0;
+
+jobFileName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".struc_matrix.hyphy";
+fprintf ( jobFileName, CLEAR_FILE, BFString );
+jobFileName = BASE_HTML_URL_STRING + filePrefix + "_" + suffix[kind] + ".struc_matrix.hyphy";
+matrixFileName = BASE_HTML_URL_STRING + filePrefix + "_" + suffix[kind] + ".struc_matrix";
+fprintf (stdout, "\n<dl><dt class = 'DT1'>Best model <a href='",matrixFileName,"'>[Matrix]</a><a href='",jobFileName,"'>[HYPHY batch file]</a>\n" );
+
+BFString = "";
+BFString * 2048;
+BFString * ( "ExecuteAFile (HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"Utility\" + DIRECTORY_SEPARATOR + \"ReadDelimitedFiles.bf\");\n" );
+BFString * ( "ExecuteAFile (HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"Utility\" + DIRECTORY_SEPARATOR + \"GrabBag.bf\");\n" );
+
+BFString * ( "SetDialogPrompt ( \"Please select a codon file for model fitting\" );\n" );
+BFString * ( "fscanf ( PROMPT_FOR_FILE, \"Raw\", dataRaw );\n" );
+BFString * ( "dataFile = LAST_FILE_PATH;\n" );
+BFString * ( "pathParts   = splitFilePath(dataFile);\n" );
+BFString * ( "cwd_prefix  = pathParts[\"DIRECTORY\"];\n" );
+BFString * ( "file_name   = pathParts[\"FILENAME\"];\n" );
+BFString * ( "fileToInclude = HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"TemplateModels\" + DIRECTORY_SEPARATOR + \"chooseGeneticCode.def\";\n" );
+BFString * ( "skipCodeSelectionStep = 1;\n" );
+BFString * ( "ExecuteAFile ( fileToInclude );\n" );
+
+jobFileName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".ma_matrix";
+fscanf ( jobFileName, "Raw", matrix );
+BFString * ( "fprintf ( \"hyphy.matrix.file\", CLEAR_FILE, \"" + matrix + "\" );\n" );
+
+BFString * ( "skipCodeSelectionStep = 0;\n" );
+BFString * ( "_options = {};\n" );
+BFString * ( "_options [\"00\"] = _geneticCodeOptionMatrix [ " + genCodeID + "];\n" );
+BFString * ( "_options [\"01\"] = dataFile;\n" );
+BFString * ( "_options [\"02\"] = \"MG94WAAFREQS\";\n" );
+BFString * ( "_options [\"03\"] = \"" + ModelTypeString[1] + "\";\n" );
+BFString * ( "_options [\"04\"] = cwd_prefix + \"hyphy.matrix.file\";\n" ); 
+BFString * ( "_options [\"05\"] = \"Global\";\n" );
+BFString * ( "_options [\"06\"] = \"012345\";\n" );
+BFString * ( "_options [\"07\"] = \"Y\";\n" );
+BFString * ( "_options [\"08\"] = \"Estimate\";\n" );
+BFString * ( "fileToInclude = HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"AnalyzeCodonData.bf\";\n" );
+BFString * ( "ExecuteAFile ( fileToInclude, _options );\n" );
+BFString * 0;
+
+jobFileName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".ma_matrix.hyphy";
+fprintf ( jobFileName, CLEAR_FILE, BFString );
+jobFileName = BASE_HTML_URL_STRING + filePrefix + "_" + suffix[kind] + ".ma_matrix.hyphy";
+matrixFileName = BASE_HTML_URL_STRING + filePrefix + "_" + suffix[kind] + ".ma_matrix";
+fprintf (stdout, "<dt class = 'DT2'>Numerical model averaged <a href='",matrixFileName,"'>[Matrix]</a><a href='",jobFileName,"'>[HYPHY batch file]</a>" );
+
+BFString = "";
+BFString * 2048;
+BFString * ( "ExecuteAFile (HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"Utility\" + DIRECTORY_SEPARATOR + \"ReadDelimitedFiles.bf\");\n" );
+BFString * ( "ExecuteAFile (HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"Utility\" + DIRECTORY_SEPARATOR + \"GrabBag.bf\");\n" );
+
+BFString * ( "SetDialogPrompt ( \"Please select a codon file for model fitting\" );\n" );
+BFString * ( "fscanf ( PROMPT_FOR_FILE, \"Raw\", dataRaw );\n" );
+BFString * ( "dataFile = LAST_FILE_PATH;\n" );
+BFString * ( "pathParts   = splitFilePath(dataFile);\n" );
+BFString * ( "cwd_prefix  = pathParts[\"DIRECTORY\"];\n" );
+BFString * ( "file_name   = pathParts[\"FILENAME\"];\n" );
+BFString * ( "fileToInclude = HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"TemplateModels\" + DIRECTORY_SEPARATOR + \"chooseGeneticCode.def\";\n" );
+BFString * ( "skipCodeSelectionStep = 1;\n" );
+BFString * ( "ExecuteAFile ( fileToInclude );\n" );
+
+jobFileName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".4_matrix";
+fscanf ( jobFileName, "Raw", matrix );
+BFString * ( "fprintf ( \"hyphy.matrix.file\", CLEAR_FILE, \"" + matrix + "\" );\n" );
+
+BFString * ( "skipCodeSelectionStep = 0;\n" );
+BFString * ( "_options = {};\n" );
+BFString * ( "_options [\"00\"] = _geneticCodeOptionMatrix [ " + genCodeID + "];\n" );
+BFString * ( "_options [\"01\"] = dataFile;\n" );
+BFString * ( "_options [\"02\"] = \"MG94WAAFREQS\";\n" );
+BFString * ( "_options [\"03\"] = \"" + ModelTypeString[0] + "\";\n" );
+BFString * ( "_options [\"04\"] = cwd_prefix + \"hyphy.matrix.file\";\n" ); 
+BFString * ( "_options [\"05\"] = \"Global\";\n" );
+BFString * ( "_options [\"06\"] = \"012345\";\n" );
+BFString * ( "_options [\"07\"] = \"Y\";\n" );
+BFString * ( "_options [\"08\"] = \"Estimate\";\n" );
+BFString * ( "fileToInclude = HYPHY_BASE_DIRECTORY + \"TemplateBatchFiles\" + DIRECTORY_SEPARATOR + \"AnalyzeCodonData.bf\";\n" );
+BFString * ( "ExecuteAFile ( fileToInclude, _options );\n" );
+BFString * 0;
+
+jobFileName = BASE_OUTPUT_PATH + filePrefix + "_" + suffix[kind] + ".4_matrix.hyphy";
+fprintf ( jobFileName, CLEAR_FILE, BFString );
+jobFileName = BASE_HTML_URL_STRING + filePrefix + "_" + suffix[kind] + ".4_matrix.hyphy";
+matrixFileName = BASE_HTML_URL_STRING + filePrefix + "_" + suffix[kind] + ".4_matrix";
+fprintf (stdout, "\n<dt class = 'DT1'>Structural 4-category approximation binning the rates into for predefined ranges: <br>0-0.1, 0.1-0.5, 0.5-1 and &gt; 1\n",
+				  "<a href='",matrixFileName,"'>[Matrix]</a><a href='",jobFileName,"'>[HYPHY batch file]</a></DL>" );
+
+
+
+fprintf ( stdout, "</DIV>\n" );
+
+/*---------------------------------------------------------------------------------------------------------------------------------------------*/
+
+function 	spoolAICTable ()
+{
+	colorList 	= {{"red","black","blue","green","purple","orange"}};
+	fcolorList 	= {{"white","white","white","white","white","black"}};
+
+	htmlAICTable = "";
+	htmlAICTable * 128;
+	
+	thermometer_width = 470;
+	
+	textAndTips = 
+	{
+		{"Classes", "The number of rate classes included in the model (N)"}
+		{"Models", "For a given number of rate classes, how many models did the GA expore?<br>Note that there is only 1 model with 1 rate class"}
+		{"Credible", "For a given number of rate classes, how many models were in the credible set,<br>defined as all models whose evidence ratio is 0.01 or greater (the best model has evidence ratio of 1)"}
+		{"mBIC", "The best modified BIC (mBIC) score for the models with this many rate classes.<br>mBIC is the same as BIC, except the parameter penalty is twice as large"}
+		{"&Delta;mBIC", "The improvment (decrease) in mBIC for this N rate classes compared to N-1 rate classes"}
+		{"dN/dS (rates in class)", "Maximum likelihood estimates for the dN/dS parameter for each rate class, and the number of residue pairs in the class. <br>The bar is partitioned according to the relative size of each rate class"}
+	};
+
+ 
+	 htmlAICTable * "\n\n<div style = 'width: 680px; border: black solid 1px; '>\n<table style = 'width: 100%;font-size: 10px;text-align:left;'>\n\t<tr>";
+	 
+	 for (k = 0; k < Rows (textAndTips); k = k + 1)
+	 {
+		 htmlAICTable * ("\n\t\t<th>" + toolTipCode (textAndTips [k][0] + "TOOLTIP", textAndTips[k][1]) + "</th>");
+	 }
+	 
+	 htmlAICTable * ("\n\t</tr>");
+
+
+
+	for (_partCount = 1; _partCount <= Abs (byBPImprovement); _partCount = _partCount + 1)
+	{
+		currentAIC = byBPImprovement [_partCount];
+		if (_partCount > 1)
+		{
+			ci 		   = Format(byBPImprovement [_partCount-1] - byBPImprovement [_partCount],6,2);
+		}
+		else
+		{
+			ci 		   = "";		
+		}
+		bpLocs2    = byBPRateSplits		 [_partCount];
+		pxPerSpan  = thermometer_width/stateVectorDimension;
+		sp		   = "<table style = 'padding: 0px; spacing: 0px;'><tr>";
+		
+		
+		for (k=0; k<Rows (bpLocs2); k=k+1)
+		{
+			sp = sp + "<td style = 'width:"+
+				 pxPerSpan*(bpLocs2[k][1])$1+
+				 "px; background-color: "+
+				 colorList[k%Columns(colorList)]+
+				 "; color: "+
+				 fcolorList[k%Columns(colorList)]+
+				 "; text-align: right; font-size: 10px;'>";
+				 
+			sp = sp + Format(bpLocs2[k][0], 5, 2) + "/" + bpLocs2[k][1];	
+			sp = sp + "</td>";
+		}	
+		sp = sp + "</tr></table>";
+		htmlAICTable * ("\n<tr><td>"+ _partCount+ 
+							  "</td><td>"+ byRateClassRaw[_partCount] +
+							  "</td><td>"+ byRateClass[_partCount]+
+							  "</td><td><span style = 'width: "+100*currentAIC/byBPImprovement [1]$1+"%; background-color: purple; color: white;'>"+Format(currentAIC,6,1)+ 
+							  "</span></td><td>"+ ci+ 
+							  "</td><td>" +sp+
+							  "</td></tr>");
+		
+	}
+
+	htmlAICTable * "\n</table></div>\n\n";
+	htmlAICTable * 0;
+	return htmlAICTable;
+}
+
+/*---------------------------------------------------------------------------------------------------------------------------------------------*/
+
+function matrixStats (vector, values)
+{
+	_rateCount  = Columns(values)-3;
+	rateInfoMx = {_rateCount,2};
+	for (_k = 0; _k < 20; _k = _k+1)
+	{
+		for (_k2 = _k+1; _k2 < 20; _k2 = _k2+1)
+		{
+			if (isOneStepSub[_k][_k2])
+			{
+				_v = vector[_k][_k2];
+				rateInfoMx[_v][1] = rateInfoMx[_v][1] + 1;
+			}
+		}
+	}
+	for (_k = 0; _k < _rateCount; _k = _k+1)
+	{
+		rateInfoMx[_k][0] = values[3 + _k];
+	}
+	return rateInfoMx % 0;
+}

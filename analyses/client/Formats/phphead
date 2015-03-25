@@ -1,0 +1,1 @@
+<?phpinclude('../php/global_include.php');DM_print_header ("Adaptive Evolution Server @ Datamonkey.org",				 _REPLACE_DOCUMENT_TITLE,"");DM_print_html_head();?>

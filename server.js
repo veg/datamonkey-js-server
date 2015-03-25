@@ -2,7 +2,11 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
+<<<<<<< HEAD
   Copyright (C) 2013
+=======
+  Copyright (C) 2015
+>>>>>>> 8a658f9a846be4f96b57c320ccdbf2fcd72337f9
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -27,67 +31,62 @@
 
 */
 
-var config = require('./config.js'),
+var config = require('./config.json'),
     io = require('socket.io').listen(config.port),
     fs = require('fs'),
-    spawn_job = require('./hivcluster/spawn_job.js'),
-    ss = require('socket.io-stream');
+    path = require('path'),
+    hivtrace = require('./app/hivtrace/hivtrace.js'),
+    prime = require('./app/prime/prime.js'),
+    busted = require('./app/busted/busted.js'),
+    relax = require('./app/relax/relax.js'),
+    absrel = require('./app/absrel/absrel.js'),
+    ss = require('socket.io-stream'),
+    JobQueue = require(__dirname + '/lib/jobqueue.js').JobQueue;
 
-io.set('log level', 1);
-    
 // For every new connection...
 io.sockets.on('connection', function (socket) {
 
   // Acknowledge new connection
   socket.emit('connected', { hello: 'Ready to serve' });
 
+
+  socket.on('job queue', function (jobs) {
+    JobQueue(function(jobs) {
+      socket.emit('job queue', jobs);
+    });
+  });
+
   // A job has been spawned by datamonkey, let's go to work
-  socket.on('spawn', function (hiv_cluster_params) {
+  ss(socket).on('spawn', function (stream, params) {
 
-    // Setup Analysis
-    var cluster_analysis = new spawn_job.DoHivClusterAnalysis();
+    if(params.job.type) {
 
-    // On status updates, report to datamonkey-js
-    cluster_analysis.on('status update', function(status_update) {
-      socket.emit('status update', status_update);
-    });
+      switch(params.job.type) {
 
-    // On errors, report to datamonkey-js
-    cluster_analysis.on('error', function(error) {
-      socket.emit('error', error);
-    });
+        case 'hivtrace':
+          new hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
+          break;
+        case 'prime':
+          new prime.PrimeAnalysis(socket, stream, params);
+          break;
+        case 'busted':
+          new busted.BustedAnalysis(socket, stream, params.job);
+          break;
+        case 'relax':
+          new relax.RelaxAnalysis(socket, stream, params.job);
+          break;
+        case 'absrel':
+          new absrel.aBSRELAnalysis(socket, stream, params.job);
+          break;
+        default:
+          socket.emit('error', 'type not recognized');
+          socket.disconnect();
+      }
 
-    // When the analysis completes, return the results to datamonkey.
-    cluster_analysis.on('completed', function(results) {
-      // Send cluster and graph information
-      socket.emit('completed', results);
-    });
-
-    // Report the torque job id back to datamonkey
-    cluster_analysis.on('job created', function(torque_id) {
-      // Send cluster and graph information
-      socket.emit('job created', torque_id);
-    });
-
-    // Report the torque job id back to datamonkey
-    cluster_analysis.on('tn93 summary', function(torque_id) {
-      // Send cluster and graph information
-      socket.emit('tn93 summary', torque_id);
-    });
-
-    // Send file
-    cluster_analysis.on('dispatch file', function(params) {
-      var stream = ss.createStream();
-      ss(socket).emit('send file', stream, { id : params.id, type: params.type });
-      fs.createReadStream(params.fn).pipe(stream);
-      socket.once('file saved', function () {
-        params.cb();
-      });
-    });
-
-    // Setup has been completed, run the job with the parameters from datamonkey
-    cluster_analysis.start(hiv_cluster_params);
-
+    } else {
+      socket.emit('error', 'analysis type not supplied');
+      socket.disconnect();
+    }
   });
   
   // Log which user disconnected
@@ -96,4 +95,3 @@ io.sockets.on('connection', function (socket) {
   });
 
 });
-

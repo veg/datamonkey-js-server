@@ -1,0 +1,483 @@
+/****************************************************
+
+EVF_Processor.ibf
+
+Sergei L Kosakovsky Pond (spond@ucsd.edu)
+April 2010
+
+This HyPhy batch file is to be used to process
+the output for EvoBLAST model selection runs.
+
+****************************************************/
+
+function ReportDistributionString (rc, stats)
+{
+	distroString = "";
+	distroString * 1024; 
+	distroString * ("<TABLE><TR CLASS = 'HeaderClassSM'><TH>Class</TH><TH colspan = '4'>"+toolTipCode("&alpha;TOOLTIP","Synonymous Subsitution Rate")+
+				   "</TH><TH colspan = '4'>"+toolTipCode("&beta;TOOLTIP","Non-synonymous Subsitution Rate")+
+				   "</TH><TH>"+toolTipCode("&omega;TOOLTIP","&beta;/&alpha;")+
+				   "</TH><TH colspan = '4'>"+toolTipCode("WeightTOOLTIP","The probability that a site belongs to this rate class")+"</TH></TR>\n");
+	distroString * "<TR CLASS = 'HeaderClassSM'><TH></TH><TH>MLE</TH><TH>2.5%</TH><TH>Median</TH><TH>97.5%</TH><TH>MLE</TH><TH>2.5%</TH><TH>Median</TH><TH>97.5%</TH><TH>MLE</TH><TH>MLE</TH><TH>2.5%</TH><TH>Median</TH><TH>97.5%</TH></TR>\n";
+	
+	reportMx = {rc,4};
+	
+	for (mi=0; mi<rc; mi=mi+1)
+	{
+		ExecuteCommands ("reportMx[mi][0]=S_"+mi+"/c_scale;");
+		ExecuteCommands ("reportMx[mi][1]=NS_"+mi+"/c_scale;");
+		reportMx[mi][2] = reportMx[mi][1]/reportMx[mi][0];
+		ExecuteCommands ("reportMx[mi][3]="+freqStrMx[mi]+";");
+		distroString * ("<TR CLASS = 'ModelClass"+(1+mi%2)+"'><TD>"+(mi+1)+"</TD><TD>"+Format(reportMx[mi][0],5,2)
+									   + "</TD><TD>"+Format(stats[mi][3],5,2)
+									   + "</TD><TD>"+Format(stats[mi][9],5,2)
+									   + "</TD><TD>"+Format(stats[mi][6],5,2)
+									   
+									   +"</TD><TD>"+Format(reportMx[mi][1],10,3)
+									   + "</TD><TD>"+Format(stats[mi][4],5,2)
+									   + "</TD><TD>"+Format(stats[mi][10],5,2)
+									   + "</TD><TD>"+Format(stats[mi][7],5,2)
+									   
+									   +"</TD><TD>"+_normalizeRatio (reportMx[mi][0],reportMx[mi][1])
+									   +"</TD><TD>"+Format(reportMx[mi][3],10,3) 
+									   + "</TD><TD>"+Format(stats[mi][5],5,2)
+									   + "</TD><TD>"+Format(stats[mi][11],5,2)
+									   + "</TD><TD>"+Format(stats[mi][8],5,2)
+									   + "</TR>");
+	}						
+	
+	distroString * "</TABLE>";
+	distroString * 0;
+	return distroString;
+}
+
+/*---------------------------------------------------------------------------------------------------------------------------------------------------*/
+
+function echoCovariance (ps,values1,values2)
+{
+	DD 			= Rows(ps)*Columns(ps);
+	EE 			= 0.0;
+	EE2			= 0.0;
+	EER			= 0.0;
+	sampleVar 	= 0.0;
+	sampleVar2 	= 0.0;
+	
+	for (k=0; k<DD; k=k+1)
+	{
+		EE  = ps[k]*values1[k]+EE;
+		EE2 = ps[k]*values2[k]+EE2;
+		EER = ps[k]*(values2[k]/values1[k]) + EER;
+		sampleVar = sampleVar+ps[k]*values1[k]*values1[k];
+		sampleVar2 = sampleVar2+ps[k]*values2[k]*values2[k];
+	}
+		
+	sampleVar  = sampleVar-EE*EE;
+	sampleVar2 = sampleVar2-EE2*EE2;
+	
+	cov  = 0;
+	for (k=0; k<DD; k=k+1)
+	{
+		cov  = cov  + ps[k]*(values1[k]-EE)*(values2[k]-EE2);
+	}
+
+	return cov/Sqrt(sampleVar*sampleVar2);
+}
+
+function rateTransform (r)
+{
+	return Min(4,Log(r+Exp(-4))); 
+}
+
+
+/* end functions */
+
+/********************************************************************************************************/
+/* MAIN */
+/********************************************************************************************************/
+
+skipCodeSelectionStep = 1;
+ExecuteAFile		("../Shared/chooseGeneticCode.def");
+ApplyGeneticCodeTable ( genCodeID );
+
+ExecuteAFile ("../Shared/GrabBag.bf"); /* need this include to process file paths */
+ExecuteAFile ("../Shared/DBTools.ibf");
+ExecuteAFile ("../Shared/DescriptiveStatistics.bf");
+ExecuteAFile ( "../Shared/PS_Plotters.bf" );
+ExecuteAFile ("../Shared/OutputsEVF.bf");
+
+
+/* print a temporary file for display on website. this file will be overwritten by model_processor.pl which takes the stdout from CMS_Processor.ibf > *.php */
+resName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + ".php";
+fprintf			(resName, CLEAR_FILE,"<!DOCTYPE HTML PUBLIC '-//W3C//DTD HTML 4.01 Transitional//EN'><html><head><meta http-equiv='Content-Type' content='text/html; charset=ISO-8859-1'><meta http-equiv='refresh' content='15'>",
+				"<title>Almost there...</title></head><body>Generating a Evolutionary Fingerprinint report...this page will refresh in 15 seconds (or you can try sooner).");
+
+
+fprintf (stdout, "<script type='text/javascript' src='http://www.datamonkey.org/wz_tooltip.js'></script>\n<H1 CLASS='SuccessCap'>Evolutionary Fingerprinting Analysis Results</H1>\n");
+
+
+
+jobFileName = BASE_CGI_URL_STRING + "slacreport.pl?file=" + filePrefix + "&task=42&format=";
+plotFileName = BASE_CGI_URL_STRING + "evf_processor.pl?file=" + filePrefix;
+fprintf ( stdout, "<DIV CLASS='RepClassCT'><b>Reports</b> <a href='",jobFileName,"0'>[HTML]</a> <a href='",jobFileName,"1'>[CSV]</a> <a href='",jobFileName,"2'>[PLOTS]</a> <a href='",filePrefix,"_",suffix[kind],".nex'>[NEXUS]</a></DIV>");
+
+
+ExecuteCommands (rawIn);
+fprintf (stdout, _makeJobIDHTML (filePrefix),_makeDataDescriptionTM (slacDBID,_treeMode, 0));
+
+GetInformation(vars,"^P_[0-9]+");
+rateCount = Columns (vars)+1;
+
+freqStrMx    = {rateCount,1};
+if (rateCount>1)
+{
+	freqStrMx[0] = "P_1";
+
+	for (mi=1; mi<rateCount-1; mi=mi+1)
+	{
+		freqStrMx[mi] = "";
+		for (mi2=1;mi2<=mi;mi2=mi2+1)
+		{
+			freqStrMx[mi] = freqStrMx[mi]+"(1-P_"+mi2+")";		
+		}
+		freqStrMx[mi] = freqStrMx[mi]+"P_"+(mi+1);	
+	}	
+	freqStrMx[mi] = "";
+
+	for (mi2=1;mi2<mi;mi2=mi2+1)
+	{
+		freqStrMx[mi] = freqStrMx[mi]+"(1-P_"+mi2+")";		
+	}
+	freqStrMx[mi] = freqStrMx[mi]+"(1-P_"+mi+")";	
+}
+else
+{
+	freqStrMx[0] = "1";
+}
+
+LFCompute (lf,LF_START_COMPUTE);
+LFCompute (lf,res);
+LFCompute (lf,LF_DONE_COMPUTE);
+
+LogL = res;
+
+/* check for branch length approximator */
+
+GetString (paramList, lf, -1);
+
+degF = Columns(paramList["Global Independent"]) /* this will overcount by one; because the mean alpha := 1 */
+	+ 8 /* 9 frequency parameters -1 */
+	- branchLengths; /* remove one more for codon scaling factor, if nuc branch lengths are used */
+
+for (fileID = 1; fileID <= fileCount; fileID = fileID + 1)
+{
+	ExecuteCommands ("degF = degF + BranchCount(tree_" + fileID + "_0) + TipCount(tree_" + fileID + "_0);");
+}	
+
+AIC	 = 2*(degF-LogL);
+AICc = 2*(degF*totalCharCount/(totalCharCount-degF-1) - LogL);
+
+
+repCount   = Abs (_sampled_gbdd);
+nMatrix    = {rateCount*repCount, 3};
+rawNMatrix = {rateCount*repCount, 2};
+
+
+/*table to store  sample information */
+RateInfoSample						= {};
+RateInfoSample ["RATE_IDX"]			= "INTEGER";
+RateInfoSample ["SAMPLE_ID"]		= "INTEGER";
+RateInfoSample ["ALPHA"]			= "FLOAT";
+RateInfoSample ["BETA"]				= "FLOAT";
+RateInfoSample ["P"]				= "FLOAT";
+
+_CheckDBID 	  (slacDBID,"EVF_SAMPLES",   RateInfoSample);
+
+samples       = {};
+
+for (k = 0; k < repCount; k = k+1)
+{
+	m = _sampled_gbdd[k];
+	aSample = {"SAMPLE_ID": k+1};
+	for (r = 0; r < rateCount; r = r+1)
+	{
+		a = rateTransform (m[r][0]);
+		b = rateTransform (m[r][1]);
+		nMatrix[k*rateCount+r][0] = a;
+		nMatrix[k*rateCount+r][1] = b;
+		rawNMatrix [k*rateCount+r][0] = m[r][0];
+		rawNMatrix [k*rateCount+r][1] = m[r][1];
+		nMatrix[k*rateCount+r][2]     = m[r][2];
+		
+		aSample ["RATE_IDX"] 	= r+1;
+		aSample ["ALPHA"] 		= m[r][0];
+		aSample ["BETA"] 		= m[r][1];
+		aSample ["P"] 			= m[r][2];
+		samples [Abs(samples)] = aSample;
+	}
+}
+
+_InsertMultipleRecords (slacDBID, "EVF_SAMPLES", samples);		
+samples = 0;
+
+meanVar = {rateCount,4};
+pVar	= {rateCount, 12};
+
+
+
+for (r = 0; r < rateCount; r = r+1)
+{
+	alpha = GatherDescriptiveStats(nMatrix[nMatrix["_MATRIX_ELEMENT_COLUMN_==0&&_MATRIX_ELEMENT_ROW_%rateCount==r"]]);
+	beta  = GatherDescriptiveStats(nMatrix[nMatrix["_MATRIX_ELEMENT_COLUMN_==1&&_MATRIX_ELEMENT_ROW_%rateCount==r"]]);
+	ralpha = GatherDescriptiveStats(rawNMatrix[rawNMatrix["_MATRIX_ELEMENT_COLUMN_==0&&_MATRIX_ELEMENT_ROW_%rateCount==r"]]);
+	rbeta  = GatherDescriptiveStats(rawNMatrix[rawNMatrix["_MATRIX_ELEMENT_COLUMN_==1&&_MATRIX_ELEMENT_ROW_%rateCount==r"]]);
+	rp     = GatherDescriptiveStats(nMatrix[nMatrix["_MATRIX_ELEMENT_COLUMN_==2&&_MATRIX_ELEMENT_ROW_%rateCount==r"]]);
+	
+	meanVar [r][0] = 4.4+alpha["Mean"];
+	meanVar [r][1] = 4.4+beta["Mean"];
+	meanVar [r][2] = 100*alpha["Std.Dev"];
+	meanVar [r][3] = 100*beta["Std.Dev"];
+
+	pVar [r][0]  = ralpha["Mean"];
+	pVar [r][1]  = rbeta["Mean"];
+	pVar [r][2]  = rp["Mean"];
+	pVar [r][3]  = ralpha["2.5%"];
+	pVar [r][4]  = rbeta["2.5%"];
+	pVar [r][5]  = rp["2.5%"];
+	pVar [r][6]  = ralpha["97.5%"];
+	pVar [r][7]  = rbeta["97.5%"];
+	pVar [r][8]  = rp["97.5%"];
+	pVar [r][9]  = ralpha["Median"];
+	pVar [r][10] = rbeta["Median"];
+	pVar [r][11] = rp["Median"];
+}
+
+fprintf (stdout, CLEAR_FILE, "<DIV CLASS = 'RepClassSM'> <b>The best fitting model has ", rateCount, " rate class classes</b><p>", 
+						 	"<DL><DT class = 'DT1'> Log likelihood:", Format (LogL, 15, 5),
+				 			"<DT class = 'DT2'>Parameters:", Format (degF, 15, 0),
+				 			"<DT class = 'DT1'>AIC:", Format (AIC,  15, 5),
+				 			"<DT class = 'DT2'>c-AIC:", Format (AICc,  15, 5),"</DL></DIV><DIV CLASS = 'RepClassSM'><b>Inferred rates</b><p>",
+						   "<dl><dt class = 'DT1' style = 'font-size:10px'> MLE - Maximum Likelihood Estimate<br>&nbsp;2.5%, Median, 97% - quantiles and median derived from an approximate posterior sample of rates.",
+						   "</dl><p>",ReportDistributionString(rateCount,pVar));
+				 			
+cov	= echoCovariance(reportMx[-1][3],reportMx[-1][0],reportMx[-1][1]);
+fprintf (stdout,  ,"<p>E[&alpha;] = ", EE, ", E[&beta;] = ", EE2, ", E[&omega;] = ", EER, ", Cov (&alpha;,&beta;) = ", cov,"</DIV>");
+
+ConstructCategoryMatrix (cm, lf, COMPLETE);
+
+site_count 		= Columns (cm)/rateCount;
+posteriorProbs  = {site_count, rateCount};
+
+priorPS		    = 0;
+weightF2		= {1,rateCount};
+
+for (h = 0; h<rateCount; h=h+1)
+{
+	if (reportMx[h][0] < reportMx[h][1])
+	{
+		priorPS = priorPS + reportMx[h][3];
+		weightF2[h] = 1;
+	}
+}
+
+allPos = 0;
+allNeg = 0;
+
+if (priorPS > 0 && priorPS < 1)
+{
+	priorPS = priorPS/(1-priorPS);
+}
+else
+{
+	if (priorPS == 0)
+	{
+		allNeg = 1;
+	}	
+	else
+	{
+		allPos = 1;
+	}	
+}
+
+weightingFactors = Transpose(reportMx[-1][3]);
+posteriors = {};
+
+
+_CheckDBID 	(slacDBID,"EVF_POSTERIOR_SAMPLES",   EFV_Resampled);
+
+columnOfOnes = Transpose((_sampled_posteriors[0][-1])["1/repCount__"]);
+
+for (site_enumerator = 0; site_enumerator < site_count; site_enumerator = site_enumerator + 1)
+{
+	sum = 0; 
+	
+	smallestScaler = 1e100;
+	
+	resampled = _sampled_posteriors[site_enumerator][-1];
+	aRecord = {"CODON": site_enumerator + 1, "SAMPLES": resampled};
+	
+	_InsertRecord (slacDBID, "EVF_POSTERIOR_SAMPLES", aRecord);
+	
+	for (rate_enumerator = 0; rate_enumerator < rateCount; rate_enumerator = rate_enumerator + 1)
+	{
+		smallestScaler 	   = Min(smallestScaler,cm.site_scalers[rate_enumerator*site_count+site_enumerator]);
+	}
+	
+	postMeanAlpha   = 0;
+	postMeanBeta 	= 0;
+	postMeanOmega	= 0;
+
+	for (rate_enumerator = 0; rate_enumerator < rateCount; rate_enumerator = rate_enumerator + 1)
+	{
+		v = cm[rate_enumerator*site_count+site_enumerator] * reportMx[rate_enumerator][3] * Exp(cm.log_scale_multiplier*(smallestScaler-cm.site_scalers[rate_enumerator*site_count+site_enumerator]));
+		posteriorProbs[site_enumerator] [rate_enumerator]= v;
+		sum = sum + v;
+	}
+
+	postPS			= 0;
+	for (rate_enumerator = 0; rate_enumerator < rateCount; rate_enumerator = rate_enumerator + 1)
+	{
+		posteriorProbs[site_enumerator] [rate_enumerator] = posteriorProbs[site_enumerator] [rate_enumerator] / sum;
+		postMeanAlpha = postMeanAlpha + reportMx[rate_enumerator][0]*posteriorProbs[site_enumerator] [rate_enumerator];
+		postMeanBeta  = postMeanBeta  + reportMx[rate_enumerator][1]*posteriorProbs[site_enumerator] [rate_enumerator];
+		postMeanOmega = postMeanOmega + (reportMx[rate_enumerator][1]/reportMx[rate_enumerator][0])*posteriorProbs[site_enumerator] [rate_enumerator];
+		
+		if (weightF2[rate_enumerator] > 0)
+		{
+			postPS = postPS + posteriorProbs[site_enumerator] [rate_enumerator];
+		}
+
+	}
+	
+	record 			= {"Codon": site_enumerator+1};
+		
+	record["dS"]   = postMeanAlpha;
+	record["dN"]   = postMeanBeta;
+	record["dSdN"] = postMeanOmega;
+	record["SAMPLEP50"] = (resampled["_MATRIX_ELEMENT_VALUE_>=50"] * columnOfOnes)[0];
+	record["SAMPLEN50"] = (resampled["_MATRIX_ELEMENT_VALUE_<=1/50&&_MATRIX_ELEMENT_VALUE_>0"] * columnOfOnes)[0];
+	
+	if (allPos + allNeg == 0)
+	{
+		if (postPS == 0)
+		{
+			negSelected     = negSelected+1;
+			record["PosPP"] = 0;
+			record["NegPP"] = 1;
+			record["PosBF"] = 0;
+			record["NegBF"] = 1e25;
+		}
+		else
+		{
+			if (postPS == 1)
+			{
+				posSelected = posSelected + 1;
+				record["PosPP"] = 1;
+				record["NegPP"] = 0;
+				record["PosBF"] = 1e25;
+				record["NegBF"] = 0;
+			}
+			else
+			{
+				
+				record["PosPP"] = postPS;
+				record["NegPP"] = 1-postPS;
+
+				postPS	   = postPS/(1-postPS)/priorPS;
+					
+				if (postPS >= _in_BayesFactor)
+				{
+					posSelected = posSelected + 1;
+				}
+				else
+				{
+					if (postPS <= 1/_in_BayesFactor)
+					{
+						negSelected = negSelected + 1;
+					}
+				}
+				record["PosBF"] = postPS;
+				record["NegBF"] = 1/postPS;
+			}
+		}
+	}
+	else
+	{
+		if (allNeg == 0)
+		{
+			record["PosPP"] = 0;
+			record["NegPP"] = 1;
+			record["PosBF"] = 0;
+			record["NegBF"] = 1;	
+		}
+		else
+		{
+			record["PosPP"] = 1;
+			record["NegPP"] = 0;
+			record["PosBF"] = 1;
+			record["NegBF"] = 0;			
+		}
+	}
+	posteriors [Abs(posteriors)] = record;
+	
+}
+
+_CheckDBID 	(slacDBID,"EVF_POSTERIORS",   EVF_ResultTable);
+_InsertMultipleRecords (slacDBID, "EVF_POSTERIORS", posteriors);
+DeleteObject (posteriors);
+
+
+fileName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + "_fingerprint.ps";
+
+
+psCode = generateDensityPlot ("nMatrix",
+							  {{-4.4,4.4,100}{-4.4,4.4,100}},
+							  {{0,1}},
+							  {{400,400,12}},
+							  {{1,1,1}{1,0,0}},
+							  {{"","Log (alpha)", "Log (beta)"}},
+							  meanVar
+							  );
+							  
+fprintf 					  (fileName, CLEAR_FILE, psCode);
+
+jobFileName = BASE_CGI_URL_STRING + "renderPSImage.pl?file=" + filePrefix +"_" + suffix[kind] + "_fingerprint";
+fprintf (stdout, "<DIV CLASS = 'RepClassSM'><b>Evolutionary fingerprint (based on ",repCount," distribution samples)</b>",
+				 "<div class = 'HelpfulTips'>The plot depicts the estimate of the <b>distribution</b> of synonymous and non-synonymous rates inferred from this alignment (on the log-log scale). ",
+				 "The ellipses reflect a Gaussian-approximated <b>variance</b> in each individual rate estimate, and colored pixels show the density of the posterior sample of the distribution for a given rate. ",
+				 "The diagonal line represents the idealized neutral evolution regime (&omega; = 1), points above the line correspond to positive selection (&omega;&gt;1), and points below the line - to negative selection (&omega;&lt;1).</div>",
+				 "<p>Save as <a href='",jobFileName,"&doPDF=1'>[PDF]</a><p><iframe name = 'pdf_frame' src='",jobFileName,"' width='460px' height = '448px' align = 'middle' frameborder='1' marginwidth='10'></iframe>" );
+fprintf ( stdout, "</DIV>" );
+
+fitFrom 			= rawIn $ "_sampled_gbdd";
+fitTo   			= rawIn $ "_multiRate[^;]+;";
+fileName			= BASE_OUTPUT_PATH + filePrefix +"_" + suffix[kind] + ".nex";
+fprintf 			(fileName, CLEAR_FILE, rawIn[0][fitFrom[0]-1] + rawIn [fitTo[1]+1][Abs(rawIn)]);
+
+EVF_Summary								= {};
+EVF_Summary	["COL_VALUE"]				= "TEXT";
+EVF_Summary ["COL_KEY"]					= "TEXT";
+_CheckDBID 	(slacDBID,"EVF_SUMMARY",   EVF_Summary);
+
+_InsertRecord (slacDBID, "EVF_SUMMARY", {"COL_KEY":"LogL","COL_VALUE": Format (LogL, 15, 5)});		
+_InsertRecord (slacDBID, "EVF_SUMMARY", {"COL_KEY":"Rates","COL_VALUE": rateCount});		
+_InsertRecord (slacDBID, "EVF_SUMMARY", {"COL_KEY":"AICc","COL_VALUE": Format(AICc,15,5)});		
+_InsertRecord (slacDBID, "EVF_SUMMARY", {"COL_KEY":"TreeMode","COL_VALUE": _treeMode});		
+_InsertRecord (slacDBID, "EVF_SUMMARY", {"COL_KEY":"MultiRate","COL_VALUE": _multiRate});	
+
+/*table to store summary info for the inferred rate distribution */
+RateInfoSummary					= {};
+RateInfoSummary ["RATE_IDX"]	= "INTEGER";
+RateInfoSummary ["ALPHA"]		= "FLOAT";
+RateInfoSummary ["BETA"]		= "FLOAT";
+RateInfoSummary ["P"]			= "FLOAT";
+
+_CheckDBID 		  (slacDBID,"EVF_RATE_INFO_SUMMARY",RateInfoSummary);
+ 
+for (r = 0; r < rateCount; r = r+1)
+{
+	aRecord = {"RATE_IDX":r+1, 
+			   "ALPHA": reportMx[r][0],
+			   "BETA": reportMx[r][1],
+			    "P": reportMx[r][3]};
+	_InsertRecord (slacDBID, "EVF_RATE_INFO_SUMMARY", aRecord );		
+}
