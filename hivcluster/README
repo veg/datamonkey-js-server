@@ -1,0 +1,22 @@
+[Perform pairwise alignment]
+> /opt/share/python3.3/bealign <INPUT.FASTA> <OUTPUT.BAM> -m HXB2_prrt -p HIV_BETWEEN_F -R
+> /opt/share/python3.3/bam2msa <OUTPUT.BAM> <OUTPUT.FASTA>
+
+[Calculate distances among user sequences]
+[The default value 0.015 can vary, for now between 0 and 0.02]
+[AVERAGE can be replaced with RESOLVE or SKIP]
+[The default value 500 can vary, for now between 100 and 1000]
+> TN93dist <OUTPUT.FASTA> <USER.TN93OUTPUT.csv> 0.015 AVERAGE CSV 500 0
+
+[Infer network for user-sequences]
+[The 0.015 value here should be the same as before]
+> hivnetworkcsv -i <USER.TN93OUTPUT.csv> -c <USER.CLUSTER.csv> -d <USER.GRAPH.dot> -t 0.015 -f plain
+
+[User will have option to compare their sequences to LANL]
+[Calculate distance to LANL]
+> TN93dist <PATH_TO_LANL_DATA.FASTA> <USERtoLANL.TN93OUTPUT.csv> 0.015 AVERAGE CSV 500 0 <OUTPUT.FASTA>
+[You'll need to concatenate USERtoLANL.TN93OUTPUT.csv with a previously run LANL.TN93OUTPUT.csv and <USER.TN93OUTPUT.csv> that I'll keep stored
+to make USER.LANL.TN93OUTPUT.csv]
+[Infer network for user and LANL sequences]
+> hivnetworkcsv -i <USER.LANL.TN93OUTPUT.csv> -c <USER.LANL.CLUSTER.csv> -d <USER.LANL.GRAPH.dot> -t 0.015 -f plain
+
