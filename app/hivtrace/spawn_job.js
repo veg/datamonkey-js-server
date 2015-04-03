@@ -50,7 +50,7 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
   self = this;
   self.subscriber.on('message', function(channel, message) { 
     var redis_packet = JSON.parse(message);
-
+    //console.log (message, redis_packet);
     if(redis_packet.type != 'completed') {
       self.emit(redis_packet.type, redis_packet); 
     } else {
@@ -85,6 +85,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
       tn93_lanl_csv_suffix='_user.tn93output.csv',
       custom_reference_suffix='_custom_reference.fas';
 
+
   self.python = config.python;
   self.output_dir  = __dirname + '/output/';
   self.qsub_script = __dirname + '/hivtrace_submit.sh';
@@ -95,6 +96,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   self.ambiguity_handling = hiv_cluster_params.ambiguity_handling;
   self.fraction = hiv_cluster_params.fraction;
   self.reference = hiv_cluster_params.reference;
+  self.filter_edges = hiv_cluster_params.filter_edges;
   self.min_overlap = hiv_cluster_params.min_overlap;
   self.status_stack = hiv_cluster_params.status_stack;
   self.lanl_compare = hiv_cluster_params.lanl_compare;
@@ -113,8 +115,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   // qsub_submit.sh
   var qsub_submit = function () {
 
-    var qsub =  spawn('qsub',
-                         ['-q',
+    var qsub_params = ['-q',
                           'datamonkey',
                           '-v',
                           'fn='+self.filepath+
@@ -125,16 +126,19 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
                           ',fraction='+self.fraction+
                           ',reference='+self.reference+
                           ',mo='+self.min_overlap+ 
+                          ',filter='+self.filter_edges+
                           ',comparelanl='+self.lanl_compare+
                           ',strip_drams='+self.strip_drams+
                           ',custom_reference_fn='+self.custom_reference_fn,
                           '-o', self.output_dir,
                           '-e', self.output_dir,
-                          self.qsub_script], 
-                          { cwd: self.output_dir });
+                          self.qsub_script];
+                          
+    var qsub =  spawn('qsub',qsub_params,{ cwd: self.output_dir });
 
     qsub.stderr.on('data', function (data) {
       // Could not start job
+      self.emit('script error', {'error' : ''+data});
       console.log('stderr: ' + data);
     });
 
