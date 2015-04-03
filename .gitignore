@@ -4,11 +4,8 @@ hpout
 *.log
 *.out
 *.log.*
-<<<<<<< HEAD
-
 #Ignore spool
 spool/
-=======
 tags
 
 #Ignore spool
@@ -20,7 +17,6 @@ app/hivtrace/res/LANL.UNALIGNED.FASTA
 
 *node_modules*
 nosetests.xml
->>>>>>> 8a658f9a846be4f96b57c320ccdbf2fcd72337f9
 
 # Compiled Object files
 *.slo
