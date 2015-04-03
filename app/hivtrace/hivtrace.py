@@ -106,25 +106,15 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
 
     with open(output, 'a') as f:
         fwriter = csv.writer(f, delimiter=',')
-        prependid = lambda x : [x[0], x[1], x[2]]
-        # Read pairwise results
-        #tail -n+2 OUTPUT_USERTOLANL_TN93_FN >> USER_LANL_TN93OUTPUT
-        with open(pairwise_fn) as pairwise_f:
-            preader = csv.reader(pairwise_f, delimiter=',')
-            preader.__next__()
-            rows = [prependid(row) for row in preader]
-            fwriter.writerows(rows)
+        
+        for file in (pairwise_fn, user_fn):        
+            with open(file) as pairwise_f:
+                preader = csv.reader(pairwise_f, delimiter=',')
+                next(preader)
+                fwriter.writerows([row[0:3] for row in preader])
 
-        # Read user_results, preprend ids
-        #tail -n+2 OUTPUT_TN93_FN >> USER_LANL_TN93OUTPUT
-        prependuid = lambda x : [x[0], x[1], x[2]]
-        with open(user_fn) as user_f:
-            ureader = csv.reader(user_f, delimiter=',')
-            ureader.__next__()
-            rows = [prependuid(row) for row in ureader]
-            fwriter.writerows(rows)
+            
 
-    f.close()
     return
 
 
@@ -327,16 +317,16 @@ def strip_reference_sequences(input, reference_fn, TN93DIST, threshold, ambiguit
 
 
 def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
-             compare_to_lanl, status_file, config, fraction, POOL, strip_drams=False):
+             compare_to_lanl, status_file, config, fraction, POOL, strip_drams=False, filter_edges = "no"):
 
     """
-    PHASE 0)  Strip Drams
     PHASE 1)  Pad sequence alignment to HXB2 length with bealign
     PHASE 2)  Convert resulting bam file back to FASTA format
     PHASE 2b) Rename any duplicates in FASTA file
     PHASE 3)  Remove HXB2 and NL43 sequences
-    PHASE 4)  tn93 analysis on the supplied FASTA file alone
-    PHASE 5)  Run hivclustercsv to return clustering information in json format
+    PHASE 3b) Strip Drams if requested
+    PHASE 4)  TN93 analysis on the supplied FASTA file alone
+    PHASE 5)  Run hivclustercsv to return clustering information in JSON format
     PHASE 5b) Attribute annotations to results from (4)
     PHASE 6)  Run tn93 against LANL if user elects to
     PHASE 6b) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
@@ -360,13 +350,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     HIVNETWORKCSV=config.get('hivnetworkcsv')
     LANL_TN93OUTPUT_CSV= resource_dir + 'LANL.TN93OUTPUT.csv'
 
-    if strip_drams:
-        if strip_drams == 'wheeler':
-            LANL_FASTA=config.get('lanl_wheeler')
-        elif strip_drams == 'lewis':
-            LANL_FASTA=config.get('lanl_lewis')
-    else:
-        LANL_FASTA=config.get('lanl_fasta')
+    LANL_FASTA=config.get('lanl_fasta')
 
     if reference in reference_files.keys():
         REFERENCE_FASTA = reference_files[reference]
@@ -389,6 +373,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     OUTPUT_TN93_FN=input+'_user.tn93output.csv'
     JSON_TN93_FN=input+'_user.tn93output.json'
     HXB2_LINKED_OUTPUT_FASTA_FN=input+'_user.hxb2linked.csv'
+    OUTPUT_COMBINED_SEQUENCE_FILE =input+"_combined_user_lanl.fasta";
     OUTPUT_CLUSTER_JSON=input+'_user.trace.json'
     STATUS_FILE=input+'_status'
 
@@ -409,7 +394,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     logging.debug(' '.join(bealign_process))
 
     # PHASE 2
-    update_status(id, "Converting to FASTA", POOL)
+    update_status(id, "BAM to FASTA conversion", POOL)
     bam_process = [PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN]
     subprocess.check_call(bam_process, stdout=DEVNULL)
     logging.debug(' '.join(bam_process))
@@ -425,32 +410,21 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
         strip_reference_sequences(OUTPUT_FASTA_FN, REFERENCE_FASTA, TN93DIST, threshold, ambiguities, min_overlap)
 
     if strip_drams:
-        stripped_fasta = sd.strip_drams(OUTPUT_FASTA_FN, strip_drams)
-
-        # Write file back to input
-        outfile = open(str(OUTPUT_FASTA_FN),'w')
-        outfile.write(stripped_fasta)
-        outfile.close()
+        with open (str(OUTPUT_FASTA_FN),'w') as output_file:
+            for (id, data) in sd.strip_drams (OUTPUT_FASTA_FN, strip_drams):
+                print (">%s\n%s" % (id, data), file = output_file)
 
     # PHASE 4
-    update_status(id, "TN93 Analysis", POOL)
-    tn93_fh = open(JSON_TN93_FN, 'w')
+    update_status(id, "Computing pairwise TN93 distances", POOL)
 
-
-    if(ambiguities != 'resolve'):
+    with open(JSON_TN93_FN, 'w') as tn93_fh:
         tn93_process = [TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
                                threshold, '-a', ambiguities, '-l',
-                               min_overlap, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
+                               min_overlap, '-g', fraction if ambiguities == 'resolve' else '1.0', '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
 
-    else:
-        tn93_process = [TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
-                               threshold, '-a', ambiguities, '-l',
-                               min_overlap, '-g', fraction, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
+        subprocess.check_call(tn93_process,stdout=tn93_fh)
+        logging.debug(' '.join(tn93_process))
 
-    subprocess.check_call(tn93_process,stdout=tn93_fh)
-    logging.debug(' '.join(tn93_process))
-
-    tn93_fh.close()
 
     id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
     if type(id_dict) is ValueError:
@@ -458,12 +432,17 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
         raise id_dict
 
     # PHASE 5
-    update_status(id, "HIV Network Analysis", POOL)
+    update_status(id, "Inferring, filtering, and analyzing molecular transmission network", POOL)
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
 
-    hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
-                               threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
-                               'report']
+    if filter_edges and filter_edges != 'no':
+        hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
+                                   threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
+                                   filter_edges, '-s', OUTPUT_FASTA_FN]
+    else:
+        hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
+                                   threshold, '-f', SEQUENCE_ID_FORMAT, '-j']
+        
 
     subprocess.check_call(hivnetworkcsv_process, stdout=output_cluster_json_fh)
     logging.debug(' '.join(hivnetworkcsv_process))
@@ -480,7 +459,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
       # PHASE 6
 
-      update_status(id, "Public Database TN93 Analysis", POOL)
+      update_status(id, "Computing pairwise TN93 distances against a public database", POOL)
 
       if ambiguities != 'resolve':
           lanl_tn93_process = [TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
@@ -511,11 +490,25 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
       # PHASE 7
-      update_status(id, "Public Database HIV Network Analysis", POOL)
+      update_status(id, "Inferring connections to sequences in a public database", POOL)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
-      lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
-                                    threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
-                                    'report', '-k', USER_FILTER_LIST]
+      
+      
+      if filter_edges and filter_edges != 'no':
+         with open (OUTPUT_COMBINED_SEQUENCE_FILE, 'w') as combined_fasta:
+            for f_path in (LANL_FASTA, OUTPUT_FASTA_FN):
+                with open (f_path) as src_file: 
+                    shutil.copyfileobj (src_file,combined_fasta)
+                    print ("\n", file = combined_fasta)
+            
+         lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
+                                        threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-k', USER_FILTER_LIST,
+                                        '-n', filter_edges, '-s', OUTPUT_COMBINED_SEQUENCE_FILE
+                                        ]
+      
+      else:
+          lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
+                                        threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-k', USER_FILTER_LIST]
 
       subprocess.check_call(lanl_hivnetworkcsv_process, stdout=lanl_output_cluster_json_fh)
       logging.debug(' '.join(lanl_hivnetworkcsv_process))
@@ -546,6 +539,7 @@ def main():
     parser.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     parser.add_argument('-m', '--minoverlap', help='Minimum Overlap')
     parser.add_argument('-g', '--fraction', help='Fraction')
+    parser.add_argument('-f', '--filter', help='Edge filtering option', default = "no", type = str)
     parser.add_argument('-s', '--strip_drams', help="Read in an aligned Fasta file (HIV prot/rt sequences) and remove \
                                                      DRAM (drug resistance associated mutation) codon sites. It will output a new alignment \
                                                      with these sites removed. It requires input/output file names along with the list of \
@@ -581,7 +575,7 @@ def main():
     if STRIP_DRAMS != 'wheeler' and STRIP_DRAMS != 'lewis':
         STRIP_DRAMS = False
 
-    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION, POOL, strip_drams=STRIP_DRAMS)
+    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION, POOL, strip_drams=STRIP_DRAMS, filter_edges = args.filter)
 
 if __name__ == "__main__":
     main()
