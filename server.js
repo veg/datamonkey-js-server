@@ -31,63 +31,147 @@ var config = require('./config.json'),
     io = require('socket.io').listen(config.port),
     fs = require('fs'),
     path = require('path'),
+    _ = require('underscore'),
+    winston = require('winston'),
     hivtrace = require('./app/hivtrace/hivtrace.js'),
     prime = require('./app/prime/prime.js'),
     busted = require('./app/busted/busted.js'),
     relax = require('./app/relax/relax.js'),
     absrel = require('./app/absrel/absrel.js'),
+    job = require('./app/job.js'),
     ss = require('socket.io-stream'),
+    router = require(__dirname + '/lib/router.js');
     JobQueue = require(__dirname + '/lib/jobqueue.js').JobQueue;
+
+winston.level = config.loglevel;
+
+// Global variable to hold array of all jobs
+var alljobs = [];
 
 // For every new connection...
 io.sockets.on('connection', function (socket) {
 
-  // Acknowledge new connection
-  socket.emit('connected', { hello: 'Ready to serve' });
+  var r =  new router.io (socket);
 
+  //Routes 
   socket.on('job queue', function (jobs) {
     JobQueue(function(jobs) {
       socket.emit('job queue', jobs);
     });
   });
 
-  // A job has been spawned by datamonkey, let's go to work
-  ss(socket).on('spawn', function (stream, params) {
-
-    if(params.job.type) {
-
-      switch(params.job.type) {
-
-        case 'hivtrace':
-          new hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
-          break;
-        case 'prime':
-          new prime.PrimeAnalysis(socket, stream, params);
-          break;
-        case 'busted':
-          new busted.BustedAnalysis(socket, stream, params.job);
-          break;
-        case 'relax':
-          new relax.RelaxAnalysis(socket, stream, params.job);
-          break;
-        case 'absrel':
-          new absrel.aBSRELAnalysis(socket, stream, params.job);
-          break;
-        default:
-          socket.emit('error', 'type not recognized');
-          socket.disconnect();
-      }
-
-    } else {
-      socket.emit('error', 'analysis type not supplied');
-      socket.disconnect();
+  // HIV Trace
+  r.route('hivtrace', {
+    spawn : function (stream, params) {
+      winston.log('info', params.job._id + ' : hivtrace : spawning');
+      var hivtrace_job = new hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
+      alljobs.push(hivtrace_job);
+    },
+    resubscribe : function(params) {
+      winston.log('info', params.id + ' : hivtrace : resubscribing');
+      new job.resubscribe(socket, params.id);
+    },
+    check : function(params) {
+      winston.log('info', params.id + ' : hivtrace : checking');
+      new job.check(socket, params.id);
     }
+  });
 
+  // PRIME
+  r.route('prime', {
+    spawn : function (stream, params) {
+      winston.log('info', params.job._id + ' : prime : spawning');
+      var prime_job = new prime.PrimeAnalysis(socket, stream, params);
+      alljobs.push(hivtrace_job);
+    },
+    resubscribe : function(params) {
+      winston.log('info', params.id + ' : prime : resubscribing');
+      new job.resubscribe(socket, id);
+    },
+    check : function(params) {
+      winston.log('info', params.id + ' : prime : check');
+      new job.check(socket, params.id);
+    }
   });
-  
-  // Log which user disconnected
-  socket.on('disconnect', function () {
-    io.sockets.emit('user disconnected');
+
+  // BUSTED
+  r.route('busted', {
+    spawn : function (stream, params) {
+      winston.log('info', params.job._id + ' : busted : spawning');
+      var busted_job = new busted.spawn(socket, stream, params.job);
+      alljobs.push(busted_job);
+    },
+    resubscribe : function(params) {
+      winston.log('info', params.id + ' : busted : resubscribing');
+      new job.resubscribe(socket, params.id); },
+    check : function(params) {
+      winston.log('info', params.id + ' : busted : checking');
+      new job.check(socket, params.id);
+    }
   });
+
+  // RELAX
+  r.route('relax', {
+    spawn : function (stream, params) {
+      winston.log('info', params.job._id + ' : relax : spawning');
+      var relax_job = new relax.RelaxAnalysis(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      winston.log('info', params.id + ' : relax : resubscribing');
+      new job.resubscribe(socket, params.id);
+    },
+    check : function(params) {
+      winston.log('info', params.id + ' : relax : checking');
+      new job.check(socket, params.id);
+    }
+  });
+
+  // aBSREL
+  r.route('absrel', {
+    spawn : function (stream, params) {
+      winston.log('info', params.job._id + ' : absrel : spawning');
+      new absrel.aBSRELAnalysis(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      winston.log('info', JSON.stringify(params) + ' : absrel : resubscribing');
+      new job.resubscribe(socket, params.id);
+    },
+    check : function(params) {
+      winston.log('info', params.id + ' : absrel : checking');
+      new job.check(socket, params.id);
+    }
+  });
+
+  // Acknowledge new connection
+  socket.emit('connected', { hello: 'Ready to serve' });
 
 });
+
+//so the program will not close instantly
+process.stdin.resume();
+
+function exitHandler(options, err) {
+
+  // We need a collection of all jobs that are active
+
+  if (options.cleanup) console.log('clean');
+  if (err) console.log(err.stack);
+  if (options.exit) process.exit();
+
+
+  //job.clearActiveJobs(function(c) {
+  //});
+
+}
+
+//do something when app is closing
+process.on('exit', exitHandler.bind(null,{cleanup:true}));
+
+//catches ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, {exit:true}));
+
+process.on('SIGTERM', exitHandler.bind(null, {exit:true}));
+
+//catches uncaught exceptions
+process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
+

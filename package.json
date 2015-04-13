@@ -5,10 +5,10 @@
     "private"     : true,
     "dependencies": {
         "hyphy"            : "git+https://github.com/stevenweaver/hyphy.git",
-        "redis"            : "*",
-        "socket.io"        : "*",
-        "socket.io-stream" : "*",
-        "tail"             : "*",
-        "should"           : "*"
+        "redis"            : "0.12.*",
+        "socket.io"        : "1.2.*",
+        "socket.io-stream" : "0.6.*",
+        "tail"             : "0.4.*",
+        "should"           : "4.3.*"
     }
 }
