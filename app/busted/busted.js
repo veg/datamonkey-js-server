@@ -27,28 +27,29 @@
 
 */
 
-var spawn_job = require('./spawn_busted.js'),
-    config = require('../../config.json'),
-    cs = require('../../lib/clientsocket.js'),
-    job = require('./job.js'),
-    redis = require('redis'),
+var config  = require('../../config.json'),
+    cs      = require('../../lib/clientsocket.js'),
+    job     = require('../job.js'),
+    redis   = require('redis'),
     winston = require('winston'),
-    _ = require('underscore'),
-    fs = require('fs'),
-    ss = require('socket.io-stream');
+    _       = require('underscore'),
+    fs      = require('fs'),
+    path    = require('path'),
+    ss      = require('socket.io-stream');
 
 winston.level = config.loglevel;
 
 // Use redis as our key-value store
-var client = redis.createClient()
+var client = redis.createClient();
 
 var busted = function (socket, stream, busted_params) {
 
   var self = this;
   self.socket = socket;
   self.stream = stream;
-  self.params = params;
-  self.filepath = fn;
+  self.params = busted_params;
+  self.fn = __dirname + '/output/' + self.params.analysis._id;
+  self.filepath = self.fn;
   self.output_dir  = path.dirname(self.filepath);
   self.qsub_script_name = 'busted_submit.sh';
   self.qsub_script = __dirname + '/' + self.qsub_script_name;
@@ -88,13 +89,14 @@ var busted = function (socket, stream, busted_params) {
   // Ensure the progress file exists
   fs.openSync(self.progress_fn, 'w');
 
+  self.spawn();
+
 };
 
 // Pass socket to busted job
-busted.prototype.spawn = function (socket, stream, params) {
+busted.prototype.spawn = function () {
 
   var self = this;
-  self.id = params.analysis._id;
 
   var push_active_job = function (id) {
         client.rpush('active_jobs', self.id)
@@ -102,65 +104,35 @@ busted.prototype.spawn = function (socket, stream, params) {
      push_job_once = _.once(push_active_job);
 
 
-  winston.log('info', 'Starting BUSTED Job ID ' + self.id);
+  winston.log('info', self.id + ' : busted : spawning');
 
   // Setup Analysis
   var busted_analysis = new job.jobRunner(self.qsub_params);
-  var clientSocket = new cs.ClientSocket(socket, self.id);  
+  var clientSocket = new cs.ClientSocket(self.socket, self.id);  
 
   // On status updates, report to datamonkey-js
   busted_analysis.on('status', function(status) {
+    winston.info(self.id + ' ' + status);
     client.hset(self.id, 'status', status, redis.print);
   });
 
   // On status updates, report to datamonkey-js
   busted_analysis.on('status update', function(status_update) {
-    
-    var redis_packet = status_update;
-    redis_packet.type = 'status update';
-    str_redis_packet =  JSON.stringify(status_update);
-    winston.log('info', self.id + ' : ' + str_redis_packet);
-    client.hset(self.id, 'status update', str_redis_packet, redis.print);
-    client.publish(self.id, str_redis_packet);
-
+    self.onStatusUpdate();
   });
 
   // On errors, report to datamonkey-js
   busted_analysis.on('script error', function(error) {
-
-    var redis_packet = error;
-    redis_packet.type = 'script error';
-    str_redis_packet = JSON.stringify(error);
-    winston.log('info', self.id + ' : ' + str_redis_packet);
-    client.hset(self.id, 'error', str_redis_packet, redis.print);
-    client.publish(self.id, str_redis_packet);
-    client.lrem('active_jobs', 1, self.id)
-
-    //if (options.cleanup) console.log('clean');
-    //if (err) console.log(err.stack);
-    //if (options.exit) process.exit();
-
-
-
+    self.onError();
   });
 
   // When the analysis completes, return the results to datamonkey.
   busted_analysis.on('completed', function(results) {
-
-    var redis_packet = results;
-    redis_packet.type = 'completed';
-    var str_redis_packet = JSON.stringify(redis_packet);
-    winston.log('info', self.id + ' : job completed');
-    client.hset(self.id, 'results', str_redis_packet, redis.print);
-    client.hset(self.id, 'status', 'completed', redis.print);
-    client.publish(self.id, str_redis_packet);
-    client.lrem('active_jobs', 1, self.id)
-
+    self.onComplete();
   });
 
   // Report the torque job id back to datamonkey
   busted_analysis.on('job created', function(torque_id) {
-
     var redis_packet = torque_id;
     redis_packet.type = 'job created';
     str_redis_packet = JSON.stringify(torque_id);
@@ -168,48 +140,84 @@ busted.prototype.spawn = function (socket, stream, params) {
     client.hset(self.id, 'torque_id', str_redis_packet, redis.print);
     client.publish(self.id, str_redis_packet);
     push_job_once(self.id);
-
   });
 
-  // Send progress file
-  busted_analysis.on('progress file', function(params) {
-
-    var stream = ss.createStream();
-    ss(socket).emit('progress file', stream, {id : params.id });
-    fs.createReadStream(params.fn).pipe(stream);
-    socket.once('file saved', function () {
-      params.cb();
-    });
-
-  });
-
-  var fn = __dirname + '/output/' + params.analysis._id;
-  stream.pipe(fs.createWriteStream(fn));
-  stream.on('end', function(err) {
+  self.stream.pipe(fs.createWriteStream(self.fn));
+  self.stream.on('end', function(err) {
     if (err) throw err;
     // Pass filename in as opposed to generating it in spawn_busted
-    busted_analysis.start(fn, params);
+    busted_analysis.submit(self.qsub_params, self.output_dir);
   });
 
-  socket.on('disconnect', function () {
+  self.socket.on('disconnect', function () {
     winston.info('user disconnected');
   });
 
 };
 
-//// On Completed
-//      clearInterval(self.metronome_id);
-//      fs.readFile(self.results_fn, 'utf8', function (err, data) {
-//        if(err) {
-//          self.emit('script error', {'error' : 'unable to read results file'});
-//        } else{
-//          if(data) {
-//            self.emit('completed', {'results' : data});
-//          } else {
-//            self.emit('script error', {'error': 'job seems to have completed, but no results found'});
-//          }
-//        }
-//      });
+busted.prototype.onComplete = function () {
 
+ var self = this;
 
-exports.spawn = spawn;
+  fs.readFile(self.results_fn, 'utf8', function (err, data) {
+    if(err) {
+      self.onError('unable to read results file');
+    } else{
+      if(data) {
+        var redis_packet = { 'results' : data };
+        redis_packet.type = 'completed';
+        var str_redis_packet = JSON.stringify(redis_packet);
+        winston.log('info', self.id + ' : job completed');
+        client.hset(self.id, 'results', str_redis_packet, redis.print);
+        client.hset(self.id, 'status', 'completed', redis.print);
+        client.publish(self.id, str_redis_packet);
+        client.lrem('active_jobs', 1, self.id)
+      } else {
+        self.onError('job seems to have completed, but no results found');
+      }
+    }
+  });
+
+}
+
+busted.prototype.onStatusUpdate = function() {
+
+ var self = this;
+
+ fs.readFile(self.progress_fn, 'utf8', function (err, data) {
+   if(err) {
+     winston.warn('error reading progress file ' + self.progress_fn + '. error: ' + err);
+   } else if (data) {
+     self.current_status = data;
+     var status_update = {'phase' : 'running', 'index': 1, 'msg': data, 'torque_id' : self.torque_id};
+     var redis_packet = status_update;
+     redis_packet.type = 'status update';
+     str_redis_packet =  JSON.stringify(status_update);
+     winston.info(self.id + ' : ' + str_redis_packet);
+     client.hset(self.id, 'status update', str_redis_packet, redis.print);
+     client.publish(self.id, str_redis_packet);
+   } else {
+    winston.warn('read progress file, but no data');
+   }
+ });
+
+}
+
+busted.prototype.onError = function(error) {
+
+  var self = this;
+
+  var redis_packet = {'error' : error };
+  redis_packet.type = 'script error';
+  str_redis_packet = JSON.stringify(error);
+  winston.warn(self.id + ' : ' + str_redis_packet);
+  client.hset(self.id, 'error', str_redis_packet, redis.print);
+  client.publish(self.id, str_redis_packet);
+  client.lrem('active_jobs', 1, self.id)
+}
+
+busted.prototype.clearJob = function() {
+  var self = this;
+}
+
+exports.busted = busted;

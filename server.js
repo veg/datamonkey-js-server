@@ -81,7 +81,7 @@ io.sockets.on('connection', function (socket) {
   r.route('prime', {
     spawn : function (stream, params) {
       winston.log('info', params.job._id + ' : prime : spawning');
-      var prime_job = new prime.PrimeAnalysis(socket, stream, params);
+      var prime_job = new prime.prime(socket, stream, params);
       alljobs.push(hivtrace_job);
     },
     resubscribe : function(params) {
@@ -97,8 +97,7 @@ io.sockets.on('connection', function (socket) {
   // BUSTED
   r.route('busted', {
     spawn : function (stream, params) {
-      winston.log('info', params.job._id + ' : busted : spawning');
-      var busted_job = new busted.spawn(socket, stream, params.job);
+      var busted_job = new busted.busted(socket, stream, params.job);
       alljobs.push(busted_job);
     },
     resubscribe : function(params) {
@@ -114,7 +113,7 @@ io.sockets.on('connection', function (socket) {
   r.route('relax', {
     spawn : function (stream, params) {
       winston.log('info', params.job._id + ' : relax : spawning');
-      var relax_job = new relax.RelaxAnalysis(socket, stream, params.job);
+      var relax_job = new relax.relax(socket, stream, params.job);
     },
     resubscribe : function(params) {
       winston.log('info', params.id + ' : relax : resubscribing');
@@ -130,7 +129,7 @@ io.sockets.on('connection', function (socket) {
   r.route('absrel', {
     spawn : function (stream, params) {
       winston.log('info', params.job._id + ' : absrel : spawning');
-      new absrel.aBSRELAnalysis(socket, stream, params.job);
+      new absrel.absrel(socket, stream, params.job);
     },
     resubscribe : function(params) {
       winston.log('info', JSON.stringify(params) + ' : absrel : resubscribing');
@@ -153,7 +152,6 @@ process.stdin.resume();
 function exitHandler(options, err) {
 
   // We need a collection of all jobs that are active
-
   if (options.cleanup) console.log('clean');
   if (err) console.log(err.stack);
   if (options.exit) process.exit();

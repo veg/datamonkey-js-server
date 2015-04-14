@@ -27,15 +27,16 @@
 
 */
 
-var config = require('../../config.json'),
-    fs = require('fs'),
-    ss = require('socket.io-stream'),
-    spawn = require('child_process').spawn,
-    fs = require('fs'),
-    path = require('path'),
-    util = require('util'),
-    Tail = require('tail').Tail,
-    EventEmitter = require('events').EventEmitter,
+var config       = require('../../config.json'),
+    cs           = require('../../lib/clientsocket.js'),
+    job          = require('../job.js'),
+    _            = require('underscore'),
+    winston      = require('winston'),
+    fs           = require('fs'),
+    ss           = require('socket.io-stream'),
+    fs           = require('fs'),
+    path         = require('path'),
+    util         = require('util');
 
 //util.inherits(Relax, Job);
 
@@ -45,6 +46,7 @@ var relax = function (socket, stream, relax_params) {
   self.socket = socket;
   self.stream = stream;
   self.params = params;
+  self.relax = config.relax;
   self.filepath = fn;
   self.output_dir  = path.dirname(self.filepath);
   self.qsub_script_name = 'relax.sh';
@@ -55,10 +57,9 @@ var relax = function (socket, stream, relax_params) {
   self.progress_fn = self.filepath + '.RELAX.progress';
   self.results_fn = self.filepath + '.RELAX.json';
   self.tree_fn = self.filepath + '.tre';
-  self.relax = config.relax;
   self.status_stack = relax_params.status_stack;
   self.analysis_type = relax_params.analysis.analysis_type;
-  self.genetic_code = "1";
+  self.genetic_code = relax_params.msa[0].gencodeid;
   self.torque_id = "unk";
   self.std_err = "unk";
 
@@ -89,7 +90,7 @@ var relax = function (socket, stream, relax_params) {
 };
 
 // Pass socket to relax job
-var relax.prototype.spawn = function () {
+relax.prototype.spawn = function () {
 
   // Setup Analysis
   var self = this;
@@ -126,6 +127,53 @@ var relax.prototype.spawn = function () {
     // Pass filename in as opposed to generating it in spawn_relax
     self.jobrunner.start(fn, params);
   });
+
+}
+
+
+relax.prototype.onStatusUpdate = function() {
+
+  fs.readFile(self.progress_fn, 'utf8', function (err, data) {
+   if(err) {
+     winston.warn('error reading progress file ' + self.progress_fn + '. error: ' + err);
+     return;
+   }
+   if(data) {
+     self.emit('status update', {'phase' : status, 'index': 1, 'msg': data, 'torque_id' : self.torque_id});
+     self.current_status = data;
+   } else {
+    winston.warn('read progress file, but no data');
+   }
+ });
+
+}
+
+relax.prototype.onCompleted = function () {
+
+  fs.readFile(self.results_fn, 'utf8', function (err, data) {
+    if(err) {
+      //self.emit('script error', {'error' : 'unable to read results file'});
+    } else{
+      if(data) {
+        //self.emit('completed', {'results' : data});
+      } else {
+        //self.emit('script error', {'error': 'job seems to have completed, but no results found'});
+      }
+    }
+  });
+
+}
+
+
+relax.prototype.onError = function() {
+
+  var redis_packet = {'error' : error };
+  redis_packet.type = 'script error';
+  str_redis_packet = JSON.stringify(error);
+  winston.warn(self.id + ' : ' + str_redis_packet);
+  client.hset(self.id, 'error', str_redis_packet, redis.print);
+  client.publish(self.id, str_redis_packet);
+  client.lrem('active_jobs', 1, self.id)
 
 }
 

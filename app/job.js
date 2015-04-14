@@ -28,13 +28,16 @@
 */
 
 var config = require('../config.json'),
+    spawn = require('child_process').spawn,
     fs = require('fs'),
     redis = require('redis'),
     cs = require('../lib/clientsocket.js'),
     winston = require('winston'),
     jobdel = require('../lib/jobdel.js'),
     ss = require('socket.io-stream'),
-    JobStatus = require(__dirname + '/../../lib/jobstatus.js').JobStatus;
+    util = require('util'),
+    JobStatus = require(__dirname + '/../lib/jobstatus.js').JobStatus,
+    EventEmitter = require('events').EventEmitter;
 
 winston.level = config.loglevel;
 
@@ -134,6 +137,7 @@ var clearActiveJobs = function(cb) {
 
 var jobRunner = function(script, params) {
   var self = this;
+  self.torque_id = '';
 
   self.states = {
           completed : 'completed',
@@ -156,7 +160,9 @@ util.inherits(jobRunner, EventEmitter);
 
 jobRunner.prototype.submit = function (params, cwd) {
 
-  var qsub =  spawn('qsub', params, { cwd : cwd });
+  var self = this;
+
+  var qsub = spawn('qsub', params, { cwd : cwd });
 
   qsub.stderr.on('data', function (data) {
     winston.info(data);
@@ -164,6 +170,7 @@ jobRunner.prototype.submit = function (params, cwd) {
 
   qsub.stdout.on('data', function (data) {
     torque_id = String(data).replace(/\n$/, '');
+    self.torque_id = torque_id;
     self.emit('job created', { 'torque_id': torque_id });
   });
 
@@ -180,8 +187,10 @@ jobRunner.prototype.submit = function (params, cwd) {
 jobRunner.prototype.status_watcher = function () {
 
   var self = this;
+
   var job_status = new JobStatus(self.torque_id);
   self.current_status = "";
+
 
   self.metronome_id = job_status.watch(function(error, status) {
 
@@ -189,43 +198,11 @@ jobRunner.prototype.status_watcher = function () {
 
     if(status == self.states.completed || status == self.states.exiting) {
       clearInterval(self.metronome_id);
-      //TODO: Move to parent
-      fs.readFile(self.results_fn, 'utf8', function (err, data) {
-        if(err) {
-          // Check stderr
-          fs.readFile(self.std_err, 'utf8', function (err, stack_trace) {
-            if(err) {
-            self.emit('script error', {'error' : 'unable to read results file'});
-            } else {
-              self.emit('script error', {'error' : stack_trace});
-            }
-          });
-        } else{
-          if(data) {
-            self.emit(self.states.completed, {'results' : data});
-          } else {
-            self.emit('script error', {'error': 'job seems to have completed, but no results found'});
-          }
-        }
-	    });
+      self.emit(self.states.completed, '');
     } else if (status == self.states.queued) {
       self.emit('job created', { 'torque_id': self.torque_id });
     } else {
-      // TODO: Move to parent
-      fs.readFile(self.progress_fn, 'utf8', function (err, data) {
-       if(err) {
-         winston.warn('error reading progress file ' + self.progress_fn + '. error: ' + err);
-         return;
-       }
-       if(data) {
-         if(data != self.current_status) {
-           self.emit('status update', {'phase' : status, 'index': 1, 'msg': data, 'torque_id' : self.torque_id});
-           self.current_status = data;
-         }
-       } else {
-	        winston.info('read progress file, but no data');
-       }
-     });
+      self.emit('status update', '');
    }
  });
 }
