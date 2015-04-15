@@ -50,7 +50,7 @@ DoHivTraceAnalysis.prototype.status_watcher = function () {
   self = this;
   self.subscriber.on('message', function(channel, message) { 
     var redis_packet = JSON.parse(message);
-    //console.log (message, redis_packet);
+    //console.log (redis_packet);
     if(redis_packet.type != 'completed') {
       self.emit(redis_packet.type, redis_packet); 
     } else {
@@ -97,6 +97,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
   self.fraction = hiv_cluster_params.fraction;
   self.reference = hiv_cluster_params.reference;
   self.filter_edges = hiv_cluster_params.filter_edges;
+  self.reference_strip = hiv_cluster_params.reference_strip;
   self.min_overlap = hiv_cluster_params.min_overlap;
   self.status_stack = hiv_cluster_params.status_stack;
   self.lanl_compare = hiv_cluster_params.lanl_compare;
@@ -128,6 +129,7 @@ DoHivTraceAnalysis.prototype.start = function (hiv_cluster_params) {
                           ',mo='+self.min_overlap+ 
                           ',filter='+self.filter_edges+
                           ',comparelanl='+self.lanl_compare+
+                          ',reference_strip='+self.reference_strip+
                           ',strip_drams='+self.strip_drams+
                           ',custom_reference_fn='+self.custom_reference_fn,
                           '-o', self.output_dir,
