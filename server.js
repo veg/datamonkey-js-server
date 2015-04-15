@@ -55,10 +55,15 @@ io.sockets.on('connection', function (socket) {
       socket.emit('job queue', jobs);
     });
   });
+  
+  /*socket.on ("stream", function (p) {
+    console.log ("HMM");
+  });*/
 
   // A job has been spawned by datamonkey, let's go to work
   ss(socket).on('spawn', function (stream, params) {
 
+    
     if(params.job.type) {
 
       switch(params.job.type) {
