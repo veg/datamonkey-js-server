@@ -533,7 +533,7 @@ def main():
     parser.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     parser.add_argument('-m', '--minoverlap', help='Minimum Overlap')
     parser.add_argument('-g', '--fraction', help='Fraction')
-    parser.add_argument('-u', '--curate', help='Filter contminants')
+    parser.add_argument('-u', '--curate', help='Filter contaminants')
     parser.add_argument('-f', '--filter', help='Edge filtering option', default = "no", type = str)
     parser.add_argument('-s', '--strip_drams', help="Read in an aligned Fasta file (HIV prot/rt sequences) and remove \
                                                      DRAM (drug resistance associated mutation) codon sites. It will output a new alignment \
