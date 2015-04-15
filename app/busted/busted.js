@@ -30,6 +30,7 @@
 var config  = require('../../config.json'),
     cs      = require('../../lib/clientsocket.js'),
     job     = require('../job.js'),
+    jobdel  = require('../../lib/jobdel.js'),
     redis   = require('redis'),
     winston = require('winston'),
     _       = require('underscore'),
@@ -104,11 +105,11 @@ busted.prototype.spawn = function () {
      push_job_once = _.once(push_active_job);
 
 
-  winston.log('info', self.id + ' : busted : spawning');
+  winston.info(self.id + ' : busted : spawning');
 
   // Setup Analysis
-  var busted_analysis = new job.jobRunner(self.qsub_params);
-  var clientSocket = new cs.ClientSocket(self.socket, self.id);  
+  var clientSocket    = new cs.ClientSocket (self.socket, self.id);
+  var busted_analysis = new job.jobRunner (self.qsub_params);
 
   // On status updates, report to datamonkey-js
   busted_analysis.on('status', function(status) {
@@ -133,6 +134,12 @@ busted.prototype.spawn = function () {
 
   // Report the torque job id back to datamonkey
   busted_analysis.on('job created', function(torque_id) {
+    // set standard error path
+    //TODO: Make this a library method
+    self.torque_id = torque_id.torque_id;
+    self.std_err = self.output_dir + '/' + self.qsub_script_name + '.e' + self.torque_id.split('.')[0];
+    winston.info(self.std_err);
+
     var redis_packet = torque_id;
     redis_packet.type = 'job created';
     str_redis_packet = JSON.stringify(torque_id);
@@ -147,6 +154,11 @@ busted.prototype.spawn = function () {
     if (err) throw err;
     // Pass filename in as opposed to generating it in spawn_busted
     busted_analysis.submit(self.qsub_params, self.output_dir);
+  });
+
+  process.on('cancelJob', function(msg) {
+    winston.warn('cancel called!');
+    self.cancel();
   });
 
   self.socket.on('disconnect', function () {
@@ -204,20 +216,38 @@ busted.prototype.onStatusUpdate = function() {
 }
 
 busted.prototype.onError = function(error) {
-
   var self = this;
 
   var redis_packet = {'error' : error };
   redis_packet.type = 'script error';
-  str_redis_packet = JSON.stringify(error);
-  winston.warn(self.id + ' : ' + str_redis_packet);
-  client.hset(self.id, 'error', str_redis_packet, redis.print);
-  client.publish(self.id, str_redis_packet);
-  client.lrem('active_jobs', 1, self.id)
+
+  // Read error path contents
+  fs.readFile(self.std_err, 'utf8', function (err, data) {
+    //TODO: Add progress file
+    redis_packet.stderr = data;
+    str_redis_packet = JSON.stringify(redis_packet);
+    winston.warn(self.id + ' : ' + str_redis_packet);
+    client.hset(self.id, 'error', str_redis_packet, redis.print);
+    client.publish(self.id, str_redis_packet);
+    client.lrem('active_jobs', 1, self.id)
+    client.llen('active_jobs', function(err, n) {
+      process.emit('jobCancelled', n);
+    });
+  });
+
 }
 
-busted.prototype.clearJob = function() {
+// See if this can be made a static function
+
+busted.prototype.cancel = function() {
+
   var self = this;
+  jobdel.jobDelete(self.torque_id, function(err, code) {
+    self.onError('job cancelled');
+  });
+
 }
 
 exports.busted = busted;
+
+

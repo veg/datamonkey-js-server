@@ -84,56 +84,6 @@ var check = function (socket, params) {
 
 };
 
-var clearActiveJobs = function(cb) {
-
-  var killcount = 0;
-  var last_job = false;
-
-  winston.warn('clearing all pending jobs');
-
-  var killTopJobInQueue = function(cb) {
-    client.lpop('active_jobs', function(err, job_id) {
-      if(job_id == null) {
-        last_job = true;
-        cb(last_job);
-      } else {
-      winston.info('clearing job id : ' + job_id);
-      // Get torque_id for job_id
-      client.hgetall(job_id, function(err, job) {
-          if (err || job == null) {
-            winston.warn('attempted to clear job id ' + job_id + ' but could not find hash!');
-          } else {
-            // set status of job as incomplete
-            torque_id = JSON.parse(job.torque_id).torque_id;
-            client.hset(job_id, 'status', 'aborted', redis.print);
-            winston.warn('qdeleleting ' + torque_id);
-            jobdel.jobDelete(torque_id, function(err, data) { 
-              if(err) {
-                winston.warn('attempted to clear job id ' + torque_id + ' but could not!');
-                cb(last_job);
-              } else {
-                cb(last_job);
-              }
-            });
-          }
-        });
-      }
-    });
-  };
-
-  var killCounter = function(last_job) {
-    if(last_job) {
-      winston.warn('cleared ' + killcount + ' jobs!');
-      cb(killcount);
-    } else {
-      killTopJobInQueue(killCounter);
-      killcount++;
-    }
-  };
-
-  killTopJobInQueue(killCounter);
-
-}
 
 var jobRunner = function(script, params) {
   var self = this;
@@ -149,6 +99,7 @@ var jobRunner = function(script, params) {
           waiting   : 'waiting',
           suspended : 'suspended'
       };
+
 }
 
 util.inherits(jobRunner, EventEmitter);
@@ -210,4 +161,3 @@ jobRunner.prototype.status_watcher = function () {
 exports.resubscribe = resubscribe;
 exports.check = check;
 exports.jobRunner = jobRunner;
-exports.clearActiveJobs = clearActiveJobs;

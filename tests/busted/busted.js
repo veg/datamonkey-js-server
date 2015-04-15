@@ -27,15 +27,43 @@
 
 */
 
-var fs = require('fs');
+var fs        = require('fs'),
+    should    = require('should'),
+    winston   = require('winston'),
+    clientio  = require('socket.io-client');
+    io        = require('socket.io').listen(5000);
+    busted    = require(__dirname + '/../../app/busted/busted.js'),
+    job       = require(__dirname + '/../../app/job.js'),
+    ss        = require('socket.io-stream');
 
-var spawn_job = require(__dirname + '/../../app/busted/spawn_busted.js');
-var should  = require('should');
+
+//TODO: retrieve socket from config
+var socketURL = 'http://0.0.0.0:5000';
+
+var options ={
+  transports: ['websocket'],
+    'force new connection': true
+    };
+    
 
 describe('busted jobrunner', function() {
 
-  var fn = __dirname + '/res/5446bc0d355080301f18a8c6';
+  var id = '5446bc0d355080301f18a8c6';
+  var fn = __dirname + '/res/' + id;
   var params_file = __dirname + '/res/params.json';
+
+  io.sockets.on('connection', function (socket) {
+    ss(socket).on('busted:spawn',function(stream, params){
+      winston.info('spawning busted');
+      var busted_job = new busted.busted(socket, stream, params);
+    });
+
+    socket.on('busted:resubscribe',function(params){
+      winston.info('spawning busted');
+      new job.resubscribe(socket, params.id);
+    });
+
+  });
 
 
   it('should complete', function(done) {
@@ -43,38 +71,112 @@ describe('busted jobrunner', function() {
     this.timeout(120000);
 
     var params = JSON.parse(fs.readFileSync(params_file));
+    busted_socket = clientio.connect(socketURL, options);
 
-    // Setup Analysis
-    var busted_analysis = new spawn_job.DoBustedAnalysis();
-
-    // On status updates, report to datamonkey-js
-    busted_analysis.on('status update', function(status_update) {
+    busted_socket.on('connect', function(data){
+      winston.info('connected to server');
+      var stream = ss.createStream();
+      ss(busted_socket).emit('busted:spawn', stream, params);
+      fs.createReadStream(fn).pipe(stream);
     });
 
-    // On errors, report to datamonkey-js
-    busted_analysis.on('script error', function(error) {
-      throw new Error(error.error);
-      done(error);
+    busted_socket.on('job created', function(data){
+      winston.info('got job id');
     });
 
-    // When the analysis completes, return the results to datamonkey.
-    busted_analysis.on('completed', function(results) {
+
+    busted_socket.on('completed', function(data){
+      //TODO: Ensure output is correct
+      winston.info('job successfully completed');
       done();
     });
 
-    // Report the torque job id back to datamonkey
-    busted_analysis.on('job created', function(torque_id) {
+
+  });
+
+  it('should kill socket, resubscribe, then complete', function(done) {
+
+    this.timeout(120000);
+
+    var params = JSON.parse(fs.readFileSync(params_file));
+    var busted_socket = clientio.connect(socketURL, options);
+
+    busted_socket.on('connect', function(data){
+      winston.info('connected to server');
+      var stream = ss.createStream();
+      ss(busted_socket).emit('busted:spawn', stream, params);
+      fs.createReadStream(fn).pipe(stream);
     });
 
-    // Send file
-    busted_analysis.on('progress file', function(params) {
+    busted_socket.on('job created', function(data){
+      winston.info('got job id');
+      busted_socket.disconnect();
+
+      var reconnect_socket = clientio.connect(socketURL, options);
+      reconnect_socket.emit('busted:resubscribe', { id : id });
+      reconnect_socket.on('completed', function(data){
+        done();
+      });
+
     });
 
-    // Setup has been completed, run the job with the parameters from datamonkey
-    busted_analysis.start(fn, params);
+  });
+
+  it('should cause an error and send output from stderr', function(done) {
+
+    this.timeout(10000);
+
+    var err_id = '5446bc0d355080301f18a8c6_ERROR';
+    var err_fn = __dirname + '/res/' + err_id;
+    var params_file = __dirname + '/res/err_params.json';
+    var params = JSON.parse(fs.readFileSync(params_file));
+
+    busted_socket = clientio.connect(socketURL, options);
+
+    busted_socket.on('connect', function(data){
+      winston.info('connected to server');
+      var stream = ss.createStream();
+      ss(busted_socket).emit('busted:spawn', stream, params);
+      fs.createReadStream(fn).pipe(stream);
+    });
+
+    busted_socket.on('script error', function(data){
+      should.exist(data.stderr);
+      data.stderr.should.not.be.empty;
+      done();
+    });
+
+  });
+
+  it('should clear job', function(done) {
+
+    this.timeout(10000);
+
+    var params = JSON.parse(fs.readFileSync(params_file));
+    busted_socket = clientio.connect(socketURL, options);
+
+    busted_socket.on('connect', function(data){
+      var stream = ss.createStream();
+      ss(busted_socket).emit('busted:spawn', stream, params);
+      fs.createReadStream(fn).pipe(stream);
+    });
+
+    busted_socket.on('cancel job', function(msg) {
+      winston.warn('cancel called!');
+    });
+
+    busted_socket.on('job created', function(data) {
+      // delete job and emit script error
+      winston.info('submitting cancel on all jobs');
+      process.emit('cancelJob', '');
+    });
+
+    busted_socket.on('script error', function(data) {
+      winston.warn(data);
+      done();
+    });
+
 
   });
 
 });
-
-

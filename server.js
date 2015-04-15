@@ -40,18 +40,19 @@ var config = require('./config.json'),
     absrel = require('./app/absrel/absrel.js'),
     job = require('./app/job.js'),
     ss = require('socket.io-stream'),
-    router = require(__dirname + '/lib/router.js');
+    redis   = require('redis'),
+    router = require(__dirname + '/lib/router.js'),
     JobQueue = require(__dirname + '/lib/jobqueue.js').JobQueue;
 
 winston.level = config.loglevel;
 
-// Global variable to hold array of all jobs
-var alljobs = [];
+var client = redis.createClient();
+
+// clear active_jobs list
+client.del('active_jobs');
 
 // For every new connection...
 io.sockets.on('connection', function (socket) {
-
-  var r =  new router.io (socket);
 
   //Routes 
   socket.on('job queue', function (jobs) {
@@ -60,19 +61,17 @@ io.sockets.on('connection', function (socket) {
     });
   });
 
+  var r =  new router.io (socket);
+
   // HIV Trace
   r.route('hivtrace', {
     spawn : function (stream, params) {
-      winston.log('info', params.job._id + ' : hivtrace : spawning');
       var hivtrace_job = new hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
-      alljobs.push(hivtrace_job);
     },
     resubscribe : function(params) {
-      winston.log('info', params.id + ' : hivtrace : resubscribing');
       new job.resubscribe(socket, params.id);
     },
     check : function(params) {
-      winston.log('info', params.id + ' : hivtrace : checking');
       new job.check(socket, params.id);
     }
   });
@@ -80,16 +79,12 @@ io.sockets.on('connection', function (socket) {
   // PRIME
   r.route('prime', {
     spawn : function (stream, params) {
-      winston.log('info', params.job._id + ' : prime : spawning');
       var prime_job = new prime.prime(socket, stream, params);
-      alljobs.push(hivtrace_job);
     },
     resubscribe : function(params) {
-      winston.log('info', params.id + ' : prime : resubscribing');
       new job.resubscribe(socket, id);
     },
     check : function(params) {
-      winston.log('info', params.id + ' : prime : check');
       new job.check(socket, params.id);
     }
   });
@@ -98,13 +93,10 @@ io.sockets.on('connection', function (socket) {
   r.route('busted', {
     spawn : function (stream, params) {
       var busted_job = new busted.busted(socket, stream, params.job);
-      alljobs.push(busted_job);
     },
     resubscribe : function(params) {
-      winston.log('info', params.id + ' : busted : resubscribing');
       new job.resubscribe(socket, params.id); },
     check : function(params) {
-      winston.log('info', params.id + ' : busted : checking');
       new job.check(socket, params.id);
     }
   });
@@ -112,15 +104,12 @@ io.sockets.on('connection', function (socket) {
   // RELAX
   r.route('relax', {
     spawn : function (stream, params) {
-      winston.log('info', params.job._id + ' : relax : spawning');
       var relax_job = new relax.relax(socket, stream, params.job);
     },
     resubscribe : function(params) {
-      winston.log('info', params.id + ' : relax : resubscribing');
       new job.resubscribe(socket, params.id);
     },
     check : function(params) {
-      winston.log('info', params.id + ' : relax : checking');
       new job.check(socket, params.id);
     }
   });
@@ -128,15 +117,12 @@ io.sockets.on('connection', function (socket) {
   // aBSREL
   r.route('absrel', {
     spawn : function (stream, params) {
-      winston.log('info', params.job._id + ' : absrel : spawning');
       new absrel.absrel(socket, stream, params.job);
     },
     resubscribe : function(params) {
-      winston.log('info', JSON.stringify(params) + ' : absrel : resubscribing');
       new job.resubscribe(socket, params.id);
     },
     check : function(params) {
-      winston.log('info', params.id + ' : absrel : checking');
       new job.check(socket, params.id);
     }
   });
@@ -149,16 +135,39 @@ io.sockets.on('connection', function (socket) {
 //so the program will not close instantly
 process.stdin.resume();
 
+function jobCleanup(cb) {
+  var total_job_count = 0;
+  client.llen('active_jobs', function(err, n) {
+    winston.info(n + ' active jobs left!');
+    if(n == 0) {
+      cb();
+    } else {
+      total_job_count = n;
+      process.emit('cancelJob', '');
+      process.on('jobCancelled', function(msg) {
+        total_job_count--;
+        if(total_job_count <= 0) {
+          cb();
+        }
+      });
+    }
+  });
+}
+
+
 function exitHandler(options, err) {
 
-  // We need a collection of all jobs that are active
-  if (options.cleanup) console.log('clean');
-  if (err) console.log(err.stack);
-  if (options.exit) process.exit();
+  var exit = function() {
+    if (options.cleanup) console.log('clean');
+    if (err) console.log(err.stack);
+    if (options.exit) process.exit();
+  }
 
+  jobCleanup(exit);
 
-  //job.clearActiveJobs(function(c) {
-  //});
+  // If jobCleanup does not complete within five seconds, 
+  // skip attempt and exit.
+  setTimeout(exit, 5000);
 
 }
 
@@ -167,9 +176,9 @@ process.on('exit', exitHandler.bind(null,{cleanup:true}));
 
 //catches ctrl+c event
 process.on('SIGINT', exitHandler.bind(null, {exit:true}));
-
 process.on('SIGTERM', exitHandler.bind(null, {exit:true}));
 
 //catches uncaught exceptions
 process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
+
 
