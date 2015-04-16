@@ -4,6 +4,8 @@ hpout
 *.log
 *.out
 *.log.*
+#Ignore spool
+spool/
 tags
 
 #Ignore spool
