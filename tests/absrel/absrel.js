@@ -32,7 +32,7 @@ var fs        = require('fs'),
     winston   = require('winston'),
     clientio  = require('socket.io-client');
     io        = require('socket.io').listen(5000);
-    relax    = require(__dirname + '/../../app/relax/relax.js'),
+    absrel    = require(__dirname + '/../../app/absrel/absrel.js'),
     job       = require(__dirname + '/../../app/job.js'),
     ss        = require('socket.io-stream');
 
@@ -45,48 +45,48 @@ var options ={
     };
 
 
-describe('relax jobrunner', function() {
 
+describe('absrel jobrunner', function() {
   var fn = __dirname + '/res/Flu.fasta';
   var params_file = __dirname + '/res/params.json';
 
   io.sockets.on('connection', function (socket) {
-    ss(socket).on('relax:spawn',function(stream, params){
-      winston.info('spawning relax');
-      var relax_job = new relax.relax(socket, stream, params);
+    ss(socket).on('absrel:spawn',function(stream, params){
+      winston.info('spawning absrel');
+      var absrel_job = new absrel.absrel(socket, stream, params);
     });
 
-    socket.on('relax:resubscribe',function(params){
-      winston.info('spawning relax');
+    socket.on('absrel:resubscribe',function(params){
+      winston.info('resubscribing absrel');
       new job.resubscribe(socket, params.id);
     });
 
   });
 
-  it('should run and cancel itself', function(done) {
+  it('should complete', function(done) {
 
-    this.timeout(5000);
+    this.timeout(120000);
 
     var params = JSON.parse(fs.readFileSync(params_file));
-    var relax_socket = clientio.connect(socketURL, options);
+    var absrel_socket = clientio.connect(socketURL, options);
 
-    relax_socket.on('connect', function(data){
+    absrel_socket.on('connect', function(data){
       winston.info('connected to server');
       var stream = ss.createStream();
-      ss(relax_socket).emit('relax:spawn', stream, params);
+      ss(absrel_socket).emit('absrel:spawn', stream, params);
       fs.createReadStream(fn).pipe(stream);
     });
 
-    relax_socket.on('job created', function(data){
+    absrel_socket.on('job created', function(data){
       winston.info('got job id');
     });
 
-    relax_socket.on('status update', function(data){
+    absrel_socket.on('status update', function(data){
       winston.info('job successfully completed');
       process.emit('cancelJob', '');
     });
 
-    relax_socket.on('script error', function(data) {
+    absrel_socket.on('script error', function(data) {
       winston.warn(data);
       done();
     });
@@ -94,5 +94,3 @@ describe('relax jobrunner', function() {
   });
 
 });
-
-

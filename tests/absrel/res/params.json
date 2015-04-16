@@ -1,0 +1,203 @@
+{
+  "type": "busted",
+  "msa" : [
+    {
+      "_id" : "552e8c1d5291492d243af5f9",
+      "datatype" : 0,
+      "gencodeid" : 0,
+      "partitions" : 1,
+      "sites" : 160,
+      "sequences" : 14,
+      "goodtree" : 1,
+      "nj" : "((((HUMAN:0.004056558335896098,GORILLA:0.006442220987705009):0.0003337811633152958,CHIMPANZEE:0.003880394466265948):0.03096413434938326,(FLM:0.006315969752260515,COLOBUS:0.04151633377171162):0.01606451953561057):0.01021651752115841,((((BABOON:0.01085200061478924,DRILL:0.01688145048309394):0.001680028795466261,(BLUEM:0.03166602874195575,PATAS:0.03199348624500717):0.02217251999728381):0.01135726506377703,MANGABEY:0.01375856601518835):0.01217271196331981,(WOLFSG:0.002075681644109351,ASM:0.01054037651822002):0.005152092099008082):0.003630071074274625,(CEMACAQUE:0.00685954202278519,RHESUS:0.003643072680460352):0.004673672549636008)",
+      "usertree" : "(((HUMAN,CHIMPANZEE),GORILLA),((((RHESUS,CEMACAQUE),(DRILL,(BABOON,MANGABEY))),(ASM,(PATAS,(WOLFSG,BLUEM)))),(COLOBUS,FLM)))",
+      "rawsites" : 480,
+      "created" : "2015-04-15T16:04:45.948Z",
+      "sequence_info" : [
+        {
+          "_id" : "552e8c1e5291492d243af5fa",
+          "name" : "HUMAN",
+          "seqindex" : 0
+        },
+        {
+          "_id" : "552e8c1e5291492d243af5fb",
+          "name" : "CHIMPANZEE",
+          "seqindex" : 1
+        },
+        {
+          "_id" : "552e8c1e5291492d243af5fc",
+          "name" : "GORILLA",
+          "seqindex" : 2
+        },
+        {
+          "_id" : "552e8c1e5291492d243af5fd",
+          "name" : "BABOON",
+          "seqindex" : 3
+        },
+        {
+          "_id" : "552e8c1e5291492d243af5fe",
+          "name" : "MANGABEY",
+          "seqindex" : 4
+        },
+        {
+          "_id" : "552e8c1e5291492d243af5ff",
+          "name" : "BLUEM",
+          "seqindex" : 5
+        },
+        {
+          "_id" : "552e8c1e5291492d243af600",
+          "name" : "WOLFSG",
+          "seqindex" : 6
+        },
+        {
+          "_id" : "552e8c1e5291492d243af601",
+          "name" : "ASM",
+          "seqindex" : 7
+        },
+        {
+          "_id" : "552e8c1e5291492d243af602",
+          "name" : "FLM",
+          "seqindex" : 8
+        },
+        {
+          "_id" : "552e8c1e5291492d243af603",
+          "name" : "COLOBUS",
+          "seqindex" : 9
+        },
+        {
+          "_id" : "552e8c1e5291492d243af604",
+          "name" : "PATAS",
+          "seqindex" : 10
+        },
+        {
+          "_id" : "552e8c1e5291492d243af605",
+          "name" : "CEMACAQUE",
+          "seqindex" : 11
+        },
+        {
+          "_id" : "552e8c1e5291492d243af606",
+          "name" : "RHESUS",
+          "seqindex" : 12
+        },
+        {
+          "_id" : "552e8c1e5291492d243af607",
+          "name" : "DRILL",
+          "seqindex" : 13
+        }
+      ],
+      "partition_info" : [
+        {
+          "_id" : "552e8c1e5291492d243af608",
+          "usertree" : "(((HUMAN,CHIMPANZEE),GORILLA),((((RHESUS,CEMACAQUE),(DRILL,(BABOON,MANGABEY))),(ASM,(PATAS,(WOLFSG,BLUEM)))),(COLOBUS,FLM)))",
+          "span" : 480,
+          "endcodon" : 479,
+          "startcodon" : 0,
+          "partition" : 1
+        }
+      ]
+    }
+  ],
+  "analysis" : {
+    "_id" : "552e8c1e5291492d243af609",
+    "__t" : "aBSREL",
+    "status" : "queue",
+    "created" : "2015-04-15T16:04:46.707Z",
+    "msa" : [
+      {
+        "_id" : "552e8c1d5291492d243af5f9",
+        "datatype" : 0,
+        "gencodeid" : 0,
+        "partitions" : 1,
+        "sites" : 160,
+        "sequences" : 14,
+        "goodtree" : 1,
+        "nj" : "((((HUMAN:0.004056558335896098,GORILLA:0.006442220987705009):0.0003337811633152958,CHIMPANZEE:0.003880394466265948):0.03096413434938326,(FLM:0.006315969752260515,COLOBUS:0.04151633377171162):0.01606451953561057):0.01021651752115841,((((BABOON:0.01085200061478924,DRILL:0.01688145048309394):0.001680028795466261,(BLUEM:0.03166602874195575,PATAS:0.03199348624500717):0.02217251999728381):0.01135726506377703,MANGABEY:0.01375856601518835):0.01217271196331981,(WOLFSG:0.002075681644109351,ASM:0.01054037651822002):0.005152092099008082):0.003630071074274625,(CEMACAQUE:0.00685954202278519,RHESUS:0.003643072680460352):0.004673672549636008)",
+        "usertree" : "(((HUMAN,CHIMPANZEE),GORILLA),((((RHESUS,CEMACAQUE),(DRILL,(BABOON,MANGABEY))),(ASM,(PATAS,(WOLFSG,BLUEM)))),(COLOBUS,FLM)))",
+        "rawsites" : 480,
+        "created" : "2015-04-15T16:04:45.948Z",
+        "sequence_info" : [
+          {
+            "_id" : "552e8c1e5291492d243af5fa",
+            "name" : "HUMAN",
+            "seqindex" : 0
+          },
+          {
+            "_id" : "552e8c1e5291492d243af5fb",
+            "name" : "CHIMPANZEE",
+            "seqindex" : 1
+          },
+          {
+            "_id" : "552e8c1e5291492d243af5fc",
+            "name" : "GORILLA",
+            "seqindex" : 2
+          },
+          {
+            "_id" : "552e8c1e5291492d243af5fd",
+            "name" : "BABOON",
+            "seqindex" : 3
+          },
+          {
+            "_id" : "552e8c1e5291492d243af5fe",
+            "name" : "MANGABEY",
+            "seqindex" : 4
+          },
+          {
+            "_id" : "552e8c1e5291492d243af5ff",
+            "name" : "BLUEM",
+            "seqindex" : 5
+          },
+          {
+            "_id" : "552e8c1e5291492d243af600",
+            "name" : "WOLFSG",
+            "seqindex" : 6
+          },
+          {
+            "_id" : "552e8c1e5291492d243af601",
+            "name" : "ASM",
+            "seqindex" : 7
+          },
+          {
+            "_id" : "552e8c1e5291492d243af602",
+            "name" : "FLM",
+            "seqindex" : 8
+          },
+          {
+            "_id" : "552e8c1e5291492d243af603",
+            "name" : "COLOBUS",
+            "seqindex" : 9
+          },
+          {
+            "_id" : "552e8c1e5291492d243af604",
+            "name" : "PATAS",
+            "seqindex" : 10
+          },
+          {
+            "_id" : "552e8c1e5291492d243af605",
+            "name" : "CEMACAQUE",
+            "seqindex" : 11
+          },
+          {
+            "_id" : "552e8c1e5291492d243af606",
+            "name" : "RHESUS",
+            "seqindex" : 12
+          },
+          {
+            "_id" : "552e8c1e5291492d243af607",
+            "name" : "DRILL",
+            "seqindex" : 13
+          }
+        ],
+        "partition_info" : [
+          {
+            "_id" : "552e8c1e5291492d243af608",
+            "usertree" : "(((HUMAN,CHIMPANZEE),GORILLA),((((RHESUS,CEMACAQUE),(DRILL,(BABOON,MANGABEY))),(ASM,(PATAS,(WOLFSG,BLUEM)))),(COLOBUS,FLM)))",
+            "span" : 480,
+            "endcodon" : 479,
+            "startcodon" : 0,
+            "partition" : 1
+          }
+        ]
+      }
+    ]
+  }
+}
