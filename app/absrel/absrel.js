@@ -33,8 +33,6 @@ var config   = require('../../config.json'),
     hyphyJob = require('../hyphyjob.js').hyphyJob,
     jobdel   = require('../../lib/jobdel.js'),
     util     = require('util'),
-    redis    = require('redis'),
-    winston  = require('winston'),
     _        = require('underscore'),
     fs       = require('fs'),
     path     = require('path'),
@@ -46,36 +44,38 @@ var absrel = function (socket, stream, params) {
   self.socket = socket;
   self.stream = stream;
   self.params = params;
-  self.fn = __dirname + '/output/' + self.params.analysis._id;
-  self.filepath = self.fn;
-  self.output_dir  = path.dirname(self.filepath);
+
+  // object specific attributes
+  self.type             = 'absrel';
   self.qsub_script_name = 'absrel.sh';
-  self.qsub_script = __dirname + '/' + self.qsub_script_name;
-  self.id = self.params.analysis._id;
-  self.msaid = self.params.msa._id;
-  self.status_fn = self.filepath + '.status';
-  self.results_fn= self.filepath + '.absrel';
-  self.results_json_fn = self.filepath + '.absrel.json';
-  self.progress_fn = self.filepath + '.absrel.progress';
-  self.tree_fn = self.filepath + '.tre';
-  self.absrel = config.absrel;
-  self.status_stack = self.params.status_stack;
-  self.analysis_type = self.params.analysis.analysis_type;
-  self.genetic_code = "1";
-  self.torque_id = "unk";
-  self.std_err = "unk";
+  self.qsub_script      = __dirname + '/' + self.qsub_script_name;
+
+  // parameter attributes
+  self.msaid        = self.params.msa._id;
+  self.id           = self.params.analysis._id;
+  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.nj           = self.params.msa[0].nj
+
+  // parameter-derived attributes
+  self.fn              = __dirname + '/output/' + self.id;
+  self.output_dir      = path.dirname(self.fn);
+  self.status_fn       = self.fn + '.status';
+  self.results_fn      = self.fn + '.absrel';
+  self.results_json_fn = self.fn + '.absrel.json';
+  self.progress_fn     = self.fn + '.absrel.progress';
+  self.tree_fn         = self.fn + '.tre';
 
   self.qsub_params = ['-q',
                           config.qsub_queue,
                           '-v',
-                          'fn='+self.filepath+
+                          'fn='+self.fn+
                           ',tree_fn='+self.tree_fn+
                           ',sfn='+self.status_fn+
                           ',pfn='+self.progress_fn+
                           ',rfn='+self.results_fn+
                           ',treemode='+self.treemode+
                           ',genetic_code='+self.genetic_code+
-                          ',analysis_type='+self.analysis_type+
+                          ',analysis_type='+self.type+
                           ',cwd='+__dirname+
                           ',msaid='+self.msaid,
                           '-o', self.output_dir,
@@ -84,14 +84,14 @@ var absrel = function (socket, stream, params) {
 
 
   // Write tree to a file
-  fs.writeFile(self.tree_fn, self.params.msa[0].nj, function (err) {
+  fs.writeFile(self.tree_fn, self.nj, function (err) {
     if (err) throw err;
   });
 
   // Ensure the progress file exists
   fs.openSync(self.progress_fn, 'w');
+  self.init();
 
-  self.spawn();
 }
 
 util.inherits(absrel, hyphyJob);

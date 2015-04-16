@@ -78,7 +78,6 @@ describe('relax jobrunner', function() {
     });
 
     relax_socket.on('job created', function(data){
-      winston.info('got job id');
     });
 
     relax_socket.on('status update', function(data){

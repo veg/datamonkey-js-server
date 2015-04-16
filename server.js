@@ -70,9 +70,6 @@ io.sockets.on('connection', function (socket) {
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
-    },
-    check : function(params) {
-      new job.check(socket, params.id);
     }
   });
 
@@ -83,9 +80,6 @@ io.sockets.on('connection', function (socket) {
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, id);
-    },
-    check : function(params) {
-      new job.check(socket, params.id);
     }
   });
 
@@ -95,9 +89,7 @@ io.sockets.on('connection', function (socket) {
       var busted_job = new busted.busted(socket, stream, params.job);
     },
     resubscribe : function(params) {
-      new job.resubscribe(socket, params.id); },
-    check : function(params) {
-      new job.check(socket, params.id);
+      new job.resubscribe(socket, params.id); 
     }
   });
 
@@ -108,9 +100,6 @@ io.sockets.on('connection', function (socket) {
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
-    },
-    check : function(params) {
-      new job.check(socket, params.id);
     }
   });
 
@@ -121,9 +110,6 @@ io.sockets.on('connection', function (socket) {
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
-    },
-    check : function(params) {
-      new job.check(socket, params.id);
     }
   });
 
@@ -135,6 +121,9 @@ io.sockets.on('connection', function (socket) {
 //so the program will not close instantly
 process.stdin.resume();
 
+
+// retrieves active jobs from redis, and attempts to cancel
+// all pending jobs
 function jobCleanup(cb) {
   var total_job_count = 0;
   client.llen('active_jobs', function(err, n) {

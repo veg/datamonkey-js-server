@@ -33,8 +33,6 @@ var config   = require('../../config.json'),
     hyphyJob = require('../hyphyjob.js').hyphyJob,
     jobdel   = require('../../lib/jobdel.js'),
     util     = require('util'),
-    redis    = require('redis'),
-    winston  = require('winston'),
     _        = require('underscore'),
     fs       = require('fs'),
     path     = require('path'),
@@ -43,33 +41,35 @@ var config   = require('../../config.json'),
 var relax = function (socket, stream, relax_params) {
 
   var self = this;
-  winston.info(self.id + ' : relax : spawning');
 
   self.socket = socket;
   self.stream = stream;
   self.params = relax_params;
-  self.relax = config.relax;
-  self.fn = __dirname + '/output/' + self.params.analysis._id;
-  self.filepath = self.fn;
-  self.output_dir  = path.dirname(self.filepath);
+
+  // object specific attributes
+  self.type             = 'relax';
   self.qsub_script_name = 'relax.sh';
-  self.qsub_script = __dirname + '/' + self.qsub_script_name;
-  self.id = self.params.analysis._id;
-  self.msaid = self.params.msa._id;
-  self.status_fn = self.filepath + '.status';
-  self.progress_fn = self.filepath + '.RELAX.progress';
-  self.results_fn = self.filepath + '.RELAX.json';
-  self.tree_fn = self.filepath + '.tre';
-  self.status_stack = self.params.status_stack;
+  self.qsub_script      = __dirname + '/' + self.qsub_script_name;
+
+  // parameter attributes
+  self.msaid         = self.params.msa._id;
+  self.id            = self.params.analysis._id;
+  self.genetic_code  = self.params.msa[0].gencodeid + 1;
   self.analysis_type = self.params.analysis.analysis_type;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
-  self.torque_id = "unk";
-  self.std_err = "unk";
+  self.nwk_tree      = self.params.analysis.tagged_nwk_tree;
+
+  // parameter-derived attributes
+  self.fn          = __dirname + '/output/' + self.id;
+  self.output_dir  = path.dirname(self.fn);
+  self.status_fn   = self.fn + '.status';
+  self.progress_fn = self.fn + '.RELAX.progress';
+  self.results_fn  = self.fn + '.RELAX.json';
+  self.tree_fn     = self.fn + '.tre';
 
   self.qsub_params = ['-q',
                         config.qsub_queue,
                         '-v',
-                        'fn='+self.filepath+
+                        'fn='+self.fn+
                         ',tree_fn='+self.tree_fn+
                         ',sfn='+self.status_fn+
                         ',pfn='+self.progress_fn+
@@ -83,7 +83,7 @@ var relax = function (socket, stream, relax_params) {
                         self.qsub_script];
 
   // Write tree to a file
-  fs.writeFile(self.tree_fn, self.params.analysis.tagged_nwk_tree, function (err) {
+  fs.writeFile(self.tree_fn, self.nwk_tree, function (err) {
     if (err) throw err;
   });
 
@@ -91,7 +91,7 @@ var relax = function (socket, stream, relax_params) {
   fs.openSync(self.progress_fn, 'w');
   fs.openSync(self.status_fn, 'w');
 
-  self.spawn();
+  self.init();
 
 };
 
