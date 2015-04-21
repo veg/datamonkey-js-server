@@ -85,11 +85,6 @@ hyphyJob.prototype.spawn = function () {
 
   self.log('spawning');
 
-  self.push_active_job = function (id) {
-    client.rpush('active_jobs', self.id);
-  };
-
-  self.push_job_once = _.once(self.push_active_job);
 
   // A class that spawns the process and emits status events
   var hyphy_job_runner = new job.jobRunner (self.qsub_params);
@@ -102,7 +97,21 @@ hyphyJob.prototype.spawn = function () {
 
   // On status updates, report to datamonkey-js
   hyphy_job_runner.on('status update', function(status_update) {
-    self.onStatusUpdate();
+
+    // HyPhy publishes updates to a specified progress file
+    fs.readFile(self.progress_fn, 'utf8', function (err, data) {
+      if(err) {
+        self.warn('status update', 
+                  'error reading progress file ' + self.progress_fn + '. error: ' + err);
+      } else if (data) {
+       self.onStatusUpdate(data);
+      } else {
+       // No status updates could be read, 
+       // but this could be due to the job just starting
+       self.warn('read progress file, but no data');
+      }
+   });
+
   });
 
   // On errors, report to datamonkey-js
@@ -145,6 +154,13 @@ hyphyJob.prototype.spawn = function () {
 hyphyJob.prototype.onJobCreated = function (torque_id) {
 
   var self = this;
+
+  self.push_active_job = function (id) {
+    client.rpush('active_jobs', self.id);
+  };
+
+  self.push_job_once = _.once(self.push_active_job);
+
   self.setTorqueParameters(torque_id);
   var redis_packet = torque_id;
   redis_packet.type = 'job created';
@@ -192,46 +208,28 @@ hyphyJob.prototype.onComplete = function () {
 
 };
 
-hyphyJob.prototype.onStatusUpdate = function() {
+hyphyJob.prototype.onStatusUpdate = function(data, index) {
 
  var self = this;
+ self.current_status = data;
 
- // HyPhy publishes updates to a specified progress file
- fs.readFile(self.progress_fn, 'utf8', function (err, data) {
-   if(err) {
-     self.warn('status update', 
-               'error reading progress file ' + self.progress_fn + '. error: ' + err);
-   } else if (data) {
+ var status_update = { 'index': index, 
+                       'msg': data, 
+                       'torque_id' : self.torque_id};
 
-     self.current_status = data;
+ 
+ // Prepare redis packet for delivery
+ var redis_packet = status_update;
+ redis_packet.type = 'status update';
+ str_redis_packet =  JSON.stringify(status_update);
 
-     var status_update = {'phase' : 'running', 
-                          'index': 1, 
-                          'msg': data, 
-                          'torque_id' : self.torque_id};
+ // Store packet in redis and publish to channel
+ client.hset(self.id, 'status update', str_redis_packet);
+ client.publish(self.id, str_redis_packet);
 
-     
-     // Prepare redis packet for delivery
-     var redis_packet = status_update;
-     redis_packet.type = 'status update';
-     str_redis_packet =  JSON.stringify(status_update);
+ // Log status update on server
+ self.log('status update', str_redis_packet);
 
-     // Store packet in redis and publish to channel
-     client.hset(self.id, 'status update', str_redis_packet);
-     client.publish(self.id, str_redis_packet);
-
-     // Log status update on server
-     self.log('status update', str_redis_packet);
-
-   } else {
-
-    // No status updates could be read, 
-    // but this could be due to the job just starting
-    self.warn('read progress file, but no data');
-
-   }
-
- });
 
 };
 
@@ -244,27 +242,29 @@ hyphyJob.prototype.onError = function(error) {
   redis_packet.type = 'script error';
 
   // Read error path contents
-  fs.readFile(self.std_err, 'utf8', function (err, data) {
-    fs.readFile(self.progress_fn, 'utf8', function (err, progress_data) {
-      fs.readFile(self.std_out, 'utf8', function (err, stdout_data) {
-        
-        // Prepare redis packet for delivery
-        redis_packet.stderr = data;
-        redis_packet.stdout = stdout_data;
-        redis_packet.progress = progress_data;
-        str_redis_packet = JSON.stringify(redis_packet);
+  var std_err_promise = Q.nfcall(fs.readFile, self.std_err, "utf-8"); 
+  var progress_fn_promise = Q.nfcall(fs.readFile, self.progress_fn, "utf-8"); 
+  var std_out_promise = Q.nfcall(fs.readFile, self.std_out, "utf-8"); 
 
-        // log error with a warning
-        self.warn('script error', str_redis_packet);
+  var promises = [ std_err_promise, progress_fn_promise, std_out_promise]; 
 
-        // Publish error messages to redis
-        client.hset(self.id, 'error', str_redis_packet);
-        client.publish(self.id, str_redis_packet);
-        client.lrem('active_jobs', 1, self.id);
-        client.llen('active_jobs', function(err, n) {
-          process.emit('jobCancelled', n);
-        });
-      });
+  Q.allSettled(promises) 
+  .then(function (results) { 
+    // Prepare redis packet for delivery
+    redis_packet.stderr = results[0].value;
+    redis_packet.progress = results[1].value;
+    redis_packet.stdout = results[2].value;
+    str_redis_packet = JSON.stringify(redis_packet);
+
+    // log error with a warning
+    self.warn('script error', str_redis_packet);
+
+    // Publish error messages to redis
+    client.hset(self.id, 'error', str_redis_packet);
+    client.publish(self.id, str_redis_packet);
+    client.lrem('active_jobs', 1, self.id);
+    client.llen('active_jobs', function(err, n) {
+      process.emit('jobCancelled', n);
     });
   });
 

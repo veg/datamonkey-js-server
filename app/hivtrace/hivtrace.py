@@ -36,6 +36,9 @@ import json
 import logging
 from Bio import SeqIO
 
+logging.basicConfig(level=logging.DEBUG)
+
+
 def update_status(id, phase, POOL, msg = ""):
 
     my_server = redis.Redis(connection_pool=POOL)
@@ -47,7 +50,7 @@ def update_status(id, phase, POOL, msg = ""):
       'msg'   : msg
     }
 
-    print (my_server.publish(id, json.dumps(msg)))
+    print (my_server.publish('python_' + id, json.dumps(msg)))
 
 def completed(id, POOL):
 
@@ -57,7 +60,7 @@ def completed(id, POOL):
       'type'  : 'completed'
     }
 
-    my_server.publish(id, json.dumps(msg))
+    my_server.publish('python_' + id, json.dumps(msg))
 
 
 
@@ -106,14 +109,14 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
 
     with open(output, 'a') as f:
         fwriter = csv.writer(f, delimiter=',')
-        
-        for file in (pairwise_fn, user_fn):        
+
+        for file in (pairwise_fn, user_fn):
             with open(file) as pairwise_f:
                 preader = csv.reader(pairwise_f, delimiter=',')
                 next(preader)
                 fwriter.writerows([row[0:3] for row in preader])
 
- 
+
 
 def create_filter_list(tn93_fn, filter_list_fn) :
     """
@@ -339,7 +342,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     LANL_FASTA=config.get('lanl_fasta')
     LANL_TN93OUTPUT_CSV=config.get ('lanl_tn93output_csv')
-    
+
     DEFAULT_DELIMITER='|'
 
     #Convert to Python
@@ -359,12 +362,12 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     OUTPUT_USERTOLANL_TN93_FN=input+'_usertolanl.tn93output.csv'
     USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=input+'_user_filter.csv'
-    
+
     CONTAMINANT_ID_LIST = input + '_contaminants.csv'
 
     DEVNULL = open(os.devnull, 'w')
     EXCLUSION_LIST = None
-    
+
 
     # PHASE 1
     current_status = "Aligning"
@@ -374,10 +377,10 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
         handle_contaminants  = 'no'
 
     bealign_process = [PYTHON, BEALIGN, '-q', '-r', reference , '-m', SCORE_MATRIX, '-R', input, BAM_FN]
-    
+
     if handle_contaminants != 'no':
         bealign_process.insert (-3, '-K')
-        
+
     subprocess.check_call(bealign_process, stdout=DEVNULL)
 
     logging.debug(' '.join(bealign_process))
@@ -387,14 +390,14 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     bam_process = [PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN]
     subprocess.check_call(bam_process, stdout=DEVNULL)
     logging.debug(' '.join(bam_process))
-    
+
     if handle_contaminants != 'no':
         with (open (OUTPUT_FASTA_FN, 'r')) as msa:
             reference_name = next (SeqIO.parse (msa, 'fasta')).id
             logging.debug ('Reference name set to %s' % reference_name)
             with open (CONTAMINANT_ID_LIST, 'w') as contaminants:
                 print (reference_name, file = contaminants)
-            
+
 
     # Ensure unique ids
     # Just warn of duplicates (by giving them an attribute)
@@ -411,7 +414,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
         OUTPUT_FASTA_FN_TMP = OUTPUT_FASTA_FN + ".spool"
         with open (str(OUTPUT_FASTA_FN_TMP),'w') as output_file:
             for (seq_id, data) in sd.strip_drams (OUTPUT_FASTA_FN, strip_drams_flag):
-                print (">%s\n%s" % (seq_id, data), file = output_file)                
+                print (">%s\n%s" % (seq_id, data), file = output_file)
         shutil.move (OUTPUT_FASTA_FN_TMP, OUTPUT_FASTA_FN)
 
     # PHASE 4
@@ -437,11 +440,11 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
                                    threshold, '-f', SEQUENCE_ID_FORMAT, '-j']
-        
+
     if filter_edges and filter_edges != 'no':
         hivnetworkcsv_process.extend (['-n',filter_edges, '-s', OUTPUT_FASTA_FN])
-        
-    if handle_contaminants != 'no':   
+
+    if handle_contaminants != 'no':
         hivnetworkcsv_process.extend (['-C', handle_contaminants, '-F', CONTAMINANT_ID_LIST])
 
     subprocess.check_call(hivnetworkcsv_process, stdout=output_cluster_json_fh)
@@ -454,6 +457,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       # PHASE 6
 
       update_status(id, "Computing pairwise TN93 distances against a public database", POOL)
+      lanl_tn93_process = ''
 
       if ambiguities != 'resolve':
           lanl_tn93_process = [TN93DIST, '-q', '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
@@ -468,8 +472,9 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
                                LANL_FASTA]
 
 
+      #logging.debug(' '.join(lanl_tn93_process))
+      logging.debug(lanl_tn93_process)
       subprocess.check_call(lanl_tn93_process, stdout=DEVNULL)
-      logging.debug(' '.join(lanl_tn93_process))
 
 
       # PHASE 6b
@@ -477,7 +482,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       #This is where reference annotation becomes an issue
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
                        OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN)
-                    
+
 
       lanl_id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
 
@@ -487,25 +492,25 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       # PHASE 7
       update_status(id, "Inferring connections to sequences in a public database", POOL)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
-      
-      
+
+
       if filter_edges and filter_edges != 'no':
          with open (OUTPUT_COMBINED_SEQUENCE_FILE, 'w') as combined_fasta:
             for f_path in (LANL_FASTA, OUTPUT_FASTA_FN):
-                with open (f_path) as src_file: 
+                with open (f_path) as src_file:
                     shutil.copyfileobj (src_file,combined_fasta)
                     print ("\n", file = combined_fasta)
-            
+
          lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
                                         threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-k', USER_FILTER_LIST,
                                         '-n', filter_edges, '-s', OUTPUT_COMBINED_SEQUENCE_FILE
                                         ]
-      
+
       else:
           lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
                                         threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-k', USER_FILTER_LIST]
 
-      if handle_contaminants != 'no':   
+      if handle_contaminants != 'no':
           lanl_hivnetworkcsv_process.extend (['-C', handle_contaminants, '-F', CONTAMINANT_ID_LIST])
 
       logging.debug(' '.join(lanl_hivnetworkcsv_process))

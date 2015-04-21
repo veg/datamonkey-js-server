@@ -66,7 +66,7 @@ io.sockets.on('connection', function (socket) {
   // HIV Trace
   r.route('hivtrace', {
     spawn : function (stream, params) {
-      var hivtrace_job = new hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
+      var hivtrace_job = new hivtrace.hivtrace(socket, stream, params.job.analysis);
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
