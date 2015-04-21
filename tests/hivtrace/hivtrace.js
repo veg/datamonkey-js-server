@@ -85,8 +85,6 @@ describe('hivtrace jobrunner', function() {
     });
 
     hivtrace_socket.on('completed', function(data) {
-      winston.info(data.lanl_trace_results);
-      //should(data.trace_results).should.be.ok;
       should.exist(data.lanl_trace_results);
       done();
     });
