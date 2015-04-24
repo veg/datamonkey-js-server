@@ -5,7 +5,7 @@
 	"reference" : "HXB2_prrt",
 	"strip_drams" : "no",
 	"ambiguity_handling" : "RESOLVE",
-	"lanl_compare" : true,
+	"lanl_compare" : false,
 	"created" : "2015-04-16T00:32:13.869Z",
 	"status_stack" : [
 		"In Queue",
@@ -13,8 +13,6 @@
 		"BAM to FASTA conversion",
 		"Computing pairwise TN93 distances",
 		"Inferring, filtering, and analyzing molecular transmission network",
-    "Computing pairwise TN93 distances against a public database",
-    "Inferring connections to sequences in a public database",
 		"Completed"
 	],
 	"fraction" : 0.05,

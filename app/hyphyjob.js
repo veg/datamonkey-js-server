@@ -86,7 +86,6 @@ hyphyJob.prototype.spawn = function () {
 
   self.log('spawning');
 
-
   // A class that spawns the process and emits status events
   var hyphy_job_runner = new job.jobRunner (self.qsub_params);
 
@@ -209,27 +208,26 @@ hyphyJob.prototype.onComplete = function () {
 
 };
 
-hyphyJob.prototype.onStatusUpdate = function(data, index) {
+hyphyJob.prototype.onStatusUpdate = function(data) {
 
- var self = this;
- self.current_status = data;
+  var self = this;
+  self.current_status = data;
 
- var status_update = { 'index': index, 
-                       'msg': data, 
+  var status_update = { 'msg': data, 
                        'torque_id' : self.torque_id};
 
- 
- // Prepare redis packet for delivery
- var redis_packet = status_update;
- redis_packet.type = 'status update';
- str_redis_packet =  JSON.stringify(status_update);
 
- // Store packet in redis and publish to channel
- client.hset(self.id, 'status update', str_redis_packet);
- client.publish(self.id, str_redis_packet);
+  // Prepare redis packet for delivery
+  var redis_packet = status_update;
+  redis_packet.type = 'status update';
+  str_redis_packet =  JSON.stringify(status_update);
 
- // Log status update on server
- self.log('status update', str_redis_packet);
+  // Store packet in redis and publish to channel
+  client.hset(self.id, 'status update', str_redis_packet);
+  client.publish(self.id, str_redis_packet);
+
+  // Log status update on server
+  self.log('status update', str_redis_packet);
 
 
 };

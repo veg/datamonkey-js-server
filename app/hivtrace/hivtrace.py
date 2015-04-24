@@ -26,6 +26,7 @@
 
 import redis
 import subprocess
+from subprocess import PIPE
 import shutil
 import strip_drams as sd
 import argparse
@@ -38,19 +39,33 @@ from Bio import SeqIO
 
 logging.basicConfig(level=logging.DEBUG)
 
+class status:
+    PENDING   = 1
+    RUNNING   = 2
+    COMPLETED = 3
 
-def update_status(id, phase, POOL, msg = ""):
+# List phases
+class phases:
+    ALIGNING                     = (0, "Aligning")
+    BAM_FASTA_CONVERSION         = (1, "BAM to FASTA conversion")
+    COMPUTE_TN93_DISTANCE        = (2, "Computing pairwise TN93 distances")
+    INFERRING_NETWORK            = (3, "Inferring, filtering, and analyzing molecular transmission network")
+    PUBLIC_COMPUTE_TN93_DISTANCE = (4, "Computing pairwise TN93 distances against a public database")
+    PUBLIC_INFERRING_CONNECTIONS = (5, "Inferring connections to sequences in a public database")
+
+def update_status(id, phase, status, POOL, msg = ""):
 
     my_server = redis.Redis(connection_pool=POOL)
 
-
     msg = {
-      'type'  : 'status update',
-      'phase' : phase,
-      'msg'   : msg
+      'type'   : 'status update',
+      'index'  : phase[0],
+      'title'  : phase[1],
+      'status' : status,
+      'msg'    : msg
     }
 
-    print (my_server.publish('python_' + id, json.dumps(msg)))
+    my_server.publish('python_' + id, json.dumps(msg))
 
 def completed(id, POOL):
 
@@ -370,8 +385,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
 
     # PHASE 1
-    current_status = "Aligning"
-    update_status(id, current_status, POOL)
+    update_status(id, phases.ALIGNING, status.RUNNING, POOL)
 
     if handle_contaminants is None:
         handle_contaminants  = 'no'
@@ -381,15 +395,16 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     if handle_contaminants != 'no':
         bealign_process.insert (-3, '-K')
 
-    subprocess.check_call(bealign_process, stdout=DEVNULL)
-
     logging.debug(' '.join(bealign_process))
+    subprocess.check_call(bealign_process, stdout=DEVNULL)
+    update_status(id, phases.ALIGNING, status.COMPLETED, POOL)
 
     # PHASE 2
-    update_status(id, "BAM to FASTA conversion", POOL)
+    update_status(id, phases.BAM_FASTA_CONVERSION, status.RUNNING, POOL)
     bam_process = [PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN]
-    subprocess.check_call(bam_process, stdout=DEVNULL)
     logging.debug(' '.join(bam_process))
+    subprocess.check_call(bam_process, stdout=DEVNULL)
+    update_status(id, phases.BAM_FASTA_CONVERSION, status.COMPLETED, POOL)
 
     if handle_contaminants != 'no':
         with (open (OUTPUT_FASTA_FN, 'r')) as msa:
@@ -418,16 +433,18 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
         shutil.move (OUTPUT_FASTA_FN_TMP, OUTPUT_FASTA_FN)
 
     # PHASE 4
-    update_status(id, "Computing pairwise TN93 distances", POOL)
+    update_status(id, phases.COMPUTE_TN93_DISTANCE, status.RUNNING, POOL)
 
     with open(JSON_TN93_FN, 'w') as tn93_fh:
         tn93_process = [TN93DIST, '-q', '-o', OUTPUT_TN93_FN, '-t',
                                threshold, '-a', ambiguities, '-l',
                                min_overlap, '-g', fraction if ambiguities == 'resolve' else '1.0', '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
 
-        subprocess.check_call(tn93_process,stdout=tn93_fh)
         logging.debug(' '.join(tn93_process))
+        subprocess.check_call(tn93_process,stdout=tn93_fh)
+        update_status(id, phases.COMPUTE_TN93_DISTANCE, status.COMPLETED, POOL)
 
+    # send contents of tn93 to status page
 
     id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
     if type(id_dict) is ValueError:
@@ -435,11 +452,13 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
         raise id_dict
 
     # PHASE 5
-    update_status(id, "Inferring, filtering, and analyzing molecular transmission network", POOL)
+    update_status(id, phases.INFERRING_NETWORK, status.RUNNING, POOL)
+
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
 
     hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
                                    threshold, '-f', SEQUENCE_ID_FORMAT, '-j']
+
 
     if filter_edges and filter_edges != 'no':
         hivnetworkcsv_process.extend (['-n',filter_edges, '-s', OUTPUT_FASTA_FN])
@@ -447,8 +466,16 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     if handle_contaminants != 'no':
         hivnetworkcsv_process.extend (['-C', handle_contaminants, '-F', CONTAMINANT_ID_LIST])
 
-    subprocess.check_call(hivnetworkcsv_process, stdout=output_cluster_json_fh)
+    # hivclustercsv uses stderr for status updates
+    complete_stderr = ''
+
     logging.debug(' '.join(hivnetworkcsv_process))
+    with subprocess.Popen(hivnetworkcsv_process, stdout=output_cluster_json_fh, stderr=PIPE, bufsize=1, universal_newlines=True) as p:
+        for line in p.stderr:
+            complete_stderr += line
+            update_status(id, phases.INFERRING_NETWORK, status.RUNNING, POOL, complete_stderr)
+
+    update_status(id, phases.INFERRING_NETWORK, status.COMPLETED, POOL, complete_stderr)
     output_cluster_json_fh.close()
 
 
@@ -456,7 +483,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
       # PHASE 6
 
-      update_status(id, "Computing pairwise TN93 distances against a public database", POOL)
+      update_status(id, phases.PUBLIC_COMPUTE_TN93_DISTANCE, status.RUNNING, POOL)
       lanl_tn93_process = ''
 
       if ambiguities != 'resolve':
@@ -475,7 +502,9 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       #logging.debug(' '.join(lanl_tn93_process))
       logging.debug(lanl_tn93_process)
       subprocess.check_call(lanl_tn93_process, stdout=DEVNULL)
+      update_status(id, phases.PUBLIC_COMPUTE_TN93_DISTANCE, status.COMPLETED, POOL)
 
+      # send contents of tn93 to status page
 
       # PHASE 6b
       #Perform concatenation
@@ -490,7 +519,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
       # PHASE 7
-      update_status(id, "Inferring connections to sequences in a public database", POOL)
+      update_status(id,phases.PUBLIC_INFERRING_CONNECTIONS, status.RUNNING, POOL)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
 
 
@@ -514,9 +543,16 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
           lanl_hivnetworkcsv_process.extend (['-C', handle_contaminants, '-F', CONTAMINANT_ID_LIST])
 
       logging.debug(' '.join(lanl_hivnetworkcsv_process))
-      subprocess.check_call(lanl_hivnetworkcsv_process, stdout=lanl_output_cluster_json_fh)
+
+      # hivclustercsv uses stderr for status updates
+      complete_stderr = ''
+      with subprocess.Popen(lanl_hivnetworkcsv_process, stdout=output_cluster_json_fh, stderr=PIPE, bufsize=1, universal_newlines=True) as p:
+          for line in p.stderr:
+              complete_stderr += line
+              update_status(id, phases.PUBLIC_INFERRING_CONNECTIONS, status.RUNNING, POOL, complete_stderr)
 
       lanl_output_cluster_json_fh.close()
+      update_status(id, phases.PUBLIC_INFERRING_CONNECTIONS, status.COMPLETED, POOL)
 
 
       # Adapt ids to attributes

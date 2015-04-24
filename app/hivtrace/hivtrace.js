@@ -40,6 +40,7 @@ var spawn        = require('child_process').spawn,
     Tail         = require('tail').Tail,
     EventEmitter = require('events').EventEmitter,
     Q            = require('q'),
+    _            = require('underscore'),
     JobStatus    = require('../../lib/jobstatus.js').JobStatus,
     redis        = require('redis');
 
@@ -49,6 +50,12 @@ var client = redis.createClient();
 var hivtrace = function (socket, stream, params) {
 
   var self = this;
+
+  self.status = {
+    PENDING   : 1,
+    RUNNING   : 2,
+    COMPLETED : 3,
+  }
 
   var cluster_output_suffix='_user.trace.json',
       lanl_cluster_output_suffix='_lanl_user.trace.json',
@@ -101,7 +108,12 @@ var hivtrace = function (socket, stream, params) {
   self.tn93_results               = self.filepath + tn93_csv_suffix;
   self.tn93_lanl_results          = self.filepath + tn93_csv_suffix;
 
+  initial_statuses = [];
+  _.each(self.status_stack, function(d, i) {  
+                              initial_statuses.push({title : d, status : self.status.PENDING}); 
+                            });
 
+  client.hset(self.id, 'complete phase status',  JSON.stringify(initial_statuses));
 
   self.qsub_params = [ '-q',
                   config.qsub_queue,
@@ -142,7 +154,7 @@ hivtrace.prototype.spawn = function () {
 
   // On status updates, report to datamonkey-js
   trace_runner.on('status update', function(status_update) {
-    self.onStatusUpdate(status_update.phase, self.status_stack.indexOf(status_update.phase));
+    self.onStatusUpdate(status_update, self.status_stack.indexOf(status_update.phase));
   });
 
   // On errors, report to datamonkey-js
@@ -168,6 +180,63 @@ hivtrace.prototype.spawn = function () {
   // Setup has been completed, run the job with the parameters from datamonkey
   self.stream.pipe(fs.createWriteStream(__dirname + '/output/' + self.id));
   trace_runner.submit(self.qsub_params, self.output_dir);
+
+};
+
+hivtrace.prototype.onStatusUpdate = function(data, index) {
+
+  var self = this;
+  self.current_status = data;
+
+
+  // get current status stored in redis
+  client.hget(self.id, 'complete phase status', function(err, entire_status) {
+
+    //msg = {
+    //  'type'   : 'status update',
+    //  'index'  : phase[0]
+    //  'phase'  : phase[1],
+    //  'status' : status,
+    //  'msg'    : msg
+    //}
+
+    new_status = JSON.parse(entire_status);
+
+    new_status[data.index].status = data.status;
+    
+    // update all older statuses as completed
+    _.each(new_status.slice(0, data.index), function(d, i) { 
+                                             new_status[i].status = self.status.COMPLETED;
+                                           });
+
+    if(data.msg) {
+      new_status[data.index].msg = data.msg;
+    }
+
+
+    var status_update = { 
+                          'msg'       : new_status,
+                          'torque_id' : self.torque_id
+                        };
+
+
+    // Prepare redis packet for delivery
+    client.hset(self.id, 'status update', JSON.stringify(data));
+
+    var redis_packet = status_update;
+    redis_packet.type = 'status update';
+    str_redis_packet =  JSON.stringify(status_update);
+
+    // Store packet in redis and publish to channel
+    client.hset(self.id, 'complete phase status', JSON.stringify(new_status));
+
+    // Publish updates for all statuses
+    client.publish(self.id, str_redis_packet);
+
+    // Log status update on server
+    self.log('status update', str_redis_packet);
+
+  });
 
 };
 
