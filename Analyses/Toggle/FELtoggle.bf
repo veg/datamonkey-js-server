@@ -83,8 +83,9 @@ ReportSiteInfo = { totalCodonCount*20,Columns(labels)}["1"];
 vOffset = 0; /* offset for the number of sites per partition */
 treeLengths 		= {fileCount,1};
 
-for ( fileID = 1; fileID <= fileCount; fileID = fileID + 1 ) {
-	FIRSTPART = 1;
+FIRSTPART = 1;
+
+for ( fileID = 1; fileID <= fileCount; fileID += 1) {
 	if ( FIRSTPART ) {
 		fprintf (intermediateHTML, "<DIV class = 'RepClassSM'><b>Phase 2</b> Starting site-wise analysis of amino acid toggling for each potential wildtype</DIV>\n" );
 		fprintf (intermediateHTML, "<DIV class = 'RepClassSM'>Data partition: ", fileID, "</DIV>\n" );
@@ -100,6 +101,10 @@ for ( fileID = 1; fileID <= fileCount; fileID = fileID + 1 ) {
 		thisbranch = branchNames [ k ];
 		ExecuteCommands ( "tvec [ k ] = nucTree_" + fileID + "." + thisbranch + ".t;" ); 
 	}
+
+	treeLengths[fileID-1] =  Eval( "+BranchLength(nucTree_" + fileID + ",-1 )" );
+	
+	
 	totalbranches = Columns(branchNames);
 	ExecuteCommands ( "partCodonSites	= filteredData_" + fileID + ".sites;" );
 	ExecuteCommands ( "partUniqueSites = filteredData_" + fileID + ".unique_sites" );
@@ -228,8 +233,6 @@ for ( fileID = 1; fileID <= fileCount; fileID = fileID + 1 ) {
 						ExecuteCommands ( "tree." + thisbranch + ".t := (1/R)*" + tvec[ k ] + ";" );
 					}
 					
-					bl_vec = BranchLength(tree,-1);
-					treeLengths[fileID] = (bl_vec*((Transponse(bl_vec))["1"]))[0];
 					ExecuteCommands ( "LikelihoodFunction lf = ( AAFilter" + siteToDo + ", tree );" );
 					
 					/*fprintf ( stdout, "job = ", jobnum, "; full data site number = ", siteToDo + vOffset, "; paritition site number = ", siteToDo, "; aanum = ", aanum, "; model = ", modelType,  "\n" );*/
