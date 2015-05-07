@@ -284,7 +284,6 @@ hivtrace.prototype.onComplete = function () {
 
 }
 
-
 // An object that manages the qsub process
 var HivTraceRunner = function (id) {
 
@@ -310,6 +309,7 @@ HivTraceRunner.prototype.status_watcher = function () {
 
   self.metronome_id = job_status.watch(function(error, status) {
     if(status == 'completed' || status == 'exiting') {
+      // check exit code
       clearInterval(self.metronome_id);
       self.emit('completed', '');
     }

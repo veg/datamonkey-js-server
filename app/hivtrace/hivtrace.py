@@ -468,16 +468,21 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     # hivclustercsv uses stderr for status updates
     complete_stderr = ''
+    returncode = None
 
     logging.debug(' '.join(hivnetworkcsv_process))
+
     with subprocess.Popen(hivnetworkcsv_process, stdout=output_cluster_json_fh, stderr=PIPE, bufsize=1, universal_newlines=True) as p:
         for line in p.stderr:
             complete_stderr += line
             update_status(id, phases.INFERRING_NETWORK, status.RUNNING, POOL, complete_stderr)
+        returncode = p.poll()
+
+    if returncode != 0:
+        raise subprocess.CalledProcessError(returncode, ' '.join(hivnetworkcsv_process), complete_stderr)
 
     update_status(id, phases.INFERRING_NETWORK, status.COMPLETED, POOL, complete_stderr)
     output_cluster_json_fh.close()
-
 
     if compare_to_lanl:
 
@@ -613,6 +618,7 @@ def main():
         STRIP_DRAMS = False
 
     hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION, POOL, strip_drams_flag =STRIP_DRAMS, filter_edges = args.filter, handle_contaminants = args.curate)
+
 
 if __name__ == "__main__":
     main()
