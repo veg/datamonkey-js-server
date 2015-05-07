@@ -94,7 +94,9 @@ FleaRunner.prototype.start = function (fn, flea_params) {
     });
 
     env_pipeline.stdout.on('data', function (data) {
-      self.emit('status update', {'phase': self.status_stack[0], 'msg': String(data)});
+      var status_update_packet = {'phase': self.status_stack[0], 'msg': String(data)};
+      self.emit('status update', status_update_packet);
+      console.log(status_update_packet);
     });
 
     env_pipeline.on('close', function (code) {

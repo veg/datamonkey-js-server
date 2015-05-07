@@ -40,7 +40,7 @@ describe('flea jobrunner', function() {
 
   it('should complete', function(done) {
 
-    this.timeout(120000);
+    this.timeout(12000);
 
     var params = JSON.parse(fs.readFileSync(params_file));
 
@@ -54,6 +54,7 @@ describe('flea jobrunner', function() {
 
     // On errors, report to datamonkey-js
     flea_analysis.on('script error', function(error) {
+      console.log('error!');
       done(error);
     });
 
