@@ -114,11 +114,12 @@ DoRelaxAnalysis.prototype.start = function (fn, relax_params) {
   self.relax = config.relax;
   self.status_stack = relax_params.status_stack;
   self.analysis_type = relax_params.analysis.analysis_type;
-  self.genetic_code = "1";
+  self.genetic_code = relax_params.analysis.msa[0].gencodeid + 1;
   self.torque_id = "unk";
   self.std_err = "unk";
   self.job_completed = false;
   self.current_status = "";
+
 
   // Write tree to a file
   fs.writeFile(self.tree_fn, relax_params.analysis.tagged_nwk_tree, function (err) {

@@ -2,7 +2,11 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
+<<<<<<< HEAD
+  Copyright (C) 2013
+=======
   Copyright (C) 2015
+>>>>>>> 8a658f9a846be4f96b57c320ccdbf2fcd72337f9
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -46,15 +50,21 @@ io.sockets.on('connection', function (socket) {
   // Acknowledge new connection
   socket.emit('connected', { hello: 'Ready to serve' });
 
+
   socket.on('job queue', function (jobs) {
     JobQueue(function(jobs) {
       socket.emit('job queue', jobs);
     });
   });
+  
+  /*socket.on ("stream", function (p) {
+    console.log ("HMM");
+  });*/
 
   // A job has been spawned by datamonkey, let's go to work
   ss(socket).on('spawn', function (stream, params) {
 
+    
     if(params.job.type) {
 
       switch(params.job.type) {
@@ -94,7 +104,6 @@ io.sockets.on('connection', function (socket) {
       socket.disconnect();
 
     }
-
   });
   
   // Log which user disconnected

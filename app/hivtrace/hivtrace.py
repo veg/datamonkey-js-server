@@ -40,13 +40,14 @@ def update_status(id, phase, POOL, msg = ""):
 
     my_server = redis.Redis(connection_pool=POOL)
 
+
     msg = {
       'type'  : 'status update',
       'phase' : phase,
       'msg'   : msg
     }
 
-    my_server.publish(id, json.dumps(msg))
+    print (my_server.publish(id, json.dumps(msg)))
 
 def completed(id, POOL):
 
@@ -91,7 +92,6 @@ def rename_duplicates(fasta_fn, delimiter):
 
     #Overwrite existing file
     shutil.move(copy_fn, fasta_fn)
-    return
 
 def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
     """
@@ -106,27 +106,14 @@ def concatenate_data(output, reference_fn, pairwise_fn, user_fn):
 
     with open(output, 'a') as f:
         fwriter = csv.writer(f, delimiter=',')
-        prependid = lambda x : [x[0], x[1], x[2]]
-        # Read pairwise results
-        #tail -n+2 OUTPUT_USERTOLANL_TN93_FN >> USER_LANL_TN93OUTPUT
-        with open(pairwise_fn) as pairwise_f:
-            preader = csv.reader(pairwise_f, delimiter=',')
-            preader.__next__()
-            rows = [prependid(row) for row in preader]
-            fwriter.writerows(rows)
+        
+        for file in (pairwise_fn, user_fn):        
+            with open(file) as pairwise_f:
+                preader = csv.reader(pairwise_f, delimiter=',')
+                next(preader)
+                fwriter.writerows([row[0:3] for row in preader])
 
-        # Read user_results, preprend ids
-        #tail -n+2 OUTPUT_TN93_FN >> USER_LANL_TN93OUTPUT
-        prependuid = lambda x : [x[0], x[1], x[2]]
-        with open(user_fn) as user_f:
-            ureader = csv.reader(user_f, delimiter=',')
-            ureader.__next__()
-            rows = [prependuid(row) for row in ureader]
-            fwriter.writerows(rows)
-
-    f.close()
-    return
-
+ 
 
 def create_filter_list(tn93_fn, filter_list_fn) :
     """
@@ -147,7 +134,6 @@ def create_filter_list(tn93_fn, filter_list_fn) :
             #Flatten list
             rows = list(set(list(chain.from_iterable(rows))))
             [f.write(row + '\n') for row in rows]
-    return
 
 
 def annotate_with_hxb2(hxb2_links_fn, hivcluster_json_fn):
@@ -229,7 +215,7 @@ def id_to_attributes(csv_fn, attribute_map, delimiter):
     # [{'id': {'a1': '', 'a2': '', ... , 'a3': ''}}, ...]
     with open(csv_fn) as csv_f:
         preader = csv.reader(csv_f, delimiter=',', quotechar='|')
-        preader.__next__()
+        next(preader)
         rows = set([item for row in preader for item in row[:2]])
         #Create unique id list from rows
         for id in rows:
@@ -296,26 +282,24 @@ def annotate_lanl(trace_json_fn, lanl_file):
 def strip_reference_sequences(input, reference_fn, TN93DIST, threshold, ambiguities, min_overlap):
 
     tn93_ref_fn = input+'_user.reference.json'
-    tn93_ref_fh = open(tn93_ref_fn , 'w')
+    with open(tn93_ref_fn , 'w') as tn93_ref_fh:
+        output_fn=input+'_user.reference.csv'
+        OUTPUT_FORMAT='csv'
 
-    output_fn=input+'_user.reference.csv'
-    OUTPUT_FORMAT='csv'
+        tn93_process =  [TN93DIST, '-q', '-o', output_fn, '-t',
+                                   threshold, '-a', ambiguities, '-g', '1', '-l',
+                                   min_overlap, '-f', OUTPUT_FORMAT, '-s', reference_fn,
+                                   input]
 
-    tn93_process =  [TN93DIST, '-o', output_fn, '-t',
-                               threshold, '-a', ambiguities, '-g', '1', '-l',
-                               min_overlap, '-f', OUTPUT_FORMAT, '-s', reference_fn,
-                               input]
-
-    subprocess.check_call(tn93_process, stdout=tn93_ref_fh)
-    tn93_ref_fh.close()
+        logging.debug(' '.join(tn93_process))
+        subprocess.check_call(tn93_process, stdout=tn93_ref_fh)
 
     # Make new FASTA file without reference sequences
     with open(output_fn) as output_fh:
-        lines = output_fh.readlines()
-        to_strip = [line.split(',')[0].strip() for line in lines[1:]]
+        to_strip = set([line.split(',')[0].strip() for line in output_fh.readlines()[1:]])
 
+    logging.debug("Stripping " + to_strip)
     input_file = list(SeqIO.parse(open(input, 'r'), 'fasta'))
-    print(to_strip)
 
     #Filter sequences to strip
     stripped = list(filter(lambda x: x.id not in to_strip, input_file))
@@ -323,20 +307,19 @@ def strip_reference_sequences(input, reference_fn, TN93DIST, threshold, ambiguit
     output_handle = open(input, "w")
     SeqIO.write(stripped, output_handle, "fasta")
 
-    logging.debug(' '.join(tn93_process))
 
 
 def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
-             compare_to_lanl, status_file, config, fraction, POOL, strip_drams=False):
+             compare_to_lanl, status_file, config, fraction, POOL, strip_drams_flag =False, filter_edges = "no", handle_contaminants = "remove"):
 
     """
-    PHASE 0)  Strip Drams
     PHASE 1)  Pad sequence alignment to HXB2 length with bealign
     PHASE 2)  Convert resulting bam file back to FASTA format
     PHASE 2b) Rename any duplicates in FASTA file
     PHASE 3)  Remove HXB2 and NL43 sequences
-    PHASE 4)  tn93 analysis on the supplied FASTA file alone
-    PHASE 5)  Run hivclustercsv to return clustering information in json format
+    PHASE 3b) Strip Drams if requested
+    PHASE 4)  TN93 analysis on the supplied FASTA file alone
+    PHASE 5)  Run hivclustercsv to return clustering information in JSON format
     PHASE 5b) Attribute annotations to results from (4)
     PHASE 6)  Run tn93 against LANL if user elects to
     PHASE 6b) Concatenate results from pre-run LANL tn93, user tn93, and (5) analyses
@@ -347,36 +330,16 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     # Declare reference file
     resource_dir =  os.path.dirname(os.path.realpath(__file__)) + '/res/'
 
-    reference_files = {
-        'HXB2_prrt'   : resource_dir + 'HXB2_2253_3869.fa',
-        'NL4-3_prrt'  : resource_dir + 'pNL43_2253_3869.fa'
-    }
-
     #These should come from config
     PYTHON=config.get('python')
     BEALIGN=config.get('bealign')
     BAM2MSA=config.get('bam2msa')
     TN93DIST=config.get('tn93dist')
     HIVNETWORKCSV=config.get('hivnetworkcsv')
-    LANL_TN93OUTPUT_CSV= resource_dir + 'LANL.TN93OUTPUT.csv'
 
-    if strip_drams:
-        if strip_drams == 'wheeler':
-            LANL_FASTA=config.get('lanl_wheeler')
-        elif strip_drams == 'lewis':
-            LANL_FASTA=config.get('lanl_lewis')
-    else:
-        LANL_FASTA=config.get('lanl_fasta')
-
-    if reference in reference_files.keys():
-        REFERENCE_FASTA = reference_files[reference]
-    elif os.path.isfile(reference):
-        REFERENCE_FASTA = reference
-    else:
-        REFERENCE_FASTA = None
-
-    # TODO: We may not need this anymore
-    HXB2_LINKED_LANL = resource_dir + 'LANL.HXB2.RESOLVE.csv'
+    LANL_FASTA=config.get('lanl_fasta')
+    LANL_TN93OUTPUT_CSV=config.get ('lanl_tn93output_csv')
+    
     DEFAULT_DELIMITER='|'
 
     #Convert to Python
@@ -388,7 +351,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     OUTPUT_FASTA_FN=input+'_output.fasta'
     OUTPUT_TN93_FN=input+'_user.tn93output.csv'
     JSON_TN93_FN=input+'_user.tn93output.json'
-    HXB2_LINKED_OUTPUT_FASTA_FN=input+'_user.hxb2linked.csv'
+    OUTPUT_COMBINED_SEQUENCE_FILE =input+"_combined_user_lanl.fasta";
     OUTPUT_CLUSTER_JSON=input+'_user.trace.json'
     STATUS_FILE=input+'_status'
 
@@ -396,23 +359,42 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     OUTPUT_USERTOLANL_TN93_FN=input+'_usertolanl.tn93output.csv'
     USER_LANL_TN93OUTPUT=input+'_userlanl.tn93output.csv'
     USER_FILTER_LIST=input+'_user_filter.csv'
+    
+    CONTAMINANT_ID_LIST = input + '_contaminants.csv'
 
     DEVNULL = open(os.devnull, 'w')
-
+    EXCLUSION_LIST = None
+    
 
     # PHASE 1
     current_status = "Aligning"
     update_status(id, current_status, POOL)
-    bealign_process = [PYTHON, BEALIGN, '-r', reference , '-m', SCORE_MATRIX, '-R', input, BAM_FN]
+
+    if handle_contaminants is None:
+        handle_contaminants  = 'no'
+
+    bealign_process = [PYTHON, BEALIGN, '-q', '-r', reference , '-m', SCORE_MATRIX, '-R', input, BAM_FN]
+    
+    if handle_contaminants != 'no':
+        bealign_process.insert (-3, '-K')
+        
     subprocess.check_call(bealign_process, stdout=DEVNULL)
 
     logging.debug(' '.join(bealign_process))
 
     # PHASE 2
-    update_status(id, "Converting to FASTA", POOL)
+    update_status(id, "BAM to FASTA conversion", POOL)
     bam_process = [PYTHON, BAM2MSA, BAM_FN, OUTPUT_FASTA_FN]
     subprocess.check_call(bam_process, stdout=DEVNULL)
     logging.debug(' '.join(bam_process))
+    
+    if handle_contaminants != 'no':
+        with (open (OUTPUT_FASTA_FN, 'r')) as msa:
+            reference_name = next (SeqIO.parse (msa, 'fasta')).id
+            logging.debug ('Reference name set to %s' % reference_name)
+            with open (CONTAMINANT_ID_LIST, 'w') as contaminants:
+                print (reference_name, file = contaminants)
+            
 
     # Ensure unique ids
     # Just warn of duplicates (by giving them an attribute)
@@ -421,36 +403,28 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
     # PHASE 3
     # Strip HXB2 and NL43 linked sequences
-    if REFERENCE_FASTA:
-        strip_reference_sequences(OUTPUT_FASTA_FN, REFERENCE_FASTA, TN93DIST, threshold, ambiguities, min_overlap)
+    #if REFERENCE_FASTA:
+    #    strip_reference_sequences(OUTPUT_FASTA_FN, REFERENCE_FASTA, TN93DIST, threshold, ambiguities, min_overlap)
 
-    if strip_drams:
-        stripped_fasta = sd.strip_drams(OUTPUT_FASTA_FN, strip_drams)
-
-        # Write file back to input
-        outfile = open(str(OUTPUT_FASTA_FN),'w')
-        outfile.write(stripped_fasta)
-        outfile.close()
+    if strip_drams_flag:
+        #update_status(id, "Masking DRAM sites", POOL)
+        OUTPUT_FASTA_FN_TMP = OUTPUT_FASTA_FN + ".spool"
+        with open (str(OUTPUT_FASTA_FN_TMP),'w') as output_file:
+            for (seq_id, data) in sd.strip_drams (OUTPUT_FASTA_FN, strip_drams_flag):
+                print (">%s\n%s" % (seq_id, data), file = output_file)                
+        shutil.move (OUTPUT_FASTA_FN_TMP, OUTPUT_FASTA_FN)
 
     # PHASE 4
-    update_status(id, "TN93 Analysis", POOL)
-    tn93_fh = open(JSON_TN93_FN, 'w')
+    update_status(id, "Computing pairwise TN93 distances", POOL)
 
-
-    if(ambiguities != 'resolve'):
-        tn93_process = [TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
+    with open(JSON_TN93_FN, 'w') as tn93_fh:
+        tn93_process = [TN93DIST, '-q', '-o', OUTPUT_TN93_FN, '-t',
                                threshold, '-a', ambiguities, '-l',
-                               min_overlap, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
+                               min_overlap, '-g', fraction if ambiguities == 'resolve' else '1.0', '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
 
-    else:
-        tn93_process = [TN93DIST, '-o', OUTPUT_TN93_FN, '-t',
-                               threshold, '-a', ambiguities, '-l',
-                               min_overlap, '-g', fraction, '-f', OUTPUT_FORMAT, OUTPUT_FASTA_FN]
+        subprocess.check_call(tn93_process,stdout=tn93_fh)
+        logging.debug(' '.join(tn93_process))
 
-    subprocess.check_call(tn93_process,stdout=tn93_fh)
-    logging.debug(' '.join(tn93_process))
-
-    tn93_fh.close()
 
     id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
     if type(id_dict) is ValueError:
@@ -458,37 +432,36 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
         raise id_dict
 
     # PHASE 5
-    update_status(id, "HIV Network Analysis", POOL)
+    update_status(id, "Inferring, filtering, and analyzing molecular transmission network", POOL)
     output_cluster_json_fh = open(OUTPUT_CLUSTER_JSON, 'w')
 
     hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', OUTPUT_TN93_FN, '-t',
-                               threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
-                               'report']
+                                   threshold, '-f', SEQUENCE_ID_FORMAT, '-j']
+        
+    if filter_edges and filter_edges != 'no':
+        hivnetworkcsv_process.extend (['-n',filter_edges, '-s', OUTPUT_FASTA_FN])
+        
+    if handle_contaminants != 'no':   
+        hivnetworkcsv_process.extend (['-C', handle_contaminants, '-F', CONTAMINANT_ID_LIST])
 
     subprocess.check_call(hivnetworkcsv_process, stdout=output_cluster_json_fh)
     logging.debug(' '.join(hivnetworkcsv_process))
     output_cluster_json_fh.close()
 
-    ## Add hxb2_link attribute to each node that is shown to be linked by way of
-    ## PHASE 5b
-    #if reference == 'HXB2_prrt':
-    #    annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, OUTPUT_CLUSTER_JSON)
-
-    #annotate_attributes(OUTPUT_CLUSTER_JSON, id_dict)
 
     if compare_to_lanl:
 
       # PHASE 6
 
-      update_status(id, "Public Database TN93 Analysis", POOL)
+      update_status(id, "Computing pairwise TN93 distances against a public database", POOL)
 
       if ambiguities != 'resolve':
-          lanl_tn93_process = [TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
+          lanl_tn93_process = [TN93DIST, '-q', '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
                                  threshold, '-a', ambiguities,
                                  '-f', OUTPUT_FORMAT, '-l', min_overlap, '-s',
                                  OUTPUT_FASTA_FN, LANL_FASTA]
       else:
-          lanl_tn93_process = [TN93DIST, '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
+          lanl_tn93_process = [TN93DIST, '-q', '-o', OUTPUT_USERTOLANL_TN93_FN, '-t',
                                threshold, '-a', ambiguities,
                                '-f', OUTPUT_FORMAT, '-g', fraction, '-l',
                                min_overlap, '-s', OUTPUT_FASTA_FN,
@@ -504,6 +477,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       #This is where reference annotation becomes an issue
       concatenate_data(USER_LANL_TN93OUTPUT, LANL_TN93OUTPUT_CSV,
                        OUTPUT_USERTOLANL_TN93_FN, OUTPUT_TN93_FN)
+                    
 
       lanl_id_dict = id_to_attributes(OUTPUT_TN93_FN, attribute_map, DEFAULT_DELIMITER)
 
@@ -511,21 +485,34 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
       create_filter_list(OUTPUT_TN93_FN, USER_FILTER_LIST)
 
       # PHASE 7
-      update_status(id, "Public Database HIV Network Analysis", POOL)
+      update_status(id, "Inferring connections to sequences in a public database", POOL)
       lanl_output_cluster_json_fh = open(LANL_OUTPUT_CLUSTER_JSON, 'w')
-      lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
-                                    threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-n',
-                                    'report', '-k', USER_FILTER_LIST]
+      
+      
+      if filter_edges and filter_edges != 'no':
+         with open (OUTPUT_COMBINED_SEQUENCE_FILE, 'w') as combined_fasta:
+            for f_path in (LANL_FASTA, OUTPUT_FASTA_FN):
+                with open (f_path) as src_file: 
+                    shutil.copyfileobj (src_file,combined_fasta)
+                    print ("\n", file = combined_fasta)
+            
+         lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
+                                        threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-k', USER_FILTER_LIST,
+                                        '-n', filter_edges, '-s', OUTPUT_COMBINED_SEQUENCE_FILE
+                                        ]
+      
+      else:
+          lanl_hivnetworkcsv_process = [PYTHON, HIVNETWORKCSV, '-i', USER_LANL_TN93OUTPUT, '-t',
+                                        threshold, '-f', SEQUENCE_ID_FORMAT, '-j', '-k', USER_FILTER_LIST]
 
-      subprocess.check_call(lanl_hivnetworkcsv_process, stdout=lanl_output_cluster_json_fh)
+      if handle_contaminants != 'no':   
+          lanl_hivnetworkcsv_process.extend (['-C', handle_contaminants, '-F', CONTAMINANT_ID_LIST])
+
       logging.debug(' '.join(lanl_hivnetworkcsv_process))
+      subprocess.check_call(lanl_hivnetworkcsv_process, stdout=lanl_output_cluster_json_fh)
 
       lanl_output_cluster_json_fh.close()
 
-      ## Add hxb2_link attribute to each lanl node that is shown to be linked based
-      ## off a supplied file, but based on the user supplied threshold.
-      #annotate_with_hxb2(HXB2_LINKED_OUTPUT_FASTA_FN, LANL_OUTPUT_CLUSTER_JSON)
-      #lanl_annotate_with_hxb2(HXB2_LINKED_LANL, LANL_OUTPUT_CLUSTER_JSON, threshold)
 
       # Adapt ids to attributes
       #annotate_attributes(LANL_OUTPUT_CLUSTER_JSON, lanl_id_dict)
@@ -546,6 +533,8 @@ def main():
     parser.add_argument('-t', '--threshold', help='Only count edges where the distance is less than this threshold')
     parser.add_argument('-m', '--minoverlap', help='Minimum Overlap')
     parser.add_argument('-g', '--fraction', help='Fraction')
+    parser.add_argument('-u', '--curate', help='Filter contaminants')
+    parser.add_argument('-f', '--filter', help='Edge filtering option', default = "no", type = str)
     parser.add_argument('-s', '--strip_drams', help="Read in an aligned Fasta file (HIV prot/rt sequences) and remove \
                                                      DRAM (drug resistance associated mutation) codon sites. It will output a new alignment \
                                                      with these sites removed. It requires input/output file names along with the list of \
@@ -565,6 +554,7 @@ def main():
 
     args = parser.parse_args()
 
+    logging.basicConfig (filename = args.input + ".hivtrace.log", level=logging.DEBUG)
     FN=args.input
     ID=os.path.basename(FN)
     REFERENCE = args.reference
@@ -581,7 +571,7 @@ def main():
     if STRIP_DRAMS != 'wheeler' and STRIP_DRAMS != 'lewis':
         STRIP_DRAMS = False
 
-    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION, POOL, strip_drams=STRIP_DRAMS)
+    hivtrace(ID, FN, REFERENCE, AMBIGUITY_HANDLING, DISTANCE_THRESHOLD, MIN_OVERLAP, COMPARE_TO_LANL, STATUS_FILE, config, FRACTION, POOL, strip_drams_flag =STRIP_DRAMS, filter_edges = args.filter, handle_contaminants = args.curate)
 
 if __name__ == "__main__":
     main()
