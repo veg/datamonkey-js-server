@@ -30,6 +30,7 @@
 var spawn_job = require('./spawn_flea.js'),
     config = require('../../config.json'),
     fs = require('fs'),
+    path = require('path'),
     ss = require('socket.io-stream');
 
 // Pass socket to flea job
@@ -72,8 +73,7 @@ var Flea = function (socket, stream, params) {
     });
   });
 
-  var fn = __dirname + '/output/' + params.analysis._id + '.tar';
-
+  var fn = path.join(__dirname, '/output/', params.analysis._id + '.tar');
   stream.pipe(fs.createWriteStream(fn));
 
   stream.on('end', function(err) {

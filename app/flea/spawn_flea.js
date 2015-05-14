@@ -35,6 +35,7 @@ var spawn = require('child_process').spawn,
     config = require('../../config.json'),
     util = require('util'),
     moment = require('moment'),
+    winston = require('winston'),
     Tail = require('tail').Tail,
     EventEmitter = require('events').EventEmitter,
     JobStatus = require(__dirname + '/../../lib/jobstatus.js').JobStatus;
@@ -55,8 +56,8 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   self.filepath = fn;
   self.output_dir  = path.dirname(self.filepath);
   self.id = flea_params.analysis._id;
-  self.filedir =  self.output_dir + '/' + self.id + '/';
-  self.file_list = self.filedir + '/files';
+  self.filedir =  path.join(self.output_dir, self.id);
+  self.file_list = path.join(self.filedir,'/files');
   self.status_fn = self.filepath + '.status';
   self.results_fn= self.filepath + '.flea';
   self.python = config.flea_python;
@@ -67,59 +68,92 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   self.msas = flea_params.msas;
   self.genetic_code = "1";
   self.torque_id = "unk";
-  self.std_err = "unk";
+  self.stdout = "";
+  self.stderr = "";
   self.job_completed = false;
-  self.current_status = "";
 
   // Results files
-  self.results_dir = self.filedir + '/hyphy_data/results/'
-  self.frequencies_fn = self.results_dir + 'frequencies.json'
-  self.rates_fn = self.results_dir + 'rates.json'
-  self.sequences_fn = self.results_dir + 'sequences.json'
-  self.trees_fn = self.results_dir + 'trees.json'
-
-  // Ensure the progress file exists
-  //fs.openSync(self.progress_fn, 'w');
+  self.results_dir = path.join(self.filedir, '/hyphy_data/results/');
+  self.frequencies_fn = path.join(self.results_dir, 'frequencies.json');
+  self.rates_fn = path.join(self.results_dir, 'rates.json');
+  self.rates_pheno_fn = path.join(self.results_dir, 'rates_pheno.tsv');
+  self.sequences_fn = path.join(self.results_dir, 'sequences.json');
+  self.trees_fn = path.join(self.results_dir,'trees.json');
+  self.turnover_fn = path.join(self.results_dir,'turnover.json');
+  self.copynumbers_fn = path.join(self.filedir,'copynumbers.json');
 
   // env_pipeline.py 
   var env_pipeline_submit = function () {
 
-    var env_pipeline =  spawn(self.python, 
-                         [ self.pipeline,
-                           '--config', self.flea_config,
-                           self.file_list ],  { cwd : self.filedir } );
+    var env_pipeline_parameters = [ '-u', self.pipeline, '--config', self.flea_config, self.file_list ];
 
-    env_pipeline.stderr.on('data', function (data) {
-      self.emit('status update', {'phase': self.status_stack[0], 'msg': String(data)});
-    });
+    winston.info('flea : submitting job : ' + self.python + ' ' + env_pipeline_parameters.join(' '));
+
+
+    var env_pipeline =  spawn(self.python, env_pipeline_parameters,  { cwd : self.filedir } );
 
     env_pipeline.stdout.on('data', function (data) {
-      var status_update_packet = {'phase': self.status_stack[0], 'msg': String(data)};
+
+      self.stdout += String(data);
+      winston.info(self.id + ' : flea : ' + self.stdout);
+      var status_update_packet = {'phase': 'running', 'msg': self.stdout };
       self.emit('status update', status_update_packet);
-      console.log(status_update_packet);
+
+    });
+
+    env_pipeline.stderr.on('data', function (data) {
+
+      self.stderr += String(data);
+      winston.info(self.id + ' : flea : ' + self.stderr);
+      var status_update_packet = { 'phase' : 'running', 'msg' : self.stderr };
+      self.emit('status update', status_update_packet);
+
     });
 
     env_pipeline.on('close', function (code) {
+
       // Read results files and send
+      winston.info('exit code: ' + code);
 
       // Save results files 
-      var frequency_promise = Q.nfcall(fs.readFile, self.frenquencies_fn, "utf-8"); 
-      var rates_promise = Q.nfcall(fs.readFile, self.rates_fn, "utf-8"); 
-      var sequences_promise = Q.nfcall(fs.readFile, self.sequences_fn, "utf-8"); 
-      var trees_promise = Q.nfcall(fs.readFile, self.trees_fn, "utf-8"); 
-      console.log(self.frequencies_fn);
+      if(code == 0) {
 
-      var promises = [ frequency_promise, rates_promise, sequences_promise, trees_promise]; 
+        var frequency_promise = Q.nfcall(fs.readFile, self.frequencies_fn, "utf-8"); 
+        var rates_promise = Q.nfcall(fs.readFile, self.rates_fn, "utf-8"); 
+        var rates_pheno_promise = Q.nfcall(fs.readFile, self.rates_pheno_fn, "utf-8"); 
+        var sequences_promise = Q.nfcall(fs.readFile, self.sequences_fn, "utf-8"); 
+        var trees_promise = Q.nfcall(fs.readFile, self.trees_fn, "utf-8"); 
+        var turnover_promise = Q.nfcall(fs.readFile, self.turnover_fn, "utf-8"); 
+        var copynumbers_promise = Q.nfcall(fs.readFile, self.copynumbers_fn, "utf-8"); 
 
-      Q.allSettled(promises) 
-      .then(function (results) { 
-          var hyphy_data = {};
-          hyphy_data.frequencies = results[0].value; 
-          hyphy_data.rates = results[1].value; 
-          hyphy_data.sequences = results[2].value; 
-          hyphy_data.trees = results[3].value; 
-          self.emit('completed', {'results' : hyphy_data});
-        }); 
+        var promises = [ frequency_promise, 
+                         rates_promise, 
+                         rates_pheno_promise, 
+                         sequences_promise, 
+                         trees_promise, 
+                         turnover_promise,
+                         copynumbers_promise
+                         ]; 
+
+        Q.allSettled(promises) 
+        .then(function (results) { 
+            var hyphy_data = {};
+            hyphy_data.frequencies = results[0].value;
+            hyphy_data.rates       = results[1].value;
+            hyphy_data.rates_pheno = results[2].value;
+            hyphy_data.sequences   = results[3].value;
+            hyphy_data.trees       = results[4].value;
+            hyphy_data.turnover    = results[5].value;
+            hyphy_data.copynumbers = results[6].value;
+            self.emit('completed', {'results' : hyphy_data});
+          }); 
+
+      } else {
+
+        self.emit('script error', {'code' : code, 'error' : self.stderr });
+
+      }
+
     });
 
   }
