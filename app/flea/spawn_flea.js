@@ -116,7 +116,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
       winston.info('exit code: ' + code);
 
       // Save results files 
-      if(code == 0) {
+      if(code === 0) {
 
         var frequency_promise = Q.nfcall(fs.readFile, self.frequencies_fn, "utf-8"); 
         var rates_promise = Q.nfcall(fs.readFile, self.rates_fn, "utf-8"); 
@@ -156,7 +156,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
 
     });
 
-  }
+  };
 
   // Write the contents of the file in the parameters to a file on the 
   // local filesystem, then spawn the job.
@@ -183,7 +183,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
           if(files.indexOf(msa._id + '.fastq') != -1) {
             var formatted_visit_date = moment(msa.visit_date).format("YYYYMMDD");
             var string_to_write = util.format('%s %s %s\n', self.filedir + '/' + msa._id + '.fastq', msa.visit_code, formatted_visit_date);
-            fs.appendFileSync(self.file_list, string_to_write)
+            fs.appendFileSync(self.file_list, string_to_write);
           }
 
           if(index == (self.msas.length - 1)) {
@@ -203,10 +203,10 @@ FleaRunner.prototype.start = function (fn, flea_params) {
       .on('error', onError)
       .pipe(extractor);
 
-    }
+    };
 
   do_flea(flea_params);
 
-}
+};
 
 exports.FleaRunner = FleaRunner;

@@ -82,7 +82,7 @@ var Flea = function (socket, stream, params) {
     flea_analysis.start(fn, params);
   });
 
-}
+};
 
 exports.Flea = Flea;
 
