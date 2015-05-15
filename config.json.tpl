@@ -16,7 +16,6 @@
   "lanl_tn93output_csv"    : "/opt/hivtrace/example_data/hivtrace/example_files/LANL.TN93OUTPUT.csv",
   "reference"              : "hxb2_prrt",
   "score_matrix"           : "HIV_BETWEEN_F",
-  "score_matrix"           : "HIV_BETWEEN_F",
   "output_format"          : "csv",
   "sequence_id_format"     : "plain",
   "ambiguity_handling"     : "average",

@@ -4,7 +4,7 @@
     "version"     : "0.2.0",
     "private"     : true,
     "dependencies": {
-        "hyphy"            : "git+https : //github.com/stevenweaver/hyphy.git",
+        "hyphy"            : "git+https://github.com/stevenweaver/hyphy.git",
         "redis"            : "0.12.x",
         "socket.io"        : "1.2.x",
         "socket.io-stream" : "0.6.x",
@@ -14,6 +14,7 @@
         "q"                : "1.2.x",
         "underscore"       : "1.8.x",
         "winston"          : "0.9.x",
-        "tar-gz"           : "1.4.2"
+        "tar"              : "1.4.2",
+        "moment"           : "1.4.2"
     }
 }
