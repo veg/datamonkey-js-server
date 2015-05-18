@@ -78,7 +78,7 @@ aBSRELRunner.prototype.status_watcher = function () {
        }
        if(data) {
          if(data != self.current_status) {
-           self.emit('status update', {'phase' : status.status, 
+           self.emit('status update', {'phase' : status, 
                                        'index': 1, 
                                        'msg': data, 
                                        'torque_id' : self.torque_id, 
@@ -88,7 +88,7 @@ aBSRELRunner.prototype.status_watcher = function () {
            self.current_status = data;
          }
        } else if ( status.status == "queued" ) {
-           self.emit('status update', {'phase' : status.status, 
+           self.emit('status update', {'phase' : status, 
                                        'index': 1, 
                                        'msg': null, 
                                        'torque_id' : self.torque_id, 
