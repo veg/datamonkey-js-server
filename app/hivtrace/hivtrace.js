@@ -42,6 +42,7 @@ var spawn        = require('child_process').spawn,
     Q            = require('q'),
     _            = require('underscore'),
     JobStatus    = require('../../lib/jobstatus.js').JobStatus,
+    winston      = require('winston'),
     redis        = require('redis');
 
 // Use redis as our key-value store

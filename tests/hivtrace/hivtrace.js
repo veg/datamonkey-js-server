@@ -32,8 +32,9 @@ var fs        = require('fs'),
     winston   = require('winston'),
     clientio  = require('socket.io-client');
     io        = require('socket.io').listen(5000);
-    hivtrace    = require(__dirname + '/../../app/hivtrace/hivtrace.js'),
+    hivtrace  = require(__dirname + '/../../app/hivtrace/hivtrace.js'),
     job       = require(__dirname + '/../../app/job.js'),
+    winston   = require('winston'),
     ss        = require('socket.io-stream');
 
 //TODO: retrieve socket from config
