@@ -106,7 +106,7 @@ hyphyJob.prototype.spawn = function () {
       } else if (data) {
        self.onStatusUpdate(data);
       } else {
-       // No status updates could be read, 
+       // No status update could be read, 
        // but this could be due to the job just starting
        self.warn('read progress file, but no data');
       }
@@ -128,6 +128,12 @@ hyphyJob.prototype.spawn = function () {
   hyphy_job_runner.on('job created', function(torque_id) {
     self.onJobCreated(torque_id);
   });
+
+  // Report the torque job id back to datamonkey
+  hyphy_job_runner.on('job metadata', function(status) {
+    self.onJobMetadata(status);
+  });
+
 
   self.stream.pipe(fs.createWriteStream(self.fn));
 
@@ -214,7 +220,10 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   self.current_status = data;
 
   var status_update = { 'msg': data, 
-                       'torque_id' : self.torque_id};
+                        'torque_id' : self.torque_id,
+                        'stime'     : self.stime,   
+                        'ctime'     : self.ctime
+                      };
 
 
   // Prepare redis packet for delivery
@@ -232,8 +241,17 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
 
 };
 
+hyphyJob.prototype.onJobMetadata = function(data) {
+
+  var self = this;
+  self.stime = data.stime;
+  self.ctime = data.ctime;
+
+};
+
 // If a job is cancelled early or the result contents cannot be read
 hyphyJob.prototype.onError = function(error) {
+
   var self = this;
 
   // The packet that will delivered to datamonkey via the publish command

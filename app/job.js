@@ -141,9 +141,9 @@ jobRunner.prototype.status_watcher = function () {
       clearInterval(self.metronome_id);
       self.emit(self.states.completed, '');
     } else if (status == self.states.queued) {
-      self.emit('job created', { 'torque_id': self.torque_id });
+      self.emit('job created', { 'torque_id' : self.torque_id });
     } else {
-      self.emit('status update', '');
+      self.emit('job metadata', status);
    }
  });
 };
