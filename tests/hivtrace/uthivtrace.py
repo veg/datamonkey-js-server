@@ -30,7 +30,6 @@ import os
 sys.path.append(os.getcwd() + '/../../app/hivtrace/')
 
 import hivtrace
-import strip_drams
 import subprocess
 import unittest
 import json
@@ -67,7 +66,7 @@ class TestHIVTrace(unittest.TestCase):
 
     self.steps = [ 'Aligning',
       'Converting to FASTA',
-      'TN93 Analysis',
+      'TN94 Analysis',
       'HIV Network Analysis',
       'Public Database TN93 Analysis',
       'Public Database HIV Network Analysis',
@@ -84,15 +83,14 @@ class TestHIVTrace(unittest.TestCase):
   def tearDown(self):
       #Reset all test files and remove generated files
       devnull = open(os.devnull, 'w')
-      #subprocess.check_call(['git', 'clean', '-f', './res/'], stdout=devnull)
-      #subprocess.check_call(['git', 'checkout', '-f', './res/*'], stdout=devnull)
+      subprocess.check_call(['git', 'clean', '-f', './res/'], stdout=devnull)
+      subprocess.check_call(['git', 'checkout', '-f', './res/*'], stdout=devnull)
       devnull.close()
       return
 
   def test_redis_connection(self):
     hivtrace.update_status(self.fn, 'Aligning', self.POOL)
     return
-
 
   def test_flag_duplicates(self):
     hivtrace.rename_duplicates(self.fn, '|')
@@ -105,17 +103,17 @@ class TestHIVTrace(unittest.TestCase):
 
     return
 
-  def test_concatenate_data(self):
-    hivtrace.concatenate_data(self.user_lanl_tn93output,
-                              self.lanl_tn93output_csv,
-                              self.output_usertolanl_tn93_fn,
-                              self.output_tn93_fn)
+  #def test_concatenate_data(self):
+  #  hivtrace.concatenate_data(self.user_lanl_tn93output,
+  #                            self.lanl_tn93output_csv,
+  #                            self.output_usertolanl_tn93_fn,
+  #                            self.output_tn93_fn)
 
-    #Check that there are five test_ids
-    with open(self.user_lanl_tn93output, 'r') as fasta_f:
-      length = len(fasta_f.readlines())
-      self.assertTrue(length == 787243)
-    return
+  #  #Check that there are five test_ids
+  #  with open(self.user_lanl_tn93output, 'r') as fasta_f:
+  #    length = len(fasta_f.readlines())
+  #    self.assertTrue(length == 787243)
+  #  return
 
   def test_annotate_lanl(self):
 
@@ -166,33 +164,33 @@ class TestHIVTrace(unittest.TestCase):
 
     return
 
-  def test_lanl_annotate_with_hxb2(self):
+  #def test_lanl_annotate_with_hxb2(self):
 
-    self.fn = './res/INPUT.FASTA'
-    HXB2_LINKED_LANL='../../app/hivtrace/res/LANL.HXB2.csv'
-    LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
-    DISTANCE_THRESHOLD = '.025'
+  #  self.fn = './res/INPUT.FASTA'
+  #  HXB2_LINKED_LANL='../../app/hivtrace/res/LANL.HXB2.csv'
+  #  LANL_OUTPUT_CLUSTER_JSON=self.fn+'_LANL_USER.TRACE.JSON'
+  #  DISTANCE_THRESHOLD = '.025'
 
-    hivtrace.lanl_annotate_with_hxb2(HXB2_LINKED_LANL,
-                                     LANL_OUTPUT_CLUSTER_JSON,
-                                     DISTANCE_THRESHOLD)
+  #  hivtrace.lanl_annotate_with_hxb2(HXB2_LINKED_LANL,
+  #                                   LANL_OUTPUT_CLUSTER_JSON,
+  #                                   DISTANCE_THRESHOLD)
 
-    with open(LANL_OUTPUT_CLUSTER_JSON) as json_fh:
-      lanl_hivcluster_json = json.loads(json_fh.read())
+  #  with open(LANL_OUTPUT_CLUSTER_JSON) as json_fh:
+  #    lanl_hivcluster_json = json.loads(json_fh.read())
 
-    nodes = lanl_hivcluster_json.get('Nodes')
+  #  nodes = lanl_hivcluster_json.get('Nodes')
 
-    test_subjects = ['B|JP|D21166|-', 'B_CH_AF077691_9999' ]
+  #  test_subjects = ['B|JP|D21166|-', 'B_CH_AF077691_9999' ]
 
-    # Ensure test subjects have hxb2 attribute
-    test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
-    [self.assertEqual(node.get('hxb2_linked'), 'true') for node in test_subject_nodes]
+  #  # Ensure test subjects have hxb2 attribute
+  #  test_subject_nodes = filter(lambda x: x['id'] in test_subjects, nodes)
+  #  [self.assertEqual(node.get('hxb2_linked'), 'true') for node in test_subject_nodes]
 
-    # Ensure the others have not been discriminated
-    non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
-    [self.assertEqual(node.get('hxb2_linked'), 'false') for node in non_test_subject_nodes]
+  #  # Ensure the others have not been discriminated
+  #  non_test_subject_nodes = filter(lambda x: x['id'] not in test_subjects, nodes)
+  #  [self.assertEqual(node.get('hxb2_linked'), 'false') for node in non_test_subject_nodes]
 
-    return
+  #  return
 
   def test_attribute_parse(self):
 
@@ -246,13 +244,12 @@ class TestHIVTrace(unittest.TestCase):
     id              = os.path.basename(self.fn)
     compare_to_lanl = True
     status_file     = self.fn+'_status'
-    strip_drams     = 'lewis'
 
     #run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
                       compare_to_lanl, status_file, self.config,
-                      '0.025', self.POOL, strip_drams=strip_drams)
+                      '0.025', self.POOL)
 
     # Read output json
     self.assertTrue(True)
@@ -266,13 +263,11 @@ class TestHIVTrace(unittest.TestCase):
     compare_to_lanl = False
     status_file=self.fn+'_status'
     hivcluster_json_fn = fn+'_user.trace.json'
-    strip_drams_type = 'wheeler'
 
     #Run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      compare_to_lanl, status_file, self.config, '0.025', self.POOL,
-                      strip_drams=strip_drams_type)
+                      compare_to_lanl, status_file, self.config, '0.025', self.POOL)
 
 
     cluster_json = json.loads(open(hivcluster_json_fn).read())
@@ -292,13 +287,11 @@ class TestHIVTrace(unittest.TestCase):
     compare_to_lanl = False
     status_file=self.fn+'_status'
     hivcluster_json_fn = fn+'_user.trace.json'
-    strip_drams_type = 'wheeler'
 
     ##run the whole thing and make sure it completed via the status file
     hivtrace.hivtrace(id, fn, self.reference, self.ambiguities,
                       self.distance_threshold, self.min_overlap,
-                      compare_to_lanl, status_file, self.config, '0.025', self.POOL,
-                      strip_drams=strip_drams_type)
+                      compare_to_lanl, status_file, self.config, '0.025', self.POOL)
 
 
     cluster_json = json.loads(open(hivcluster_json_fn).read())
@@ -337,7 +330,6 @@ class TestHIVTrace(unittest.TestCase):
     reference  = './res/TEST_REFERENCE.FASTA'
     id = os.path.basename(input_fn)
     status_file = input_fn+'_status'
-    strip_drams = False
 
     known_contaminants = ['Z|JP|K03455|2036|7']
 
@@ -354,43 +346,6 @@ class TestHIVTrace(unittest.TestCase):
     [self.assertTrue(not any([k in node for k in known_contaminants])) for node in cluster_json["Nodes"]]
 
 
-  def test_strip_drams(self):
-
-    pol_fn    = './res/HIV1_ALL_2013_pol_DNA.fasta'
-    outfile   = './res/HIV1_ALL_2013_pol_DNA.drams_stripped.fasta'
-    dram_type = 'lewis'
-
-    stripped_fasta = strip_drams.strip_drams(pol_fn, dram_type)
-
-    stripped_seq_dict = {}
-    for line in stripped_fasta.split('\n'):
-        if ">" in line:
-            seq_id = line.rstrip()
-            stripped_seq_dict.update({seq_id:''})
-        else:
-            stripped_seq_dict[seq_id] = stripped_seq_dict[seq_id] + line.rstrip()
-
-
-    PR_set = set([30,32,33,46,47,48,50,54,76,82,84,88,90])
-    RT_set = set([41,62,65,67,69,70,74,75,77,100,103,106,108,115,116,151,181,184,188,190,210,215,219,225,236])
-
-    # Open outfile and compare to original file, ensure sites are stripped
-    f = open(pol_fn, 'r')
-    original_fasta = f.read()
-
-    seq_dict = {}
-    for line in original_fasta.split('\n'):
-        if '>' in line:
-            seq_id = line.rstrip()
-            seq_dict.update({seq_id:''})
-        else:
-            seq_dict[seq_id] = seq_dict[seq_id] + line.rstrip()
-
-    for key in stripped_seq_dict:
-        if len(seq_dict[key]) > 999:
-            assert(len(seq_dict[key]) - len(stripped_seq_dict[key]) == ((len(PR_set) + len(RT_set)) * 3))
-
-    return
 
 if __name__ == '__main__':
   unittest.main()
