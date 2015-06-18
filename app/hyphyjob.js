@@ -47,12 +47,15 @@ var client = redis.createClient();
 var hyphyJob = function () {};
 
 hyphyJob.prototype.log = function (notification, complementary_info) {
+
   var self = this;
+
   if(complementary_info) {
     winston.info([self.type, self.id, notification, complementary_info].join(' : '));
   } else {
     winston.info([self.type, self.id, notification].join(' : '));
   }
+
 };
 
 hyphyJob.prototype.warn = function (notification, complementary_info) {
@@ -91,7 +94,7 @@ hyphyJob.prototype.spawn = function () {
 
   // On status updates, report to datamonkey-js
   hyphy_job_runner.on('status', function(status) {
-    self.log(status);
+    self.log('status', JSON.stringify(status));
     client.hset(self.id, 'status', status);
   });
 
@@ -187,6 +190,7 @@ hyphyJob.prototype.onComplete = function () {
       // Error reading results file
       self.onError('unable to read results file. ' + err);
     } else{
+
       if(data) {
 
         // Prepare redis packet for delivery
@@ -219,10 +223,11 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   var self = this;
   self.current_status = data;
 
-  var status_update = { 'msg': data, 
+  var status_update = { 'msg'       : self.current_status, 
                         'torque_id' : self.torque_id,
                         'stime'     : self.stime,   
-                        'ctime'     : self.ctime
+                        'ctime'     : self.ctime,
+                        'phase'     : 'running'
                       };
 
 

@@ -49,7 +49,7 @@ var busted = function (socket, stream, busted_params) {
   // object specific attributes
   self.type             = 'busted';
   self.qsub_script_name = 'busted_submit.sh';
-  self.qsub_script      = __dirname + '/' + self.qsub_script_name;
+  self.qsub_script      = path.join(__dirname,  self.qsub_script_name);
 
   // parameter attributes
   self.msaid        = busted_params.msa._id;

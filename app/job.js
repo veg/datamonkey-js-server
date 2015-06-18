@@ -82,6 +82,47 @@ var resubscribe = function (socket, id) {
 
 };
 
+var cancel = function (socket, id) {
+
+  var self = this;
+  self.id = id;
+
+  var callback = function(err, obj) {
+
+    if(err || !obj) {
+      winston.warn(self.id + ' : cancel : ' + err);
+      socket.emit('cancelled', {'success' : 'no', 'error' : err});
+    } else {
+      // check job status
+      var current_status = obj.status;
+      var torque_id = obj.torque_id;
+      if (current_status != 'completed' && current_status != 'exiting') {
+        // if job is still pending, cancel
+        winston.warn('info', self.id + ' : job : cancel : cancelling job');
+        jobdel.jobDelete(torque_id, function() {
+          winston.warn('info', self.id + ' : job : cancel : job cancelled');
+          socket.emit('cancelled', {'success' : 'ok'});
+          socket.disconnect();
+        });
+      } else if ( current_status == 'completed') {
+        // if job completed, emit results
+        winston.info(self.id + ' : job : cancel : job already completed');
+        json_results = JSON.parse(obj.results);
+        socket.emit('cancelled', {'success' : 'ok'});
+        socket.disconnect();
+      } else {
+        // if job aborted, emit error
+        winston.info(self.id + ' : job : cancel : job doesnt exist');
+        socket.emit('cancelled', {'success' : 'no', 'error' : 'no job'});
+      }
+    }
+  };
+
+  client.hgetall(self.id, callback);
+
+};
+
+
 var jobRunner = function(script, params) {
   var self = this;
   self.torque_id = '';
@@ -130,23 +171,23 @@ jobRunner.prototype.submit = function (params, cwd) {
 jobRunner.prototype.status_watcher = function () {
 
   var self = this;
-
   var job_status = new JobStatus(self.torque_id);
+  self.metronome_id = job_status.watch(function(error, status_packet) {
 
-  self.metronome_id = job_status.watch(function(error, status) {
-
-    self.emit('status', status);
-
-    if(status == self.states.completed || status == self.states.exiting) {
+    if(status_packet.status == self.states.completed || status_packet.status == self.states.exiting) {
       clearInterval(self.metronome_id);
       self.emit(self.states.completed, '');
-    } else if (status == self.states.queued) {
+    } else if (status_packet.status == self.states.queued) {
       self.emit('job created', { 'torque_id' : self.torque_id });
     } else {
-      self.emit('job metadata', status);
+      self.emit('job metadata', status_packet);
+      self.emit('status update', status_packet);
    }
+
  });
 };
 
 exports.resubscribe = resubscribe;
+exports.cancel = cancel;
 exports.jobRunner = jobRunner;
+

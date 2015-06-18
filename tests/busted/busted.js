@@ -2,7 +2,7 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
-  Copyright (C) 2014
+  Copyright (C) 2015
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -30,8 +30,10 @@
 var fs        = require('fs'),
     should    = require('should'),
     winston   = require('winston'),
+    path      = require('path'),
     clientio  = require('socket.io-client');
-    io        = require('socket.io').listen(5000);
+    io        = require('socket.io').listen(5000),
+    redis     = require('redis'),
     busted    = require(__dirname + '/../../app/busted/busted.js'),
     job       = require(__dirname + '/../../app/job.js'),
     ss        = require('socket.io-stream');
@@ -45,12 +47,15 @@ var options ={
     'force new connection': true
     };
     
+var client = redis.createClient();
 
 describe('busted jobrunner', function() {
 
   var id = '5446bc0d355080301f18a8c6';
-  var fn = __dirname + '/res/' + id;
-  var params_file = __dirname + '/res/params.json';
+  var fn = path.join(__dirname, '/res/', id);
+  var params_file = path.join(__dirname, '/res/params.json');
+
+  client.del(id);
 
   io.sockets.on('connection', function (socket) {
     ss(socket).on('busted:spawn',function(stream, params){
@@ -62,6 +67,12 @@ describe('busted jobrunner', function() {
       winston.info('spawning busted');
       new job.resubscribe(socket, params.id);
     });
+
+    socket.on('busted:cancel',function(params){
+      winston.info('cancelling busted');
+      new job.cancel(socket, params.id);
+    });
+
 
   });
 
@@ -115,6 +126,34 @@ describe('busted jobrunner', function() {
       var reconnect_socket = clientio.connect(socketURL, options);
       reconnect_socket.emit('busted:resubscribe', { id : id });
       reconnect_socket.on('completed', function(data){
+        done();
+      });
+
+    });
+
+  });
+
+  it.only('should cancel job', function(done) {
+
+    this.timeout(5000);
+
+    var params = JSON.parse(fs.readFileSync(params_file));
+    var busted_socket = clientio.connect(socketURL, options);
+
+    busted_socket.on('connect', function(data){
+      winston.info('connected to server');
+      var stream = ss.createStream();
+      ss(busted_socket).emit('busted:spawn', stream, params);
+      fs.createReadStream(fn).pipe(stream);
+    });
+
+    busted_socket.on('job created', function(data){
+      winston.info('got job id');
+      busted_socket.disconnect();
+
+      var reconnect_socket = clientio.connect(socketURL, options);
+      reconnect_socket.emit('busted:cancel', { id : id });
+      reconnect_socket.on('cancelled', function(data){
         done();
       });
 
@@ -176,7 +215,7 @@ describe('busted jobrunner', function() {
       done();
     });
 
-
   });
 
 });
+

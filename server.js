@@ -81,6 +81,9 @@ io.sockets.on('connection', function (socket) {
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, id);
     }
   });
 
@@ -91,6 +94,9 @@ io.sockets.on('connection', function (socket) {
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id); 
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id); 
     }
   });
 
@@ -101,6 +107,9 @@ io.sockets.on('connection', function (socket) {
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
     }
   });
 
@@ -111,7 +120,11 @@ io.sockets.on('connection', function (socket) {
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
     }
+
   });
 
   // Acknowledge new connection
@@ -170,5 +183,4 @@ process.on('SIGTERM', exitHandler.bind(null, {exit:true}));
 
 //catches uncaught exceptions
 process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
-
 
