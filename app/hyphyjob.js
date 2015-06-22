@@ -59,7 +59,6 @@ hyphyJob.prototype.log = function (notification, complementary_info) {
 };
 
 hyphyJob.prototype.warn = function (notification, complementary_info) {
-
   var self = this;
   if(complementary_info) {
     winston.warn([self.type, self.id, notification, complementary_info].join(' : '));
@@ -119,7 +118,14 @@ hyphyJob.prototype.spawn = function () {
 
   // On errors, report to datamonkey-js
   hyphy_job_runner.on('script error', function(error) {
-    self.onError();
+
+    // Check that job was not manually cancelled
+    client.hget(self.id, 'status', function(err, status) {
+      if(status != 'cancelled') {
+        self.onError();
+      }
+    });
+
   });
 
   // When the analysis completes, return the results to datamonkey.

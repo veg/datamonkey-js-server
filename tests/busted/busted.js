@@ -102,7 +102,6 @@ describe('busted jobrunner', function() {
       done();
     });
 
-
   });
 
   it('should kill socket, resubscribe, then complete', function(done) {
@@ -120,6 +119,7 @@ describe('busted jobrunner', function() {
     });
 
     busted_socket.on('job created', function(data){
+
       winston.info('got job id');
       busted_socket.disconnect();
 
@@ -147,15 +147,18 @@ describe('busted jobrunner', function() {
       fs.createReadStream(fn).pipe(stream);
     });
 
-    busted_socket.on('job created', function(data){
+    busted_socket.on('job created', function(data) {
+
       winston.info('got job id');
       busted_socket.disconnect();
 
       var reconnect_socket = clientio.connect(socketURL, options);
-      reconnect_socket.emit('busted:cancel', { id : id });
-      reconnect_socket.on('cancelled', function(data){
+
+      reconnect_socket.on('cancelled', function(data) {
         done();
       });
+
+      setTimeout(function() { reconnect_socket.emit('busted:cancel', { id : id }) }, 1000);
 
     });
 

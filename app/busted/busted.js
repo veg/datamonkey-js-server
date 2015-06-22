@@ -95,3 +95,4 @@ var busted = function (socket, stream, busted_params) {
 util.inherits(busted, hyphyJob);
 
 exports.busted = busted;
+
