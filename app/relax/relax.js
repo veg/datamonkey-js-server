@@ -27,82 +27,74 @@
 
 */
 
-var spawn_job = require('./spawn_relax.js'),
-    config = require('../../config.json'),
-    fs = require('fs'),
-    ss = require('socket.io-stream');
+var config   = require('../../config.json'),
+    cs       = require('../../lib/clientsocket.js'),
+    job      = require('../job.js'),
+    hyphyJob = require('../hyphyjob.js').hyphyJob,
+    jobdel   = require('../../lib/jobdel.js'),
+    util     = require('util'),
+    _        = require('underscore'),
+    fs       = require('fs'),
+    path     = require('path'),
+    ss       = require('socket.io-stream');
 
-// Pass socket to relax job
-var RelaxAnalysis = function (socket, stream, params) {
+var relax = function (socket, stream, relax_params) {
 
-  if(params.action == "recheck") {
-    // Check if file exists
-    var fn = __dirname + '/output/' + params.analysis._id;
-    results_fn = fn + '.RELAX.json';
+  var self = this;
 
-    if (fs.existsSync(results_fn)) {
-      fs.readFile(results_fn, 'utf8', function (err, data) {
-        if(err) {
-          socket.emit('script error', {'error' : 'unable to read results file'});
-          socket.disconnect();
-        } else {
-          socket.emit('completed', {'results' : data});
-          socket.disconnect();
-        }
-      });
-    } else {
-      socket.emit('script error', {'error' : 'unable to read results file'});
-    }
+  self.socket = socket;
+  self.stream = stream;
+  self.params = relax_params;
 
-  } else {
-    // Setup Analysis
-    var relax_analysis = new spawn_job.DoRelaxAnalysis();
+  // object specific attributes
+  self.type             = 'relax';
+  self.qsub_script_name = 'relax.sh';
+  self.qsub_script      = __dirname + '/' + self.qsub_script_name;
 
-    // On status updates, report to datamonkey-js
-    relax_analysis.on('status update', function(status_update) {
-      socket.emit('status update', status_update);
-    });
+  // parameter attributes
+  self.msaid         = self.params.msa._id;
+  self.id            = self.params.analysis._id;
+  self.genetic_code  = self.params.msa[0].gencodeid + 1;
+  self.analysis_type = self.params.analysis.analysis_type;
+  self.nwk_tree      = self.params.analysis.tagged_nwk_tree;
 
-    // On errors, report to datamonkey-js
-    relax_analysis.on('script error', function(error) {
-      socket.emit('script error', error);
-      socket.disconnect();
-    });
+  // parameter-derived attributes
+  self.fn          = __dirname + '/output/' + self.id;
+  self.output_dir  = path.dirname(self.fn);
+  self.status_fn   = self.fn + '.status';
+  self.progress_fn = self.fn + '.RELAX.progress';
+  self.results_fn  = self.fn + '.RELAX.json';
+  self.tree_fn     = self.fn + '.tre';
 
-    // When the analysis completes, return the results to datamonkey.
-    relax_analysis.on('completed', function(results) {
-      // Send trace and graph information
-      socket.emit('completed', results);
-      socket.disconnect();
-    });
+  self.qsub_params = ['-q',
+                        config.qsub_queue,
+                        '-v',
+                        'fn='+self.fn+
+                        ',tree_fn='+self.tree_fn+
+                        ',sfn='+self.status_fn+
+                        ',pfn='+self.progress_fn+
+                        ',treemode='+self.treemode+
+                        ',genetic_code='+self.genetic_code+
+                        ',analysis_type='+self.analysis_type+
+                        ',cwd='+__dirname+
+                        ',msaid='+self.msaid,
+                        '-o', self.output_dir,
+                        '-e', self.output_dir, 
+                        self.qsub_script];
 
-    // Report the torque job id back to datamonkey
-    relax_analysis.on('job created', function(torque_id) {
-      // Send trace and graph information
-      socket.emit('job created', torque_id);
-    });
+  // Write tree to a file
+  fs.writeFile(self.tree_fn, self.nwk_tree, function (err) {
+    if (err) throw err;
+  });
 
-    // Send file
-    relax_analysis.on('progress file', function(params) {
-      var stream = ss.createStream();
-      ss(socket).emit('progress file', stream, {id : params.id });
-      fs.createReadStream(params.fn).pipe(stream);
-      socket.once('file saved', function () {
-        params.cb();
-      });
-    });
+  // Ensure the progress file exists
+  fs.openSync(self.progress_fn, 'w');
+  fs.openSync(self.status_fn, 'w');
 
-    var fn = __dirname + '/output/' + params.analysis._id;
-    stream.pipe(fs.createWriteStream(fn));
+  self.init();
 
-    stream.on('end', function(err) {
-      if (err) throw err;
-      // Pass filename in as opposed to generating it in spawn_relax
-      relax_analysis.start(fn, params);
-    });
+};
 
-  }
+util.inherits(relax, hyphyJob);
 
-}
-
-exports.RelaxAnalysis = RelaxAnalysis;
+exports.relax = relax;

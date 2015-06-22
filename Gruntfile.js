@@ -17,7 +17,7 @@ module.exports = function(grunt) {
     },
     mochaTest: {
       test: {
-          src: ['tests/flea/flea.js'],
+          src: ['tests/jobstatus.js'],
           options: {
                 run: true,
                 debug: true,

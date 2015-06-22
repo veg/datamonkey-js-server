@@ -8,7 +8,6 @@
             "sequences": 21,
             "sites": 566,
             "partitions": 1,
-            "analysis_type": "1",
             "gencodeid": 0,
             "datatype": 0,
             "_id": "5446bc0d355080301f18a8c7",
@@ -137,7 +136,6 @@
         "_id": "5446bc0d355080301f18a8c6",
         "__t": "Busted",
         "mail": "sweaver@ucsd.edu",
-        "analysis_type": 1,
         "__v": 0,
         "msa": [
             {
@@ -272,9 +270,9 @@
         "created": "2014-10-21T20:03:25.798Z"
     },
     "status_stack": [
-        "In Queue",
-        "Running",
-        "Completed"
+        "queue",
+        "running",
+        "completed"
     ],
-    "type": "relax"
+    "type": "busted"
 }

@@ -1,0 +1,1 @@
+(echo 1; echo /home/sweaver/datamonkey/datamonkey-server/tests/busted/res/5446bc0d355080301f18a8c6; echo /home/sweaver/datamonkey/datamonkey-server/tests/busted/res/5446bc0d355080301f18a8c6.tre; echo 4;echo d;) | /home/sweaver/hyphy/HYPHYMP /home/sweaver/hyphy/res/TemplateBatchFiles/BUSTED.bf

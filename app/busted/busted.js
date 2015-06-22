@@ -2,7 +2,7 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
-  Copyright (C) 2014
+  Copyright (C) 2015
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -27,60 +27,72 @@
 
 */
 
-var spawn_job = require('./spawn_busted.js'),
-    config = require('../../config.json'),
-    fs = require('fs'),
-    ss = require('socket.io-stream');
+var config   = require('../../config.json'),
+    cs       = require('../../lib/clientsocket.js'),
+    job      = require('../job.js'),
+    hyphyJob = require('../hyphyjob.js').hyphyJob,
+    jobdel   = require('../../lib/jobdel.js'),
+    util     = require('util'),
+    _        = require('underscore'),
+    fs       = require('fs'),
+    path     = require('path'),
+    ss       = require('socket.io-stream');
 
-// Pass socket to busted job
-var BustedAnalysis = function (socket, stream, params) {
+var busted = function (socket, stream, busted_params) {
 
-  // Setup Analysis
-  var busted_analysis = new spawn_job.DoBustedAnalysis();
+  var self = this;
+  self.socket = socket;
+  self.stream = stream;
+  self.params = busted_params;
 
-  // On status updates, report to datamonkey-js
-  busted_analysis.on('status update', function(status_update) {
-    socket.emit('status update', status_update);
-  });
 
-  // On errors, report to datamonkey-js
-  busted_analysis.on('script error', function(error) {
-    socket.emit('script error', error);
-    socket.disconnect();
-  });
+  // object specific attributes
+  self.type             = 'busted';
+  self.qsub_script_name = 'busted_submit.sh';
+  self.qsub_script      = path.join(__dirname,  self.qsub_script_name);
 
-  // When the analysis completes, return the results to datamonkey.
-  busted_analysis.on('completed', function(results) {
-    // Send trace and graph information
-    socket.emit('completed', results);
-    socket.disconnect();
-  });
+  // parameter attributes
+  self.msaid        = busted_params.msa._id;
+  self.id           = busted_params.analysis._id;
+  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.type         = self.params.type;
 
-  // Report the torque job id back to datamonkey
-  busted_analysis.on('job created', function(torque_id) {
-    // Send trace and graph information
-    socket.emit('job created', torque_id);
-  });
+  // parameter-derived attributes
+  self.fn          = __dirname + '/output/' + self.id;
+  self.output_dir  = path.dirname(self.fn);
+  self.status_fn   = self.fn + '.status';
+  self.progress_fn = self.fn + '.BUSTED.progress';
+  self.results_fn  = self.fn + '.BUSTED.json';
+  self.tree_fn     = self.fn + '.tre';
 
-  // Send file
-  busted_analysis.on('progress file', function(params) {
-    var stream = ss.createStream();
-    ss(socket).emit('progress file', stream, {id : params.id });
-    fs.createReadStream(params.fn).pipe(stream);
-    socket.once('file saved', function () {
-      params.cb();
-    });
-  });
+  self.qsub_params =  ['-q',
+                          config.qsub_queue,
+                          '-v',
+                          'fn='+self.fn+
+                          ',tree_fn='+self.tree_fn+
+                          ',sfn='+self.status_fn+
+                          ',pfn='+self.progress_fn+
+                          ',treemode='+self.treemode+
+                          ',genetic_code='+self.genetic_code+
+                          ',cwd='+__dirname+
+                          ',msaid='+self.msaid,
+                          '-o', self.output_dir,
+                          '-e', self.output_dir, 
+                          self.qsub_script];
 
-  var fn = __dirname + '/output/' + params.analysis._id;
-  stream.pipe(fs.createWriteStream(fn));
-
-  stream.on('end', function(err) {
+  // Write tree to a file
+  fs.writeFile(self.tree_fn, busted_params.analysis.tagged_nwk_tree, function (err) {
     if (err) throw err;
-    // Pass filename in as opposed to generating it in spawn_busted
-    busted_analysis.start(fn, params);
   });
 
-}
+  // Ensure the progress file exists
+  fs.openSync(self.progress_fn, 'w');
 
-exports.BustedAnalysis = BustedAnalysis;
+  self.init();
+
+};
+
+util.inherits(busted, hyphyJob);
+
+exports.busted = busted;
+

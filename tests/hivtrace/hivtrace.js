@@ -32,8 +32,9 @@ var fs        = require('fs'),
     winston   = require('winston'),
     clientio  = require('socket.io-client');
     io        = require('socket.io').listen(5000);
-    relax    = require(__dirname + '/../../app/relax/relax.js'),
+    hivtrace  = require(__dirname + '/../../app/hivtrace/hivtrace.js'),
     job       = require(__dirname + '/../../app/job.js'),
+    winston   = require('winston'),
     ss        = require('socket.io-stream');
 
 //TODO: retrieve socket from config
@@ -44,51 +45,56 @@ var options ={
     'force new connection': true
     };
 
-
-describe('relax jobrunner', function() {
-
-  var fn = __dirname + '/res/Flu.fasta';
+describe('hivtrace jobrunner', function() {
+  var fn = __dirname + '/res/552f030ddfb365a631365975';
   var params_file = __dirname + '/res/params.json';
 
   io.sockets.on('connection', function (socket) {
-    ss(socket).on('relax:spawn',function(stream, params){
-      winston.info('spawning relax');
-      var relax_job = new relax.relax(socket, stream, params);
+    ss(socket).on('hivtrace:spawn',function(stream, params){
+      winston.info('spawning hivtrace');
+      var hivtrace_job = new hivtrace.hivtrace(socket, stream, params);
     });
 
-    socket.on('relax:resubscribe',function(params){
-      winston.info('spawning relax');
+    socket.on('hivtrace:resubscribe',function(params){
+      winston.info('resubscribing hivtrace');
       new job.resubscribe(socket, params.id);
     });
 
   });
 
-  it('should run and cancel itself', function(done) {
+  it('should complete', function(done) {
 
-    this.timeout(5000);
+    this.timeout(120000);
 
     var params = JSON.parse(fs.readFileSync(params_file));
-    var relax_socket = clientio.connect(socketURL, options);
+    var hivtrace_socket = clientio.connect(socketURL, options);
 
-    relax_socket.on('connect', function(data){
+    hivtrace_socket.on('connect', function(data){
       winston.info('connected to server');
       var stream = ss.createStream();
-      ss(relax_socket).emit('relax:spawn', stream, params);
+      ss(hivtrace_socket).emit('hivtrace:spawn', stream, params);
       fs.createReadStream(fn).pipe(stream);
     });
 
-    relax_socket.on('job created', function(data){
+    hivtrace_socket.on('job created', function(data){
+      winston.info('got job id');
     });
 
-    relax_socket.on('status update', function(data){
-      winston.info('job successfully completed');
-      process.emit('cancelJob', '');
+    hivtrace_socket.on('status update', function(data){
+      winston.info('got status update!');
     });
 
-    relax_socket.on('script error', function(data) {
-      winston.warn(data);
+    hivtrace_socket.on('completed', function(data) {
+      should.exist(data.lanl_trace_results);
       done();
     });
+
+    hivtrace_socket.on('script error', function(data) {
+      // assert failure
+      //winston.warn(data);
+      done();
+    });
+
 
   });
 

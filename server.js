@@ -2,11 +2,7 @@
 
   Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 
-<<<<<<< HEAD
-  Copyright (C) 2013
-=======
   Copyright (C) 2015
->>>>>>> 8a658f9a846be4f96b57c320ccdbf2fcd72337f9
   Sergei L Kosakovsky Pond (spond@ucsd.edu)
   Steven Weaver (sweaver@ucsd.edu)
 
@@ -35,80 +31,156 @@ var config = require('./config.json'),
     io = require('socket.io').listen(config.port),
     fs = require('fs'),
     path = require('path'),
+    _ = require('underscore'),
+    winston = require('winston'),
     hivtrace = require('./app/hivtrace/hivtrace.js'),
     prime = require('./app/prime/prime.js'),
     busted = require('./app/busted/busted.js'),
     relax = require('./app/relax/relax.js'),
     absrel = require('./app/absrel/absrel.js'),
+    job = require('./app/job.js'),
     flea = require('./app/flea/flea.js'),
     ss = require('socket.io-stream'),
+    redis   = require('redis'),
+    router = require(__dirname + '/lib/router.js'),
     JobQueue = require(__dirname + '/lib/jobqueue.js').JobQueue;
+
+winston.level = config.loglevel;
+
+var client = redis.createClient();
+
+// clear active_jobs list
+client.del('active_jobs');
 
 // For every new connection...
 io.sockets.on('connection', function (socket) {
 
-  // Acknowledge new connection
-  socket.emit('connected', { hello: 'Ready to serve' });
-
-
+  //Routes 
   socket.on('job queue', function (jobs) {
     JobQueue(function(jobs) {
       socket.emit('job queue', jobs);
     });
   });
-  
-  /*socket.on ("stream", function (p) {
-    console.log ("HMM");
-  });*/
 
-  // A job has been spawned by datamonkey, let's go to work
-  ss(socket).on('spawn', function (stream, params) {
+  var r =  new router.io (socket);
 
-    
-    if(params.job.type) {
-
-      switch(params.job.type) {
-
-        case 'absrel':
-          new absrel.aBSRELAnalysis(socket, stream, params.job);
-          break;
-
-        case 'busted':
-          new busted.BustedAnalysis(socket, stream, params.job);
-          break;
-
-        case 'flea':
-          new flea.Flea(socket, stream, params.job);
-          break;
-
-        case 'hivtrace':
-          new hivtrace.HIVTraceAnalysis(socket, stream, params.job.analysis);
-          break;
-
-        case 'prime':
-          new prime.PrimeAnalysis(socket, stream, params.job);
-          break;
-
-        case 'relax':
-          new relax.RelaxAnalysis(socket, stream, params.job);
-          break;
-
-        default:
-          socket.emit('error', 'type not recognized');
-          socket.disconnect();
-      }
-
-    } else {
-
-      socket.emit('error', 'analysis type not supplied');
-      socket.disconnect();
-
+  // HIV Trace
+  r.route('hivtrace', {
+    spawn : function (stream, params) {
+      var hivtrace_job = new hivtrace.hivtrace(socket, stream, params.job.analysis);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
     }
   });
-  
-  // Log which user disconnected
-  socket.on('disconnect', function () {
-    io.sockets.emit('user disconnected');
+
+  // PRIME
+  r.route('prime', {
+    spawn : function (stream, params) {
+      var prime_job = new prime.prime(socket, stream, params);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, id);
+    }
   });
 
+  // BUSTED
+  r.route('busted', {
+    spawn : function (stream, params) {
+      var busted_job = new busted.busted(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id); 
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id); 
+    }
+  });
+
+  // RELAX
+  r.route('relax', {
+    spawn : function (stream, params) {
+      var relax_job = new relax.relax(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // aBSREL
+  r.route('absrel', {
+    spawn : function (stream, params) {
+      new absrel.absrel(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
+    }
+
+  });
+
+  // Acknowledge new connection
+  socket.emit('connected', { hello: 'Ready to serve' });
+
 });
+
+//so the program will not close instantly
+process.stdin.resume();
+
+
+// retrieves active jobs from redis, and attempts to cancel
+// all pending jobs
+function jobCleanup(cb) {
+  var total_job_count = 0;
+  client.llen('active_jobs', function(err, n) {
+    winston.info(n + ' active jobs left!');
+    if(n == 0) {
+      cb();
+    } else {
+      total_job_count = n;
+      process.emit('cancelJob', '');
+      process.on('jobCancelled', function(msg) {
+        total_job_count--;
+        if(total_job_count <= 0) {
+          cb();
+        }
+      });
+    }
+  });
+}
+
+
+function exitHandler(options, err) {
+
+  var exit = function() {
+    if (options.cleanup) console.log('clean');
+    if (err) console.log(err.stack);
+    if (options.exit) process.exit();
+  }
+
+  jobCleanup(exit);
+
+  // If jobCleanup does not complete within five seconds, 
+  // skip attempt and exit.
+  setTimeout(exit, 5000);
+
+}
+
+//do something when app is closing
+process.on('exit', exitHandler.bind(null,{cleanup:true}));
+
+//catches ctrl+c event
+process.on('SIGINT', exitHandler.bind(null, {exit:true}));
+process.on('SIGTERM', exitHandler.bind(null, {exit:true}));
+
+//catches uncaught exceptions
+process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
+

@@ -27,60 +27,73 @@
 
 */
 
-var spawn_job = require('./spawn_absrel.js'),
-    config = require('../../config.json'),
-    fs = require('fs'),
-    ss = require('socket.io-stream');
+var config   = require('../../config.json'),
+    cs       = require('../../lib/clientsocket.js'),
+    job      = require('../job.js'),
+    hyphyJob = require('../hyphyjob.js').hyphyJob,
+    jobdel   = require('../../lib/jobdel.js'),
+    util     = require('util'),
+    _        = require('underscore'),
+    fs       = require('fs'),
+    path     = require('path'),
+    ss       = require('socket.io-stream');
 
-// Pass socket to absrel job
-var aBSRELAnalysis = function (socket, stream, params) {
+var absrel = function (socket, stream, params) {
 
-  // Setup Analysis
-  var absrel_analysis = new spawn_job.aBSRELRunner();
+  var self = this;
+  self.socket = socket;
+  self.stream = stream;
+  self.params = params;
 
-  // On status updates, report to datamonkey-js
-  absrel_analysis.on('status update', function(status_update) {
-    socket.emit('status update', status_update);
-  });
+  // object specific attributes
+  self.type             = 'absrel';
+  self.qsub_script_name = 'absrel.sh';
+  self.qsub_script      = __dirname + '/' + self.qsub_script_name;
 
-  // On errors, report to datamonkey-js
-  absrel_analysis.on('script error', function(error) {
-    socket.emit('script error', error);
-    socket.disconnect();
-  });
+  // parameter attributes
+  self.msaid        = self.params.msa._id;
+  self.id           = self.params.analysis._id;
+  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.nj           = self.params.msa[0].nj
 
-  // When the analysis completes, return the results to datamonkey.
-  absrel_analysis.on('completed', function(results) {
-    // Send trace and graph information
-    socket.emit('completed', results);
-    socket.disconnect();
-  });
+  // parameter-derived attributes
+  self.fn              = __dirname + '/output/' + self.id;
+  self.output_dir      = path.dirname(self.fn);
+  self.status_fn       = self.fn + '.status';
+  self.results_fn      = self.fn + '.absrel';
+  self.results_json_fn = self.fn + '.absrel.json';
+  self.progress_fn     = self.fn + '.absrel.progress';
+  self.tree_fn         = self.fn + '.tre';
 
-  // Report the torque job id back to datamonkey
-  absrel_analysis.on('job created', function(torque_id) {
-    // Send trace and graph information
-    socket.emit('job created', torque_id);
-  });
+  self.qsub_params = ['-q',
+                          config.qsub_queue,
+                          '-v',
+                          'fn='+self.fn+
+                          ',tree_fn='+self.tree_fn+
+                          ',sfn='+self.status_fn+
+                          ',pfn='+self.progress_fn+
+                          ',rfn='+self.results_fn+
+                          ',treemode='+self.treemode+
+                          ',genetic_code='+self.genetic_code+
+                          ',analysis_type='+self.type+
+                          ',cwd='+__dirname+
+                          ',msaid='+self.msaid,
+                          '-o', self.output_dir,
+                          '-e', self.output_dir, 
+                          self.qsub_script];
 
-  // Send file
-  absrel_analysis.on('progress file', function(params) {
-    var stream = ss.createStream();
-    ss(socket).emit('progress file', stream, {id : params.id });
-    fs.createReadStream(params.fn).pipe(stream);
-    socket.once('file saved', function () {
-      params.cb();
-    });
-  });
 
-  var fn = __dirname + '/output/' + params.analysis._id;
-  stream.pipe(fs.createWriteStream(fn));
-
-  stream.on('end', function(err) {
+  // Write tree to a file
+  fs.writeFile(self.tree_fn, self.nj, function (err) {
     if (err) throw err;
-    // Pass filename in as opposed to generating it in spawn_absrel
-    absrel_analysis.start(fn, params);
   });
+
+  // Ensure the progress file exists
+  fs.openSync(self.progress_fn, 'w');
+  self.init();
 
 }
 
-exports.aBSRELAnalysis = aBSRELAnalysis;
+util.inherits(absrel, hyphyJob);
+
+exports.absrel = absrel;
