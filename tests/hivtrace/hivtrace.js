@@ -28,12 +28,13 @@
 */
 
 var fs        = require('fs'),
+    path      = require('path'),
     should    = require('should'),
     winston   = require('winston'),
     clientio  = require('socket.io-client');
     io        = require('socket.io').listen(5000);
-    hivtrace  = require(__dirname + '/../../app/hivtrace/hivtrace.js'),
-    job       = require(__dirname + '/../../app/job.js'),
+    hivtrace  = require(path.join(__dirname, '/../../app/hivtrace/hivtrace.js')),
+    job       = require(path.join(__dirname, '/../../app/job.js')),
     winston   = require('winston'),
     ss        = require('socket.io-stream');
 
@@ -98,6 +99,34 @@ describe('hivtrace jobrunner', function() {
 
   });
 
-});
+  it.only('should cancel job', function(done) {
 
+    this.timeout(5000);
+
+    var params = JSON.parse(fs.readFileSync(params_file));
+    var hivtrace_socket = clientio.connect(socketURL, options);
+
+    hivtrace_socket.on('connect', function(data){
+      winston.info('connected to server');
+      var stream = ss.createStream();
+      ss(hivtrace_socket).emit('hivtrace:spawn', stream, params);
+      fs.createReadStream(fn).pipe(stream);
+    });
+
+    hivtrace_socket.on('job created', function(data){
+      winston.info('got job id');
+      setTimeout(function() { process.emit('cancelJob', '') }, 1000);
+    });
+
+    hivtrace_socket.on('status update', function(data){
+      winston.info('got status update!');
+    });
+
+    hivtrace_socket.on('script error', function(data) {
+      // assert failure
+      should.exist(data.stdout);
+      done();
+    });
+  });
+});
 

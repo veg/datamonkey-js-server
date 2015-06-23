@@ -306,8 +306,8 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
   self.torque_id = torque_id.torque_id;
 
   // The standard out and error logs of the job
-  self.std_err = self.output_dir + '/' + self.qsub_script_name + '.e' + self.torque_id.split('.')[0];
-  self.std_out = self.output_dir + '/' + self.qsub_script_name + '.o' + self.torque_id.split('.')[0];
+  self.std_err = path.join(self.output_dir, self.qsub_script_name) + '.e' + self.torque_id.split('.')[0];
+  self.std_out = path.join(self.output_dir, self.qsub_script_name) + '.o' + self.torque_id.split('.')[0];
 
 };
 
@@ -320,6 +320,8 @@ hyphyJob.prototype.cancel = function() {
   var cb = function(err, code) {
     self.onError('job cancelled');
   };
+
+  self.warn('cancel called!');
 
   self.cancel_once = _.once(jobdel.jobDelete);
   self.cancel_once(self.torque_id, cb);

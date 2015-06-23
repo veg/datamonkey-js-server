@@ -52,7 +52,7 @@ var hivtrace = function (socket, stream, params) {
 
   var self = this;
 
-  self.status = {
+  self.status_states = {
     PENDING   : 1,
     RUNNING   : 2,
     COMPLETED : 3,
@@ -71,10 +71,10 @@ var hivtrace = function (socket, stream, params) {
 
   // object specific attributes
   self.python              = config.python;
-  self.output_dir          = __dirname + '/output/';
+  self.output_dir          = path.join(__dirname, '/output/');
   self.qsub_script_name    = 'hivtrace_submit.sh';
-  self.qsub_script         = __dirname + '/' + self.qsub_script_name;
-  self.hivtrace            = __dirname + '/hivtrace.py';
+  self.qsub_script         = path.join(__dirname, self.qsub_script_name);
+  self.hivtrace            = path.join(__dirname, '/hivtrace.py');
   self.custom_reference_fn = '';
   self.type                = 'hivtrace';
 
@@ -101,7 +101,7 @@ var hivtrace = function (socket, stream, params) {
 
 
   // parameter-derived attributes
-  self.filepath                   = self.output_dir + self.id;
+  self.filepath                   = path.join(self.output_dir, self.id);
   self.status_fn                  = self.filepath + '_status';
   self.output_cluster_output      = self.filepath + cluster_output_suffix;
   self.lanl_output_cluster_output = self.filepath + lanl_cluster_output_suffix;
@@ -111,7 +111,7 @@ var hivtrace = function (socket, stream, params) {
 
   initial_statuses = [];
   _.each(self.status_stack, function(d, i) {  
-                              initial_statuses.push({title : d, status : self.status.PENDING}); 
+                              initial_statuses.push({title : d, status : self.status_states.PENDING}); 
                             });
 
   client.hset(self.id, 'complete phase status',  JSON.stringify(initial_statuses));
@@ -178,8 +178,15 @@ hivtrace.prototype.spawn = function () {
     socket.emit('tn93 summary', tn93);
   });
 
+  // Global event that triggers all jobs to cancel
+  process.on('cancelJob', function(msg) {
+    self.warn('cancel called!');
+    self.cancel_once = _.once(self.cancel);
+    self.cancel_once();
+  });
+
   // Setup has been completed, run the job with the parameters from datamonkey
-  self.stream.pipe(fs.createWriteStream(__dirname + '/output/' + self.id));
+  self.stream.pipe(fs.createWriteStream(path.join(__dirname, '/output/', self.id)));
   trace_runner.submit(self.qsub_params, self.output_dir);
 
 };
@@ -207,13 +214,10 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
     
     // update all older statuses as completed
     _.each(new_status.slice(0, data.index), function(d, i) { 
-                                             new_status[i].status = self.status.COMPLETED;
+                                             new_status[i].status = self.status_states.COMPLETED;
                                            });
 
-    if(data.msg) {
-      new_status[data.index].msg = data.msg;
-    }
-
+    new_status[data.index].msg = data.msg ? data.msg : '';
 
     var status_update = { 
                           'msg'       : new_status,
@@ -309,11 +313,15 @@ HivTraceRunner.prototype.status_watcher = function () {
   var job_status = new JobStatus(self.torque_id);
 
   self.metronome_id = job_status.watch(function(error, status) {
+
+    var status = status.status;
+
     if(status == 'completed' || status == 'exiting') {
       // check exit code
       clearInterval(self.metronome_id);
       self.emit('completed', '');
     }
+
   });
 
   self.subscriber.on('message', function(channel, message) { 

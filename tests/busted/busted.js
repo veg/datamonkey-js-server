@@ -133,7 +133,7 @@ describe('busted jobrunner', function() {
 
   });
 
-  it.only('should cancel job', function(done) {
+  it('should cancel job', function(done) {
 
     this.timeout(5000);
 

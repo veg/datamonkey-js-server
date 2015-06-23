@@ -42,8 +42,8 @@ var config = require('./config.json'),
     flea = require('./app/flea/flea.js'),
     ss = require('socket.io-stream'),
     redis   = require('redis'),
-    router = require(__dirname + '/lib/router.js'),
-    JobQueue = require(__dirname + '/lib/jobqueue.js').JobQueue;
+    router = require(path.join(__dirname, '/lib/router.js')),
+    JobQueue = require(path.join(__dirname, '/lib/jobqueue.js')).JobQueue;
 
 winston.level = config.loglevel;
 
