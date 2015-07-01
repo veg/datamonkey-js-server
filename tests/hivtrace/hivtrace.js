@@ -38,7 +38,6 @@ var fs        = require('fs'),
     winston   = require('winston'),
     ss        = require('socket.io-stream');
 
-//TODO: retrieve socket from config
 var socketURL = 'http://0.0.0.0:5000';
 
 var options ={
@@ -91,15 +90,13 @@ describe('hivtrace jobrunner', function() {
     });
 
     hivtrace_socket.on('script error', function(data) {
-      // assert failure
-      //winston.warn(data);
-      done();
+      throw new Error('job failed');
     });
 
 
   });
 
-  it.only('should cancel job', function(done) {
+  it('should cancel job', function(done) {
 
     this.timeout(5000);
 
