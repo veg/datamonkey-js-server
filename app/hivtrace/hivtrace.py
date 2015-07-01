@@ -281,14 +281,16 @@ def annotate_lanl(trace_json_fn, lanl_file):
 
     trace_json_cp_fn = trace_json_fn + '.tmp'
     lanl = SeqIO.parse(open(lanl_file, 'r'), 'fasta')
-    lanl_ids = [r.id for r in lanl]
+    lanl_ids = set([r.id for r in lanl])
 
     with open(trace_json_fn) as json_fh:
         trace_json = json.loads(json_fh.read())
         nodes = trace_json.get('Nodes')
+        node_ids = set([n["id"] for n in nodes])
+
         try:
-          #TODO: optimize this line. It takes far too long (50% of runtime)
-          [node.update({'is_lanl' : str(node["id"] in lanl_ids).lower() }) for node in nodes]
+          lanl_hits = node_ids.intersection(lanl_ids)
+          [node.update({'is_lanl' : str(node["id"] in lanl_hits).lower() }) for node in nodes]
           with open(trace_json_cp_fn, 'w') as copy_f:
               json.dump(trace_json, copy_f)
         except:
@@ -344,6 +346,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
     PHASE 6c) Flag any potential HXB2 sequences
     PHASE 7)  Run hivclustercsv to return clustering information in json format
     """
+
 
     # Declare reference file
     resource_dir =  os.path.dirname(os.path.realpath(__file__)) + '/res/'
@@ -550,7 +553,7 @@ def hivtrace(id, input, reference, ambiguities, threshold, min_overlap,
 
       # hivclustercsv uses stderr for status updates
       complete_stderr = ''
-      with subprocess.Popen(lanl_hivnetworkcsv_process, stdout=output_cluster_json_fh, stderr=PIPE, bufsize=1, universal_newlines=True) as p:
+      with subprocess.Popen(lanl_hivnetworkcsv_process, stdout=lanl_output_cluster_json_fh, stderr=PIPE, bufsize=1, universal_newlines=True) as p:
           for line in p.stderr:
               complete_stderr += line
               update_status(id, phases.PUBLIC_INFERRING_CONNECTIONS, status.RUNNING, POOL, complete_stderr)
