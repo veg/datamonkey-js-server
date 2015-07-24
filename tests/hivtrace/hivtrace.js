@@ -39,6 +39,7 @@ var fs        = require('fs'),
     ss        = require('socket.io-stream');
 
 var socketURL = 'http://0.0.0.0:5000';
+winston.level = 'warn';
 
 var options ={
   transports: ['websocket'],
@@ -62,12 +63,13 @@ describe('hivtrace jobrunner', function() {
 
   });
 
-  it('should complete', function(done) {
+  it.only('should complete', function(done) {
 
     this.timeout(120000);
 
     var params = JSON.parse(fs.readFileSync(params_file));
     var hivtrace_socket = clientio.connect(socketURL, options);
+    var aligned_fasta_cnt = 0;
 
     hivtrace_socket.on('connect', function(data){
       winston.info('connected to server');
@@ -84,15 +86,21 @@ describe('hivtrace jobrunner', function() {
       winston.info('got status update!');
     });
 
+    hivtrace_socket.on('aligned fasta', function(data){
+      winston.warn('incoming aligned fasta file');
+      aligned_fasta_cnt += 1;
+    });
+
     hivtrace_socket.on('completed', function(data) {
-      should.exist(data.lanl_trace_results);
+      winston.info('completed!');
+      should.exist(data.results);
+      aligned_fasta_cnt.should.be.equal(1);
       done();
     });
 
     hivtrace_socket.on('script error', function(data) {
       throw new Error('job failed');
     });
-
 
   });
 

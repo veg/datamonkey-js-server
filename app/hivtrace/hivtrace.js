@@ -31,7 +31,6 @@
 var spawn        = require('child_process').spawn,
     cs           = require('../../lib/clientsocket.js'),
     fs           = require('fs'),
-    ss           = require('socket.io-stream');
     fs           = require('fs'),
     config       = require('../../config.json'),
     util         = require('util'),
@@ -44,6 +43,7 @@ var spawn        = require('child_process').spawn,
     JobStatus    = require('../../lib/jobstatus.js').JobStatus,
     winston      = require('winston'),
     redis        = require('redis');
+
 
 // Use redis as our key-value store
 var client = redis.createClient();
@@ -64,6 +64,7 @@ var hivtrace = function (socket, stream, params) {
       tn93_csv_suffix='_user.tn93output.csv',
       tn93_lanl_csv_suffix='_user.tn93output.csv',
       custom_reference_suffix='_custom_reference.fas';
+      output_fasta_suffix='_output.fasta'
 
   self.socket = socket;
   self.stream = stream;
@@ -108,6 +109,7 @@ var hivtrace = function (socket, stream, params) {
   self.tn93_stdout                = self.filepath + tn93_json_suffix;
   self.tn93_results               = self.filepath + tn93_csv_suffix;
   self.tn93_lanl_results          = self.filepath + tn93_csv_suffix;
+  self.aligned_fasta              = self.filepath + output_fasta_suffix;
 
   initial_statuses = [];
   _.each(self.status_stack, function(d, i) {  
@@ -155,7 +157,19 @@ hivtrace.prototype.spawn = function () {
 
   // On status updates, report to datamonkey-js
   trace_runner.on('status update', function(status_update) {
-    self.onStatusUpdate(status_update, self.status_stack.indexOf(status_update.phase));
+
+    var index = status_update.index;
+    var status = status_update.status;
+
+    self.onStatusUpdate(status_update, status_update.index);
+    self.log(status_update);
+
+    self.warn(JSON.stringify(status_update));
+
+    if(index == 2 && status == 3) {
+      self.sendAlignedFasta();    
+    }
+
   });
 
   // On errors, report to datamonkey-js
@@ -263,7 +277,7 @@ hivtrace.prototype.onComplete = function () {
         var results_data = {};
 
         results_data.trace_results = results[0].value;
-        results_data.lanl_trace_results = results[1].value;
+        //results_data.lanl_trace_results = results[1].value;
 
         var redis_packet = { 'results' : results_data };
         redis_packet.type = 'completed';
@@ -272,7 +286,6 @@ hivtrace.prototype.onComplete = function () {
 
         // Log that the job has been completed
         self.log('complete', 'success');
-        self.log('complete', str_redis_packet);
 
         // Store packet in redis and publish to channel
         client.hset(self.id, 'results', str_redis_packet);
@@ -283,6 +296,29 @@ hivtrace.prototype.onComplete = function () {
 
       } else {
         self.onError('job seems to have completed, but no results found');
+      }
+
+    }); 
+
+}
+
+hivtrace.prototype.sendAlignedFasta = function () {
+
+  var self = this;
+
+  var aligned_promise = Q.nfcall(fs.readFile, self.aligned_fasta); 
+  var promises = [aligned_promise]; 
+
+  Q.allSettled(promises) 
+  .then(function (results) { 
+
+      if (results[0].state == 'fulfilled' && results[0].value) {
+        self.socket.emit('aligned fasta', { buffer : results[0].value });
+
+        // Log that the job has been completed
+        self.log('sending aligned fasta', 'success');
+      } else {
+        self.onError('no aligned fasta to send');
       }
 
     }); 

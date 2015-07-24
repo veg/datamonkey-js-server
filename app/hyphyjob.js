@@ -71,7 +71,7 @@ hyphyJob.prototype.warn = function (notification, complementary_info) {
 // Attach socket to redis channel
 hyphyJob.prototype.attachSocket = function () {
   var self = this;
-  new cs.ClientSocket (self.socket, self.id);
+  new cs.ClientSocket(self.socket, self.id);
 }
 
 hyphyJob.prototype.init = function () {
