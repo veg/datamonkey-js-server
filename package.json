@@ -14,7 +14,7 @@
         "q"                : "1.2.x",
         "underscore"       : "1.8.x",
         "winston"          : "0.9.x",
-        "tar"              : "1.4.2",
+        "tar"              : "1.x.x",
         "moment"           : "x.x.x",
         "moment-timezone"  : "x.x.x"
     }
