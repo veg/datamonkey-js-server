@@ -31,10 +31,15 @@ var spawn_job = require('./spawn_flea.js'),
     config = require('../../config.json'),
     fs = require('fs'),
     path = require('path'),
+    winston = require('winston'),
     ss = require('socket.io-stream');
 
 // Pass socket to flea job
-var Flea = function (socket, stream, params) {
+var flea = function (socket, stream, params) {
+
+  log = function (notification) {
+    winston.info(['flea', JSON.stringify(notification)].join(' : '));
+  };
 
   // Setup Analysis
   var flea_analysis = new spawn_job.FleaRunner();
@@ -42,6 +47,7 @@ var Flea = function (socket, stream, params) {
   // On status updates, report to datamonkey-js
   flea_analysis.on('status update', function(status_update) {
     socket.emit('status update', status_update);
+    log(status_update);
   });
 
   // On errors, report to datamonkey-js
@@ -76,7 +82,10 @@ var Flea = function (socket, stream, params) {
   var fn = path.join(__dirname, '/output/', params.analysis._id + '.tar');
   stream.pipe(fs.createWriteStream(fn));
 
+  socket.emit('status update', {'phase': params.status_stack[0], 'msg': ''});
+
   stream.on('end', function(err) {
+    console.log('finished receiving data from datamonkey-dev');
     if (err) throw err;
     // Pass filename in as opposed to generating it in spawn_flea
     flea_analysis.start(fn, params);
@@ -84,5 +93,5 @@ var Flea = function (socket, stream, params) {
 
 };
 
-exports.Flea = Flea;
+exports.flea = flea;
 

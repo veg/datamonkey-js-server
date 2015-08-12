@@ -76,6 +76,7 @@ describe('flea jobrunner', function() {
       status_update_count.should.be.above(0);
 
       done();
+
     });
 
     // Setup has been completed, run the job with the parameters from datamonkey

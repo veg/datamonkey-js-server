@@ -74,6 +74,16 @@ io.sockets.on('connection', function (socket) {
     }
   });
 
+  // FLEA
+  r.route('flea', {
+    spawn : function (stream, params) {
+      var flea_job = new flea.flea(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    }
+  });
+
   // PRIME
   r.route('prime', {
     spawn : function (stream, params) {

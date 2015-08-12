@@ -85,10 +85,10 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   // env_pipeline.py 
   var env_pipeline_submit = function () {
 
+    self.emit('status update', {'phase': self.status_stack[2], 'msg': ''});
+
     var env_pipeline_parameters = [ '-u', self.pipeline, '--config', self.flea_config, self.file_list ];
-
     winston.info('flea : submitting job : ' + self.python + ' ' + env_pipeline_parameters.join(' '));
-
 
     var env_pipeline =  spawn(self.python, env_pipeline_parameters,  { cwd : self.filedir } );
 
@@ -162,17 +162,19 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   // local filesystem, then spawn the job.
   var do_flea = function(stream, flea_params) {
 
-    self.emit('status update', {'phase': self.status_stack[0], 'msg': ''});
+    self.emit('status update', {'phase': self.status_stack[1], 'msg': ''});
 
     //Unpack the tar file
     function onError(err) {
       err = err +   ' : ' + self.filepath;
+      winston.warn('flea : script error: ' + self.python + ' ' + err);
       self.emit('script error', err);
     }
 
     function onEnd() {
 
       fs.writeFileSync(self.file_list, '');
+      winston.log('flea : status update : creating list');
 
       // Create list inside filedir
       fs.readdir(self.filedir, function(err, files) {
@@ -183,6 +185,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
           if(files.indexOf(msa._id + '.fastq') != -1) {
             var formatted_visit_date = moment(msa.visit_date).format("YYYYMMDD");
             var string_to_write = util.format('%s %s %s\n', self.filedir + '/' + msa._id + '.fastq', msa.visit_code, formatted_visit_date);
+            winston.log('flea : appending list : ' + string_to_write);
             fs.appendFileSync(self.file_list, string_to_write);
           }
 
