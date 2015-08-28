@@ -42,6 +42,7 @@ var spawn        = require('child_process').spawn,
     _            = require('underscore'),
     JobStatus    = require('../../lib/jobstatus.js').JobStatus,
     winston      = require('winston'),
+    Tail         = require('tail').Tail,
     redis        = require('redis');
 
 
@@ -55,7 +56,7 @@ var hivtrace = function (socket, stream, params) {
   self.status_states = {
     PENDING   : 1,
     RUNNING   : 2,
-    COMPLETED : 3,
+    COMPLETED : 3
   }
 
   var cluster_output_suffix='_user.trace.json',
@@ -63,7 +64,8 @@ var hivtrace = function (socket, stream, params) {
       tn93_json_suffix='_user.tn93output.json',
       tn93_csv_suffix='_user.tn93output.csv',
       tn93_lanl_csv_suffix='_user.tn93output.csv',
-      custom_reference_suffix='_custom_reference.fas';
+      custom_reference_suffix='_custom_reference.fas',
+      hivtrace_log_suffix='.hivtrace.log',
       output_fasta_suffix='_output.fasta'
 
   self.socket = socket;
@@ -71,11 +73,11 @@ var hivtrace = function (socket, stream, params) {
   self.params = params;
 
   // object specific attributes
-  self.python              = config.python;
+  self.python              = path.join(__dirname, '../../.python/env/bin/python');
   self.output_dir          = path.join(__dirname, '/output/');
   self.qsub_script_name    = 'hivtrace_submit.sh';
   self.qsub_script         = path.join(__dirname, self.qsub_script_name);
-  self.hivtrace            = path.join(__dirname, '/hivtrace.py');
+  self.hivtrace            = path.join(__dirname, '../../.python/env/bin/hivtrace');
   self.custom_reference_fn = '';
   self.type                = 'hivtrace';
 
@@ -100,16 +102,15 @@ var hivtrace = function (socket, stream, params) {
     fs.writeFile(self.custom_reference_fn, self.custom_reference, function (err) {});
   } 
 
-
   // parameter-derived attributes
   self.filepath                   = path.join(self.output_dir, self.id);
   self.status_fn                  = self.filepath + '_status';
   self.output_cluster_output      = self.filepath + cluster_output_suffix;
-  self.lanl_output_cluster_output = self.filepath + lanl_cluster_output_suffix;
   self.tn93_stdout                = self.filepath + tn93_json_suffix;
   self.tn93_results               = self.filepath + tn93_csv_suffix;
   self.tn93_lanl_results          = self.filepath + tn93_csv_suffix;
   self.aligned_fasta              = self.filepath + output_fasta_suffix;
+  self.hivtrace_log               = self.filepath + hivtrace_log_suffix;
 
   initial_statuses = [];
   _.each(self.status_stack, function(d, i) {  
@@ -133,6 +134,8 @@ var hivtrace = function (socket, stream, params) {
                   ',comparelanl='+self.lanl_compare+
                   ',reference_strip='+self.reference_strip+
                   ',strip_drams='+self.strip_drams+
+                  ',output='+self.output_cluster_output+
+                  ',hivtrace_log='+self.hivtrace_log+
                   ',custom_reference_fn='+self.custom_reference_fn,
                   '-o', self.output_dir,
                   '-e', self.output_dir,
@@ -148,11 +151,12 @@ util.inherits(hivtrace, hyphyJob);
 hivtrace.prototype.spawn = function () {
 
   var self = this;
+  self.send_aligned_fasta_once = _.once(self.sendAlignedFasta);
 
   client.hset(self.id, 'params', self.params);
 
   // Setup Analysis
-  var trace_runner = new HivTraceRunner(self.id);
+  var trace_runner = new HivTraceRunner(self.id, self.hivtrace_log);
   new cs.ClientSocket (self.socket, self.id);
 
   // On status updates, report to datamonkey-js
@@ -166,8 +170,8 @@ hivtrace.prototype.spawn = function () {
 
     self.warn(JSON.stringify(status_update));
 
-    if(index == 2 && status == 3) {
-      self.sendAlignedFasta();    
+    if(index >= 3 && status == 3) {
+      self.send_aligned_fasta_once();
     }
 
   });
@@ -210,7 +214,6 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
   var self = this;
   self.current_status = data;
 
-
   // get current status stored in redis
   client.hget(self.id, 'complete phase status', function(err, entire_status) {
 
@@ -222,9 +225,9 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
     //  'msg'    : msg
     //}
 
-    new_status = JSON.parse(entire_status);
-
+    var new_status = JSON.parse(entire_status);
     new_status[data.index].status = data.status;
+    new_status[data.index].index = data.index;
     
     // update all older statuses as completed
     _.each(new_status.slice(0, data.index), function(d, i) { 
@@ -262,30 +265,24 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
 hivtrace.prototype.onComplete = function () {
 
   var self = this;
-
   client.hset(self.id, 'status', 'completed');
 
   var results_promise = Q.nfcall(fs.readFile, self.output_cluster_output, "utf-8"); 
-  var lanl_results_promise = Q.nfcall(fs.readFile, self.lanl_output_cluster_output, "utf-8"); 
-  var promises = [ results_promise, lanl_results_promise]; 
+  var promises = [ results_promise ]; 
 
   Q.allSettled(promises) 
   .then(function (results) { 
 
       if (results[0].state == 'fulfilled' && results[0].value) {
 
-        var results_data = {};
-
-        results_data.trace_results = results[0].value;
-        //results_data.lanl_trace_results = results[1].value;
-
-        var redis_packet = { 'results' : results_data };
-        redis_packet.type = 'completed';
-
+        var results_data = JSON.parse(results[0].value);
+        var redis_packet = {'type' : 'completed'};
         var str_redis_packet = JSON.stringify(redis_packet);
 
         // Log that the job has been completed
         self.log('complete', 'success');
+
+        self.socket.emit('completed', { results : results_data });
 
         // Store packet in redis and publish to channel
         client.hset(self.id, 'results', str_redis_packet);
@@ -295,11 +292,10 @@ hivtrace.prototype.onComplete = function () {
         client.lrem('active_jobs', 1, self.id);
 
       } else {
-        self.onError('job seems to have completed, but no results found');
+        self.onError('job seems to have completed, but no results found: ' + self.output_cluster_output);
       }
 
     }); 
-
 }
 
 hivtrace.prototype.sendAlignedFasta = function () {
@@ -313,12 +309,14 @@ hivtrace.prototype.sendAlignedFasta = function () {
   .then(function (results) { 
 
       if (results[0].state == 'fulfilled' && results[0].value) {
+
         self.socket.emit('aligned fasta', { buffer : results[0].value });
 
         // Log that the job has been completed
-        self.log('sending aligned fasta', 'success');
+        self.warn('sending aligned fasta', self.aligned_fasta, 'success');
+
       } else {
-        self.onError('no aligned fasta to send');
+        self.onError(self.aligned_fasta + ': no aligned fasta to send');
       }
 
     }); 
@@ -326,16 +324,50 @@ hivtrace.prototype.sendAlignedFasta = function () {
 }
 
 // An object that manages the qsub process
-var HivTraceRunner = function (id) {
+var HivTraceRunner = function (id, hivtrace_log) {
 
   var self = this; 
+  self.python_redis_channel = 'python_' + id;
+  self.hivtrace_log = hivtrace_log;
   self.subscriber = redis.createClient();
-  self.subscriber.subscribe('python_' + id);
+  self.subscriber.subscribe(self.python_redis_channel);
   self.last_status_update = '';
 
 };
 
 util.inherits(HivTraceRunner, EventEmitter);
+
+HivTraceRunner.prototype.log_publisher = function() {
+
+  var self = this;
+
+  // read log file
+  tail = new Tail(self.hivtrace_log);
+
+  tail.on("line", function(data) {
+
+    winston.debug(data);
+
+    if(data.indexOf('INFO:') != -1) {
+
+      var msg = '';
+
+      // try parsing the message
+      try {
+        var info = data.split('INFO:')[1].split('root:')[1];
+        msg = JSON.parse(info);
+      } catch (e) {
+        winston.warn('error' + e + ' for ' + info)
+      }
+
+      // publish to redis
+      client.publish(self.python_redis_channel, JSON.stringify(msg));
+
+    }
+
+  });
+
+}
 
 /**
  * Once the job has been scheduled, we need to watch the files that it
@@ -344,7 +376,6 @@ util.inherits(HivTraceRunner, EventEmitter);
 HivTraceRunner.prototype.status_watcher = function () {
 
   var self = this;
-  
 
   var job_status = new JobStatus(self.torque_id);
 
@@ -372,7 +403,6 @@ HivTraceRunner.prototype.status_watcher = function () {
 
   });
 
-
 };
 
 /**
@@ -386,35 +416,31 @@ HivTraceRunner.prototype.submit = function (qsub_params, cwd) {
 
   var qsub_submit = function () {
 
-    var qsub =  spawn('qsub', qsub_params, { cwd: cwd });
+    var qsub = spawn('qsub', qsub_params, { cwd: cwd });
 
     qsub.stderr.on('data', function (data) {
-
-      winston.warn(data);
       // error when starting job
       self.emit('script error', {'error' : ''+data});
-
+      //winston.warn(data);
     });
 
     qsub.stdout.on('data', function (data) {
 
-      torque_id = String(data).replace(/\n$/, '');
-      winston.info(torque_id);
-      self.torque_id = torque_id;
-      self.emit('job created', { 'torque_id': torque_id });
+      self.torque_id = String(data).replace(/\n$/, '');
+      self.emit('job created', { 'torque_id': self.torque_id });
+      winston.info(self.torque_id);
 
     });
 
     qsub.on('close', function (code) {
-
       self.status_watcher();
-
     });
 
   }
 
+  fs.closeSync(fs.openSync(self.hivtrace_log, 'w'));
   qsub_submit();
-
+  self.log_publisher();
 
 }
 

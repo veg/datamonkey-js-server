@@ -47,6 +47,7 @@ var options ={
     };
 
 describe('hivtrace jobrunner', function() {
+
   var fn = __dirname + '/res/552f030ddfb365a631365975';
   var params_file = __dirname + '/res/params.json';
 
@@ -65,7 +66,7 @@ describe('hivtrace jobrunner', function() {
 
   it.only('should complete', function(done) {
 
-    this.timeout(120000);
+    this.timeout(195000);
 
     var params = JSON.parse(fs.readFileSync(params_file));
     var hivtrace_socket = clientio.connect(socketURL, options);
@@ -87,13 +88,13 @@ describe('hivtrace jobrunner', function() {
     });
 
     hivtrace_socket.on('aligned fasta', function(data){
-      winston.warn('incoming aligned fasta file');
       aligned_fasta_cnt += 1;
     });
 
     hivtrace_socket.on('completed', function(data) {
       winston.info('completed!');
-      should.exist(data.results);
+      should.exist(data.results.trace_results);
+      should.exist(data.results.lanl_trace_results);
       aligned_fasta_cnt.should.be.equal(1);
       done();
     });
@@ -111,20 +112,20 @@ describe('hivtrace jobrunner', function() {
     var params = JSON.parse(fs.readFileSync(params_file));
     var hivtrace_socket = clientio.connect(socketURL, options);
 
-    hivtrace_socket.on('connect', function(data){
+    hivtrace_socket.on('connect', function(data) {
       winston.info('connected to server');
       var stream = ss.createStream();
       ss(hivtrace_socket).emit('hivtrace:spawn', stream, params);
       fs.createReadStream(fn).pipe(stream);
     });
 
-    hivtrace_socket.on('job created', function(data){
+    hivtrace_socket.on('job created', function(data) {
       winston.info('got job id');
       setTimeout(function() { process.emit('cancelJob', '') }, 1000);
     });
 
-    hivtrace_socket.on('status update', function(data){
-      winston.info('got status update!');
+    hivtrace_socket.on('status update', function(data) {
+      //winston.info('got status update!');
     });
 
     hivtrace_socket.on('script error', function(data) {

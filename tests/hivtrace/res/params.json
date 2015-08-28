@@ -1,11 +1,11 @@
 {
 	"_id" : "552f030ddfb365a631365975",
-	"reference_strip" : "remove",
+	"reference_strip" : "no",
 	"filter_edges" : "no",
 	"reference" : "HXB2_prrt",
 	"strip_drams" : "no",
 	"ambiguity_handling" : "RESOLVE",
-	"lanl_compare" : false,
+	"lanl_compare" : true,
 	"created" : "2015-04-16T00:32:13.869Z",
 	"status_stack" : [
 		"In Queue",

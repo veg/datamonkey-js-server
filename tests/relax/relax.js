@@ -65,7 +65,7 @@ describe('relax jobrunner', function() {
 
   it('should run and cancel itself', function(done) {
 
-    this.timeout(5000);
+    this.timeout(15000);
 
     var params = JSON.parse(fs.readFileSync(params_file));
     var relax_socket = clientio.connect(socketURL, options);
