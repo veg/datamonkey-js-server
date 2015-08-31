@@ -1,0 +1,29 @@
+{
+	"_id" : "552f030ddfb365a631365975",
+	"reference_strip" : "remove",
+	"filter_edges" : "remove",
+	"reference" : "HXB2_prrt",
+	"strip_drams" : "lewis",
+	"ambiguity_handling" : "AVERAGE",
+	"lanl_compare" : false,
+	"created" : "2015-04-16T00:32:13.869Z",
+	"status_stack" : [
+		"In Queue",
+		"Aligning",
+		"BAM to FASTA conversion",
+		"Computing pairwise TN93 distances",
+		"Inferring, filtering, and analyzing molecular transmission network",
+		"Completed"
+	],
+	"fraction" : 0.05,
+	"min_overlap" : 500,
+	"distance_threshold" : 0.015,
+	"__v" : 0,
+	"attribute_map" : {
+		"delimiter" : "_",
+		"map" : [
+			"id"
+		]
+	},
+	"status" : "completed"
+}

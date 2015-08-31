@@ -49,7 +49,8 @@ describe('job status', function() {
       id = data.toString().split('.')[0]
       var job_status = new JobStatus(id);
 
-      job_status.watch(function(error, status) {
+      job_status.watch(function(error, data) {
+        var status = data.status;
         winston.info(status);
         if(status == "completed" || status == "exiting") {
           // ensure full status returns appropriate metadata
@@ -59,6 +60,7 @@ describe('job status', function() {
             done();
           });
         } else {
+          console.log(status);
           (status == "running" || status == "queued").should.be.equal(true, error);
         }
       });

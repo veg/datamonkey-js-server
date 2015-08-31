@@ -48,8 +48,9 @@ var options ={
 
 describe('hivtrace jobrunner', function() {
 
-  var fn = __dirname + '/res/552f030ddfb365a631365975';
-  var params_file = __dirname + '/res/params.json';
+  var fn = path.join(__dirname, '/res/552f030ddfb365a631365975');
+  var params_file = path.join(__dirname, '/res/params.json');
+  var params_stripdrams_file = path.join(__dirname, '/res/params_stripdrams.json');
 
   io.sockets.on('connection', function (socket) {
     ss(socket).on('hivtrace:spawn',function(stream, params){
@@ -64,7 +65,48 @@ describe('hivtrace jobrunner', function() {
 
   });
 
-  it.only('should complete', function(done) {
+  it.only('strip drams should complete', function(done) {
+
+    this.timeout(195000);
+
+    var params = JSON.parse(fs.readFileSync(params_stripdrams_file));
+    var hivtrace_socket = clientio.connect(socketURL, options);
+    var aligned_fasta_cnt = 0;
+
+    hivtrace_socket.on('connect', function(data){
+      winston.info('connected to server');
+      var stream = ss.createStream();
+      ss(hivtrace_socket).emit('hivtrace:spawn', stream, params);
+      fs.createReadStream(fn).pipe(stream);
+    });
+
+    hivtrace_socket.on('job created', function(data){
+      winston.info('got job id');
+    });
+
+    hivtrace_socket.on('status update', function(data){
+      winston.info('got status update!');
+    });
+
+    hivtrace_socket.on('aligned fasta', function(data){
+      aligned_fasta_cnt += 1;
+    });
+
+    hivtrace_socket.on('completed', function(data) {
+      winston.info('completed!');
+      should.exist(data.results.trace_results);
+      aligned_fasta_cnt.should.be.equal(1);
+      done();
+    });
+
+    hivtrace_socket.on('script error', function(data) {
+      throw new Error('job failed');
+    });
+
+  });
+
+
+  it('lanl compare should complete', function(done) {
 
     this.timeout(195000);
 
@@ -134,5 +176,6 @@ describe('hivtrace jobrunner', function() {
       done();
     });
   });
+
 });
 
