@@ -190,7 +190,7 @@ describe('busted jobrunner', function() {
 
   });
 
-  it('should clear job', function(done) {
+  it.only('should clear job', function(done) {
 
     this.timeout(10000);
 

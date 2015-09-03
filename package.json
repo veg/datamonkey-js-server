@@ -4,13 +4,13 @@
     "version"     : "0.3.0",
     "private"     : true,
     "scripts"     : {
-      "test"          : "npm run test-absrel && npm run test-busted && npm run test-relax && npm run test-flea && npm run test-jobs && npm run test-hivtrace",
+      "test"          : "npm run test-absrel && npm run test-busted && npm run test-jobs && npm run test-hivtrace",
       "test-absrel"   : "mocha -R spec ./tests/absrel/absrel.js",
-      "test-busted"   : "mocha -R spec ./tests/busted/busted.js",
       "test-relax"    : "mocha -R spec ./tests/relax/relax.js",
       "test-flea"     : "mocha -R spec ./tests/flea/flea.js",
       "test-jobs"     : "mocha -R spec ./tests/*.js",
-      "test-hivtrace" : "mocha -R spec ./tests/hivtrace/hivtrace.js"
+      "test-hivtrace" : "mocha -R spec ./tests/hivtrace/hivtrace.js",
+      "test-busted"   : "mocha -R spec ./tests/busted/busted.js"
     },
     "dependencies": {
         "redis"            : "0.12.x",

@@ -36,6 +36,7 @@ var fs        = require('fs'),
     hivtrace  = require(path.join(__dirname, '/../../app/hivtrace/hivtrace.js')),
     job       = require(path.join(__dirname, '/../../app/job.js')),
     winston   = require('winston'),
+    _         = require('underscore'),
     ss        = require('socket.io-stream');
 
 var socketURL = 'http://0.0.0.0:5000';
@@ -72,6 +73,7 @@ describe('hivtrace jobrunner', function() {
     var params = JSON.parse(fs.readFileSync(params_stripdrams_file));
     var hivtrace_socket = clientio.connect(socketURL, options);
     var aligned_fasta_cnt = 0;
+    var done_once = _.once(done);
 
     hivtrace_socket.on('connect', function(data){
       winston.info('connected to server');
@@ -96,7 +98,7 @@ describe('hivtrace jobrunner', function() {
       winston.info('completed!');
       should.exist(data.results.trace_results);
       aligned_fasta_cnt.should.be.equal(1);
-      done();
+      done_once();
     });
 
     hivtrace_socket.on('script error', function(data) {
@@ -113,6 +115,7 @@ describe('hivtrace jobrunner', function() {
     var params = JSON.parse(fs.readFileSync(params_file));
     var hivtrace_socket = clientio.connect(socketURL, options);
     var aligned_fasta_cnt = 0;
+    var done_once = _.once(done);
 
     hivtrace_socket.on('connect', function(data){
       winston.info('connected to server');
@@ -138,7 +141,7 @@ describe('hivtrace jobrunner', function() {
       should.exist(data.results.trace_results);
       should.exist(data.results.lanl_trace_results);
       aligned_fasta_cnt.should.be.equal(1);
-      done();
+      done_once();
     });
 
     hivtrace_socket.on('script error', function(data) {
