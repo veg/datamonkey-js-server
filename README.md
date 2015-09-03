@@ -10,5 +10,6 @@ Datamonkey Server
 ###INSTALL
     git clone git@github.com:veg/datamonkey-server.git
     git checkout socketio
-    cp config.js.tpl config.js 
-    node server.js
+    cp config.json.tpl config.json
+    make install
+    make test
