@@ -17,7 +17,7 @@ module.exports = function(grunt) {
     },
     mochaTest: {
       test: {
-          src: ['tests/hivtrace/hivtrace.js'],
+          src: ['tests/jobstatus.js'],
           options: {
                 run: true,
                 debug: true,
@@ -26,7 +26,7 @@ module.exports = function(grunt) {
     },
 
     watch: {
-      files: ['lib/*.js', 'app/**/*.js', 'tests/*.js', 'lib/**/*.js*'],
+      files: ['lib/*.js', 'app/**/*.js', 'tests/**/*.js', 'lib/**/*.js*'],
       tasks: ['mochaTest']
     }
 
