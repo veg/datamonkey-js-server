@@ -38,6 +38,7 @@ var config = require('./config.json'),
     busted = require('./app/busted/busted.js'),
     relax = require('./app/relax/relax.js'),
     absrel = require('./app/absrel/absrel.js'),
+    fade = require('./app/fade/fade.js'),
     job = require('./app/job.js'),
     flea = require('./app/flea/flea.js'),
     ss = require('socket.io-stream'),
@@ -114,6 +115,19 @@ io.sockets.on('connection', function (socket) {
   r.route('relax', {
     spawn : function (stream, params) {
       var relax_job = new relax.relax(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // FADE
+  r.route('fade', {
+    spawn : function (stream, params) {
+      var fade = new fade.fade(socket, stream, params.job);
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
