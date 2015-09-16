@@ -5,7 +5,8 @@
 	"reference" : "HXB2_prrt",
 	"strip_drams" : "lewis",
 	"ambiguity_handling" : "AVERAGE",
-	"lanl_compare" : false,
+	"lanl_compare" : true,
+	"prealigned" : true,
 	"created" : "2015-04-16T00:32:13.869Z",
 	"status_stack" : [
 		"In Queue",
