@@ -17,7 +17,7 @@ module.exports = function(grunt) {
     },
     mochaTest: {
       test: {
-          src: ['tests/hivtrace/hivtrace.js'],
+          src: ['tests/jobqueue.js'],
           options: {
                 run: true,
                 debug: true,
