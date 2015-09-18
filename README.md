@@ -3,9 +3,7 @@ Datamonkey Server
 
 ###Dependencies
 * node
-* HIVClustering https://github.com/spond/HIVClustering
-* TN93          https://github.com/spond/TN93
-* sequtil       https://github.com/nlhepler/sequtil
+* redis
 
 ###INSTALL
     git clone git@github.com:veg/datamonkey-server.git
