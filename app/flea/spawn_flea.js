@@ -51,7 +51,7 @@ util.inherits(FleaRunner, EventEmitter);
  */
 
 FleaRunner.prototype.start = function (fn, flea_params) {
-  
+
   var self = this;
   self.filepath = fn;
   self.output_dir  = path.dirname(self.filepath);
@@ -73,26 +73,29 @@ FleaRunner.prototype.start = function (fn, flea_params) {
   self.job_completed = false;
 
   // Results files
-  self.results_dir = path.join(self.filedir, '/hyphy_data/results/');
-  self.frequencies_fn = path.join(self.results_dir, 'frequencies.json');
-  self.rates_fn = path.join(self.results_dir, 'rates.json');
-  self.rates_pheno_fn = path.join(self.results_dir, 'rates_pheno.tsv');
-  self.sequences_fn = path.join(self.results_dir, 'sequences.json');
-  self.trees_fn = path.join(self.results_dir,'trees.json');
-  self.turnover_fn = path.join(self.results_dir,'turnover.json');
-  self.copynumbers_fn = path.join(self.filedir,'copynumbers.json');
+  self.analysis_dir = path.join(self.filedir, '/analysis/');
+  self.frequencies_fn = path.join(self.analysis_dir, 'frequencies.json');
+  self.rates_fn = path.join(self.analysis_dir, 'rates.json');
+  self.rates_pheno_fn = path.join(self.analysis_dir, 'rates_pheno.json');
+  self.sequences_fn = path.join(self.analysis_dir, 'sequences.json');
+  self.trees_fn = path.join(self.analysis_dir, 'trees.json');
+  self.divergence_fn = path.join(self.analysis_dir, 'js_divergence.json');
+  self.copynumbers_fn = path.join(self.analysis_dir, 'copynumbers.json');
+  self.coordinates_fn = path.join(self.analysis_dir, 'coordinates.json');
+  self.dates_fn = path.join(self.analysis_dir, 'dates.json');
+  self.run_info_fn = path.join(self.filedir, 'run_info.json');
 
-  // env_pipeline.py 
-  var env_pipeline_submit = function () {
+  // flea_pipeline.py
+  var flea_pipeline_submit = function () {
 
     self.emit('status update', {'phase': self.status_stack[2], 'msg': ''});
 
-    var env_pipeline_parameters = [ '-u', self.pipeline, '--config', self.flea_config, self.file_list ];
-    winston.info('flea : submitting job : ' + self.python + ' ' + env_pipeline_parameters.join(' '));
+    var flea_pipeline_parameters = [ '-u', self.pipeline, '--config', self.flea_config, self.file_list ];
+    winston.info('flea : submitting job : ' + self.python + ' ' + flea_pipeline_parameters.join(' '));
 
-    var env_pipeline =  spawn(self.python, env_pipeline_parameters,  { cwd : self.filedir } );
+    var flea_pipeline =  spawn(self.python, flea_pipeline_parameters,  { cwd : self.filedir } );
 
-    env_pipeline.stdout.on('data', function (data) {
+    flea_pipeline.stdout.on('data', function (data) {
 
       self.stdout += String(data);
       winston.info(self.id + ' : flea : ' + self.stdout);
@@ -101,7 +104,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
 
     });
 
-    env_pipeline.stderr.on('data', function (data) {
+    flea_pipeline.stderr.on('data', function (data) {
 
       self.stderr += String(data);
       winston.info(self.id + ' : flea : ' + self.stderr);
@@ -110,43 +113,53 @@ FleaRunner.prototype.start = function (fn, flea_params) {
 
     });
 
-    env_pipeline.on('close', function (code) {
+    flea_pipeline.on('close', function (code) {
 
       // Read results files and send
       winston.info('exit code: ' + code);
 
-      // Save results files 
+      // Save results files
       if(code === 0) {
 
-        var frequency_promise = Q.nfcall(fs.readFile, self.frequencies_fn, "utf-8"); 
-        var rates_promise = Q.nfcall(fs.readFile, self.rates_fn, "utf-8"); 
-        var rates_pheno_promise = Q.nfcall(fs.readFile, self.rates_pheno_fn, "utf-8"); 
-        var sequences_promise = Q.nfcall(fs.readFile, self.sequences_fn, "utf-8"); 
-        var trees_promise = Q.nfcall(fs.readFile, self.trees_fn, "utf-8"); 
-        var turnover_promise = Q.nfcall(fs.readFile, self.turnover_fn, "utf-8"); 
-        var copynumbers_promise = Q.nfcall(fs.readFile, self.copynumbers_fn, "utf-8"); 
+        var frequency_promise = Q.nfcall(fs.readFile, self.frequencies_fn, "utf-8");
+        var rates_promise = Q.nfcall(fs.readFile, self.rates_fn, "utf-8");
+        var rates_pheno_promise = Q.nfcall(fs.readFile, self.rates_pheno_fn, "utf-8");
+        var sequences_promise = Q.nfcall(fs.readFile, self.sequences_fn, "utf-8");
+        var trees_promise = Q.nfcall(fs.readFile, self.trees_fn, "utf-8");
+        var divergence_promise = Q.nfcall(fs.readFile, self.divergence_fn, "utf-8");
+        var copynumbers_promise = Q.nfcall(fs.readFile, self.copynumbers_fn, "utf-8");
+        var coordinates_promise = Q.nfcall(fs.readFile, self.coordinates_fn, "utf-8");
+        var dates_promise = Q.nfcall(fs.readFile, self.dates_fn, "utf-8");
+        var run_info_promise = Q.nfcall(fs.readFile, self.run_info_fn, "utf-8");
 
-        var promises = [ frequency_promise, 
-                         rates_promise, 
-                         rates_pheno_promise, 
-                         sequences_promise, 
-                         trees_promise, 
-                         turnover_promise,
-                         copynumbers_promise
-                         ]; 
 
-        Q.allSettled(promises) 
-        .then(function (results) { 
+        var promises = [ frequency_promise,
+                         rates_promise,
+                         rates_pheno_promise,
+                         sequences_promise,
+                         trees_promise,
+                         divergence_promise,
+                         copynumbers_promise,
+                         coordinates_promise,
+                         dates_promise,
+                         run_info_promise
+                         ];
+
+        Q.allSettled(promises)
+        .then(function (results) {
             var hyphy_data = {};
             hyphy_data.frequencies = results[0].value;
             hyphy_data.rates       = results[1].value;
             hyphy_data.rates_pheno = results[2].value;
             hyphy_data.sequences   = results[3].value;
             hyphy_data.trees       = results[4].value;
-            hyphy_data.turnover    = results[5].value;
+            hyphy_data.divergence  = results[5].value;
             hyphy_data.copynumbers = results[6].value;
+            hyphy_data.coordinates = results[7].value;
+            hyphy_data.dates = results[8].value;
+            hyphy_data.run_info = results[9].value;
             self.emit('completed', {'results' : hyphy_data});
-          }); 
+          });
 
       } else {
 
@@ -158,7 +171,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
 
   };
 
-  // Write the contents of the file in the parameters to a file on the 
+  // Write the contents of the file in the parameters to a file on the
   // local filesystem, then spawn the job.
   var do_flea = function(stream, flea_params) {
 
@@ -179,7 +192,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
       // Create list inside filedir
       fs.readdir(self.filedir, function(err, files) {
         // Compare files in directory to file list
-        self.msas.forEach(function(msa, index) {    
+        self.msas.forEach(function(msa, index) {
           // Append to file
           // Format : PC64_V00_small.fastq V00 20080301
           if(files.indexOf(msa._id + '.fastq') != -1) {
@@ -190,7 +203,7 @@ FleaRunner.prototype.start = function (fn, flea_params) {
           }
 
           if(index == (self.msas.length - 1)) {
-            env_pipeline_submit();
+            flea_pipeline_submit();
           }
 
         });
