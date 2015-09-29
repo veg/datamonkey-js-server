@@ -146,7 +146,6 @@ describe('hivtrace jobrunner', function() {
 
   });
 
-
   it('lanl compare should complete', function(done) {
 
     this.timeout(195000);
