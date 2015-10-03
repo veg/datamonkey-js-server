@@ -62,7 +62,7 @@ io.sockets.on('connection', function (socket) {
     });
   });
 
-  var r =  new router.io (socket);
+  var r =  new router.io(socket);
 
   // HIV Trace
   r.route('hivtrace', {
@@ -99,6 +99,7 @@ io.sockets.on('connection', function (socket) {
 
   // BUSTED
   r.route('busted', {
+
     spawn : function (stream, params) {
       var busted_job = new busted.busted(socket, stream, params.job);
     },
@@ -108,10 +109,12 @@ io.sockets.on('connection', function (socket) {
     cancel : function(params) {
       new job.cancel(socket, params.id); 
     }
+
   });
 
   // RELAX
   r.route('relax', {
+
     spawn : function (stream, params) {
       var relax_job = new relax.relax(socket, stream, params.job);
     },
@@ -121,6 +124,7 @@ io.sockets.on('connection', function (socket) {
     cancel : function(params) {
       new job.cancel(socket, params.id);
     }
+
   });
 
   // aBSREL
