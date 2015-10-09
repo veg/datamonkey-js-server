@@ -180,12 +180,13 @@ hyphyJob.prototype.onJobCreated = function (torque_id) {
   redis_packet.type = 'job created';
   str_redis_packet = JSON.stringify(torque_id);
   self.log('job created',str_redis_packet);
+
   client.hset(self.id, 'torque_id', str_redis_packet);
   client.publish(self.id, str_redis_packet);
-  client.hset(self.torque_id, 'datamonkey_id', self.id);
-  client.hset(self.torque_id, 'type', self.type);
-  client.hset(self.torque_id, 'sites', self.params.msa[0].sites);
-  client.hset(self.torque_id, 'sequences', self.params.msa[0].sequences);
+  client.hset(self.torque_id, 'datamonkey_id', self.id, redis.print);
+  client.hset(self.torque_id, 'type', self.type, redis.print);
+  client.hset(self.torque_id, 'sites', self.params.msa[0].sites, redis.print);
+  client.hset(self.torque_id, 'sequences', self.params.msa[0].sequences, redis.print);
   self.push_job_once(self.id);
 
 };
