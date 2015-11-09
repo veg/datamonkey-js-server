@@ -197,6 +197,7 @@ jobRunner.prototype.status_watcher = function () {
    }
 
  });
+
 };
 
 exports.resubscribe = resubscribe;

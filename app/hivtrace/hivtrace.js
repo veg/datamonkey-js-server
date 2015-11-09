@@ -299,6 +299,28 @@ hivtrace.prototype.onComplete = function () {
     }); 
 }
 
+hivtrace.prototype.onJobCreated = function (torque_id) {
+
+  var self = this;
+
+  self.push_active_job = function (id) {
+    client.rpush('active_jobs', self.id);
+  };
+
+  self.push_job_once = _.once(self.push_active_job);
+  self.setTorqueParameters(torque_id);
+  var redis_packet = torque_id;
+  redis_packet.type = 'job created';
+  str_redis_packet = JSON.stringify(torque_id);
+  self.log('job created',str_redis_packet);
+  client.hset(self.id, 'torque_id', str_redis_packet);
+  client.publish(self.id, str_redis_packet);
+  client.hset(self.torque_id, 'datamonkey_id', self.id);
+  client.hset(self.torque_id, 'type', self.type);
+  self.push_job_once(self.id);
+
+};
+
 hivtrace.prototype.sendAlignedFasta = function () {
 
   var self = this;
