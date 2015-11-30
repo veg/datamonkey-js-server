@@ -57,13 +57,13 @@ var absrel = function (socket, stream, params) {
   self.nj           = self.params.msa[0].nj
 
   // parameter-derived attributes
-  self.fn              = __dirname + '/output/' + self.id;
-  self.output_dir      = path.dirname(self.fn);
-  self.status_fn       = self.fn + '.status';
-  self.results_fn      = self.fn + '.absrel';
-  self.results_json_fn = self.fn + '.absrel.json';
-  self.progress_fn     = self.fn + '.absrel.progress';
-  self.tree_fn         = self.fn + '.tre';
+  self.fn               = __dirname + '/output/' + self.id;
+  self.output_dir       = path.dirname(self.fn);
+  self.status_fn        = self.fn + '.status';
+  self.results_short_fn = self.fn + '.absrel';
+  self.results_fn       = self.fn + '.absrel.json';
+  self.progress_fn      = self.fn + '.absrel.progress';
+  self.tree_fn          = self.fn + '.tre';
 
   self.qsub_params = ['-q',
                           config.qsub_queue,
@@ -72,7 +72,7 @@ var absrel = function (socket, stream, params) {
                           ',tree_fn='+self.tree_fn+
                           ',sfn='+self.status_fn+
                           ',pfn='+self.progress_fn+
-                          ',rfn='+self.results_fn+
+                          ',rfn='+self.results_short_fn+
                           ',treemode='+self.treemode+
                           ',genetic_code='+self.genetic_code+
                           ',analysis_type='+self.type+

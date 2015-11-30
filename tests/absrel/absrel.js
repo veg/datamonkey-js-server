@@ -86,9 +86,15 @@ describe('absrel jobrunner', function() {
       process.emit('cancelJob', '');
     });
 
-    absrel_socket.on('script error', function(data) {
+    absrel_socket.on('completed', function(data) {
       winston.warn(data);
       done();
+    });
+
+
+    absrel_socket.on('script error', function(data) {
+      winston.warn(data);
+      //done();
     });
 
   });

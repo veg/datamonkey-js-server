@@ -92,6 +92,7 @@ var hivtrace = function (socket, stream, params) {
   self.min_overlap        = params.min_overlap;
   self.status_stack       = params.status_stack;
   self.lanl_compare       = params.lanl_compare;
+  self.prealigned         = params.prealigned;
   self.strip_drams        = params.strip_drams == 'no' ? false : params.strip_drams;
 
   if(params.reference == 'Custom') {
@@ -134,6 +135,7 @@ var hivtrace = function (socket, stream, params) {
                   ',comparelanl='+self.lanl_compare+
                   ',reference_strip='+self.reference_strip+
                   ',strip_drams='+self.strip_drams+
+                  ',prealigned='+self.prealigned+
                   ',output='+self.output_cluster_output+
                   ',hivtrace_log='+self.hivtrace_log+
                   ',custom_reference_fn='+self.custom_reference_fn,
@@ -282,11 +284,10 @@ hivtrace.prototype.onComplete = function () {
         // Log that the job has been completed
         self.log('complete', 'success');
 
-        self.socket.emit('completed', { results : results_data });
 
         // Store packet in redis and publish to channel
         client.hset(self.id, 'results', str_redis_packet);
-        client.publish(self.id, str_redis_packet);
+        self.socket.emit('completed', { results : results_data });
 
         // Remove id from active_job queue
         client.lrem('active_jobs', 1, self.id);
@@ -297,6 +298,28 @@ hivtrace.prototype.onComplete = function () {
 
     }); 
 }
+
+hivtrace.prototype.onJobCreated = function (torque_id) {
+
+  var self = this;
+
+  self.push_active_job = function (id) {
+    client.rpush('active_jobs', self.id);
+  };
+
+  self.push_job_once = _.once(self.push_active_job);
+  self.setTorqueParameters(torque_id);
+  var redis_packet = torque_id;
+  redis_packet.type = 'job created';
+  str_redis_packet = JSON.stringify(torque_id);
+  self.log('job created',str_redis_packet);
+  client.hset(self.id, 'torque_id', str_redis_packet);
+  client.publish(self.id, str_redis_packet);
+  client.hset(self.torque_id, 'datamonkey_id', self.id);
+  client.hset(self.torque_id, 'type', self.type);
+  self.push_job_once(self.id);
+
+};
 
 hivtrace.prototype.sendAlignedFasta = function () {
 

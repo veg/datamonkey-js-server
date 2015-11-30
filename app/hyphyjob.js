@@ -77,7 +77,7 @@ hyphyJob.prototype.attachSocket = function () {
 hyphyJob.prototype.init = function () {
   var self = this;
   // store parameters in redis
-  client.hset(self.id, 'params', self.params);
+  client.hset(self.id, 'params', JSON.stringify(self.params));
   self.attachSocket();
   self.spawn();
 }
@@ -175,14 +175,18 @@ hyphyJob.prototype.onJobCreated = function (torque_id) {
   };
 
   self.push_job_once = _.once(self.push_active_job);
-
   self.setTorqueParameters(torque_id);
   var redis_packet = torque_id;
   redis_packet.type = 'job created';
   str_redis_packet = JSON.stringify(torque_id);
   self.log('job created',str_redis_packet);
+
   client.hset(self.id, 'torque_id', str_redis_packet);
   client.publish(self.id, str_redis_packet);
+  client.hset(self.torque_id, 'datamonkey_id', self.id, redis.print);
+  client.hset(self.torque_id, 'type', self.type, redis.print);
+  client.hset(self.torque_id, 'sites', self.params.msa[0].sites, redis.print);
+  client.hset(self.torque_id, 'sequences', self.params.msa[0].sequences, redis.print);
   self.push_job_once(self.id);
 
 };
