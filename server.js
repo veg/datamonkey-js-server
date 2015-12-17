@@ -131,7 +131,7 @@ io.sockets.on('connection', function (socket) {
   // FADE
   r.route('fade', {
     spawn : function (stream, params) {
-      var fade = new fade.fade(socket, stream, params.job);
+      var fade_job = new fade.fade(socket, stream, params.job);
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);

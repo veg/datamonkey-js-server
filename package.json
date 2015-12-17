@@ -1,32 +1,32 @@
 {
-    "name"        : "datamonkey-server",
-    "description" : "",
-    "version"     : "0.3.0",
-    "private"     : true,
-    "scripts"     : {
-      "test"          : "npm run test-absrel && npm run test-busted && npm run test-jobs && npm run test-hivtrace",
-      "test-absrel"   : "mocha -R spec ./tests/absrel/absrel.js",
-      "test-relax"    : "mocha -R spec ./tests/relax/relax.js",
-      "test-flea"     : "mocha -R spec ./tests/flea/flea.js",
-      "test-jobs"     : "mocha -R spec ./tests/*.js",
-      "test-hivtrace" : "mocha -R spec ./tests/hivtrace/hivtrace.js",
-      "test-busted"   : "mocha -R spec ./tests/busted/busted.js"
-    },
-    "dependencies": {
-        "redis"            : "0.12.x",
-        "socket.io"        : "1.2.x",
-        "socket.io-stream" : "0.6.x",
-        "tail"             : "0.4.x",
-        "should"           : "4.3.x",
-        "grunt"            : "0.4.x",
-        "q"                : "1.2.x",
-        "underscore"       : "1.8.x",
-        "winston"          : "0.9.x",
-        "tar"              : "1.x.x",
-        "moment"           : "x.x.x",
-        "moment-timezone"  : "x.x.x"
-    },
-    "devDependencies" : {
-      "socket.io-client" : "1.x.x"
-    }
+  "name": "datamonkey-server",
+  "description": "",
+  "version": "0.3.0",
+  "private": true,
+  "scripts": {
+    "test": "npm run test-absrel && npm run test-busted && npm run test-jobs && npm run test-hivtrace",
+    "test-absrel": "mocha -R spec ./tests/absrel/absrel.js",
+    "test-relax": "mocha -R spec ./tests/relax/relax.js",
+    "test-flea": "mocha -R spec ./tests/flea/flea.js",
+    "test-jobs": "mocha -R spec ./tests/*.js",
+    "test-hivtrace": "mocha -R spec ./tests/hivtrace/hivtrace.js",
+    "test-busted": "mocha -R spec ./tests/busted/busted.js"
+  },
+  "dependencies": {
+    "grunt": "0.4.x",
+    "moment": "x.x.x",
+    "moment-timezone": "x.x.x",
+    "q": "^1.2.1",
+    "redis": "0.12.x",
+    "should": "4.3.x",
+    "socket.io": "1.2.x",
+    "socket.io-stream": "0.6.x",
+    "tail": "0.4.x",
+    "tar": "1.x.x",
+    "underscore": "1.8.x",
+    "winston": "0.9.x"
+  },
+  "devDependencies": {
+    "socket.io-client": "1.x.x"
+  }
 }

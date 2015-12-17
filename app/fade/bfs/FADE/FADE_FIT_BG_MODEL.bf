@@ -1,34 +1,34 @@
-RequireVersion  ("2.13");
-ExecuteAFile			("../Shared/globals.ibf");
-ExecuteAFile			("../Shared/GrabBag.bf");
+RequireVersion("2.13");
+ExecuteAFile("../lib/GrabBag.bf");
 
-fscanf  			(stdin,"String", _in_FilePath);
-fscanf              (stdin,"String", _in_ModelName);
-
-timer               = Time(1);
+fscanf(stdin,"String", _in_FilePath);
+fscanf(stdin,"String", _in_ModelName);
 
 timer = Time (1);
 
-baseFilePath  		= "spool/"+_in_FilePath;
-
+baseFilePath = _in_FilePath;
 intermediateHTML	= baseFilePath + ".progress";
-timeStamp           = baseFilePath + ".time";
-alignmentData   	= baseFilePath + ".seq";
-treeData            = baseFilePath + ".trees";
-auxInfoFile         = baseFilePath + ".info";
-
+timeStamp = baseFilePath + ".time";
+alignmentData = baseFilePath + ".seq";
+treeData = baseFilePath + ".trees";
+auxInfoFile = baseFilePath + ".info";
 
 fscanf (alignmentData, "Raw", dataFileString);
-fscanf (treeData,      "Raw", analysisSpecRaw);
-fscanf (auxInfoFile,   "Raw", auxInfo);
-auxInfo = Eval (auxInfo);
+fprintf(stdout, treeData);
+fscanf (treeData, "Raw", analysisSpecRaw);
+fscanf (auxInfoFile, "Raw", auxInfo);
+auxInfo = Eval(auxInfo);
 
 fprintf (timeStamp, CLEAR_FILE, timer);
 
-_modelInfo             		= _generateProteinModelInfo (_in_ModelName);
-longModelName 				= _getLongModelName (_in_ModelName);
-modelNameString				= "_customAAModelMatrix";
-ExecuteAFile			    ("../Shared/_MFReaderAA_.ibf");
+_modelInfo = _generateProteinModelInfo (_in_ModelName);
+longModelName = _getLongModelName (_in_ModelName);
+modelNameString = "_customAAModelMatrix";
+
+// TODO: Change this method to using a HYPHY library
+ExecuteAFile("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/lib/_MFReaderAA_.ibf");
+
+fprintf(stdout, _modelInfo);
 
 if (_modelInfo["+F"]) {
     _freqOption = "Estimated";
@@ -55,10 +55,11 @@ status_updates [_mapNumberToString (Abs(status_updates))] =
                      "Time": Time(1),
                      "Information": {"00000":"Fitting the " + _modelInfo["Name"] +" substitution model to obtain initial branch length estimates"}};
                      
-fprintf				(stdout, CLEAR_FILE, "\n", status_updates);
+fprintf(stdout, CLEAR_FILE, "\n", status_updates);
 
 ACCEPT_ROOTED_TREES = 1;
 populateTrees ("prot_tree", fileCount);
+
 ExecuteCommands(constructLF ("baseLF", "filteredData", "prot_tree", fileCount));
 Optimize (base_res, baseLF);
 

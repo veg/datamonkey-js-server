@@ -1,0 +1,975 @@
+execve("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/../../.hyphy/HYPHYMP", ["/home/sweaver/datamonkey/datamon"..., "FADE_FIT_BG_MODEL.bf"], [/* 49 vars */]) = 0
+brk(0)                                  = 0x908000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df7b000
+access("/etc/ld.so.preload", R_OK)      = -1 ENOENT (No such file or directory)
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/tls/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/scyld/openmpi/1.6.3/gnu/lib/tls/x86_64", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/tls/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/scyld/openmpi/1.6.3/gnu/lib/tls", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/scyld/openmpi/1.6.3/gnu/lib/x86_64", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/scyld/openmpi/1.6.3/gnu/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/opt/scyld/maui/lib/tls/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/scyld/maui/lib/tls/x86_64", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/tls/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/scyld/maui/lib/tls", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/scyld/maui/lib/x86_64", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/scyld/maui/lib", {st_mode=S_IFDIR|0755, st_size=4096, ...}) = 0
+open("/opt/AMDAPP/lib/x86_64/tls/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/AMDAPP/lib/x86_64/tls/x86_64", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/tls/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/AMDAPP/lib/x86_64/tls", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/AMDAPP/lib/x86_64/x86_64", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/AMDAPP/lib/x86_64", {st_mode=S_IFDIR|0775, st_size=4096, ...}) = 0
+open("/opt/AMDAPP/lib/x86/tls/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/AMDAPP/lib/x86/tls/x86_64", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/tls/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/AMDAPP/lib/x86/tls", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/x86_64/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/AMDAPP/lib/x86/x86_64", 0x7fffeee3a490) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libdl.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+stat("/opt/AMDAPP/lib/x86", {st_mode=S_IFDIR|0775, st_size=4096, ...}) = 0
+open("/etc/ld.so.cache", O_RDONLY)      = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=158842, ...}) = 0
+mmap(NULL, 158842, PROT_READ, MAP_PRIVATE, 3, 0) = 0x7f2d1df50000
+close(3)                                = 0
+open("/lib64/libdl.so.2", O_RDONLY)     = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\340\r\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=19536, ...}) = 0
+mmap(NULL, 2109696, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1db50000
+mprotect(0x7f2d1db52000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d1dd52000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7f2d1dd52000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libpthread.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libpthread.so.0", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\340]\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=142640, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df7a000
+mmap(NULL, 2212848, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1d930000
+mprotect(0x7f2d1d947000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d1db47000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x17000) = 0x7f2d1db47000
+mmap(0x7f2d1db49000, 13296, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1db49000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libcrypto.so.10", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libcrypto.so.10", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libcrypto.so.10", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libcrypto.so.10", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libcrypto.so.10", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\300\234\6\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=1963296, ...}) = 0
+mmap(NULL, 4075384, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1d548000
+mprotect(0x7f2d1d701000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1d900000, 159744, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1b8000) = 0x7f2d1d900000
+mmap(0x7f2d1d927000, 16248, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1d927000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libcurl.so.4", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libcurl.so.4", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libcurl.so.4", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libcurl.so.4", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libcurl.so.4", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\336\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=343248, ...}) = 0
+mmap(NULL, 2439784, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1d2f0000
+mprotect(0x7f2d1d342000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1d541000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x51000) = 0x7f2d1d541000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libssl.so.10", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libssl.so.10", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libssl.so.10", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libssl.so.10", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libssl.so.10", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\340\202\1\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=441240, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df4f000
+mmap(NULL, 2536616, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1d080000
+mprotect(0x7f2d1d0e2000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1d2e1000, 45056, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x61000) = 0x7f2d1d2e1000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libstdc++.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libstdc++.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libstdc++.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libstdc++.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib/libstdc++.so.6", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360c\5\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=987096, ...}) = 0
+mmap(NULL, 3166648, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1cd78000
+mprotect(0x7f2d1ce60000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d1d060000, 36864, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xe8000) = 0x7f2d1d060000
+mmap(0x7f2d1d069000, 82360, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1d069000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libm.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libm.so.6", O_RDONLY)      = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0p>\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=596272, ...}) = 0
+mmap(NULL, 2633912, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1caf0000
+mprotect(0x7f2d1cb73000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1cd72000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x82000) = 0x7f2d1cd72000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libgomp.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libgomp.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libgomp.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libgomp.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libgomp.so.1", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\220A\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=85264, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df4e000
+mmap(NULL, 2180496, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1c8d8000
+mprotect(0x7f2d1c8ed000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1caec000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x14000) = 0x7f2d1caec000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libgcc_s.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libgcc_s.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libgcc_s.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libgcc_s.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libgcc_s.so.1", O_RDONLY)  = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\20)\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=90880, ...}) = 0
+mmap(NULL, 2186584, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1c6c0000
+mprotect(0x7f2d1c6d6000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1c8d5000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x15000) = 0x7f2d1c8d5000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libc.so.6", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libc.so.6", O_RDONLY)      = 3
+read(3, "\177ELF\2\1\1\3\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0p\356\1\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=1921176, ...}) = 0
+mmap(NULL, 3750152, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1c328000
+mprotect(0x7f2d1c4b2000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d1c6b2000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x18a000) = 0x7f2d1c6b2000
+mmap(0x7f2d1c6b7000, 18696, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1c6b7000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libz.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libz.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libz.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libz.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libz.so.1", O_RDONLY)      = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 !\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=88600, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df4d000
+mmap(NULL, 2183696, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1c110000
+mprotect(0x7f2d1c125000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1c324000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x14000) = 0x7f2d1c324000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libidn.so.11", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libidn.so.11", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libidn.so.11", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libidn.so.11", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libidn.so.11", O_RDONLY)   = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0/\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=206672, ...}) = 0
+mmap(NULL, 2301768, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1bed8000
+mprotect(0x7f2d1bf0a000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1c109000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x31000) = 0x7f2d1c109000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libldap-2.4.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libldap-2.4.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libldap-2.4.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libldap-2.4.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libldap-2.4.so.2", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\320\356\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=326736, ...}) = 0
+mmap(NULL, 2422000, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1bc88000
+mprotect(0x7f2d1bcd5000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1bed4000, 16384, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x4c000) = 0x7f2d1bed4000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/librt.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/librt.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/librt.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/librt.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/librt.so.1", O_RDONLY)     = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@!\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=43880, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df4c000
+mmap(NULL, 2128816, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1ba80000
+mprotect(0x7f2d1ba87000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1bc86000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x6000) = 0x7f2d1bc86000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libgssapi_krb5.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libgssapi_krb5.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libgssapi_krb5.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libgssapi_krb5.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libgssapi_krb5.so.2", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\220\254\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=277704, ...}) = 0
+mmap(NULL, 2373600, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1b838000
+mprotect(0x7f2d1b879000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d1ba79000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x41000) = 0x7f2d1ba79000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libkrb5.so.3", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libkrb5.so.3", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libkrb5.so.3", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libkrb5.so.3", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libkrb5.so.3", O_RDONLY)   = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0000\264\1\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=941920, ...}) = 0
+mmap(NULL, 3037856, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1b550000
+mprotect(0x7f2d1b62b000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1b82a000, 49152, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xda000) = 0x7f2d1b82a000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libk5crypto.so.3", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libk5crypto.so.3", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libk5crypto.so.3", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libk5crypto.so.3", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libk5crypto.so.3", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\320C\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=174840, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df4b000
+mmap(NULL, 2273704, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1b320000
+mprotect(0x7f2d1b349000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d1b549000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x29000) = 0x7f2d1b549000
+mmap(0x7f2d1b54b000, 424, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1b54b000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libcom_err.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libcom_err.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libcom_err.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libcom_err.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libcom_err.so.2", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360\23\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=14664, ...}) = 0
+mmap(NULL, 2109872, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1b118000
+mprotect(0x7f2d1b11b000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1b31a000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7f2d1b31a000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libssl3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libssl3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libssl3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libssl3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libssl3.so", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0000\260\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=254328, ...}) = 0
+mmap(NULL, 2351920, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1aed8000
+mprotect(0x7f2d1af13000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1b112000, 16384, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3a000) = 0x7f2d1b112000
+mmap(0x7f2d1b116000, 816, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1b116000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libsmime3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libsmime3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libsmime3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libsmime3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libsmime3.so", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360\235\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=181176, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df4a000
+mmap(NULL, 2276480, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1aca8000
+mprotect(0x7f2d1acd0000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1aecf000, 20480, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x27000) = 0x7f2d1aecf000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libnss3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libnss3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libnss3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libnss3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libnss3.so", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\240\234\1\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=1300048, ...}) = 0
+mmap(NULL, 3401128, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1a968000
+mprotect(0x7f2d1aa9f000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1ac9e000, 28672, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x136000) = 0x7f2d1ac9e000
+mmap(0x7f2d1aca5000, 5544, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1aca5000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libnssutil3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libnssutil3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libnssutil3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libnssutil3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libnssutil3.so", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0 \276\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=179416, ...}) = 0
+mmap(NULL, 2275920, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1a738000
+mprotect(0x7f2d1a75d000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d1a95d000, 28672, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x25000) = 0x7f2d1a95d000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libplds4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libplds4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libplds4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libplds4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libplds4.so", O_RDONLY)    = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\20\17\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=14560, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df49000
+mmap(NULL, 2109776, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1a530000
+mprotect(0x7f2d1a533000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1a732000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x2000) = 0x7f2d1a732000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libplc4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libplc4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libplc4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libplc4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libplc4.so", O_RDONLY)     = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\20\24\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=18720, ...}) = 0
+mmap(NULL, 2113912, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1a328000
+mprotect(0x7f2d1a32c000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1a52b000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x3000) = 0x7f2d1a52b000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libnspr4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libnspr4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libnspr4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libnspr4.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libnspr4.so", O_RDONLY)    = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\220\320\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=244656, ...}) = 0
+mmap(NULL, 2350368, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d1a0e8000
+mprotect(0x7f2d1a121000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d1a321000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x39000) = 0x7f2d1a321000
+mmap(0x7f2d1a324000, 7456, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1a324000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libssh2.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libssh2.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libssh2.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libssh2.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libssh2.so.1", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0pR\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=161664, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df48000
+mmap(NULL, 2257152, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d19ec0000
+mprotect(0x7f2d19ee7000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1a0e6000, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x26000) = 0x7f2d1a0e6000
+mmap(0x7f2d1a0e7000, 256, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1a0e7000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/liblber-2.4.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/liblber-2.4.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/liblber-2.4.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/liblber-2.4.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/liblber-2.4.so.2", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0206\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=60512, ...}) = 0
+mmap(NULL, 2155816, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d19cb0000
+mprotect(0x7f2d19cbe000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d19ebd000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0xd000) = 0x7f2d19ebd000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libresolv.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libresolv.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libresolv.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libresolv.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libresolv.so.2", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\00009\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=110960, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df47000
+mmap(NULL, 2202248, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d19a90000
+mprotect(0x7f2d19aa6000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d19ca6000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x16000) = 0x7f2d19ca6000
+mmap(0x7f2d19ca8000, 6792, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d19ca8000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libsasl2.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libsasl2.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libsasl2.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libsasl2.so.2", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/lib64/libsasl2.so.2", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\340F\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=106160, ...}) = 0
+mmap(NULL, 2201520, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d19870000
+mprotect(0x7f2d19889000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d19a88000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x18000) = 0x7f2d19a88000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libkrb5support.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libkrb5support.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libkrb5support.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libkrb5support.so.0", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libkrb5support.so.0", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0@*\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=43728, ...}) = 0
+mmap(NULL, 2139216, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d19660000
+mprotect(0x7f2d1966a000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d19869000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x9000) = 0x7f2d19869000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libkeyutils.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libkeyutils.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libkeyutils.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libkeyutils.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libkeyutils.so.1", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\360\v\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=10192, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1986f000
+mmap(NULL, 2105424, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d19458000
+mprotect(0x7f2d1945a000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d19659000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1000) = 0x7f2d19659000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libcrypt.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libcrypt.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libcrypt.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libcrypt.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libcrypt.so.1", O_RDONLY)  = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\0\f\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=40400, ...}) = 0
+mmap(NULL, 2318816, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d19220000
+mprotect(0x7f2d19227000, 2097152, PROT_NONE) = 0
+mmap(0x7f2d19427000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x7000) = 0x7f2d19427000
+mmap(0x7f2d19429000, 184800, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d19429000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libselinux.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libselinux.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libselinux.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libselinux.so.1", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libselinux.so.1", O_RDONLY) = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\320X\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=122040, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df46000
+mmap(NULL, 2221912, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d19000000
+mprotect(0x7f2d1901d000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d1921c000, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x1c000) = 0x7f2d1921c000
+mmap(0x7f2d1921e000, 1880, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d1921e000
+close(3)                                = 0
+open("/opt/scyld/openmpi/1.6.3/gnu/lib/libfreebl3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/scyld/maui/lib/libfreebl3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86_64/libfreebl3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/opt/AMDAPP/lib/x86/libfreebl3.so", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/lib64/libfreebl3.so", O_RDONLY)  = 3
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\300>\0\0\0\0\0\0"..., 832) = 832
+fstat(3, {st_mode=S_IFREG|0755, st_size=477760, ...}) = 0
+mmap(NULL, 2590792, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7f2d18d80000
+mprotect(0x7f2d18df3000, 2093056, PROT_NONE) = 0
+mmap(0x7f2d18ff2000, 12288, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_DENYWRITE, 3, 0x72000) = 0x7f2d18ff2000
+mmap(0x7f2d18ff5000, 14408, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0x7f2d18ff5000
+close(3)                                = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df45000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df44000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df43000
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df42000
+mmap(NULL, 8192, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df40000
+arch_prctl(ARCH_SET_FS, 0x7f2d1df40840) = 0
+mprotect(0x7f2d18ff2000, 8192, PROT_READ) = 0
+mprotect(0x7f2d1921c000, 4096, PROT_READ) = 0
+mprotect(0x7f2d19427000, 4096, PROT_READ) = 0
+mprotect(0x7f2d19659000, 4096, PROT_READ) = 0
+mprotect(0x7f2d19869000, 4096, PROT_READ) = 0
+mprotect(0x7f2d19a88000, 4096, PROT_READ) = 0
+mprotect(0x7f2d19ca6000, 4096, PROT_READ) = 0
+mprotect(0x7f2d19ebd000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1a321000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1a52b000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1a732000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1a95d000, 24576, PROT_READ) = 0
+mprotect(0x7f2d1ac9e000, 20480, PROT_READ) = 0
+mprotect(0x7f2d1aecf000, 16384, PROT_READ) = 0
+mprotect(0x7f2d1b112000, 12288, PROT_READ) = 0
+mprotect(0x7f2d1b31a000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1b549000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1b82a000, 40960, PROT_READ) = 0
+mprotect(0x7f2d1ba79000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1bc86000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1bed4000, 8192, PROT_READ) = 0
+mprotect(0x7f2d1c324000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1c6b2000, 16384, PROT_READ) = 0
+mprotect(0x7f2d1cd72000, 4096, PROT_READ) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df3f000
+mprotect(0x7f2d1d060000, 28672, PROT_READ) = 0
+mprotect(0x7f2d1d2e1000, 16384, PROT_READ) = 0
+mprotect(0x7f2d1d900000, 110592, PROT_READ) = 0
+mprotect(0x7f2d1db47000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1dd52000, 4096, PROT_READ) = 0
+mprotect(0x7f2d1df77000, 4096, PROT_READ) = 0
+munmap(0x7f2d1df50000, 158842)          = 0
+set_tid_address(0x7f2d1df40b10)         = 81425
+set_robust_list(0x7f2d1df40b20, 0x18)   = 0
+futex(0x7fffeee3ad8c, FUTEX_WAKE_PRIVATE, 1) = 0
+futex(0x7fffeee3ad8c, FUTEX_WAIT_BITSET_PRIVATE|FUTEX_CLOCK_REALTIME, 1, NULL, 7f2d1df40840) = -1 EAGAIN (Resource temporarily unavailable)
+rt_sigaction(SIGRTMIN, {0x7f2d1d935c60, [], SA_RESTORER|SA_SIGINFO, 0x7f2d1d93f710}, NULL, 8) = 0
+rt_sigaction(SIGRT_1, {0x7f2d1d935cf0, [], SA_RESTORER|SA_RESTART|SA_SIGINFO, 0x7f2d1d93f710}, NULL, 8) = 0
+rt_sigprocmask(SIG_UNBLOCK, [RTMIN RT_1], NULL, 8) = 0
+getrlimit(RLIMIT_STACK, {rlim_cur=10240*1024, rlim_max=RLIM_INFINITY}) = 0
+futex(0x7f2d1dd530ec, FUTEX_WAKE_PRIVATE, 2147483647) = 0
+brk(0)                                  = 0x908000
+brk(0x929000)                           = 0x929000
+gettid()                                = 81425
+rt_sigaction(SIGPIPE, {SIG_IGN, [], SA_RESTORER, 0x7f2d1d93f710}, NULL, 8) = 0
+open("/dev/urandom", O_RDONLY)          = 3
+fstat(3, {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 9), ...}) = 0
+ioctl(3, SNDCTL_TMR_TIMEBASE or TCGETS, 0x7fffeee3aae0) = -1 EINVAL (Invalid argument)
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+read(3, "L\325n)\360\20\5\327.\fZ\3441\275\314\320\357\355p\264\\\337\360\3474\240j\322%\35(p"..., 4096) = 4096
+close(3)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+sysinfo({uptime=18118334, loads=[186816, 155712, 150976] totalram=135308713984, freeram=6910255104, sharedram=0, bufferram=389902336} totalswap=0, freeswap=0, procs=2164}) = 0
+uname({sys="Linux", node="silverback", ...}) = 0
+sysinfo({uptime=18118334, loads=[186816, 155712, 150976] totalram=135308713984, freeram=6910255104, sharedram=0, bufferram=389902336} totalswap=0, freeswap=0, procs=2164}) = 0
+stat("/dev/urandom", {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 9), ...}) = 0
+open("/dev/urandom", O_RDONLY)          = 3
+fstat(3, {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 9), ...}) = 0
+ioctl(3, SNDCTL_TMR_TIMEBASE or TCGETS, 0x7fffeee36980) = -1 EINVAL (Invalid argument)
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+read(3, "6\303\377\31\313[S\243q\215t\t\320\204_+m\353a\243\247\323$\235\360p5g\366.\224\t"..., 4096) = 4096
+close(3)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+stat("/etc/passwd", {st_mode=S_IFREG|0644, st_size=8751, ...}) = 0
+open("/etc/passwd", O_RDONLY)           = 3
+fstat(3, {st_mode=S_IFREG|0644, st_size=8751, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+read(3, "root:x:0:0:root:/root:/bin/bash\n"..., 8192) = 8192
+open("/dev/urandom", O_RDONLY)          = 4
+fstat(4, {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 9), ...}) = 0
+ioctl(4, SNDCTL_TMR_TIMEBASE or TCGETS, 0x7fffeee367a0) = -1 EINVAL (Invalid argument)
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df75000
+read(4, "K\3\222\310\353\300\222\367Cc\n\263\362N\260J\1\t\0\351\332)9\1\264\2\225\311\253\271K8"..., 4096) = 4096
+close(4)                                = 0
+munmap(0x7f2d1df75000, 4096)            = 0
+open("/dev/urandom", O_RDONLY)          = 4
+fstat(4, {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 9), ...}) = 0
+ioctl(4, SNDCTL_TMR_TIMEBASE or TCGETS, 0x7fffeee36860) = -1 EINVAL (Invalid argument)
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df75000
+read(4, "\34\16\363*\200\257\\\20k|ZK\257\v:@\216\n\341\334Es\306+n\311\266\312\374\3312\23"..., 4096) = 4096
+close(4)                                = 0
+munmap(0x7f2d1df75000, 4096)            = 0
+read(3, "yinfant:x:600:603::/home/hyphyin"..., 8192) = 559
+read(3, "", 4096)                       = 0
+read(3, "", 8192)                       = 0
+close(3)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+stat("/etc/utmp", 0x7fffeee36b30)       = -1 ENOENT (No such file or directory)
+stat("/tmp", {st_mode=S_IFDIR|S_ISVTX|0777, st_size=36864, ...}) = 0
+open("/tmp", O_RDONLY)                  = 3
+fstat(3, {st_mode=S_IFDIR|S_ISVTX|0777, st_size=36864, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+read(3, 0x7fffeee36bc0, 8192)           = -1 EISDIR (Is a directory)
+close(3)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+stat("/var/tmp", {st_mode=S_IFDIR|S_ISVTX|0777, st_size=4096, ...}) = 0
+open("/var/tmp", O_RDONLY)              = 3
+fstat(3, {st_mode=S_IFDIR|S_ISVTX|0777, st_size=4096, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+read(3, 0x7fffeee36bc0, 8192)           = -1 EISDIR (Is a directory)
+close(3)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+stat("/usr/tmp", {st_mode=S_IFDIR|S_ISVTX|0777, st_size=4096, ...}) = 0
+open("/usr/tmp", O_RDONLY)              = 3
+fstat(3, {st_mode=S_IFDIR|S_ISVTX|0777, st_size=4096, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+read(3, 0x7fffeee36bc0, 8192)           = -1 EISDIR (Is a directory)
+close(3)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+open("/dev/urandom", O_RDONLY)          = 3
+fstat(3, {st_mode=S_IFCHR|0666, st_rdev=makedev(1, 9), ...}) = 0
+ioctl(3, SNDCTL_TMR_TIMEBASE or TCGETS, 0x7fffeee3a400) = -1 EINVAL (Invalid argument)
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+read(3, "\202E0%\fp\221\314\0\2\32\3\241\31S\f7\301\10%~#8\32\216#\r\r\212\274u\315"..., 4096) = 4096
+close(3)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+open("/lib64/libfreebl3.chk", O_RDONLY) = 3
+read(3, "\361\305\1\2\0\0\0\f\0\0\0\1", 12) = 12
+lseek(3, 12, SEEK_SET)                  = 12
+read(3, "\0\0\1\1", 4)                  = 4
+read(3, "\0\244\302\203O6\323O\256\240\261GC\250\25\356\255\243\230\243)E\256\\\331\22\231\t\334\357\5\264"..., 257) = 257
+read(3, "\0\0\0!", 4)                   = 4
+read(3, "\0\216\253\364\276E\353\243XN`\25fZK%\317Ew\211?s4J\340\236\254\375\334\377\234\215"..., 33) = 33
+read(3, "\0\0\1\1", 4)                  = 4
+read(3, "\0\215r2F\246\\\200\343C\n\236\2245\206\324X\241\312\"\271sF\v\373>3\361\325\323\264&"..., 257) = 257
+read(3, "\0\0\1\0", 4)                  = 4
+read(3, "\207\26\364\233\35\323b%5\374\313\354\326;'\35\10\235v\204\33$\350\343J<\1775\336\206\241\306"..., 256) = 256
+read(3, "\0\0\0@", 4)                   = 4
+read(3, "T\26\360\234`\201\16<\205[\352\10\360v/\23.\3253\217\371\206\335\214E\\n\345\332\373j*"..., 64) = 64
+close(3)                                = 0
+stat("/usr/sbin/prelink", {st_mode=S_IFREG|0755, st_size=1308280, ...}) = 0
+pipe([3, 4])                            = 0
+rt_sigaction(SIGCHLD, {0x7f2d18dab630, [], SA_RESTORER|SA_SIGINFO, 0x7f2d1d93f710}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigprocmask(SIG_BLOCK, [CHLD], [], 8) = 0
+vfork()                                 = 81426
+rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0
+close(4)                                = 0
+fcntl(3, F_GETFL)                       = 0 (flags O_RDONLY)
+fcntl(3, F_SETFL, O_RDONLY|O_NONBLOCK)  = 0
+read(3, 0x7fffeee39ce0, 4096)           = -1 EAGAIN (Resource temporarily unavailable)
+poll([{fd=3, events=POLLIN|POLLPRI}], 1, 5000) = 1 ([{fd=3, revents=POLLIN}])
+read(3, "\177ELF\2\1\1\0\0\0\0\0\0\0\0\0\3\0>\0\1\0\0\0\300>\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "@v\5\0\0\0\0\0@.'\0\0\0\0\0\10\0\0\0\0\0\0\0 v\5\0\0\0\0\0"..., 4096) = 4096
+read(3, "\10\0\0\0\0\0\0\0\360#\2\0\0\0\0\0\2706'\0\0\0\0\0\10\0\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\230>'\0\0\0\0\0\10\0\0\0\0\0\0\0\34B'\0\0\0\0\0\250>'\0\0\0\0\0"..., 4096) = 4096
+read(3, "H\211\331\272\0 \0\0\276\1\0\0\0H\211\347\350\273\374\377\377H\205\300u\346H\211\337\350\256\375"..., 4096) = 4096
+read(3, "\341\321\300L1\343\301\301\36H\211G\360H\213G\360L\213G\340L\215\214\2\241\353\331nD\211\330"..., 4096) = 4096
+read(3, "M1\312I1\332N\215\24\22\211\352\301\302\5I\1\322H\213W\370L\213_HH\213_8L1"..., 4096) = 4096
+read(3, "$\370H\203\354(I\211\364\350R\377\377\377H\205\300H\211\303tUH\211\307\350\222\376\377\377L\211"..., 4096) = 4096
+read(3, "D\211\323A\1\350\301\313\22A\301\313\7D1\333E\211\323A\301\353\3D1\333D\213\\$\fA"..., 4096) = 4096
+read(3, "$\224D\213\277\0\1\0\0A\301\316\vE!\317D\211|$TD\213|$\224D1|$TD"..., 4096) = 4096
+read(3, "\6D\211\373A1\325D\211\372D!\313\301\312\31A\211\363A1\325D\211\372A!\353\367\322D\1"..., 4096) = 4096
+read(3, "1\335L\213\234$\330\0\0\0I\301\353\6L1\335L\213\234$\320\0\0\0I\215,*M\211\362"..., 4096) = 4096
+read(3, "L\213\234$\230\1\0\0I\301\312\10H\321\315I1\352H\213l$\370I\301\313\23H\301\355\7I"..., 4096) = 4096
+read(3, "\362L1\355H\301\312\"I\215\f\16L1\315I\211\361I\301\311\34L1\312I\211\361I\301\311'"..., 4096) = 4096
+read(3, "H\215T\25\0L\211\305L!\335H\21542L\211\302O\21542M\211\302H\301\312\16I\301\312"..., 4096) = 4096
+read(3, "\17\267\26\203\350\2H\203\306\2f\211\27H\203\307\2@\366\307\4t\215f\17\37\204\0\0\0\0\0"..., 4096) = 4096
+read(3, "SH\213G\10H\211\373H\213?\377P H\213C\10H\215s\24H\213;[\213P8H\213@"..., 4096) = 4096
+read(3, "fD)\311A\211\321f\301\302\17A\367\321f+WHE!\301fD)\311E\211\301A!\301f"..., 4096) = 4096
+read(3, "\366\363H\253u\n\363\303\17\37\204\0\0\0\0\0H\211\327\351\350\330\3\0\17\37\204\0\0\0\0\0"..., 4096) = 4096
+read(3, "\0\0\0A\201\341\374\0\0\0B3\214\10\0\2\0\0D\213OPB3\214\0\0\4\0\0A1"..., 4096) = 4096
+read(3, "\215U81\366H\211\337\350\243\372\376\377H\215}@E1\3001\311\2728\0\0\0\306E\10\0L"..., 4096) = 4096
+read(3, "\34$H\213l$\10L\213d$\20L\213l$\30L\213t$ H\203\304(\303\17\37D\0\0"..., 4096) = 4096
+read(3, "\205\300\17\205\10\377\377\377H\215=q\20\4\0\271@\0\0\0H\211\336\363\246\17\205\361\376\377\377\350"..., 4096) = 4096
+read(3, "\0\0H\213L$(A\270\20\0\0\0L\211\362L\211\376L\211\357\350\265\343\377\377\205\300\17\205\r"..., 4096) = 4096
+read(3, "L\3d$\10E)\365t\24J\215T%\0J\2154#H\213<$A\377\327\205\300t\342H\203"..., 4096) = 4096
+read(3, "\254$\240\0\0\0\17\204\313\0\0\0E\211\317\203\375\20H\215D$0M\211\304L\2155\257\354\377"..., 4096) = 4096
+read(3, "\0\301\351\30F3D\255\0\17\266\311D3\4\213D1\300A\301\310\10D\211D$\2101D$\210"..., 4096) = 4096
+read(3, "\341\36\1\312\211\331\211T$<\213T$D\301\341\36\301\352\2\1\312\211\371\211T$8D\211\244$"..., 4096) = 4096
+read(3, "\f\230A1\351\301\315\10E\211\313D1\325E1\353D1\315E\211\332E\17\266\313A\211\355A\301"..., 4096) = 4096
+read(3, "\252D34\230A1\356\301\315\10E1\364D1\335E\211\343D1\365A\17\266\334A\301\353\30A"..., 4096) = 4096
+read(3, "E1\363A\301\352\30E\211\335E\211\322A\301\355\30G\213\24\220D3\24\230D\211\343\301\353\20D"..., 4096) = 4096
+read(3, "\213L$\30L\213T$\10L\213\\$\20\17\210\255\2\0\0\213S\20H\213s\10H\213|$H"..., 4096) = 4096
+read(3, "\203\372\375tc\203\372\376tN\203\372\374t9\277\1\340\377\377\350w\367\2\0\275\377\377\377\377\276\1"..., 4096) = 4096
+read(3, "\0H\213|$\20\3505J\1\0H\213|$\30\350+J\1\0H\213|$(\350!J\1\0H"..., 4096) = 4096
+read(3, "H\213|$\30\350V\343\377\377\205\300t\22\277\16\340\377\377\350x\327\2\0\351\360\376\377\377\17\37\0"..., 4096) = 4096
+read(3, "\367t$8L\211\341\211\3261\322\350\240?\1\0\205\300\211\303\17\210T\376\377\377\213T$@L\211"..., 4096) = 4096
+read(3, "\3771\311L\211\372L\211\356L\211\377\350\1777\1\0\205\300\211\303\17\210h\375\377\377\213t$lH"..., 4096) = 4096
+read(3, "\0\0001\366H\211\337\3504\245\2\0\213D$`\203\350\3\203\370\4w\25H\215\25\21q\3\0\211"..., 4096) = 4096
+read(3, "\377\213\274$\300\1\0\0\213\224$\200\1\0\0H\3}\30H\213\264$x\1\0\0\350\200\334\375\377"..., 4096) = 4096
+read(3, "\0\0H\205\366\17\204\r\3\0\0H\203~\10\0\17\204\2\3\0\0\277\0\10\0\0\350\300\206\2\0"..., 4096) = 4096
+read(3, "\3\0\0H\215\214$\240\0\0\0H\211\317H\211L$ \350\30\332\0\0\205\300\211\301\17\210H\4"..., 4096) = 4096
+read(3, "$\320L\211d$\340I\211\326L\211l$\350L\211|$\370H\201\354\230\1\0\0H\205\366H\211"..., 4096) = 4096
+read(3, "\17\216\27\3\0\0\211\302H\213\204$\20\1\0\0H\213\264$\20\1\0\0H\2138H\201\306\310\0"..., 4096) = 4096
+read(3, "1\322\301\340\3\211D$\24H\215D$(H\211D$\30\17\37D\0\0L\211\376H\211\337\211T"..., 4096) = 4096
+read(3, "\211\337A\211\304\350\3268\2\0D\211\340H\213\34$H\213l$\10L\213d$\20H\203\304\30\303"..., 4096) = 4096
+read(3, ">\211\375D\17\266\347A\211\373\301\355\30H\211\373A\301\353\20\211\355\17\266\377E\17\266\333\213\254\250"..., 4096) = 4096
+read(3, "\331\211\\$\374D1\3671\371A\211\312D\17\266\311A\211\310A\301\352\30A\301\350\20\17\266\315E"..., 4096) = 4096
+read(3, "\4\0\0\213z\20\205\377\17\204\2\4\0\0H\203y\10\0\17\204\367\3\0\0M\205\355\17\204\356\3"..., 4096) = 4096
+read(3, "\0\0E\213I\20E\205\311\17\204\221\5\0\0I\203}\10\0\17\204\206\5\0\0H\203\274$(\2"..., 4096) = 4096
+read(3, "\377\351\5\377\377\377\270\375\377\377\377\351\373\376\377\377H\215T$`H\215s L\211\347L\211T$"..., 4096) = 4096
+read(3, "\366I\301\356\20A\201\346\0\0\377\0D\211t$\340I\211\366I\301\356\10A\201\346\0\0\377\0D"..., 4096) = 4096
+read(3, "\0H\213t$\30H\213|$\10\350@U\0\0\205\300\17\210\335\0\0\0H\213|$\30L\211\376"..., 4096) = 4096
+read(3, "H\211D$H\350v\342\377\377\205\300\17\210\256\0\0\0L\211\357\3506\4\0\0H\213\25w\376#"..., 4096) = 4096
+read(3, "\0H\203\357 H\203\351 H\213W\30H\213A\30H9\302uZH\213W\20H\213A\20H9"..., 4096) = 4096
+read(3, "\202\333\0\0\0\211\306L\211\347\350!\374\377\377\205\300\17\205\267\0\0\0D\213]\10L\213M\0201"..., 4096) = 4096
+read(3, "\300u$M\205\344t\vH\211\356L\211\347\350\235\347\377\3771\300M\205\355t\rH\211\356L\211\357"..., 4096) = 4096
+read(3, "\376\377\377HcD$\f\306\4\3-\203D$\f\1\353\212ffff.\17\37\204\0\0\0\0\0"..., 4096) = 4096
+read(3, "\350;\312\377\377\213D$\10\351t\377\377\377L\211\356L\211\367\350\267\273\377\3771\300\353\334\17\37\0"..., 4096) = 4096
+read(3, "L\211\347\350\350\312\377\377H\213|$(\276\1\0\0\0\350Y\271\377\377H\213|$@\276\1\0\0"..., 4096) = 4096
+read(3, "A\203\351\1E9\315\17\215\233\0\0\0Ic\311H\215\f\312L\213\1M\205\300t\344\213s\4H"..., 4096) = 4096
+read(3, "\1\370M\21\313L\21\323H\1\370M\21\313L\21\323H\211D$\340H\213\1H\367a`H\211\307"..., 4096) = 4096
+read(3, " H\367\241\310\0\0\0H\1\307I\21\321I\203\322\0H\213A(H\367\241\300\0\0\0H\1\307"..., 4096) = 4096
+read(3, "H\213\201\230\0\0\0H\367\241\260\0\0\0H\1\307I\21\321I\203\322\0H\213\201\240\0\0\0H"..., 4096) = 4096
+read(3, "I\211\321M1\322H\213A\10H\367a0H\1\307I\21\321I\203\322\0H\213A\20H\367a("..., 4096) = 4096
+read(3, "\211F\10\213\26\211\26H\203\304\20[]A\\A]\303fffff.\17\37\204\0\0\0\0\0"..., 4096) = 4096
+read(3, "\1\307H\21\326H\203\321\0H\213D$\360H\367\244$\240\0\0\0H\1\307H\21\326H\203\321\0"..., 4096) = 4096
+read(3, "\1\301H\21\327H\203\326\0H\213D$HH\367\244$\210\0\0\0H\1\301H\21\327H\203\326\0"..., 4096) = 4096
+read(3, "\321\0H\213D$\240H\367\244$h\1\0\0H\1\307H\21\326H\203\321\0H\213D$\250H\367"..., 4096) = 4096
+read(3, "\203\321\0H\213D$\300H\367\244$x\1\0\0H\1\307H\21\326H\203\321\0H\213D$\310H"..., 4096) = 4096
+read(3, "$\20\1\0\0H\1\306H\21\321H\203\327\0H\213D$hH\367\244$\10\1\0\0H\1\306H"..., 4096) = 4096
+read(3, "\327\0H\211\263\330\1\0\0L\211\306H\213D$pH\367\244$\200\1\0\0H\1\301H\21\327H"..., 4096) = 4096
+read(3, "\320H\203\321\0H\213D$\270H\367d$hI\1\301I\21\320H\203\321\0H\213D$\300H\367"..., 4096) = 4096
+read(3, "d$\370I\1\302I\21\321I\203\323\0L\211Q0D\213\6D3\7M\205\311L\211I8\307C"..., 4096) = 4096
+read(3, "\\\377\377\377\17\37@\0H\215U`H\215uHH\215|$\20I\211\351M\211\360L\211\341\377\225"..., 4096) = 4096
+read(3, "L)\325\17\222\302I\211\352\17\266\322M\205\322I\215j\377u}M)\315@\17\222\307M\211\351@"..., 4096) = 4096
+read(3, "\353\316H\213F\20H\307D$0\0\0\0\0H\307D$8\0\0\0\0H\213H\20H\211L$"..., 4096) = 4096
+read(3, "\377\377fffff.\17\37\204\0\0\0\0\0H\211\\$\320H\211l$\330L\211d$\340L"..., 4096) = 4096
+read(3, "\350+\212\376\377\205\300\17\210\203\1\0\0L\215\254$\200\0\0\0L\215t$`L\215|$@L"..., 4096) = 4096
+read(3, "\10[]\303\220\220\220\220\220\220\220\220\220\220\220\2201\322\205\377\270\1\0\0\0~\16\17\37D\0\0"..., 4096) = 4096
+read(3, "\276\5\0\0\0\350\326M\373\377H\205\300H\211\303\17\204\267\2\0\0H\2155\35\275\1\0H\211\307"..., 4096) = 4096
+read(3, "\205\300H\211\303t\240L\211\2400\1\0\0H\213E I\215t$0A\213T$\4H\307\203@"..., 4096) = 4096
+read(3, "\363\17\177\f\6f\17o\301H\203\300\20I9\301u\251\363\17\177\0021\300\303\17\37\200\0\0\0\0"..., 4096) = 4096
+read(3, "\363fA\0178\336\373fE\0178\336\303fE\0178\336\313fE\0178\336\323\363\17oOP\363D"..., 4096) = 4096
+read(3, "A\0178\336\333fA\0178\336\343fA\0178\336\353fA\0178\336\363fA\0178\336\373fE\17"..., 4096) = 4096
+read(3, "\304\343ID\345\0\305\341\357\334\305\372ot$P\304\301zoaP\304\342A\334\374\304b9\334\304"..., 4096) = 4096
+read(3, "\16I\377\301\353\356\304\342q\0\rQ\343\377\377\305\371\357\301\305\372o\n\350(\0\0\0\304\342y\0"..., 4096) = 4096
+read(3, "\0\0B\0\200\0@\0\202\0\2\0\0\0\0\0\2\0\0\0\0\0\2\0\200\0B\0\2\0@\0"..., 4096) = 4096
+read(3, "\3u\370\310iE?\227^.H\341]X\227L\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\255\255\354A\324\324g\263\242\242\375_\257\257\352E\234\234\277#\244\244\367Srr\226\344\300\300[\233"..., 4096) = 4096
+read(3, "\264\222\247y\271\231\251p\256\204\273k\243\217\265b\200\276\237]\215\265\221T\232\250\203O\227\243\215F"..., 4096) = 4096
+read(3, "\1q9\250\263\336\10\f\344\234\330\264\301\220dV\204a{\313\266p\3252\\tHlWB\320\270"..., 4096) = 4096
+read(3, "l\264\330lV\372\254V\364\7\363\364\352%\317\352e\257\312ez\216\364z\256\351G\256\10\30\20\10"..., 4096) = 4096
+read(3, "D\0DD\262\0\262\262\265\0\265\265\221\0\221\221\10\0\10\10\250\0\250\250\374\0\374\374P\0PP"..., 4096) = 4096
+read(3, "$d`D-laM\6\304\302\3064tpD\25\324\321\3054\264\260\204*\350\342\312\t\10\1\t"..., 4096) = 4096
+read(3, "\353\f\0\0\0\0\0\0\361\f\0\0\0\0\0\0\367\f\0\0\0\0\0\0\373\f\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\23\36\0\0\0\0\0\0\27\36\0\0\0\0\0\0%\36\0\0\0\0\0\0+\36\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\2770\0\0\0\0\0\0\3070\0\0\0\0\0\0\3130\0\0\0\0\0\0\3210\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\361C\0\0\0\0\0\0\371C\0\0\0\0\0\0\tD\0\0\0\0\0\0\vD\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\305W\0\0\0\0\0\0\321W\0\0\0\0\0\0\323W\0\0\0\0\0\0\345W\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "[l\0\0\0\0\0\0_l\0\0\0\0\0\0el\0\0\0\0\0\0gl\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\341\200\0\0\0\0\0\0\347\200\0\0\0\0\0\0\365\200\0\0\0\0\0\0\377\200\0\0\0\0\0\0"..., 4096) = 4096
+--- SIGCHLD (Child exited) @ 0 (0) ---
+wait4(81426, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 81426
+rt_sigreturn(0x13e12)                   = 4096
+read(3, "\317\225\0\0\0\0\0\0\343\225\0\0\0\0\0\0\351\225\0\0\0\0\0\0\371\225\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\v\253\0\0\0\0\0\0\r\253\0\0\0\0\0\0\21\253\0\0\0\0\0\0\31\253\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\331\300\0\0\0\0\0\0\357\300\0\0\0\0\0\0\361\300\0\0\0\0\0\0\1\301\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\235\326\0\0\0\0\0\0\245\326\0\0\0\0\0\0\257\326\0\0\0\0\0\0\275\326\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "!\354\0\0\0\0\0\0)\354\0\0\0\0\0\0M\354\0\0\0\0\0\0Q\354\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\315\314L>d\377J>tGI>V\243G>\222\21F>\324\220D>\351\37C>\275\275A>"..., 4096) = 4096
+read(3, "L\300\371\377\374\27\0\0l\300\371\377\24\30\0\0\234\300\371\3774\30\0\0\374\300\371\377T\30\0\0"..., 4096) = 4096
+read(3, "\f\27\376\377\fm\0\0\34\27\376\377$m\0\0\\\35\376\377Tm\0\0<\37\376\377\204m\0\0"..., 4096) = 4096
+read(3, "\n\16\10A\v\0\0\0\34\0\0\0\354\r\0\0\260.\372\3777\0\0\0\0M\206\2\203\3D\16"..., 4096) = 4096
+read(3, "\16 B\16\30B\16\20B\16\10A\v\0\0\0\24\0\0\0\364\35\0\0\30\231\372\377M\0\0\0"..., 4096) = 4096
+read(3, "\0\0\0\0\0\0\0\0$\0\0\0\354-\0\0\300}\373\377\334\0\0\0\0M\216\2\215\3V\16"..., 4096) = 4096
+read(3, " K\374\377v\0\0\0\0\0\0\0\0\0\0\0\24\0\0\0\364=\0\0\210K\374\377$\0\0\0"..., 4096) = 4096
+read(3, "\4\214\5N\16p\217\2\216\3\2\332\16\10\0\0$\0\0\0\364M\0\0h\235\374\377\222\0\0\0"..., 4096) = 4096
+read(3, "\340\324\375\377\33\0\0\0\0D\16\20P\n\16\10B\v\0\0\0\0\0\0\34\0\0\0\374]\0\0"..., 4096) = 4096
+read(3, "\310\241\6\0\0\0\0\0\325\241\6\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"..., 4096) = 4096
+read(3, "\226:\0\0\0\0\0\0\246:\0\0\0\0\0\0\266:\0\0\0\0\0\0\306:\0\0\0\0\0\0"..., 4096) = 2624
+read(3, "", 4096)                       = 0
+close(3)                                = 0
+wait4(81426, NULL, 0, NULL)             = -1 ECHILD (No child processes)
+rt_sigaction(SIGCHLD, {SIG_DFL, [], SA_RESTORER, 0x7f2d1d93f710}, NULL, 8) = 0
+statfs("/selinux", {f_type="EXT2_SUPER_MAGIC", f_bsize=4096, f_blocks=61146688, f_bfree=26191745, f_bavail=23085672, f_files=15532032, f_ffree=14808342, f_fsid={2044617894, 427597025}, f_namelen=255, f_frsize=4096}) = 0
+open("/proc/filesystems", O_RDONLY)     = 3
+fstat(3, {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+read(3, "nodev\tsysfs\nnodev\trootfs\nnodev\tb"..., 1024) = 382
+read(3, "", 1024)                       = 0
+close(3)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+access("/usr/share/dracut/modules.d/01fips", F_OK) = -1 ENOENT (No such file or directory)
+open("/sys/devices/system/cpu", O_RDONLY|O_NONBLOCK|O_DIRECTORY|O_CLOEXEC) = 3
+fcntl(3, F_GETFD)                       = 0x1 (flags FD_CLOEXEC)
+getdents(3, /* 43 entries */, 32768)    = 1312
+getdents(3, /* 0 entries */, 32768)     = 0
+close(3)                                = 0
+sched_getaffinity(81425, 8,  { ffffffff }) = 8
+rt_sigaction(SIGTERM, {0x6599a0, [TERM], SA_RESTORER|SA_RESTART, 0x7f2d1c35a6a0}, {SIG_DFL, [], 0}, 8) = 0
+rt_sigaction(SIGINT, {0x6599a0, [INT], SA_RESTORER|SA_RESTART, 0x7f2d1c35a6a0}, {SIG_DFL, [], 0}, 8) = 0
+getcwd("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/FADE", 4096) = 66
+getcwd("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/FADE", 4096) = 66
+brk(0x94a000)                           = 0x94a000
+open("errors.log", O_RDWR|O_CREAT|O_TRUNC, 0666) = 3
+open("messages.log", O_RDWR|O_CREAT|O_TRUNC, 0666) = 4
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/FADE/.hyphyinit", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/FADE/.hyphyinit", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/FADE/FADE_FIT_BG_MODEL.bf", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=2559, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+fstat(5, {st_mode=S_IFREG|0644, st_size=2559, ...}) = 0
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "RequireVersion(\"2.13\");\nExecuteA"..., 2559) = 2559
+lseek(5, 2559, SEEK_SET)                = 2559
+close(5)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/lib/GrabBag.bf", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0755, st_size=17121, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+fstat(5, {st_mode=S_IFREG|0755, st_size=17121, ...}) = 0
+lseek(5, 16384, SEEK_SET)               = 16384
+read(5, ")[_mapNumberToString(key1)])[\"Ti"..., 737) = 737
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "/*------------------------------"..., 16384) = 16384
+read(5, ")[_mapNumberToString(key1)])[\"Ti"..., 4096) = 737
+close(5)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+brk(0x96b000)                           = 0x96b000
+brk(0x96a000)                           = 0x96a000
+brk(0x98b000)                           = 0x98b000
+brk(0x98a000)                           = 0x98a000
+fstat(4, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df76000
+write(4, "\nVariable 'END_OF_FILE' was not "..., 63) = 63
+fstat(0, {st_mode=S_IFIFO|0600, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df75000
+read(0, "/home/sweaver/datamonkey/datamon"..., 4096) = 97
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.seq", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=3316, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+fstat(5, {st_mode=S_IFREG|0644, st_size=3316, ...}) = 0
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "#NEXUS\n\n[\nGenerated by HYPHY 2.1"..., 3316) = 3316
+lseek(5, 3316, SEEK_SET)                = 3316
+lseek(5, 3316, SEEK_SET)                = 3316
+close(5)                                = 0
+munmap(0x7f2d1df74000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.trees", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=17, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+fstat(5, {st_mode=S_IFREG|0644, st_size=17, ...}) = 0
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "1\n0-277\nundefined", 17)      = 17
+lseek(5, 17, SEEK_SET)                  = 17
+lseek(5, 17, SEEK_SET)                  = 17
+close(5)                                = 0
+munmap(0x7f2d1df74000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.info", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=17, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+fstat(5, {st_mode=S_IFREG|0644, st_size=17, ...}) = 0
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "{\"TREE_MODE\" : 0}", 17)      = 17
+lseek(5, 17, SEEK_SET)                  = 17
+lseek(5, 17, SEEK_SET)                  = 17
+close(5)                                = 0
+munmap(0x7f2d1df74000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.time", O_WRONLY|O_CREAT|O_APPEND, 0666) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=10, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+fstat(5, {st_mode=S_IFREG|0644, st_size=10, ...}) = 0
+lseek(5, 10, SEEK_SET)                  = 10
+close(5)                                = 0
+munmap(0x7f2d1df74000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.time", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+write(5, "1450038616", 10)              = 10
+close(5)                                = 0
+munmap(0x7f2d1df74000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/lib/ProteinModels/modellist.ibf", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0755, st_size=9789, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+fstat(5, {st_mode=S_IFREG|0755, st_size=9789, ...}) = 0
+lseek(5, 8192, SEEK_SET)                = 8192
+read(5, "(2007) MtArt: A new model of ami"..., 1597) = 1597
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "modelList = {};\n\nindex = 0;\n/* D"..., 8192) = 8192
+read(5, "(2007) MtArt: A new model of ami"..., 4096) = 1597
+close(5)                                = 0
+munmap(0x7f2d1df74000, 4096)            = 0
+brk(0x9ab000)                           = 0x9ab000
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/lib/ProteinModels/modellist.ibf", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0755, st_size=9789, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+fstat(5, {st_mode=S_IFREG|0755, st_size=9789, ...}) = 0
+lseek(5, 8192, SEEK_SET)                = 8192
+read(5, "(2007) MtArt: A new model of ami"..., 1597) = 1597
+brk(0x9cc000)                           = 0x9cc000
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "modelList = {};\n\nindex = 0;\n/* D"..., 8192) = 8192
+read(5, "(2007) MtArt: A new model of ami"..., 4096) = 1597
+close(5)                                = 0
+munmap(0x7f2d1df74000, 4096)            = 0
+brk(0x9c9000)                           = 0x9c9000
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/lib/_MFReaderAA_.ibf", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0755, st_size=2657, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+fstat(5, {st_mode=S_IFREG|0755, st_size=2657, ...}) = 0
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "sscanf\t\t\t\t(analysisSpecRaw,\"Line"..., 2657) = 2657
+lseek(5, 2657, SEEK_SET)                = 2657
+close(5)                                = 0
+munmap(0x7f2d1df74000, 4096)            = 0
+write(4, "\nRow and/or column partition is "..., 76) = 76
+write(4, "\nRow and/or column partition is "..., 76) = 76
+write(4, "\nVariable 'totalCharCount' was n"..., 66) = 66
+write(4, "\nVariable 'totalSiteCount' was n"..., 66) = 66
+write(4, "\nVariable 'totalUniqueSites' was"..., 68) = 68
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 106), ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df74000
+write(1, "{\"+F\":0,\n", 9)             = 9
+write(1, "\"Filepath\":\"/home/sweaver/datamo"..., 101) = 101
+open("/usr/local/lib/hyphy/TemplateBatchFiles/Custom_AA_empirical", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/Custom_AA_empirical.bf", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/Custom_AA_empirical.ibf", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/Custom_AA_empirical.def", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/Custom_AA_empirical.mdl", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/TemplateModels/Custom_AA_empirical", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/TemplateModels/Custom_AA_empirical.bf", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/TemplateModels/Custom_AA_empirical.ibf", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/TemplateModels/Custom_AA_empirical.def", O_RDONLY) = -1 ENOENT (No such file or directory)
+open("/usr/local/lib/hyphy/TemplateBatchFiles/TemplateModels/Custom_AA_empirical.mdl", O_RDONLY) = 5
+write(4, "\nLoaded 'Custom_AA_empirical' fr"..., 113) = 113
+fstat(5, {st_mode=S_IFREG|0644, st_size=4357, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0644, st_size=4357, ...}) = 0
+lseek(5, 4096, SEEK_SET)                = 4096
+read(5, "ng*0;\n\tExecuteCommands (modelDef"..., 261) = 261
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "/*------------------------------"..., 4096) = 4096
+read(5, "ng*0;\n\tExecuteCommands (modelDef"..., 4096) = 261
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+open("/usr/local/lib/hyphy/TemplateBatchFiles/TemplateModels/modelParameters2.mdl", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=546, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0644, st_size=546, ...}) = 0
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "/* \n\tA utility file for multi-pa"..., 546) = 546
+lseek(5, 546, SEEK_SET)                 = 546
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+open("/usr/local/lib/hyphy/TemplateBatchFiles/TemplateModels/defineGamma.mdl", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=10995, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0644, st_size=10995, ...}) = 0
+lseek(5, 8192, SEEK_SET)                = 8192
+read(5, "ha = .5;\n\talpha:>0.01;alpha:<100"..., 2803) = 2803
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "function GaussLaguerreQuardature"..., 8192) = 8192
+read(5, "ha = .5;\n\talpha:>0.01;alpha:<100"..., 4096) = 2803
+brk(0x9ea000)                           = 0x9ea000
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+open("/usr/local/lib/hyphy/TemplateBatchFiles/TemplateModels/defineHM.mdl", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=10198, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0644, st_size=10198, ...}) = 0
+lseek(5, 8192, SEEK_SET)                = 8192
+read(5, "_*sigma*sqrt2pi__), /*density*/\n"..., 2006) = 2006
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "function GaussLaguerreQuardature"..., 8192) = 8192
+read(5, "_*sigma*sqrt2pi__), /*density*/\n"..., 4096) = 2006
+write(4, "\nOverwritten previously defined "..., 66) = 66
+write(4, "\nOverwritten previously defined "..., 58) = 58
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+write(4, "\nVariable 'PROMPT_FOR_FILE' was "..., 67) = 67
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/lib/ProteinModels/Dayhoff", O_RDONLY) = 5
+fstat(5, {st_mode=S_IFREG|0755, st_size=6410, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0755, st_size=6410, ...}) = 0
+lseek(5, 4096, SEEK_SET)                = 4096
+read(5, "441,     1.1334792,     1.024108"..., 2314) = 2314
+lseek(5, 0, SEEK_SET)                   = 0
+lseek(5, 0, SEEK_SET)                   = 0
+read(5, "ACDEFGHIKLMNPQRSTVWY\n\n{{        "..., 4096) = 4096
+read(5, "441,     1.1334792,     1.024108"..., 4096) = 2314
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+write(4, "\nVariable 'SKIP_MODEL_PARAMETER_"..., 77) = 77
+brk(0xa0e000)                           = 0xa0e000
+brk(0xa2f000)                           = 0xa2f000
+brk(0xa2e000)                           = 0xa2e000
+brk(0xa4f000)                           = 0xa4f000
+brk(0xa70000)                           = 0xa70000
+brk(0xa91000)                           = 0xa91000
+brk(0xab2000)                           = 0xab2000
+brk(0xad3000)                           = 0xad3000
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.progress", O_WRONLY|O_CREAT|O_APPEND, 0666) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=215, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0644, st_size=215, ...}) = 0
+lseek(5, 215, SEEK_SET)                 = 215
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.progress", O_WRONLY|O_CREAT|O_TRUNC, 0666) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+write(5, "\n{\"00000\":{\"Phase\":\"Baseline Mod"..., 188) = 188
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.progress", O_WRONLY|O_CREAT|O_APPEND, 0666) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=188, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0644, st_size=188, ...}) = 0
+lseek(5, 188, SEEK_SET)                 = 188
+write(5, "\nlol\n", 5)                  = 5
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.progress", O_WRONLY|O_CREAT|O_APPEND, 0666) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=193, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0644, st_size=193, ...}) = 0
+lseek(5, 193, SEEK_SET)                 = 193
+write(5, "{\"1\":\"undefined\"}", 17)   = 17
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+open("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/output/565cc1365b30e3946b0eaee6.progress", O_WRONLY|O_CREAT|O_APPEND, 0666) = 5
+fstat(5, {st_mode=S_IFREG|0644, st_size=210, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(5, {st_mode=S_IFREG|0644, st_size=210, ...}) = 0
+lseek(5, 210, SEEK_SET)                 = 210
+write(5, "\nlol\n", 5)                  = 5
+close(5)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+fstat(3, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7f2d1df73000
+fstat(3, {st_mode=S_IFREG|0644, st_size=0, ...}) = 0
+lseek(3, 0, SEEK_SET)                   = 0
+close(3)                                = 0
+munmap(0x7f2d1df73000, 4096)            = 0
+unlink("errors.log")                    = 0
+lseek(4, 0, SEEK_CUR)                   = 796
+write(2, "\nCheck messages.log details of t"..., 41
+Check messages.log details of this run.
+) = 41
+close(4)                                = 0
+munmap(0x7f2d1df76000, 4096)            = 0
+write(1, "\"Name\":\"Dayhoff [model frequenci"..., 37) = 37
+exit_group(0)                           = ?

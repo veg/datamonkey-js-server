@@ -161,6 +161,7 @@ jobRunner.prototype.submit = function (params, cwd) {
   var self = this;
 
   var qsub = spawn('qsub', params, { cwd : cwd });
+  console.log(params);
 
   qsub.stderr.on('data', function (data) {
     winston.info(data.toString('utf8'));

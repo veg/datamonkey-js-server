@@ -1,31 +1,27 @@
 RequireVersion  ("2.13");
-ExecuteAFile			("../Shared/globals.ibf");
-ExecuteAFile			("../Shared/GrabBag.bf");
-ExecuteAFile            ("FADE_tools.ibf");
-ExecuteAFile            ("FUBAR_tools_iterative.ibf");
-LoadFunctionLibrary     ("ReadDelimitedFiles");
+ExecuteAFile("../lib/GrabBag.bf");
+ExecuteAFile("FADE_tools.ibf");
+ExecuteAFile("FUBAR_tools_iterative.ibf");
+LoadFunctionLibrary("ReadDelimitedFiles");
 
-LoadFunctionLibrary     ("chooseGeneticCode", {"0": "Universal"}); 
+LoadFunctionLibrary("chooseGeneticCode", {"0": "Universal"}); 
+
 // for _alphabeticalAAOrdering
+fscanf(stdin,"String", _in_FilePath);
+fscanf(stdin,"Number", _concentration);
 
-     
-fscanf  			(stdin,"String", _in_FilePath);
-fscanf              (stdin,"Number", _concentration);
-   /* Dirichlet prior */
- 
+// Dirichlet prior
 // ';' separated list of branches to put the FG model on
-
-baseFilePath  		= "spool/"+_in_FilePath;
+baseFilePath = _in_FilePath;
 intermediateHTML	= baseFilePath + ".progress";
-gridFile            = baseFilePath + ".grid";
-weightsFile            = baseFilePath + ".weights";
+gridFile = baseFilePath + ".grid";
+weightsFile = baseFilePath + ".weights";
 
-fscanf (intermediateHTML, "Raw", status_updates);
-status_updates = Eval (status_updates);
+fscanf(intermediateHTML, "Raw", status_updates);
+status_updates = Eval(status_updates);
 
 fitted_weights = {};
-                                                
-fscanf (gridFile, "NMatrix", grid_points);
+fscanf(gridFile, "NMatrix", grid_points);
 
 _optimizationTaskInformation = {};
 

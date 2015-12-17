@@ -3,8 +3,7 @@ RequireVersion  ("2.13");
 fscanf  			(stdin,"String", _in_FilePath);
 fscanf              (stdin,"String", _testTheseBranches);
 
-ExecuteAFile			("../Shared/globals.ibf");
-ExecuteAFile			("../Shared/GrabBag.bf");
+ExecuteAFile			("../lib/GrabBag.bf");
 ExecuteAFile            ("FADE_tools.ibf");
 ExecuteAFile            ("FUBAR_tools_iterative.ibf");
 LoadFunctionLibrary     ("ReadDelimitedFiles");
@@ -12,49 +11,47 @@ LoadFunctionLibrary     ("chooseGeneticCode", {"0": "Universal"});
 // for _alphabeticalAAOrdering
 
 fade_grid_dimension = {{15,15}};
-    /*
-        number of site-scalers (relative to alignment average) [0,30]
-        number of bias parameters [0, 30]
-    */
 
- 
-baseFilePath  		= "spool/"+_in_FilePath;
+/*
+  number of site-scalers (relative to alignment average) [0,30]
+  number of bias parameters [0, 30]
+*/
+baseFilePath  		= _in_FilePath;
 intermediateHTML	= baseFilePath + ".progress";
-timeStamp           = baseFilePath + ".time";
-baseFitFile         = baseFilePath + ".baseFit";
-gridFile            = baseFilePath + ".grid";
-auxInfoFile         = baseFilePath + ".info";
+timeStamp         = baseFilePath + ".time";
+baseFitFile       = baseFilePath + ".baseFit";
+gridFile          = baseFilePath + ".grid";
+auxInfoFile       = baseFilePath + ".info";
 
-fscanf (auxInfoFile,   "Raw", auxInfo);
-auxInfo = Eval (auxInfo);
-
-
-ExecuteAFile (baseFitFile);
+fscanf (auxInfoFile, "Raw", auxInfo);
+auxInfo = Eval(auxInfo);
+ExecuteAFile(baseFitFile);
 
 fscanf (timeStamp, "Number", time1);
 
 fscanf (intermediateHTML, "Raw", status_updates);
 GLOBAL_FPRINTF_REDIRECT = intermediateHTML;
 
-status_updates = Eval (status_updates);
+status_updates = Eval(status_updates);
 
-fadeGrid = defineFadeGrid (fade_grid_dimension[0], fade_grid_dimension[1]);
-grid_description =  describeGrid (fade_grid_dimension, fadeGrid);
+fadeGrid = defineFadeGrid(fade_grid_dimension[0], fade_grid_dimension[1]);
+grid_description = describeGrid (fade_grid_dimension, fadeGrid);
 
-status_updates [_mapNumberToString(Abs(status_updates))] = {"Phase": "Computing the likelihood function on a discrete grid",
-                                                "Time" : Time(1),
-                                                "Information": {"00000":"Set up the grid: " + grid_description}};
-                                                
+status_updates [_mapNumberToString(Abs(status_updates))] = {
+                                                  "Phase": "Computing the likelihood function on a discrete grid",
+                                                  "Time" : Time(1),
+                                                  "Information": {"00000":"Set up the grid: " + grid_description}
+                                                };
 
 availableBranchNames = BranchName (prot_tree_1, -1);
+
 if (_testTheseBranches == "ALL") {
-    _branchesToAttachFG = {};
-    for (k = 0; k < Columns (availableBranchNames) - 1; k+=1) {
-        _branchesToAttachFG + availableBranchNames [k];
-    }
-    
+  _branchesToAttachFG = {};
+  for (k = 0; k < Columns (availableBranchNames) - 1; k+=1) {
+      _branchesToAttachFG + availableBranchNames [k];
+  }
 } else {
-    _branchesToAttachFG = splitOnRegExp (_testTheseBranches, ";");
+  _branchesToAttachFG = splitOnRegExp (_testTheseBranches, ";");
 }
                                                 
 

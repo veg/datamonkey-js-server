@@ -78,6 +78,7 @@ hyphyJob.prototype.init = function () {
   var self = this;
   // store parameters in redis
   client.hset(self.id, 'params', JSON.stringify(self.params));
+  console.log(self.fn);
   self.attachSocket();
   self.spawn();
 }
@@ -143,7 +144,6 @@ hyphyJob.prototype.spawn = function () {
     self.onJobMetadata(status);
   });
 
-
   self.stream.pipe(fs.createWriteStream(self.fn));
 
   self.stream.on('end', function(err) {
@@ -206,6 +206,7 @@ hyphyJob.prototype.onComplete = function () {
         // Prepare redis packet for delivery
         var redis_packet = { 'results' : data };
         redis_packet.type = 'completed';
+
         var str_redis_packet = JSON.stringify(redis_packet);
 
         // Log that the job has been completed

@@ -47,7 +47,7 @@ var options ={
 
 describe('fade jobrunner', function() {
 
-  var fn = __dirname + '/res/Flu.fasta';
+  var fn = __dirname + '/res/upload.278155041617087.1';
   var params_file = __dirname + '/res/params.json';
 
   io.sockets.on('connection', function (socket) {
@@ -93,5 +93,4 @@ describe('fade jobrunner', function() {
   });
 
 });
-
 

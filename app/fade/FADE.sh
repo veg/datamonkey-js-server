@@ -2,27 +2,36 @@
 #PBS -l nodes=3:ppn=8
 
 FN=$fn
+SEQFN=$seq_fn
+JSONFN=$json_fn
+OUTFN=$out_fn
 CWD=$cwd
-TREE_FN=$tree_fn
 STATUS_FILE=$sfn
-PROGRESS_FILE=$pfn
-GENETIC_CODE=$genetic_code
-ANALYSIS_TYPE=$analysis_type
-FG_MODEL=$fg_model
-CONCENTRATION_PARAMETER=$concentration_param
-HYPHY=$CWD/../../.hyphy/HYPHYMP
+MODEL=$model
+FG_MODEL=$fg_model;
+CONCENTRATION_PARAMETER=0.5
 FADE=$CWD/FADE.bf
-GETCOUNT=$CWD/../../lib/getAnnotatedCount.bf 
-export HYPHY_PATH=$CWD/../../node_modules/hyphy/res/
+HYPHY=$CWD/../../.hyphy/HYPHYMP
+HYPHYMPI=$CWD/../../.hyphy/HYPHYMPI
+
+#export HYPHY_PATH=$CWD/../../node_modules/hyphy/res/
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-(echo $FN; echo $TREEMODE; echo $ROOT_ON) | /usr/local/bin/HYPHYMP ${BASEPATH}FADE_DOWNLOAD.bf >  ${BASEPATH}hpout 2>&1
-#(echo $FN; echo $MODEL) | /usr/bin/bpsh `beomap --nolocal -exclude $EXCLUDE_NODES` /usr/local/bin/HYPHYMP  ${BASEPATH}FADE_FIT_BG_MODEL.bf > ${BASEPATH}hpout 2>&1
+cp $FN $SEQFN
 
-## OpenMPI
-#(echo $FN; echo $FG_MODEL) | mpirun -np 25 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI ${BASEPATH}FADE_COMPUTE_GRID.bf > ${BASEPATH}hpout 2>&1
-#(echo $FN; echo $CONCENTRATION_PARAMETER) | mpirun -np 21 -hostfile $HOSTFILE /usr/local/bin/HYPHYMPI ${BASEPATH}FADE_ESTIMATE_WEIGHTS.bf > ${BASEPATH}hpout 2>&1
+echo "(echo $FN; echo $MODEL) | $HYPHY $CWD/bfs/FADE/FADE_FIT_BG_MODEL.bf"
+(echo $FN; echo "$MODEL") | $HYPHY $CWD/bfs/FADE/FADE_FIT_BG_MODEL.bf
 
+echo "(echo $FN; echo $FG_MODEL) | mpirun -np 25 $HYPHYMPI $CWD/bfs/FADE/FADE_COMPUTE_GRID.bf"
+(echo $FN; echo $FG_MODEL) | $HYPHY $CWD/bfs/FADE/FADE_COMPUTE_GRID.bf
 
-#(echo $1) | /usr/bin/bpsh `beomap --nolocal -exclude $EXCLUDE_NODES` /usr/local/bin/HYPHYMP  ${BASEPATH}FADE_COMPUTE_POSTERIORS.bf > ${BASEPATH}hpout 2>&1
+echo "(echo $FN; echo $CONCENTRATION_PARAMETER) | mpirun -np 25 $HYPHYMPI $CWD/bfs/FADE/FADE_ESTIMATE_WEIGHTS.bf"
+(echo $FN; echo $CONCENTRATION_PARAMETER) | $HYPHY $CWD/bfs/FADE/FADE_ESTIMATE_WEIGHTS.bf
+
+echo "(echo $FN) | $HYPHY $CWD/bfs/FADE/FADE_COMPUTE_POSTERIORS.bf"
+(echo $FN) | $HYPHY $CWD/bfs/FADE/FADE_COMPUTE_POSTERIORS.bf
+
+echo "(echo $OUTFN) | $HYPHY $CWD/bfs/FADE/FADE_RESULTS_PROCESSOR.bf > $JSONFN"
+(echo $OUTFN) | $HYPHY $CWD/bfs/FADE/FADE_RESULTS_PROCESSOR.bf > $JSONFN
+

@@ -1,22 +1,19 @@
-RequireVersion  ("2.13");
-ExecuteAFile			("../Shared/globals.ibf");
-ExecuteAFile			("../Shared/GrabBag.bf");
-ExecuteAFile            ("FUBAR_tools_iterative.ibf");
-LoadFunctionLibrary     ("WriteDelimitedFiles");
+RequireVersion("2.13");
+ExecuteAFile("../lib/GrabBag.bf");
+ExecuteAFile("FUBAR_tools_iterative.ibf");
+LoadFunctionLibrary("WriteDelimitedFiles");
+LoadFunctionLibrary("chooseGeneticCode", {"0": "Universal"}); 
 
-LoadFunctionLibrary     ("chooseGeneticCode", {"0": "Universal"}); 
 // for _alphabeticalAAOrdering
+fscanf(stdin,"String", _in_FilePath);
 
-     
-fscanf  			(stdin,"String", _in_FilePath);
-
-baseFilePath  		= "spool/"+_in_FilePath;
-intermediateHTML	= baseFilePath + ".progress";
-gridFile            = baseFilePath + ".grid";
-weightsFile         = baseFilePath + ".weights";
-resultsFile         = baseFilePath + ".out";
-auxInfoFile         = baseFilePath + ".info";
-timeFile            = baseFilePath + ".time";
+baseFilePath = _in_FilePath;
+intermediateHTML = baseFilePath + ".progress";
+gridFile = baseFilePath + ".grid";
+weightsFile = baseFilePath + ".weights";
+resultsFile = baseFilePath + ".out";
+auxInfoFile = baseFilePath + ".info";
+timeFile = baseFilePath + ".time";
 
 fscanf (auxInfoFile,   "Raw", auxInfo);
 auxInfo = Eval (auxInfo);
@@ -69,7 +66,6 @@ for (_residue_id = 0; _residue_id < 20; _residue_id += 1) {
    updateAndWriteStatusJSON ("status_updates", Abs(status_updates)-1, 1, 
             "Computed posterior probabilities for " + _alphabeticalAAOrdering[0][_residue_id] + " (" + runTimeEstimator (last_time,20,_residue_id+1) + ")", 1);
 	
-	    
 	norm_matrix         = transWeights*current_conditionals;
 	poster_matrix = {points,sites}["(transWeights[_MATRIX_ELEMENT_ROW_]*current_conditionals[_MATRIX_ELEMENT_ROW_][_MATRIX_ELEMENT_COLUMN_])/norm_matrix[_MATRIX_ELEMENT_COLUMN_]"];
 	pos_sel_matrix      = (transWeights*(current_conditionals$positive_selection_stencil) / norm_matrix);
@@ -77,8 +73,8 @@ for (_residue_id = 0; _residue_id < 20; _residue_id += 1) {
 	neg_sel_matrix      = (transWeights*(current_conditionals$negative_selection_stencil) / norm_matrix);
 	alpha_matrix        = ((transWeights*diag_alpha*current_conditionals)/norm_matrix);
 	beta_matrix         = ((transWeights*diag_beta*current_conditionals)/norm_matrix);
-	
-    offset = _residue_id*5 + 1;
+  offset = _residue_id*5 + 1;
+
 	for (s = 0; s < sites; s+=1) {
 		full_table[s][offset] = alpha_matrix[s];
 		full_table[s][offset+1] = beta_matrix[s];
@@ -115,7 +111,6 @@ auxInfo ["FADE"] = full_table;
 auxInfo ["HEADERS"] = header;
 
 fprintf (resultsFile, CLEAR_FILE, auxInfo);
-
-fprintf             (stdout, CLEAR_FILE, "DONE");
-GetString 			(time_info, TIME_STAMP, 1);
-fprintf 			("usage.log",time_info[0][Abs(time_info)-2],",",auxInfo["SPECIES"],",",sites,",",Time(1)-time1, ",", Abs (sites_with_deps), "\n");
+fprintf(stdout, CLEAR_FILE, "DONE");
+GetString(time_info, TIME_STAMP, 1);
+fprintf("usage.log",time_info[0][Abs(time_info)-2],",",auxInfo["SPECIES"],",",sites,",",Time(1)-time1, ",", Abs (sites_with_deps), "\n");
