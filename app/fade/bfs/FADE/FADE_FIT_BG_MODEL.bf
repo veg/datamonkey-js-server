@@ -25,8 +25,7 @@ _modelInfo = _generateProteinModelInfo (_in_ModelName);
 longModelName = _getLongModelName (_in_ModelName);
 modelNameString = "_customAAModelMatrix";
 
-// TODO: Change this method to using a HYPHY library
-ExecuteAFile("/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/lib/_MFReaderAA_.ibf");
+ExecuteAFile("../lib/_MFReaderAA_.ibf");
 
 fprintf(stdout, _modelInfo);
 

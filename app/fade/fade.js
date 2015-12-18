@@ -58,7 +58,6 @@ var fade = function (socket, stream, fade_params) {
   self.qsub_script      = path.join(__dirname, self.qsub_script_name);
 
   // parameter attributes
-  console.log(self.params);
   self.msaid         = self.params.msa._id;
   self.id            = self.params.analysis._id;
   self.genetic_code  = self.params.msa[0].gencodeid + 1;

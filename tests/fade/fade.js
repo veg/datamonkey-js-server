@@ -32,7 +32,7 @@ var fs        = require('fs'),
     winston   = require('winston'),
     clientio  = require('socket.io-client');
     io        = require('socket.io').listen(5000);
-    fade    = require(__dirname + '/../../app/fade/fade.js'),
+    fade      = require(__dirname + '/../../app/fade/fade.js'),
     job       = require(__dirname + '/../../app/job.js'),
     ss        = require('socket.io-stream');
 

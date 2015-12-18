@@ -24,7 +24,7 @@ echo "(echo $FN; echo $MODEL) | $HYPHY $CWD/bfs/FADE/FADE_FIT_BG_MODEL.bf"
 (echo $FN; echo "$MODEL") | $HYPHY $CWD/bfs/FADE/FADE_FIT_BG_MODEL.bf
 
 echo "(echo $FN; echo $FG_MODEL) | mpirun -np 25 $HYPHYMPI $CWD/bfs/FADE/FADE_COMPUTE_GRID.bf"
-(echo $FN; echo $FG_MODEL) | $HYPHY $CWD/bfs/FADE/FADE_COMPUTE_GRID.bf
+(echo $FN; echo "$FG_MODEL") | $HYPHY $CWD/bfs/FADE/FADE_COMPUTE_GRID.bf
 
 echo "(echo $FN; echo $CONCENTRATION_PARAMETER) | mpirun -np 25 $HYPHYMPI $CWD/bfs/FADE/FADE_ESTIMATE_WEIGHTS.bf"
 (echo $FN; echo $CONCENTRATION_PARAMETER) | $HYPHY $CWD/bfs/FADE/FADE_ESTIMATE_WEIGHTS.bf

@@ -400,11 +400,9 @@ function _generateProteinModelInfo (modelDesc)
         _result ["+F"] = 1;
     }
 
-    //TODO: Fix file path
-    _result ["Filepath"] = "/home/sweaver/datamonkey/datamonkey-server-test/app/fade/bfs/lib/ProteinModels/" + modelDesc;
+    _result["Filepath"] =HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR +  "EmpiricalAA" + DIRECTORY_SEPARATOR + modelDesc;
+    ExecuteAFile (HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR +  "EmpiricalAA" + DIRECTORY_SEPARATOR + "modellist.ibf");
 
-    //TODO
-    ExecuteAFile ("../lib/ProteinModels/modellist.ibf");
     for (k = 0; k < Abs(modelList); k += 1) {
         if (modelDesc == (modelList[k])["File"]) {
             break;
