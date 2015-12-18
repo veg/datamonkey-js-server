@@ -366,7 +366,7 @@ function _getTreeLink (fileName,mode,reroot)
 function _getLongModelName (modelDesc)
 {
 	longShanks = "";
-	ExecuteAFile ("../lib/ProteinModels/modellist.ibf");
+  ExecuteAFile (HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR +  "EmpiricalAA" + DIRECTORY_SEPARATOR + "modellist.ibf");
 	for (k = 0; k < Abs(modelList); k=k+1)
 	{
 		if (modelDesc == (modelList[k])["File"])
@@ -438,7 +438,7 @@ function _generateModelName (dataType, modelDesc, rvChoice, modelDescString&)
 		{
 			modelDesc = modelDesc[0][isPF[0]-1];
 		}
-		ExecuteAFile ("../lib/ProteinModels/modellist.ibf");
+    ExecuteAFile (HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR +  "EmpiricalAA" + DIRECTORY_SEPARATOR + "modellist.ibf");
 		for (k = 0; k < Abs(modelList); k=k+1)
 		{
 			if (modelDesc == (modelList[k])["File"])
