@@ -11,8 +11,8 @@ MODEL=$model
 FG_MODEL=$fg_model;
 CONCENTRATION_PARAMETER=0.5
 FADE=$CWD/FADE.bf
-HYPHY=$CWD/../../.hyphy/HYPHYMP
-HYPHYMPI=$CWD/../../.hyphy/HYPHYMPI
+HYPHY=$CWD/../../.hyphy226/HYPHYMP
+HYPHYMPI=$CWD/../../.hyphy226/HYPHYMPI
 
 #export HYPHY_PATH=$CWD/../../node_modules/hyphy/res/
 
