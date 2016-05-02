@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=3:ppn=8
+#PBS -l nodes=1:ppn=32
 
 #  Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
 #

@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=3:ppn=8
+#PBS -l nodes=1:ppn=32
 
 export PATH=/usr/local/bin:$PATH
 

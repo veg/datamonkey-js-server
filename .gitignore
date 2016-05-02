@@ -15,8 +15,10 @@ app/hivtrace/output
 app/hivtrace/res/LANL.FASTA
 app/hivtrace/res/LANL.UNALIGNED.FASTA
 **/output
-.hyphy
+.hyphy*
 .python
+tests/flea/.ruffus_history.sqlite
+tests/flea/res/54f75ea60cb1503c69b83f5e/
 
 *node_modules*
 nosetests.xml
