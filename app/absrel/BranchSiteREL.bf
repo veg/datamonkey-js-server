@@ -1,4 +1,5 @@
 RequireVersion ("2.1320141101");
+//OPTIMIZATION_TIME_HARD_LIMIT=1;
 
 _BSREL_timers  = {5,1};
 taskTimerStart (4);

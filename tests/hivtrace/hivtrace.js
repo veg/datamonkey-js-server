@@ -106,7 +106,7 @@ describe('hivtrace jobrunner', function() {
 
   });
 
-  it.only('prealigned FASTA file should fail', function(done) {
+  it('prealigned FASTA file should fail', function(done) {
 
     this.timeout(195000);
 
@@ -146,7 +146,7 @@ describe('hivtrace jobrunner', function() {
 
   });
 
-  it('lanl compare should complete', function(done) {
+  it.only('lanl compare should complete', function(done) {
 
     this.timeout(195000);
 

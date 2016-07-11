@@ -1,7 +1,8 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=32
+#PBS -l nodes=3:ppn=32
 
 export PATH=/usr/local/bin:$PATH
+module load openmpi/gnu/1.6.3
 
 FN=$fn
 CWD=$cwd
@@ -10,7 +11,10 @@ STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
 ANALYSIS_TYPE=$analysis_type
-HYPHY=$CWD/../../.hyphy226/HYPHYMP
+
+#HYPHY=$CWD/../../.hyphy226/HYPHYMP
+HYPHY=$CWD/../../.hyphy226/HYPHYMPI
+
 RELAX=$CWD/RELAX.bf
 GETCOUNT=$CWD/../../lib/getAnnotatedCount.bf 
 export HYPHY_PATH=$CWD/../../.hyphy226/res/
