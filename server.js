@@ -212,3 +212,4 @@ process.on('SIGTERM', exitHandler.bind(null, {exit:true}));
 //catches uncaught exceptions
 process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
 
+process.setMaxListeners(0)
