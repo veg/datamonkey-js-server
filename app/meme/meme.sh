@@ -1,8 +1,9 @@
 #!/bin/bash
-#PBS -l nodes=3:ppn=32
+#PBS -l nodes=1:ppn=32
 
 export PATH=/usr/local/bin:$PATH
 module load openmpi/gnu/1.6.3
+module load gcc/6.1.0
 
 FN=$fn
 CWD=$cwd
@@ -12,12 +13,15 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 
-#HYPHY=$CWD/../../.hyphy/HYPHYMP
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
-ABSREL=$CWD/BranchSiteREL.bf
-
-export HYPHY_PATH=$CWD/../../.hyphy/res/
+HYPHY=$CWD/../../.hyphy2.3/HYPHYMP
+HYPHY_PATH=$CWD/../../.hyphy2.3/res/
+MEME=$HYPHY_PATH/SelectionAnalyses/MEME.bf
+export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
-echo '(echo '$GENETIC_CODE'; echo 1; echo 2; echo '$FN'; echo '$TREE_FN'; echo 2; echo d; echo '$RESULTS_FN') | '$HYPHY' '$ABSREL''
-export HYPHY_PATH=$CWD/../../.hyphy/res/; (echo $GENETIC_CODE; echo 1; echo 2; echo $FN; echo $TREE_FN; echo 2; echo d; echo $RESULTS_FN) | $HYPHY $ABSREL
+
+#TODO - Check if there is a supplied tree
+#TODO - Allow user to select which branches
+
+echo '(echo '$GENETIC_CODE'; echo '$FN'; echo 1; echo '0.1') | '$HYPHY' '$MEME''
+(echo $GENETIC_CODE; echo $FN; echo 1; echo "0.1") | $HYPHY LIBPATH=$HYPHY_PATH $MEME
