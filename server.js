@@ -33,14 +33,15 @@ var config = require('./config.json'),
     path = require('path'),
     _ = require('underscore'),
     winston = require('winston'),
-    hivtrace = require('./app/hivtrace/hivtrace.js'),
-    prime = require('./app/prime/prime.js'),
-    busted = require('./app/busted/busted.js'),
-    relax = require('./app/relax/relax.js'),
     absrel = require('./app/absrel/absrel.js'),
+    busted = require('./app/busted/busted.js'),
     fade = require('./app/fade/fade.js'),
-    job = require('./app/job.js'),
     flea = require('./app/flea/flea.js'),
+    hivtrace = require('./app/hivtrace/hivtrace.js'),
+    meme = require('./app/meme/meme.js'),
+    prime = require('./app/prime/prime.js'),
+    relax = require('./app/relax/relax.js'),
+    job = require('./app/job.js'),
     ss = require('socket.io-stream'),
     redis   = require('redis'),
     router = require(path.join(__dirname, '/lib/router.js')),
@@ -154,6 +155,21 @@ io.sockets.on('connection', function (socket) {
     }
 
   });
+
+  // MEME
+  r.route('meme', {
+    spawn : function (stream, params) {
+      new meme.meme(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
+    }
+
+  });
+
 
   // Acknowledge new connection
   socket.emit('connected', { hello: 'Ready to serve' });
