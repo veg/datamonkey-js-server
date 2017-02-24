@@ -15,7 +15,7 @@ GENETIC_CODE=$genetic_code
 
 HYPHY=$CWD/../../.hyphy2.3/HYPHYMP
 HYPHY_PATH=$CWD/../../.hyphy2.3/res/
-MEME=$HYPHY_PATH/SelectionAnalyses/MEME.bf
+MEME=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/MEME.bf
 export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR

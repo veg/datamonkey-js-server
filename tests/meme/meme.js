@@ -18,7 +18,7 @@ var options ={
 
 
 describe('meme jobrunner', function() {
-  var fn = __dirname + '/res/Flu.fasta';
+  var fn = __dirname + '/res/CD2.nex';
   var params_file = __dirname + '/res/params.json';
 
   io.sockets.on('connection', function (socket) {
