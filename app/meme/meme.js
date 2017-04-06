@@ -37,7 +37,7 @@ var meme = function (socket, stream, params) {
   self.tree_fn          = self.fn + '.tre';
 
   self.qsub_params = ['-q',
-                          config.qsub_queue,
+                          config.qsub_avx_queue,
                           '-v',
                           'fn='+self.fn+
                           ',tree_fn='+self.tree_fn+
