@@ -66,5 +66,4 @@ var meme = function (socket, stream, params) {
 };
 
 util.inherits(meme, hyphyJob);
-
 exports.meme = meme;
