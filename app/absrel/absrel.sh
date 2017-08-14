@@ -12,8 +12,8 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 
-#HYPHY=$CWD/../../.hyphy/HYPHYMP
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
+HYPHY=$CWD/../../.hyphy/HYPHYMP
+#HYPHY=$CWD/../../.hyphy/HYPHYMPI
 ABSREL=$CWD/BranchSiteREL.bf
 
 export HYPHY_PATH=$CWD/../../.hyphy/res/

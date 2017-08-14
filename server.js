@@ -102,6 +102,7 @@ io.sockets.on('connection', function (socket) {
 
   // FADE
   r.route('fade', {
+
     spawn : function (stream, params) {
       var fade_job = new fade.fade(socket, stream, params.job);
     },
@@ -111,10 +112,12 @@ io.sockets.on('connection', function (socket) {
     cancel : function(params) {
       new job.cancel(socket, params.id);
     }
+
   });
 
   // aBSREL
   r.route('absrel', {
+
     spawn : function (stream, params) {
       new absrel.absrel(socket, stream, params.job);
     },
@@ -129,6 +132,7 @@ io.sockets.on('connection', function (socket) {
 
   // MEME
   r.route('meme', {
+
     spawn : function (stream, params) {
       new meme.meme(socket, stream, params.job);
     },
@@ -140,6 +144,51 @@ io.sockets.on('connection', function (socket) {
     }
 
   });
+
+  // SLAC
+  r.route('slac', {
+
+    spawn : function (stream, params) {
+      new slac.slac(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
+    }
+
+  });
+
+  // GARD 
+  r.route('gard', {
+
+    spawn : function (stream, params) {
+      new gard.gard(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
+    }
+
+  });
+
+  // FUBAR
+  r.route('fubar', {
+    spawn : function (stream, params) {
+      new fubar.fubar(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
+    }
+
+  });
+
 
 
   // Acknowledge new connection
