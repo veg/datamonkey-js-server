@@ -8,10 +8,13 @@ var config = require('./config.json'),
     busted = require('./app/busted/busted.js'),
     fade = require('./app/fade/fade.js'),
     flea = require('./app/flea/flea.js'),
+    fubar = require('./app/fubar/fubar.js'),
+    gard = require('./app/gard/gard.js'),
     hivtrace = require('./app/hivtrace/hivtrace.js'),
     meme = require('./app/meme/meme.js'),
     prime = require('./app/prime/prime.js'),
     relax = require('./app/relax/relax.js'),
+    slac = require('./app/slac/slac.js'),
     job = require('./app/job.js'),
     ss = require('socket.io-stream'),
     redis   = require('redis'),
@@ -177,6 +180,7 @@ io.sockets.on('connection', function (socket) {
 
   // FUBAR
   r.route('fubar', {
+
     spawn : function (stream, params) {
       new fubar.fubar(socket, stream, params.job);
     },

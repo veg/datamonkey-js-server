@@ -1,4 +1,3 @@
-
 var config   = require('../../config.json'),
     cs       = require('../../lib/clientsocket.js'),
     job      = require('../job.js'),

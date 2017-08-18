@@ -3,21 +3,20 @@ var fs        = require('fs'),
     winston   = require('winston'),
     clientio  = require('socket.io-client');
     io        = require('socket.io').listen(5000);
-    slac    = require(__dirname + '/../../app/slac/slac.js'),
+    slac      = require(__dirname + '/../../app/slac/slac.js'),
     job       = require(__dirname + '/../../app/job.js'),
     ss        = require('socket.io-stream');
 
 //TODO: retrieve socket from config
 var socketURL = 'http://0.0.0.0:5000';
 
-var options ={
+var options = {
   transports: ['websocket'],
-    'force new connection': true
-    };
-
-
+  'force new connection': true
+};
 
 describe('slac jobrunner', function() {
+
   var fn = __dirname + '/res/CD2.nex';
   var params_file = __dirname + '/res/params.json';
 
@@ -61,7 +60,6 @@ describe('slac jobrunner', function() {
       winston.warn(data);
       done();
     });
-
 
     slac_socket.on('script error', function(data) {
       winston.warn(data);

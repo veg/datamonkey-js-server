@@ -115,9 +115,6 @@ hyphyJob.prototype.spawn = function () {
     self.onJobMetadata(status);
   });
 
-  console.log(self.stream);
-  console.log(self.fn);
-
   self.stream.pipe(fs.createWriteStream(self.fn));
 
   self.stream.on('end', function(err) {
