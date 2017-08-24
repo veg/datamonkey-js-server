@@ -32,7 +32,7 @@ var meme = function (socket, stream, params) {
   self.output_dir       = path.dirname(self.fn);
   self.status_fn        = self.fn + '.status';
   self.results_short_fn = self.fn + '.meme';
-  self.results_fn       = self.fn + '.meme.json';
+  self.results_fn       = self.fn + '.MEME.json';
   self.progress_fn      = self.fn + '.meme.progress';
   self.tree_fn          = self.fn + '.tre';
 

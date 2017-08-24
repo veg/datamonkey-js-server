@@ -7,6 +7,7 @@ var config = require('./config.json'),
     absrel = require('./app/absrel/absrel.js'),
     busted = require('./app/busted/busted.js'),
     fade = require('./app/fade/fade.js'),
+    fel = require('./app/fel/fel.js'),
     flea = require('./app/flea/flea.js'),
     fubar = require('./app/fubar/fubar.js'),
     gard = require('./app/gard/gard.js'),
@@ -42,12 +43,15 @@ io.sockets.on('connection', function (socket) {
 
   // HIV-TRACE
   r.route('hivtrace', {
+
     spawn : function (stream, params) {
       var hivtrace_job = new hivtrace.hivtrace(socket, stream, params.job.analysis);
     },
+
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
     }
+
   });
 
   // FLEA
@@ -117,6 +121,22 @@ io.sockets.on('connection', function (socket) {
     }
 
   });
+
+  // FEL
+  r.route('fel', {
+
+    spawn : function (stream, params) {
+      var fel_job = new fel.fel(socket, stream, params.job);
+    },
+    resubscribe : function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel : function(params) {
+      new job.cancel(socket, params.id);
+    }
+
+  });
+
 
   // aBSREL
   r.route('absrel', {

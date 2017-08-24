@@ -12,6 +12,9 @@ var config   = require('../../config.json'),
 var gard = function (socket, stream, params) {
 
   var self = this;
+
+  variation_map = { 'none' : 1, 'general_discrete':2, 'beta_gamma' : 3 };
+
   self.socket = socket;
   self.stream = stream;
   self.params = params;
@@ -22,10 +25,11 @@ var gard = function (socket, stream, params) {
   self.qsub_script      = __dirname + '/' + self.qsub_script_name;
 
   // parameter attributes
-  self.msaid        = self.params.msa._id;
-  self.id           = self.params.analysis._id;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
-  self.nj           = self.params.msa[0].nj;
+  self.msaid          = self.params.msa._id;
+  self.id             = self.params.analysis._id;
+  self.rate_variation = variation_map[self.params.analysis.site_to_site_variation];
+  self.genetic_code   = self.params.msa[0].gencodeid + 1;
+  self.nj             = self.params.msa[0].nj;
 
   // parameter-derived attributes
   self.fn               = __dirname + '/output/' + self.id;
@@ -46,13 +50,13 @@ var gard = function (socket, stream, params) {
                           ',rfn='+self.results_short_fn+
                           ',treemode='+self.treemode+
                           ',genetic_code='+self.genetic_code+
+                          ',rate_var='+self.rate_variation+
                           ',analysis_type='+self.type+
                           ',cwd='+__dirname+
                           ',msaid='+self.msaid,
                           '-o', self.output_dir,
                           '-e', self.output_dir, 
                           self.qsub_script];
-
 
   // Write tree to a file
   fs.writeFile(self.tree_fn, self.nj, function (err) {

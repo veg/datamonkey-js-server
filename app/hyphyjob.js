@@ -30,12 +30,14 @@ hyphyJob.prototype.log = function (notification, complementary_info) {
 };
 
 hyphyJob.prototype.warn = function (notification, complementary_info) {
+
   var self = this;
   if(complementary_info) {
     winston.warn([self.type, self.id, notification, complementary_info].join(' : '));
   } else {
     winston.warn([self.type, self.id, notification].join(' : '));
   }
+
 };
 
 
@@ -49,9 +51,9 @@ hyphyJob.prototype.init = function () {
   var self = this;
   // store parameters in redis
   client.hset(self.id, 'params', JSON.stringify(self.params));
-  console.log(self.fn);
   self.attachSocket();
   self.spawn();
+
 };
 
 hyphyJob.prototype.spawn = function () {
@@ -84,6 +86,7 @@ hyphyJob.prototype.spawn = function () {
        // but this could be due to the job just starting
        self.warn('read progress file, but no data');
       }
+
    });
 
   });
@@ -118,9 +121,11 @@ hyphyJob.prototype.spawn = function () {
   self.stream.pipe(fs.createWriteStream(self.fn));
 
   self.stream.on('end', function(err) {
+
     if (err) throw err;
     // Pass filename in as opposed to generating it in spawn_hyphyJob
     hyphy_job_runner.submit(self.qsub_params, self.output_dir);
+
   });
 
   // Global event that triggers all jobs to cancel
@@ -147,6 +152,7 @@ hyphyJob.prototype.onJobCreated = function (torque_id) {
 
   self.push_job_once = _.once(self.push_active_job);
   self.setTorqueParameters(torque_id);
+
   var redis_packet = torque_id;
   redis_packet.type = 'job created';
   str_redis_packet = JSON.stringify(torque_id);
