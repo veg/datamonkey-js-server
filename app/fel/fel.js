@@ -32,7 +32,7 @@ var fel = function (socket, stream, params) {
   self.output_dir       = path.dirname(self.fn);
   self.status_fn        = self.fn + '.status';
   self.results_short_fn = self.fn + '.fel';
-  self.results_fn       = self.fn + '.fel.json';
+  self.results_fn       = self.fn + '.FEL.json';
   self.progress_fn      = self.fn + '.fel.progress';
   self.tree_fn          = self.fn + '.tre';
 
