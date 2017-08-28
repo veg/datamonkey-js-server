@@ -13,8 +13,7 @@ ExecuteAFile			("../Shared/GrabBag.bf");
 
 timer = Time (1);
 
-baseFilePath  		= "spool/"+_in_FilePath;
-
+baseFilePath  		= _in_FilePath;
 intermediateHTML	= baseFilePath + ".progress";
 timeStamp           = baseFilePath + ".time";
 alignmentData   	= baseFilePath + ".seq";

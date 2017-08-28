@@ -15,7 +15,7 @@ ExecuteAFile			("../Shared/GrabBag.bf");
 
 timer = Time (0);
 
-baseFilePath  		= "spool/"+_in_FilePath;
+baseFilePath  		= ""+_in_FilePath;
 
 intermediateHTML	= baseFilePath + ".progress";
 _felRawResultFile         	= baseFilePath + ".out";

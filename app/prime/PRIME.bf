@@ -6,7 +6,6 @@ fscanf  			(stdin,"Number", _qcap_metric);
 fscanf  			(stdin,"Number", _tree_mode);
 //OPTIMIZATION_TIME_HARD_LIMIT=1;
 
-
 skipCodeSelectionStep    = 1;
 LoadFunctionLibrary			("chooseGeneticCode.def");
 ApplyGeneticCodeTable (_in_GeneticCodeTable);
@@ -104,7 +103,6 @@ if (_fel_test_type == 0) {
                                                         
 
         nullModel =  runFELTestsOnPartition ("filteredData_" + file_id, "QCAPModelNeutNeg", treeString, "codon_tree_" + file_id, "synRate", "syn", _felTests, 1, _felRawResultFile);
-        results   =  runFELTestsOnPartition ("filteredData_" + file_id, "QCAPModel", treeString, "codon_tree_" + file_id, "synRate", "syn", _felTests, 1, _felRawResultFile);
     }
    
     for (_copyVarValue = 0; _copyVarValue < Abs(nullModel); _copyVarValue += 1) {

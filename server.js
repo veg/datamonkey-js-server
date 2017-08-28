@@ -65,6 +65,7 @@ io.sockets.on('connection', function (socket) {
   });
 
   // PRIME
+  // TODO: Currently broken and route is commented out
   r.route('prime', {
     spawn : function (stream, params) {
       var prime_job = new prime.prime(socket, stream, params.job);
