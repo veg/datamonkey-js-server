@@ -2,7 +2,9 @@
 #PBS -l nodes=3:ppn=32
 
 export PATH=/usr/local/bin:$PATH
+
 module load openmpi/gnu/1.6.3
+module load gcc/6.1.0
 
 FN=$fn
 CWD=$cwd
@@ -12,12 +14,10 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 
-HYPHY=$CWD/../../.hyphy/HYPHYMP
-#HYPHY=$CWD/../../.hyphy/HYPHYMPI
-ABSREL=$CWD/BranchSiteREL.bf
-
-export HYPHY_PATH=$CWD/../../.hyphy/res/
+HYPHY=$CWD/../../.hyphy-2.3.1-alpha/HYPHYMP
+export HYPHY_PATH=$CWD/../../.hyphy-2.3.1-alpha/res/
+ABSREL=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
-echo '(echo '$GENETIC_CODE'; echo 1; echo 2; echo '$FN'; echo '$TREE_FN'; echo 2; echo d; echo '$RESULTS_FN') | '$HYPHY' '$ABSREL''
-export HYPHY_PATH=$CWD/../../.hyphy/res/; (echo $GENETIC_CODE; echo 1; echo 2; echo $FN; echo $TREE_FN; echo 2; echo d; echo $RESULTS_FN) | $HYPHY $ABSREL
+echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 4;) | '$HYPHY' '$ABSREL''
+(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 1;) | $HYPHY $ABSREL > $PROGRESS_FILE

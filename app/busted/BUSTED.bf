@@ -1,5 +1,4 @@
 RequireVersion ("2.1320141020");
-//OPTIMIZATION_TIME_HARD_LIMIT=1;
 
 _BUSTED_timers  = {3,1};
 busted.taskTimerStart (2);
