@@ -32,7 +32,7 @@ var fubar = function (socket, stream, params) {
   self.output_dir       = path.dirname(self.fn);
   self.status_fn        = self.fn + '.status';
   self.results_short_fn = self.fn + '.fubar';
-  self.results_fn       = self.fn + '.fubar.json';
+  self.results_fn       = self.fn + '.FUBAR.json';
   self.progress_fn      = self.fn + '.fubar.progress';
   self.tree_fn          = self.fn + '.tre';
 
