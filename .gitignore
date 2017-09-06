@@ -4,10 +4,24 @@ hpout
 *.log
 *.out
 *.log.*
+#Ignore spool
+spool/
+tags
 
 #Ignore spool
 spool/
-Analyses/**/lf_dump/
+app/node_modules/
+app/hivtrace/output
+app/hivtrace/res/LANL.FASTA
+app/hivtrace/res/LANL.UNALIGNED.FASTA
+**/output
+.hyphy*
+.python
+tests/flea/.ruffus_history.sqlite
+tests/flea/res/54f75ea60cb1503c69b83f5e/
+
+*node_modules*
+nosetests.xml
 
 # Compiled Object files
 *.slo
@@ -21,3 +35,8 @@ Analyses/**/lf_dump/
 *.lai
 *.la
 *.a
+*.sh.*
+*Test*
+*Full model*
+__pycache__
+config.json
