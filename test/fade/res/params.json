@@ -1,0 +1,158 @@
+{
+	"msa" : [
+		{
+			"_id" : "565cc1365b30e3946b0eaee7",
+			"gencodeid" : -2,
+			"partitions" : 1,
+			"sites" : 278,
+			"sequences" : 10,
+			"goodtree" : 0,
+			"nj" : "((ESCHERICHIA_COLI:0.4366037449979055,ALCANIVORAX_BORKUMENSIS:0.3619310535368931):0.006877322798855605,(BUCHNERA_APHIDICOLA:0.3387888470005259,PSEUDOALTEROMONAS_ATLANTICA:0.3718338636221847):0.01623703243228792,(((MORGANELLA_MORGANII:0.4141972903703874,METHYLOBACTERIUM_EXTORQUENS:0.173393950505525):0.01430234151493273,AEROMONAS_HYDROPHILA:0.3842097303548033):0.009336314537044477,((PANTOEA_ANANATIS:0.4210749712574529,ACINETOBACTER_BAUMANNII:0.2822217320392504):0.02322865698778093,SHEWANELLA_BALTICA:0.3833647496056256):0.009561910109355365):0.004481832036576545)",
+			"rawsites" : 278,
+			"created" : "2015-11-30T21:35:50.402Z",
+			"sequence_info" : [
+				{
+					"_id" : "565cc1365b30e3946b0eaee8",
+					"name" : "ESCHERICHIA_COLI",
+					"seqindex" : 0
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaee9",
+					"name" : "BUCHNERA_APHIDICOLA",
+					"seqindex" : 1
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeea",
+					"name" : "MORGANELLA_MORGANII",
+					"seqindex" : 2
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeeb",
+					"name" : "PANTOEA_ANANATIS",
+					"seqindex" : 3
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeec",
+					"name" : "AEROMONAS_HYDROPHILA",
+					"seqindex" : 4
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeed",
+					"name" : "METHYLOBACTERIUM_EXTORQUENS",
+					"seqindex" : 5
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeee",
+					"name" : "ALCANIVORAX_BORKUMENSIS",
+					"seqindex" : 6
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeef",
+					"name" : "ACINETOBACTER_BAUMANNII",
+					"seqindex" : 7
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaef0",
+					"name" : "PSEUDOALTEROMONAS_ATLANTICA",
+					"seqindex" : 8
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaef1",
+					"name" : "SHEWANELLA_BALTICA",
+					"seqindex" : 9
+				}
+			],
+			"partition_info" : [
+				{
+					"_id" : "565cc1365b30e3946b0eaef2",
+					"span" : 278,
+					"endcodon" : 277,
+					"startcodon" : 0,
+					"partition" : 1
+				}
+			]
+		}
+	],
+"analysis": {
+	"_id" : "565cc1365b30e3946b0eaee6",
+	"__t" : "Fade",
+	"mail" : "sweaver@ucsd.edu",
+	"fg_branches" : "ALL",
+	"created" : "2015-11-30T21:35:50.400Z",
+	"msa" : [
+		{
+			"_id" : "565cc1365b30e3946b0eaee7",
+			"gencodeid" : -2,
+			"partitions" : 1,
+			"sites" : 278,
+			"sequences" : 10,
+			"goodtree" : 0,
+			"nj" : "((ESCHERICHIA_COLI:0.4366037449979055,ALCANIVORAX_BORKUMENSIS:0.3619310535368931):0.006877322798855605,(BUCHNERA_APHIDICOLA:0.3387888470005259,PSEUDOALTEROMONAS_ATLANTICA:0.3718338636221847):0.01623703243228792,(((MORGANELLA_MORGANII:0.4141972903703874,METHYLOBACTERIUM_EXTORQUENS:0.173393950505525):0.01430234151493273,AEROMONAS_HYDROPHILA:0.3842097303548033):0.009336314537044477,((PANTOEA_ANANATIS:0.4210749712574529,ACINETOBACTER_BAUMANNII:0.2822217320392504):0.02322865698778093,SHEWANELLA_BALTICA:0.3833647496056256):0.009561910109355365):0.004481832036576545)",
+			"rawsites" : 278,
+			"created" : "2015-11-30T21:35:50.402Z",
+			"sequence_info" : [
+				{
+					"_id" : "565cc1365b30e3946b0eaee8",
+					"name" : "ESCHERICHIA_COLI",
+					"seqindex" : 0
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaee9",
+					"name" : "BUCHNERA_APHIDICOLA",
+					"seqindex" : 1
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeea",
+					"name" : "MORGANELLA_MORGANII",
+					"seqindex" : 2
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeeb",
+					"name" : "PANTOEA_ANANATIS",
+					"seqindex" : 3
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeec",
+					"name" : "AEROMONAS_HYDROPHILA",
+					"seqindex" : 4
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeed",
+					"name" : "METHYLOBACTERIUM_EXTORQUENS",
+					"seqindex" : 5
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeee",
+					"name" : "ALCANIVORAX_BORKUMENSIS",
+					"seqindex" : 6
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaeef",
+					"name" : "ACINETOBACTER_BAUMANNII",
+					"seqindex" : 7
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaef0",
+					"name" : "PSEUDOALTEROMONAS_ATLANTICA",
+					"seqindex" : 8
+				},
+				{
+					"_id" : "565cc1365b30e3946b0eaef1",
+					"name" : "SHEWANELLA_BALTICA",
+					"seqindex" : 9
+				}
+			],
+			"partition_info" : [
+				{
+					"_id" : "565cc1365b30e3946b0eaef2",
+					"span" : 278,
+					"endcodon" : 277,
+					"startcodon" : 0,
+					"partition" : 1
+				}
+			]
+		}
+	],
+	"__v" : 0
+  }
+}

@@ -1,0 +1,13 @@
+digraph G { overlap="voronoi";
+ outputorder = edgesfirst;
+node[style=filled];
+"GQ462106_9999" [label = "", fillcolor = "white", shape = ellipse];
+"GQ462218_9999" [label = "", fillcolor = "white", shape = ellipse];
+"GQ462106_9999" -> "GQ462218_9999" [style="bold" label = "" arrowhead = "none"];
+"GQ462061_9999" [label = "", fillcolor = "white", shape = ellipse];
+"GQ462131_9999" [label = "", fillcolor = "white", shape = ellipse];
+"GQ462061_9999" -> "GQ462131_9999" [style="bold" label = "" arrowhead = "none"];
+"GQ462194_9999" [label = "", fillcolor = "white", shape = ellipse];
+"GQ462131_9999" -> "GQ462194_9999" [style="bold" label = "" arrowhead = "none"];
+
+};

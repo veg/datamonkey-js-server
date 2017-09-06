@@ -1,0 +1,459 @@
+/*	QCAP: Quadratic Combination of Amino Acid Properties
+
+	Implementation adapted from LCAP.mdl; this model differs from LCAP in two ways:
+	1) Format of input properties: input is taken from a matrix containing property values, rather than a set of distance matrices. 
+	   Currently, this is hardcoded to use the properties given in Table 2 of Atchley et al, "Solving the protein sequence metric problem", PNAS 2005.
+	2) A weighted L^2 norm is used instead of a weighted L^1 norm: distances are the sqrt of a weighted sum-of-squares. 
+	   Parameters are still the weights alpha_i and a parameter C such that overall nonsynonymous is multiplied by exp(C).
+
+*/
+
+_qcap_settings = {};
+
+numProps = 5; /* number of amino acid properties included in the property file */
+propset  = 0; /* 0: Conant; 1: Atchley */
+
+prop_choices = {{"Conant-Stadler","Use the five properties defined in the Conant and Stadler LCAP model [Mol Biol Evol (2009) 26 (5): 1155-1161. doi: 10.1093/molbev/msp031]"}
+                {"Atchley","Use the five properties derived from a factor analysis of 500 amino-acid properties [Table 2 in PNAS (2005) 102(18) 6395-6400 doi: 10.1073/pnas.0408677102]"}};
+
+if (_qcap_propset == None) {
+    ChoiceList (_qcap_propset,"Amino-acid properties to use",1,SKIP_NONE,
+                prop_choices);
+}
+
+if (_qcap_propset < 0) {
+    return -1;
+}
+
+SELECTION_STRINGS = prop_choices[_qcap_propset][0];
+fprintf (stdout, "Using the ", SELECTION_STRINGS , " property set\n");
+
+_qcap_settings["Properties"] = SELECTION_STRINGS;
+
+if (_qcap_propset == 0 ) {
+    prop_file = HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "EmpiricalAA" + DIRECTORY_SEPARATOR + "LCAP";
+	fscanf (prop_file , "NMatrix,NMatrix,NMatrix,NMatrix,NMatrix", prop_0, prop_1, prop_2, prop_3, prop_4 );
+} else {
+	//fscanf ( HYPHY_LIB_DIRECTORY + "TemplateBatchFiles" + DIRECTORY_SEPARATOR + "TemplateModels" + DIRECTORY_SEPARATOR + "EmpiricalAA" + DIRECTORY_SEPARATOR + "atchley_properties.txt", "NMatrix", prop ); 
+	fscanf ("properties/atchley_properties.txt", "NMatrix", prop);
+	
+	/* prop contain numProps columns, each with 20 property values */
+
+	LoadFunctionLibrary("GrabBag");
+	map = mapStrings(_hyphyAAOrdering,_alphabeticalAAOrdering);
+}
+
+
+test_choices = {{"Interacting properties","The substitution rates are modulated by the distance between the projections of corresponding property vectors on the property-weighting vector, which is estimated by ML"},
+                {"Independent properties","The weighted sum of absolute differences in individual properties; weights are estimated by ML"}};
+                
+if (_qcap_metric == None) {
+    ChoiceList (_qcap_metric,"How do individual properties interact?",1,SKIP_NONE,
+                test_choices);
+}
+        
+if (_qcap_metric < 0) {
+    return -1;
+}
+
+SELECTION_STRINGS = test_choices[_qcap_metric][0];
+fprintf (stdout, "Using the " + SELECTION_STRINGS + " metric\n");
+
+_qcap_settings  ["Metric"] = SELECTION_STRINGS;
+
+
+/*---------------------------------------------------------------------------------------------------------*/
+
+function BuildCodonFrequencies1x4 (obsF)
+{
+	PIStop = 1.0;
+	result = {ModelMatrixDimension,1};
+	hshift = 0;
+
+	for (h=0; h<64; h=h+1)
+	{
+		first = h$16;
+		second = h%16$4;
+		third = h%4;
+		if (_Genetic_Code[h]==10) 
+		{
+			hshift = hshift+1;
+			PIStop = PIStop-obsF[first]*obsF[second]*obsF[third];
+			continue; 
+		}
+		result[h-hshift]=obsF[first]*obsF[second]*obsF[third];
+	}
+	return result*(1.0/PIStop);
+}
+
+/*---------------------------------------------------------------------------------------------------------*/
+
+function BuildCodonFrequencies3x4 (obsF)
+{
+	PIStop = 1.0;
+	result = {ModelMatrixDimension,1};
+	hshift = 0;
+
+	for (h=0; h<64; h+=1)
+	{
+		first = h$16;
+		second = h%16$4;
+		third = h%4;
+		if (IsStop(h,_Genetic_Code)) 
+		{
+			hshift += 1;
+			PIStop = PIStop-obsF[first][0]*obsF[second][1]*obsF[third][2];
+			continue; 
+		}
+		result[h-hshift]=obsF[first][0]*obsF[second][1]*obsF[third][2];
+	}
+	return result*(1.0/PIStop);
+}
+
+/*---------------------------------------------------------------------------------------------------------*/
+												  
+function PopulateModelMatrix (ModelMatrixName&, EFV, freqs, global_name_prefix, include_srv, negative_neutral)
+{
+	if (!ModelMatrixDimension) {
+		ModelMatrixDimension = 64 - (_Genetic_Code["_MATRIX_ELEMENT_VALUE_ == 10"]*Transpose(_Genetic_Code["1"]))[0];
+	}
+		
+	ModelMatrixName = {ModelMatrixDimension,ModelMatrixDimension}; 
+	
+	if (include_srv>1) {
+	    LoadFunctionLibrary ("defineGamma", {"0": "General Discrete", "1" : ("" + include_srv)});
+	    synCatRateMult 	  = "c*synRate*";
+	    nonsynCatRateMult = "c*synRate*";	
+	} else {
+	    synCatRateMult 	  = "synRate*";
+	    nonsynCatRateMult = "synRate*";
+	}
+	
+	
+	modelDefString = "";
+	modelDefString*16384;
+	
+	alpha_parameter_names = {numProps,1};
+	_qcap_settings        ["Property Parameters"] = {};
+	
+	for ( aaprop = 0; aaprop < numProps; aaprop += 1 ) {
+	    alpha_parameter_name = global_name_prefix + "alpha_" + aaprop;
+	    alpha_parameter_names [aaprop] = alpha_parameter_name;
+		ExecuteCommands ( "global `alpha_parameter_name` = 0.5; global `alpha_parameter_name` :> -20; global `alpha_parameter_name` :< 20;" );
+		_qcap_settings        ["Property Parameters"] + alpha_parameter_name;
+	}
+	
+	if (_qcap_metric == 1) { // weighted components
+	    _metric_prefix = "Abs";
+	    _metric_suffix = "";
+	} else { // projection
+	    lambda_param_name       = global_name_prefix + "lambda";
+	    ExecuteCommands ("global `lambda_param_name` = 1; `lambda_param_name` :> -10000;");
+	    _qcap_settings        ["Property Parameters"] + lambda_param_name;
+        _metric_prefix = ""; 
+        _metric_suffix = "";	
+	}
+
+	hshift = 0;
+	
+	_aa_multipliers = {};
+	_aa_differences = {};
+	
+	for (h=0; h<64; h += 1)
+	{
+		if (IsStop(h,_Genetic_Code))  {
+			hshift += 1;
+			continue; 
+		}
+		vshift = hshift;
+		for (v = h+1; v<64; v += 1)
+		{
+			diff = v-h;
+			if (IsStop(v,_Genetic_Code)) 
+			{
+				vshift += 1;
+				continue; 
+			}
+			nucPosInCodon = 2;
+			if (h$4==v$4 || (diff%4==0)&&(h$16==v$16) || diff%16==0) {
+				if (h$4==v$4) {
+					transition = v%4;
+					transition2= h%4;
+				}
+				else {
+					if(diff%16==0) {
+						transition = v$16;
+						transition2= h$16;
+						nucPosInCodon = 0;
+					} else {
+						transition = v%16$4;
+						transition2= h%16$4;
+						nucPosInCodon = 1;
+					}
+				}
+				
+				hs  = Format(h-hshift,0,0);
+				vs  = Format(v-vshift,0,0);
+				ts  = Format(transition,0,0);
+				ts2 = Format(transition2,0,0);
+				ps  = Format(nucPosInCodon,0,0);
+				aa1 = _Genetic_Code[0][h];
+				aa2 = _Genetic_Code[0][v];
+				
+				
+				if (_qcap_propset == 0) {
+					/*Conant does not have stop AA in the matrices, so we need to adjust for aa > 10 */
+					caa1 = aa1 - (aa1 >= 10);
+					caa2 = aa2 - (aa2 >= 10);
+					
+				} else {
+					/* correct for difference between alphabetical AA order and HyPhy (genetic code based) AA order: */
+					caa1 = map [aa1];
+    	            caa2 = map [aa2];
+    	        }
+				
+				/* add in the amino acid property multipliers */ 
+				/* this differs from LCAP: property input matrix is different and we are using weighted L^2 norm */
+				
+				
+                if (caa1 != caa2) {
+                
+                    if (aa1 < aa2) {
+                        _pairID = _hyphyAAOrdering [aa1] + _hyphyAAOrdering [aa2];
+                    } else {
+                        _pairID = _hyphyAAOrdering [aa2] + _hyphyAAOrdering [aa1];
+                    }
+                
+                    if (Abs(_aa_multipliers [_pairID]) == 0) {
+                        _aa_differences [_pairID] = {};
+                        aapropMultiplier = ""; aapropMultiplier * 128;
+
+                        if (negative_neutral) {
+                            aapropMultiplier * "Min (1,";
+                        } else {
+                            aapropMultiplier * "Min (100000,";                        
+                        }
+                        
+                        for ( aaprop = 0; aaprop < numProps; aaprop += 1 ) {
+                            _weight = alpha_parameter_names[aaprop];
+                            (_aa_differences [_pairID])[aaprop] = _weight;
+                            if (_qcap_propset == 0) {
+                                ( _aa_differences [_pairID])[aaprop] = Eval ("prop_" + aaprop + "[" + caa1 + "][" + caa2 + "]");
+                            } else {
+                                ( _aa_differences [_pairID])[aaprop] = (prop[caa1][aaprop] - prop[caa2][aaprop]);
+                            }
+                                   
+                            propMulti = Eval(_metric_prefix + "(" + ( _aa_differences [_pairID])[aaprop] + ")" + _metric_suffix); 
+                            
+                            if (_qcap_metric == 1) {
+                                propMulti = Abs(propMulti);
+                                if ( aaprop == 0 ) {
+                                    aapropMultiplier * ("Exp(-`_weight`*" + propMulti);						
+                                }
+                                else {
+                                    aapropMultiplier * ("-`_weight`*" + propMulti );
+                                }
+                            } else { 
+                                if (propMulti >= 0) {             
+                                    if ( aaprop == 0 ) {
+                                        aapropMultiplier * ("Exp(-`lambda_param_name`*Abs(`_weight`*" + propMulti );						
+                                    } else {
+                                        aapropMultiplier * ("+`_weight`*" + propMulti );
+                                    }
+                                 } else {
+                                    if ( aaprop == 0 ) {
+                                        aapropMultiplier * ("Exp(-`lambda_param_name`*Abs(-`_weight`*" + (-propMulti) );						
+                                    } else {
+                                        aapropMultiplier * ("-`_weight`*" + (-propMulti) );
+                                    }
+                                 }
+                            }
+                        }
+                        
+                        
+                        
+                        
+                        if (_qcap_metric == 0) {
+                            aapropMultiplier * ")";
+                        }
+                        aapropMultiplier * "))";
+                        aapropMultiplier * 0;
+                        _aa_multipliers [_pairID] = aapropMultiplier;
+                    } else {
+                        aapropMultiplier = _aa_multipliers [_pairID];                    
+                    }
+                }
+				
+				if ( freqs != 2 ) {
+					if ( freqs == 0 ) { // not position specific 
+						ps = 0;
+					}
+				
+				    if (freqs != 4) {    				
+                        if (aa1==aa2) {
+                            modelDefString*("ModelMatrixName["+hs+"]["+vs+"] := "+synCatRateMult+_nucBiasTerms[transition][transition2]+"EFV__["+ts+"]["+ps+"];\n"+
+                                                         "ModelMatrixName["+vs+"]["+hs+"] := "+synCatRateMult+_nucBiasTerms[transition][transition2]+"EFV__["+ts2+"]["+ps+"];\n");
+                        }
+                        else {
+                            modelDefString*("ModelMatrixName["+hs+"]["+vs+"] := "+nonsynCatRateMult+_nucBiasTerms[transition][transition2]+"EFV__["+ts+"]["+ps+"]*" + aapropMultiplier + ";\n"+
+                                                         "ModelMatrixName["+vs+"]["+hs+"] := "+nonsynCatRateMult+_nucBiasTerms[transition][transition2]+"EFV__["+ts2+"]["+ps+"]*" + aapropMultiplier + ";\n");						
+                        }
+                    } else {
+                        if (aa1==aa2) {
+                            modelDefString*("ModelMatrixName["+hs+"]["+vs+"] := "+synCatRateMult+_nucBiasTerms[transition][transition2]+EFV[transition][nucPosInCodon] + ";\n"+
+                                                         "ModelMatrixName["+vs+"]["+hs+"] := "+synCatRateMult+_nucBiasTerms[transition][transition2]+EFV[transition2][nucPosInCodon] + ";\n");
+                        }
+                        else {
+                            modelDefString*("ModelMatrixName["+hs+"]["+vs+"] := "+nonsynCatRateMult+_nucBiasTerms[transition][transition2]+EFV[transition][nucPosInCodon] + "*"+ aapropMultiplier + ";\n"+
+                                                         "ModelMatrixName["+vs+"]["+hs+"] := "+nonsynCatRateMult+_nucBiasTerms[transition][transition2]+EFV[transition2][nucPosInCodon] +"*" + aapropMultiplier + ";\n");						
+                        }
+                    
+                    }
+				}
+				else {
+					if (aa1==aa2) {
+						modelDefString*("ModelMatrixName["+hs+"]["+vs+"] := "+synCatRateMult+_nucBiasTerms[transition][transition2]+"1;\n"+
+													 "ModelMatrixName["+vs+"]["+hs+"] := "+synCatRateMult+_nucBiasTerms[transition][transition2]+"1;\n");
+					}
+					else {
+						modelDefString*("ModelMatrixName["+hs+"]["+vs+"] := "+nonsynCatRateMult+_nucBiasTerms[transition][transition2]+aapropMultiplier + "*1;\n"+
+													 "ModelMatrixName["+vs+"]["+hs+"] := "+nonsynCatRateMult+_nucBiasTerms[transition][transition2]+aapropMultiplier + "*1;\n");						
+					}
+				}
+			}
+	    }
+    }		
+	modelDefString*0;
+	//fprintf ( stdout, modelDefString );
+	ExecuteCommands (modelDefString);
+	
+	_qcap_settings ["Multipliers"] = _aa_multipliers;
+	_qcap_settings ["Differences"] = _aa_differences;
+	
+	return freqs == 2;
+} /*** End of PopulateModelMatrix ***/
+
+
+//-----------------------------------------------------------------------------------------------------
+
+if (freqType == None) {
+     ChoiceList (freqType,"Choose a frequency parameterisation",1,SKIP_NONE,
+                "F1x4","Empirical nucleotide frequencies",
+                "F3x4","Empirical position specific nucleotide frequencies",
+                "F61","Empirical codon frequencies",
+                "CF3x4","Corrected empirical (suggested default)",
+                "ML3x4","Maximum likelihood estimated position specific frequencies");
+}
+
+
+if (Type (modelDesc) != "String" || Abs (modelDesc) != 6) {
+    fprintf						  (stdout, "\nModel string for nucleotide biases: (eg: 010010 for HKY85):");
+    fscanf						  (stdin,"String",modelDesc);
+}
+
+MGCustomRateBiasTerms = {{"AC*","","AT*","CG*","CT*","GT*"}};	
+
+		
+paramCount	   = 0;
+_nucBiasTerms  = {4,4};
+
+_nucBiasTerms[0][0] = "";
+
+
+if (modelDesc[0]==modelDesc[1]) {
+	MGCustomRateBiasTerms[0] = MGCustomRateBiasTerms[1];
+}
+
+_nucBiasTerms[1][0] = MGCustomRateBiasTerms[0];
+_nucBiasTerms[0][1] = MGCustomRateBiasTerms[0];
+_nucBiasTerms[2][0] = MGCustomRateBiasTerms[1];
+_nucBiasTerms[0][2] = MGCustomRateBiasTerms[1];
+
+h = 0;
+v = 3;
+
+for (customLoopCounter2=2; customLoopCounter2<6; customLoopCounter2 += 1) {
+	for (customLoopCounter=0; customLoopCounter<customLoopCounter2; customLoopCounter += 1) {
+		if (modelDesc[customLoopCounter]==modelDesc[customLoopCounter2]) {
+			_nucBiasTerms[h][v] = MGCustomRateBiasTerms[customLoopCounter];
+			_nucBiasTerms[v][h] = MGCustomRateBiasTerms[customLoopCounter];
+			break;
+		}
+	}
+	if (customLoopCounter == customLoopCounter2) {
+		_nucBiasTerms[h][v] = MGCustomRateBiasTerms[customLoopCounter2];
+		_nucBiasTerms[v][h] = MGCustomRateBiasTerms[customLoopCounter2];
+	}
+	
+	v  += 1;
+	if (v==4) {
+		h += 1;
+		v = h+1;
+	}
+}
+
+prev = "";
+for ( i = 0; i < Columns ( _nucBiasTerms ); i = i + 1 ) {
+	for ( j = 0; j < Rows ( _nucBiasTerms ); j = j + 1 ) {
+		if ( Abs ( _nucBiasTerms [i][j] ) ) {
+			nucPair = _nucBiasTerms [i][j];
+			if ( prev != nucPair ) {
+			    // only define if the variable does not already exist
+			    nucRateName = nucPair[0][Abs(nucPair)-2];
+			    GetInformation (exists, nucRateName);
+			    if (Rows (exists) == 0) {
+				    ExecuteCommands ( "global `nucRateName` = 1;" );
+				}
+				prev = nucPair;
+			}
+		}
+	}
+}
+
+COUNT_GAPS_IN_FREQUENCIES = 0;
+
+if (!ModelMatrixDimension) {
+    ModelMatrixDimension = 64 - (_Genetic_Code["_MATRIX_ELEMENT_VALUE_ == 10"]*Transpose(_Genetic_Code["1"]))[0];
+}
+
+
+if ( freqType < 1 ) {
+	HarvestFrequencies (observedFreq,filteredData,1,1,1);
+	vectorOfFrequencies = BuildCodonFrequencies1x4 (observedFreq);
+}
+else {
+	if ( freqType == 1 ) { /* F3x4*/
+		HarvestFrequencies ( observedFreq, filteredData, 3,1,1);
+		vectorOfFrequencies = BuildCodonFrequencies3x4 (observedFreq);
+	}
+	if ( freqType == 2 ) { /* F61 */
+		HarvestFrequencies (observedFreq,filteredData,3,3,1);
+		vectorOfFrequencies = Transpose(observedFreq[Transpose(_Genetic_Code["_MATRIX_ELEMENT_VALUE_!=10"])]); /* cough, cough, cough ... HACK! */
+	}
+    if ( freqType == 3 ) { /*CF3x4*/
+        if (Abs (positionalFrequencies) == 0) {
+		    HarvestFrequencies ( observedFreq, filteredData, 3,1,1);
+		} else {
+		    observedFreq = positionalFrequencies;
+		}
+		LoadFunctionLibrary ("CF3x4");
+		observedFreq = CF3x4 (observedFreq,GeneticCodeExclusions);
+		vectorOfFrequencies = BuildCodonFrequencies3x4 (observedFreq);
+	}
+	if ( freqType == 4 ) { /*MLF3x4*/
+		HarvestFrequencies ( observedFreq, filteredData, 3,1,1);
+		LoadFunctionLibrary ("MGFreqsEstimator");
+		BuildCodonFrequencies (paramFreqs,"vectorOfFrequencies");
+		observedFreq = paramFreqs;
+	}
+}
+
+MULTIPLY_BY_FREQS = PopulateModelMatrix ("QCAP", observedFreq, freqType, "", 0, 0 );
+Model QCAPModel = (QCAP,vectorOfFrequencies,MULTIPLY_BY_FREQS);
+
+
+
+/*
+Export ( modelString, QCAPModel );
+fprintf ( stdout, modelString, "\n" );
+*/

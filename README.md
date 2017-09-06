@@ -1,5 +1,13 @@
 Datamonkey Server
-=================
+========================
 
-This is to be installed in the directory specified by "$cgi_lib'cluster_path" 
-in cgi-lib_datamonkey.pl on the client-side portion of datamonkey.
+###Dependencies
+* node
+* redis
+
+###INSTALL
+    git clone git@github.com:veg/datamonkey-server.git
+    git checkout socketio
+    cp config.json.tpl config.json
+    make install
+    make test
