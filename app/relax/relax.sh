@@ -12,12 +12,11 @@ PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
 ANALYSIS_TYPE=$analysis_type
 
-#HYPHY=$CWD/../../.hyphy226/HYPHYMP
-HYPHY=$CWD/../../.hyphy226/HYPHYMPI
+HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
 
 RELAX=$CWD/RELAX.bf
 GETCOUNT=$CWD/../../lib/getAnnotatedCount.bf 
-export HYPHY_PATH=$CWD/../../.hyphy226/res/
+export HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 count=$(echo '(echo '$TREE_FN') | '$HYPHY' '$GETCOUNT'' 2> /dev/null)

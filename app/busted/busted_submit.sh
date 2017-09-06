@@ -12,8 +12,8 @@ STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
 
-HYPHY=$CWD/../../.hyphy-2.3.1-alpha/HYPHYMP
-HYPHY_PATH=$CWD/../../.hyphy-2.3.1-alpha/res/
+HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
+HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
 BUSTED=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/BUSTED.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
