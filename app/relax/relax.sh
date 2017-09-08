@@ -13,7 +13,7 @@ PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
 ANALYSIS_TYPE=$analysis_type
 
-HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
+HYPHY=$CWD/../../.hyphy-1.3.3/HYPHYMP
 
 export HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
 RELAX=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/RELAX.bf
@@ -24,8 +24,8 @@ count=$(echo '(echo '$TREE_FN') | '$HYPHY' '$GETCOUNT'' 2> /dev/null)
 if [ $count -eq 2]
 then
   echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 2;echo '$ANALYSIS_TYPE') | '$HYPHY' LIBPATH='$HYPHY_PATH' '$RELAX''
-  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX
+  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX > $PROGRESS_FILE
 else
   echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 3; echo 2;echo '$ANALYSIS_TYPE') | '$HYPHY' LIBPATH='$HYPHY_PATH' '$RELAX''
-  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 3; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX
+  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 3; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX > $PROGRESS_FILE
 fi
