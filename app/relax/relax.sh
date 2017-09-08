@@ -13,7 +13,7 @@ PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
 ANALYSIS_TYPE=$analysis_type
 
-HYPHY=$CWD/../../.hyphy-1.3.3/HYPHYMP
+HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
 
 export HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
 RELAX=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/RELAX.bf
