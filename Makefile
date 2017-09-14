@@ -22,18 +22,7 @@ npm:
 	@npm install
 
 directories:
-	mkdir app/absrel/output
-	mkdir app/busted/output
-	mkdir app/fade/output
-	mkdir app/fel/output
-	mkdir app/flea/output
-	mkdir app/fubar/output
-	mkdir app/gard/output
-	mkdir app/hivtrace/output
-	mkdir app/meme/output
-	mkdir app/prime/output
-	mkdir app/relax/output
-	mkdir app/slac/output
+	mkdir -p app/**/output
 
 install: hyphy npm directories
 
