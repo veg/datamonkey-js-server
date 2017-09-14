@@ -12,7 +12,9 @@ Datamonkey JS Server
 * `git clone git@github.com:veg/datamonkey-js-server.git`
 
 * `cp config.json.tpl config.json`
-  Please make appropriate edits to the config.json like Redis port.
+ 
+ Please make appropriate edits to the config.json like Redis port.
+
 * `make install`
 * `supervisor server.js`
 
