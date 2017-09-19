@@ -1,8 +1,5 @@
 .PHONY: clean all test publish
 
-test:
-	@npm test
-
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone git@github.com:veg/hyphy.git ./.hyphy/; fi
