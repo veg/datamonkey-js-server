@@ -1,8 +1,5 @@
 .PHONY: clean all test publish
 
-test:
-	@npm test
-
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone git@github.com:veg/hyphy.git ./.hyphy/; fi
@@ -21,5 +18,18 @@ npm:
 	echo "running npm"
 	@npm install
 
-install: hyphy npm
+directories:
+	mkdir -p app/absrel/output
+	mkdir -p app/busted/output
+	mkdir -p app/fade/output
+	mkdir -p app/fel/output
+	mkdir -p app/flea/output
+	mkdir -p app/fubar/output
+	mkdir -p app/gard/output
+	mkdir -p app/meme/output
+	mkdir -p app/prime/output
+	mkdir -p app/relax/output
+	mkdir -p app/slac/output
+
+install: hyphy npm directories
 

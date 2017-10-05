@@ -1,7 +1,7 @@
 {
   "name": "datamonkey-server",
   "description": "",
-  "version": "0.4.3",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "test": "npm run test-absrel && npm run test-busted && npm run test-jobs && npm run test-hivtrace",

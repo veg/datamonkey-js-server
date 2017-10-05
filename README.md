@@ -1,13 +1,20 @@
-Datamonkey Server
+Datamonkey JS Server
 ========================
 
-###Dependencies
+## Dependencies
+
 * node
 * redis
+* PBS server
 
-###INSTALL
-    git clone git@github.com:veg/datamonkey-server.git
-    git checkout socketio
-    cp config.json.tpl config.json
-    make install
-    make test
+## Install
+
+* `git clone git@github.com:veg/datamonkey-js-server.git`
+
+* `cp config.json.tpl config.json`
+ 
+ Please make appropriate edits to the config.json like Redis port.
+
+* `make install`
+* `supervisor server.js`
+
