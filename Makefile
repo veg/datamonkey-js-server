@@ -2,8 +2,8 @@
 
 hyphy:
 	echo "installing hyphy"
-	@if ! test -d ./.hyphy; then git clone git@github.com:veg/hyphy.git ./.hyphy/; fi
-	@if ! test -d ./.hyphy-2.3.3;then git clone git@github.com:veg/hyphy.git ./.hyphy-2.3.3/; fi
+	@if ! test -d ./.hyphy; then git clone http://github.com/veg/hyphy.git ./.hyphy/; fi
+	@if ! test -d ./.hyphy-2.3.3;then git clone http://github.com/veg/hyphy.git ./.hyphy-2.3.3/; fi
 	@cd ./.hyphy-2.3.3 && cmake . && make HYPHYMP && cd ../
 	@cd ./.hyphy && cmake . && make HYPHYMP && cd ../
 
