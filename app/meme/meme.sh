@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=64
+#PBS -l nodes=1:ppn=16
 
 export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
