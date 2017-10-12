@@ -1,7 +1,7 @@
 Datamonkey JS Server
 ========================
 
-Datamonkey JS Server works in conjunction with [datamonkey-js](veg/datamonkey-js). When the daemon is running, it acts as the job dispatcher and provisioner backend for jobs submitted to datamonkey-js. 
+Datamonkey JS Server works in conjunction with [datamonkey-js](http://github.com/veg/datamonkey-js). When the daemon is running, it acts as the job dispatcher and provisioner backend for jobs submitted to datamonkey-js. 
 
 ## Dependencies
 
