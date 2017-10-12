@@ -25,13 +25,15 @@ Installation should be fairly straightforward as long as the dependencies are me
  Please make appropriate edits to the config.json.
  
  ### Configuration overview
- - port - The port that daemon will be hosted on
- - redis\_host - The host that the redis is residing on
- - redis\_port - The port that redis is listening on
- - loglevel - The log level, see the [syslog protocol](https://tools.ietf.org/html/rfc5424) for more information
- - tn93dist - The path to the tn93 binary installed on the system. (HIV-TRACE is the only method that uses it)
- - qsub\_queue - Which qsub command you wish to use
- - qsub\_avx\_queue - To be deprecated, specify queue that has avx nodes.
+ ```
+  - port - The port that daemon will be hosted on
+  - redis\_host - The host that the redis is residing on
+  - redis\_port - The port that redis is listening on
+  - loglevel - The log level, see the [syslog protocol](https://tools.ietf.org/html/rfc5424) for more information
+  - tn93dist - The path to the tn93 binary installed on the system. (HIV-TRACE is the only method that uses it)
+  - qsub\_queue - Which qsub command you wish to use
+  - qsub\_avx\_queue - To be deprecated, specify queue that has avx nodes.
+```
  
 
 * `make install`
