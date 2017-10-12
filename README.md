@@ -31,8 +31,8 @@ Installation should be fairly straightforward as long as the dependencies are me
   - redis_port - The port that redis is listening on
   - loglevel - The log level, see the [syslog protocol](https://tools.ietf.org/html/rfc5424) for more information
   - tn93dist - The path to the tn93 binary installed on the system. (HIV-TRACE is the only method that uses it)
-  - qsub_queue - Which qsub command you wish to use
-  - qsub_avx_queue - To be deprecated, specify queue that has avx nodes.
+  - qsub_queue - Which qsub queue you wish to use
+  - qsub_avx_queue - To be deprecated, specify queue that has avx nodes. (HyPhy > 2.3.0 depends on avx system calls being available)
 ```
  
 
