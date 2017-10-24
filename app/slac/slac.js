@@ -32,7 +32,7 @@ var slac = function (socket, stream, params) {
   self.output_dir       = path.dirname(self.fn);
   self.status_fn        = self.fn + '.status';
   self.results_short_fn = self.fn + '.slac';
-  self.results_fn       = self.fn + '.slac.json';
+  self.results_fn       = self.fn + '.SLAC.json';
   self.progress_fn      = self.fn + '.slac.progress';
   self.tree_fn          = self.fn + '.tre';
 
@@ -52,7 +52,6 @@ var slac = function (socket, stream, params) {
                           '-o', self.output_dir,
                           '-e', self.output_dir, 
                           self.qsub_script];
-
 
   // Write tree to a file
   fs.writeFile(self.tree_fn, self.nj, function (err) {
