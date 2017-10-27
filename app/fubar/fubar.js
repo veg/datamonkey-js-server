@@ -36,6 +36,14 @@ var fubar = function (socket, stream, params) {
   self.progress_fn      = self.fn + '.fubar.progress';
   self.tree_fn          = self.fn + '.tre';
 
+  // advanced options
+  self.number_of_grid_points            = self.params.analysis.number_of_grid_points;
+  self.number_of_mcmc_chains            = self.params.analysis.number_of_mcmc_chains;
+  self.length_of_each_chain             = self.params.analysis.length_of_each_chain;
+  self.number_of_burn_in_samples        = self.params.analysis.number_of_burn_in_samples;
+  self.number_of_samples                = self.params.analysis.number_of_samples;
+  self.concentration_of_dirichlet_prior = self.params.analysis.concentration_of_dirichlet_prior;
+
   self.qsub_params = ['-q',
                           config.qsub_avx_queue,
                           '-v',
@@ -48,7 +56,13 @@ var fubar = function (socket, stream, params) {
                           ',genetic_code='+self.genetic_code+
                           ',analysis_type='+self.type+
                           ',cwd='+__dirname+
-                          ',msaid='+self.msaid,
+                          ',msaid='+self.msaid+
+                          ',number_of_grid_points='+self.number_of_grid_points+
+                          ',number_of_mcmc_chains='+self.number_of_mcmc_chains+
+                          ',length_of_each_chain='+self.length_of_each_chain+
+                          ',number_of_burn_in_samples='+self.number_of_burn_in_samples+
+                          ',number_of_samples='+self.number_of_samples+
+                          ',concentration_of_dirichlet_prior='+self.concentration_of_dirichlet_prior,
                           '-o', self.output_dir,
                           '-e', self.output_dir, 
                           self.qsub_script];

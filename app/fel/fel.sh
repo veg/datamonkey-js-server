@@ -14,7 +14,7 @@ STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
-RATE_VARIATION=1
+RATE_VARIATION=$rate_variation
 
 HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
 HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
