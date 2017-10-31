@@ -83,6 +83,26 @@ var gard = function (socket, stream, params) {
 
 util.inherits(gard, hyphyJob);
 
+
+
+gard.prototype.sendNexusFile = function (cb) {
+
+  var self = this;
+
+  fs.readFile(self.finalout_results_fn, function (err, results) { 
+      if (results) {
+
+        self.socket.emit('gard nexus file', { buffer : results });
+        cb(null, "success!");
+
+      } else {
+        cb(self.finalout_results_fn + ': no gard nexus to send', null);
+      }
+
+    });
+
+};
+
 gard.prototype.onComplete = function () {
 
   var self = this;
@@ -97,40 +117,41 @@ gard.prototype.onComplete = function () {
 
   winston.info("gard results files to translate : " + JSON.stringify(files));
 
-  translate_gard.toJSON(files, (err, data) => {
+  self.sendNexusFile(function(err, success) {
+    translate_gard.toJSON(files, (err, data) => {
+      if(err) {
+        // Error reading results file
+        self.onError('unable to read results file. ' + err);
+      } else{
 
-    if(err) {
-      // Error reading results file
-      self.onError('unable to read results file. ' + err);
-    } else{
+        if(data) {
 
-      if(data) {
+          var stringified_results = JSON.stringify(data);
 
-        var stringified_results = JSON.stringify(data);
+          // Prepare redis packet for delivery
+          var redis_packet = { 'results' : stringified_results };
+          redis_packet.type = 'completed';
+          var str_redis_packet = JSON.stringify(redis_packet);
 
-        // Prepare redis packet for delivery
-        var redis_packet = { 'results' : stringified_results };
-        redis_packet.type = 'completed';
-        var str_redis_packet = JSON.stringify(redis_packet);
+          // Log that the job has been completed
+          self.log('complete', 'success');
 
-        // Log that the job has been completed
-        self.log('complete', 'success');
+          // Store packet in redis and publish to channel
+          client.hset(self.id, 'results', str_redis_packet);
+          client.hset(self.id, 'status', 'completed');
+          client.publish(self.id, str_redis_packet);
 
-        // Store packet in redis and publish to channel
-        client.hset(self.id, 'results', str_redis_packet);
-        client.hset(self.id, 'status', 'completed');
-        client.publish(self.id, str_redis_packet);
+          // Remove id from active_job queue
+          client.lrem('active_jobs', 1, self.id);
 
-        // Remove id from active_job queue
-        client.lrem('active_jobs', 1, self.id);
+        } else {
+          // Empty results file
+          self.onError('job seems to have completed, but no results found');
+        }
 
-      } else {
-        // Empty results file
-        self.onError('job seems to have completed, but no results found');
       }
 
-    }
-
+    });
   });
 
 };
