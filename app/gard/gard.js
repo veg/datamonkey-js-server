@@ -107,7 +107,6 @@ gard.prototype.onComplete = function () {
       if(data) {
 
         var stringified_results = JSON.stringify(data);
-        console.log(stringified_results);
 
         // Prepare redis packet for delivery
         var redis_packet = { 'results' : stringified_results };
