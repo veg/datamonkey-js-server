@@ -117,7 +117,7 @@ gard.prototype.onComplete = function () {
 
   winston.info("gard results files to translate : " + JSON.stringify(files));
 
-  self.sendNexusFile(function(err, success) {
+  self.sendNexusFile((err, success) => {
     translate_gard.toJSON(files, (err, data) => {
       if(err) {
         // Error reading results file
