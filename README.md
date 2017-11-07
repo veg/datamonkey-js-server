@@ -7,7 +7,7 @@ Datamonkey JS Server works in conjunction with [datamonkey-js](http://github.com
 
 Other versions might work, but not well tested.
 
-* node - v0.10.x
+* node - 8.x.x
 * redis - 3.x.x
 * PBS server - 4.x.x
 * tn93 - 1.x.x
