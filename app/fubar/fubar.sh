@@ -29,7 +29,7 @@ FUBAR=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FUBAR.bf
 export HYPHY_PATH=$HYPHY_PATH
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$GRIDPOINTS'; echo '$CHAINS'; echo '$LENGTH'; echo '$BURNIN'; echo '$SAMPLES'; echo '$CONCENTRATION';) | '$HYPHY' LIBPATH='$HYPHY_PATH' ' $FUBAR''
-(echo $GENETIC_CODE; echo $FN; echo $GRIDPOINTS; echo $CHAINS; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $CONCENTRATION;) | $HYPHY LIBPATH=$HYPHY_PATH $FUBAR > $PROGRESS_FILE
+echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo '$GRIDPOINTS'; echo '$CHAINS'; echo '$LENGTH'; echo '$BURNIN'; echo '$SAMPLES'; echo '$CONCENTRATION';) | '$HYPHY' LIBPATH='$HYPHY_PATH' ' $FUBAR''
+(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $GRIDPOINTS; echo $CHAINS; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $CONCENTRATION;) | $HYPHY LIBPATH=$HYPHY_PATH $FUBAR > $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE
