@@ -16,8 +16,8 @@ RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 RATE_VARIATION=$rate_var
 
-HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMPI
-HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
+HYPHY=$CWD/../../.hyphy/HYPHYMPI
+HYPHY_PATH=$CWD/../../.hyphy/res/
 
 # Needs an MPI environment
 GARD=$HYPHY_PATH/TemplateBatchFiles/GARD.bf
