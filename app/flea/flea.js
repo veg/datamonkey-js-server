@@ -7,6 +7,7 @@ var spawn_job = require("./spawn_flea.js"),
 
 // Pass socket to flea job
 var flea = function(socket, stream, params) {
+
   log = function(notification) {
     winston.info(["flea", JSON.stringify(notification)].join(" : "));
   };
@@ -30,7 +31,7 @@ var flea = function(socket, stream, params) {
   flea_analysis.on("completed", function(results) {
     // Send trace and graph information
     socket.emit("completed", results);
-    socket.disconnect();
+    //socket.disconnect();
   });
 
   // Report the torque job id back to datamonkey
@@ -50,6 +51,7 @@ var flea = function(socket, stream, params) {
   });
 
   var fn = path.join(__dirname, "/output/", params.analysis._id + ".tar");
+
   stream.pipe(fs.createWriteStream(fn));
 
   socket.emit("status update", { phase: params.status_stack[0], msg: "" });
@@ -58,8 +60,9 @@ var flea = function(socket, stream, params) {
     console.log("finished receiving data from datamonkey-dev");
     if (err) throw err;
     // Pass filename in as opposed to generating it in spawn_flea
-    flea_analysis.start(fn, params);
+    flea_analysis.start(fn, socket, params);
   });
+
 };
 
 exports.flea = flea;
