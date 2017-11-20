@@ -3,9 +3,7 @@
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone http://github.com/veg/hyphy.git ./.hyphy/; fi
-	@if ! test -d ./.hyphy-2.3.3;then git clone http://github.com/veg/hyphy.git ./.hyphy-2.3.3/; fi
-	@cd ./.hyphy-2.3.3 && git pull && git co 2.3.3 cmake . && make -j 4 HYPHYMP && cd ../
-	@cd ./.hyphy && git pull && git co 2.3.5 && cmake . && make -j 4 HYPHYMP && cd ../
+	@cd ./.hyphy && git pull && git checkout 2.3.7 && cmake . && make -j 4 HYPHYMP && cd ../
 
 hivtrace:
 	@mkdir -p ./.python
