@@ -14,8 +14,8 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 
-HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
-export HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
+HYPHY=$CWD/../../.hyphy/HYPHYMP
+export HYPHY_PATH=$CWD/../../.hyphy/res/
 ABSREL=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
