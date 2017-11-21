@@ -15,8 +15,8 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 
-HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
-HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
+HYPHY=$CWD/../../.hyphy/HYPHYMP
+HYPHY_PATH=$CWD/../../.hyphy/res/
 
 SLAC=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/SLAC.bf
 

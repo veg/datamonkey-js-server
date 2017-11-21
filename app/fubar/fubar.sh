@@ -15,8 +15,8 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 
-HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
-HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
+HYPHY=$CWD/../../.hyphy/HYPHYMP
+HYPHY_PATH=$CWD/../../.hyphy/res/
 GRIDPOINTS=$number_of_grid_points
 CHAINS=$number_of_mcmc_chains
 LENGTH=$length_of_each_chain
