@@ -15,6 +15,7 @@
   "dependencies": {
     "moment": "x.x.x",
     "moment-timezone": "x.x.x",
+    "ms": "~0.7",
     "q": "^1.2.1",
     "redis": "0.12.x",
     "should": "4.3.x",
@@ -22,8 +23,7 @@
     "socket.io-stream": "0.6.x",
     "tail": "0.4.x",
     "tar": "^2.0",
-    "ms": "~0.7",
-    "translate-gard": "^1.0.0",
+    "translate-gard": "1.0.1",
     "underscore": "1.8.x",
     "winston": "0.9.x"
   },
