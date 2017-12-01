@@ -13,9 +13,9 @@ PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
 ANALYSIS_TYPE=$analysis_type
 
-HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
+HYPHY=$CWD/../../.hyphy/HYPHYMP
 
-export HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
+export HYPHY_PATH=$CWD/../../.hyphy/res/
 RELAX=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/RELAX.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
@@ -26,6 +26,6 @@ then
   echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 2;echo '$ANALYSIS_TYPE') | '$HYPHY' LIBPATH='$HYPHY_PATH' '$RELAX''
   (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX > $PROGRESS_FILE
 else
-  echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 3; echo 2;echo '$ANALYSIS_TYPE') | '$HYPHY' LIBPATH='$HYPHY_PATH' '$RELAX''
-  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 3; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX > $PROGRESS_FILE
+  echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 2; echo 2;echo '$ANALYSIS_TYPE') | '$HYPHY' LIBPATH='$HYPHY_PATH' '$RELAX''
+  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 2; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX > $PROGRESS_FILE
 fi

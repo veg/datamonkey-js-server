@@ -18,6 +18,7 @@ var client = redis.createClient();
 var hyphyJob = function() {};
 
 hyphyJob.prototype.log = function(notification, complementary_info) {
+
   var self = this;
 
   if (complementary_info) {
@@ -55,6 +56,7 @@ hyphyJob.prototype.init = function() {
 };
 
 hyphyJob.prototype.spawn = function() {
+
   var self = this;
 
   self.log("spawning");
@@ -73,7 +75,7 @@ hyphyJob.prototype.spawn = function() {
     // HyPhy publishes updates to a specified progress file
     fs.readFile(self.progress_fn, "utf8", function(err, data) {
       if (err) {
-        self.warn(
+        self.log(
           "status update",
           "error reading progress file " + self.progress_fn + ". error: " + err
         );
@@ -82,7 +84,7 @@ hyphyJob.prototype.spawn = function() {
       } else {
         // No status update could be read,
         // but this could be due to the job just starting
-        self.warn("read progress file, but no data");
+        self.log("read progress file, but no data");
       }
     });
   });
@@ -150,14 +152,13 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
 
   client.hset(self.id, "torque_id", str_redis_packet);
   client.publish(self.id, str_redis_packet);
-  client.hset(self.torque_id, "datamonkey_id", self.id, redis.print);
-  client.hset(self.torque_id, "type", self.type, redis.print);
-  client.hset(self.torque_id, "sites", self.params.msa[0].sites, redis.print);
+  client.hset(self.torque_id, "datamonkey_id", self.id);
+  client.hset(self.torque_id, "type", self.type);
+  client.hset(self.torque_id, "sites", self.params.msa[0].sites);
   client.hset(
     self.torque_id,
     "sequences",
-    self.params.msa[0].sequences,
-    redis.print
+    self.params.msa[0].sequences
   );
   self.push_job_once(self.id);
 };

@@ -253,7 +253,7 @@ function exitHandler(options, err) {
     if (options.cleanup) console.log('clean');
     if (err) console.log(err.stack);
     if (options.exit) process.exit();
-  }
+  };
 
   jobCleanup(exit);
 

@@ -16,8 +16,8 @@ RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 RATE_VARIATION=$rate_variation
 
-HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMP
-HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
+HYPHY=$CWD/../../.hyphy/HYPHYMP
+HYPHY_PATH=$CWD/../../.hyphy/res/
 FEL=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FEL.bf
 
 export HYPHY_PATH=$HYPHY_PATH
