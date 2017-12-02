@@ -26,6 +26,6 @@ then
   echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 2;echo '$ANALYSIS_TYPE') | '$HYPHY' LIBPATH='$HYPHY_PATH' '$RELAX''
   (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX > $PROGRESS_FILE
 else
-  echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 3; echo 2;echo '$ANALYSIS_TYPE') | '$HYPHY' LIBPATH='$HYPHY_PATH' '$RELAX''
-  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 3; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX > $PROGRESS_FILE
+  echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 2; echo 2;echo '$ANALYSIS_TYPE') | '$HYPHY' LIBPATH='$HYPHY_PATH' '$RELAX''
+  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 2; echo 2;echo $ANALYSIS_TYPE) | $HYPHY LIBPATH=$HYPHY_PATH $RELAX > $PROGRESS_FILE
 fi

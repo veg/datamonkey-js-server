@@ -19,7 +19,7 @@ var gard = function (socket, stream, params) {
 
   var self = this;
 
-  variation_map = { 'none' : 1, 'general_discrete':2, 'beta_gamma' : 3 };
+  var variation_map = { 'none' : 1, 'general_discrete':2, 'beta_gamma' : 3 };
 
   self.socket = socket;
   self.stream = stream;
@@ -34,6 +34,7 @@ var gard = function (socket, stream, params) {
   self.msaid          = self.params.msa._id;
   self.id             = self.params.analysis._id;
   self.rate_variation = variation_map[self.params.analysis.site_to_site_variation];
+  self.rate_classes   = self.params.analysis.rate_classes || 2;
   self.genetic_code   = self.params.msa[0].gencodeid + 1;
   self.nj             = self.params.msa[0].nj;
 
@@ -63,6 +64,7 @@ var gard = function (socket, stream, params) {
                           ',treemode='+self.treemode+
                           ',genetic_code='+self.genetic_code+
                           ',rate_var='+self.rate_variation+
+                          ',rate_classes='+self.rate_classes +
                           ',analysis_type='+self.type+
                           ',cwd='+__dirname+
                           ',msaid='+self.msaid,
@@ -83,20 +85,21 @@ var gard = function (socket, stream, params) {
 
 util.inherits(gard, hyphyJob);
 
-
-
 gard.prototype.sendNexusFile = function (cb) {
 
   var self = this;
 
   fs.readFile(self.finalout_results_fn, function (err, results) { 
+
       if (results) {
 
         self.socket.emit('gard nexus file', { buffer : results });
         cb(null, "success!");
 
       } else {
+
         cb(self.finalout_results_fn + ': no gard nexus to send', null);
+
       }
 
     });
@@ -118,13 +121,17 @@ gard.prototype.onComplete = function () {
   winston.info("gard results files to translate : " + JSON.stringify(files));
 
   self.sendNexusFile((err, success) => {
+
     translate_gard.toJSON(files, (err, data) => {
+
       if(err) {
+
         // Error reading results file
         self.onError('unable to read results file. ' + err);
-      } else{
 
-        if(data) {
+      } else {
+
+        if (data) {
 
           var stringified_results = JSON.stringify(data);
 
@@ -152,6 +159,7 @@ gard.prototype.onComplete = function () {
       }
 
     });
+
   });
 
 };

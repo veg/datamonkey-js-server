@@ -10,6 +10,7 @@ var config = require("../../config.json"),
   ss = require("socket.io-stream");
 
 var busted = function(socket, stream, busted_params) {
+
   var self = this;
   self.socket = socket;
   self.stream = stream;

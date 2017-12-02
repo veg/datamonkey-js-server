@@ -5,5 +5,8 @@
   "loglevel"               : "info",
   "tn93dist"               : "/opt/hivtrace/TN93/tn93",
   "qsub_queue"             : "datamonkey",
-  "qsub_avx_queue"         : "avx"
+  "qsub_avx_queue"         : "datamonkey"
+  "flea_python" : "/opt/flea-pipeline/flea-env/bin/python",
+  "flea_pipeline" : "/opt/flea-pipeline/flea-env/bin/flea.py",
+  "flea_config" : "/opt/flea-pipeline/flea-datamonkey.config"
 }
