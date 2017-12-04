@@ -16,7 +16,6 @@ var options ={
     };
 
 
-
 describe('gard jobrunner', function() {
 
   var fn = __dirname + '/res/CD2.nex';

@@ -85,20 +85,21 @@ var gard = function (socket, stream, params) {
 
 util.inherits(gard, hyphyJob);
 
-
-
 gard.prototype.sendNexusFile = function (cb) {
 
   var self = this;
 
   fs.readFile(self.finalout_results_fn, function (err, results) { 
+
       if (results) {
 
         self.socket.emit('gard nexus file', { buffer : results });
         cb(null, "success!");
 
       } else {
+
         cb(self.finalout_results_fn + ': no gard nexus to send', null);
+
       }
 
     });
@@ -120,13 +121,17 @@ gard.prototype.onComplete = function () {
   winston.info("gard results files to translate : " + JSON.stringify(files));
 
   self.sendNexusFile((err, success) => {
+
     translate_gard.toJSON(files, (err, data) => {
+
       if(err) {
+
         // Error reading results file
         self.onError('unable to read results file. ' + err);
-      } else{
 
-        if(data) {
+      } else {
+
+        if (data) {
 
           var stringified_results = JSON.stringify(data);
 
@@ -154,6 +159,7 @@ gard.prototype.onComplete = function () {
       }
 
     });
+
   });
 
 };
