@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=32
+#PBS -l nodes=2:ppn=48
 
 export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
@@ -17,8 +17,8 @@ GENETIC_CODE=$genetic_code
 RATE_VARIATION=$rate_var
 RATE_CLASSES=$rate_classes
 
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
-HYPHY_PATH=$CWD/../../.hyphy/res/
+HYPHY=$CWD/../../.hyphy-2.3.3/HYPHYMPI
+HYPHY_PATH=$CWD/../../.hyphy-2.3.3/res/
 
 # Needs an MPI environment
 GARD=$HYPHY_PATH/TemplateBatchFiles/GARD.bf
