@@ -26,7 +26,8 @@ winston.level = config.loglevel;
 
 var client = redis.createClient();
 
-// clear active_jobs list
+// clear active_jobs list 
+// TODO: we should do more than just clear the active_jobs list
 client.del('active_jobs');
 
 // For every new connection...
@@ -214,63 +215,9 @@ io.sockets.on('connection', function (socket) {
 
   });
 
-
-
   // Acknowledge new connection
   socket.emit('connected', { hello: 'Ready to serve' });
 
 });
 
-//so the program will not close instantly
-process.stdin.resume();
-
-
-// retrieves active jobs from redis, and attempts to cancel
-// all pending jobs
-function jobCleanup(cb) {
-  var total_job_count = 0;
-  client.llen('active_jobs', function(err, n) {
-    winston.info(n + ' active jobs left!');
-    if(n == 0) {
-      cb();
-    } else {
-      total_job_count = n;
-      process.emit('cancelJob', '');
-      process.on('jobCancelled', function(msg) {
-        total_job_count--;
-        if(total_job_count <= 0) {
-          cb();
-        }
-      });
-    }
-  });
-}
-
-
-function exitHandler(options, err) {
-
-  var exit = function() {
-    if (options.cleanup) console.log('clean');
-    if (err) console.log(err.stack);
-    if (options.exit) process.exit();
-  };
-
-  jobCleanup(exit);
-
-  // If jobCleanup does not complete within five seconds, 
-  // skip attempt and exit.
-  setTimeout(exit, 5000);
-
-}
-
-//do something when app is closing
-process.on('exit', exitHandler.bind(null,{cleanup:true}));
-
-//catches ctrl+c event
-process.on('SIGINT', exitHandler.bind(null, {exit:true}));
-process.on('SIGTERM', exitHandler.bind(null, {exit:true}));
-
-//catches uncaught exceptions
-process.on('uncaughtException', exitHandler.bind(null, {exit:true}));
-
-process.setMaxListeners(0)
+process.setMaxListeners(0);
