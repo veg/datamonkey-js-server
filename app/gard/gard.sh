@@ -34,7 +34,15 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo '(echo '$FN'; echo '$MODEL'; echo '$RATE_VARIATION'; echo '$RATE_CLASSES'; echo '$RESULTS_FN') | '$HYPHY' LIBPATH='$HYPHY_PATH' ' $GARD''
-(echo $FN; echo $MODEL; echo $RATE_VARIATION; echo $RATE_CLASSES; echo $RESULTS_FN;) | mpirun -np 48 $HYPHY LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
+if (($RATE_VARIATION < 2))
+then
+  echo '(echo '$FN'; echo '$MODEL'; echo '$RATE_VARIATION'; echo '$RESULTS_FN') | mpirun -np 48 '$HYPHY' LIBPATH='$HYPHY_PATH' ' $GARD''
+  (echo $FN; echo $MODEL; echo $RATE_VARIATION; echo $RESULTS_FN;) | mpirun -np 48 $HYPHY LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
+else
+  echo '(echo '$FN'; echo '$MODEL'; echo '$RATE_VARIATION'; echo '$RATE_CLASSES'; echo '$RESULTS_FN') | mpirun -np 48 '$HYPHY' LIBPATH='$HYPHY_PATH' ' $GARD''
+  (echo $FN; echo $MODEL; echo $RATE_VARIATION; echo $RATE_CLASSES; echo $RESULTS_FN;) | mpirun -np 48 $HYPHY LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
+fi
 
 echo "Completed" > $STATUS_FILE
+
+

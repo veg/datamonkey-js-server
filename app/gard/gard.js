@@ -19,7 +19,7 @@ var gard = function (socket, stream, params) {
 
   var self = this;
 
-  var variation_map = { 'none' : 1, 'general_discrete':2, 'beta_gamma' : 3 };
+  var variation_map = { 'none' : 1, 'general_discrete' : 2, 'beta_gamma' : 3 };
 
   self.socket = socket;
   self.stream = stream;
@@ -125,10 +125,8 @@ gard.prototype.onComplete = function () {
     translate_gard.toJSON(files, (err, data) => {
 
       if(err) {
-
         // Error reading results file
         self.onError('unable to read results file. ' + err);
-
       } else {
 
         if (data) {
