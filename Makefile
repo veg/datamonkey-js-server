@@ -10,7 +10,7 @@ hivtrace:
 	@virtualenv-3.4 ./.python/env/
 	@./.python/env/bin/pip install numpy
 	@./.python/env/bin/pip install biopython
-	@./.python/env/bin/pip install hivtrace
+	@./.python/env/bin/pip install hivtrace==0.3.2
 
 npm:
 	echo "running npm"
