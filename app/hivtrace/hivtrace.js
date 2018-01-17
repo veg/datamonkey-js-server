@@ -184,6 +184,11 @@ hivtrace.prototype.spawn = function () {
 hivtrace.prototype.onStatusUpdate = function(data, index) {
 
   var self = this;
+
+  if(!data) {
+    return;
+  }
+
   self.current_status = data;
 
   // get current status stored in redis
