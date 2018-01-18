@@ -137,10 +137,13 @@ hivtrace.prototype.spawn = function () {
     var index = status_update.index;
     var status = status_update.status;
 
-    self.onStatusUpdate(status_update, status_update.index);
-    self.log(status_update);
+    try {
+      self.onStatusUpdate(status_update, status_update.index);
+    } catch(e) {
+      self.warn("failed to write status update: " + JSON.stringify(status_update));
+    }
 
-    self.warn(JSON.stringify(status_update));
+    self.log(JSON.stringify(status_update));
 
     if(index >= 3 && status == 3) {
       self.send_aligned_fasta_once();
