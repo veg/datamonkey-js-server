@@ -7,17 +7,17 @@ var fs        = require('fs'),
     job       = require(__dirname + '/../../app/job.js'),
     ss        = require('socket.io-stream');
 
-//TODO: retrieve socket from config
 var socketURL = 'http://0.0.0.0:5000';
+
+winston.loglevel = 'info';
 
 var options ={
   transports: ['websocket'],
     'force new connection': true
     };
 
-
-
 describe('absrel jobrunner', function() {
+
   var fn = __dirname + '/res/Flu.fasta';
   var params_file = __dirname + '/res/params.json';
 
@@ -53,6 +53,7 @@ describe('absrel jobrunner', function() {
     });
 
     absrel_socket.on('status update', function(data){
+      winston.warn(JSON.stringify(data));
       winston.info('job successfully completed');
       process.emit('cancelJob', '');
     });

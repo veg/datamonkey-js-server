@@ -18,7 +18,6 @@ export HYPHY_PATH=$CWD/../../.hyphy/res/
 BUSTED=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/BUSTED.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
-
 echo "(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo "5"; echo "4";) | $HYPHY LIBPATH=$HYPHY_PATH $BUSTED"
 (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo "5"; echo "4";) | $HYPHY LIBPATH=$HYPHY_PATH $BUSTED > $PROGRESS_FILE
 
