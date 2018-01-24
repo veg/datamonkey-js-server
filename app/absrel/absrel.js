@@ -37,7 +37,7 @@ var absrel = function(socket, stream, params) {
 
   self.qsub_params = [
     "-q",
-    config.qsub_queue,
+    config.qsub_avx_queue,
     "-v",
     "fn=" +
       self.fn +
