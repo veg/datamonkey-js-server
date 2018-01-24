@@ -1,4 +1,4 @@
-#!/bin/bash
+##!/bin/bash
 #PBS -l nodes=1:ppn=16
 
 export PATH=/usr/local/bin:$PATH
@@ -19,5 +19,5 @@ export HYPHY_PATH=$CWD/../../.hyphy/res/
 ABSREL=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
-echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 4;) | '$HYPHY' '$ABSREL''
-(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 1;) | $HYPHY $ABSREL > $PROGRESS_FILE
+echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 5; echo 4;) | '$HYPHY' '$ABSREL''
+(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 5; echo 4;) | $HYPHY $ABSREL > $PROGRESS_FILE
