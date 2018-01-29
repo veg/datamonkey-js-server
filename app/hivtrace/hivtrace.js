@@ -210,12 +210,12 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
 
     // validate new_status and index
     if(_.isUndefined(new_status)) {
-      winston.warn("hivtrace malformed status update: ");
+      winston.warn("hivtrace malformed status update: " + entire_status);
       return;
     }
 
     if(_.isUndefined(new_status[data.index])) {
-      winston.warn("hivtrace malformed status update: ");
+      winston.warn("hivtrace malformed status update: " + entire_status);
       return;
     }
 
