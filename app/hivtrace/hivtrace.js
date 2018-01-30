@@ -27,7 +27,7 @@ var hivtrace = function (socket, stream, params) {
     PENDING   : 1,
     RUNNING   : 2,
     COMPLETED : 3
-  }
+  };
 
   var cluster_output_suffix='_user.trace.json',
       lanl_cluster_output_suffix='_lanl_user.trace.json',
@@ -204,8 +204,21 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
     //  'status' : status,
     //  'msg'    : msg
     //}
+    
 
     var new_status = JSON.parse(entire_status);
+
+    // validate new_status and index
+    if(_.isUndefined(new_status)) {
+      winston.warn("hivtrace malformed status update: " + entire_status);
+      return;
+    }
+
+    if(_.isUndefined(new_status[data.index])) {
+      winston.warn("hivtrace malformed status update: " + entire_status);
+      return;
+    }
+
     new_status[data.index].status = data.status;
     new_status[data.index].index = data.index;
     
