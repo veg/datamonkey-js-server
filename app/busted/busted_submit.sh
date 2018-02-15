@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=16
+#PBS -l nodes=1:ppn=32
 
 export PATH=/usr/local/bin:$PATH
 module load openmpi/gnu/1.6.3
