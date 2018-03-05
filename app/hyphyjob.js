@@ -146,8 +146,9 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   self.setTorqueParameters(torque_id);
 
   var redis_packet = torque_id;
-  redis_packet.type = "job created";
-  str_redis_packet = JSON.stringify(torque_id);
+
+  var str_redis_packet = JSON.stringify(torque_id);
+
   self.log("job created", str_redis_packet);
 
   client.hset(self.id, "torque_id", str_redis_packet);
@@ -164,6 +165,7 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
 };
 
 hyphyJob.prototype.onComplete = function() {
+
   var self = this;
 
   fs.readFile(self.results_fn, "utf8", function(err, data) {
