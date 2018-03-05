@@ -1,7 +1,6 @@
 var spawn        = require('child_process').spawn,
     cs           = require('../../lib/clientsocket.js'),
     fs           = require('fs'),
-    fs           = require('fs'),
     config       = require('../../config.json'),
     util         = require('util'),
     path         = require('path'),
