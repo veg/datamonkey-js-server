@@ -6,7 +6,6 @@ var config = require('./config.json'),
     winston = require('winston'),
     absrel = require('./app/absrel/absrel.js'),
     busted = require('./app/busted/busted.js'),
-    fade = require('./app/fade/fade.js'),
     fel = require('./app/fel/fel.js'),
     flea = require('./app/flea/flea.js'),
     fubar = require('./app/fubar/fubar.js'),
@@ -99,21 +98,6 @@ io.sockets.on('connection', function (socket) {
 
     spawn : function (stream, params) {
       var relax_job = new relax.relax(socket, stream, params.job);
-    },
-    resubscribe : function(params) {
-      new job.resubscribe(socket, params.id);
-    },
-    cancel : function(params) {
-      new job.cancel(socket, params.id);
-    }
-
-  });
-
-  // FADE
-  r.route('fade', {
-
-    spawn : function (stream, params) {
-      var fade_job = new fade.fade(socket, stream, params.job);
     },
     resubscribe : function(params) {
       new job.resubscribe(socket, params.id);
