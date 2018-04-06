@@ -1,15 +1,11 @@
 var config = require("../../config.json"),
-  cs = require("../../lib/clientsocket.js"),
-  job = require("../job.js"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
-  jobdel = require("../../lib/jobdel.js"),
   util = require("util"),
-  _ = require("underscore"),
   fs = require("fs"),
-  path = require("path"),
-  ss = require("socket.io-stream");
+  path = require("path");
 
 var relax = function(socket, stream, relax_params) {
+
   var self = this;
 
   self.socket = socket;

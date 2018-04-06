@@ -1,5 +1,4 @@
 var spawn_job = require("./spawn_flea.js"),
-  config = require("../../config.json"),
   fs = require("fs"),
   path = require("path"),
   winston = require("winston"),
@@ -8,7 +7,7 @@ var spawn_job = require("./spawn_flea.js"),
 // Pass socket to flea job
 var flea = function(socket, stream, params) {
 
-  log = function(notification) {
+  var log = function(notification) {
     winston.info(["flea", JSON.stringify(notification)].join(" : "));
   };
 
@@ -57,7 +56,6 @@ var flea = function(socket, stream, params) {
   socket.emit("status update", { phase: params.status_stack[0], msg: "" });
 
   stream.on("end", function(err) {
-    console.log("finished receiving data from datamonkey-dev");
     if (err) throw err;
     // Pass filename in as opposed to generating it in spawn_flea
     flea_analysis.start(fn, socket, params);

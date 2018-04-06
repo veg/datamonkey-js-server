@@ -7,8 +7,7 @@ var config = require("../config.json"),
   winston = require("winston"),
   _ = require("underscore"),
   fs = require("fs"),
-  path = require("path"),
-  ss = require("socket.io-stream");
+  path = require("path");
 
 winston.level = config.loglevel;
 
@@ -18,7 +17,6 @@ var client = redis.createClient();
 var hyphyJob = function() {};
 
 hyphyJob.prototype.log = function(notification, complementary_info) {
-
   var self = this;
 
   if (complementary_info) {
@@ -56,7 +54,6 @@ hyphyJob.prototype.init = function() {
 };
 
 hyphyJob.prototype.spawn = function() {
-
   var self = this;
 
   self.log("spawning");
@@ -71,7 +68,7 @@ hyphyJob.prototype.spawn = function() {
   });
 
   // On status updates, report to datamonkey-js
-  hyphy_job_runner.on("status update", function(status_update) {
+  hyphy_job_runner.on("status update", function() {
     // HyPhy publishes updates to a specified progress file
     fs.readFile(self.progress_fn, "utf8", function(err, data) {
       if (err) {
@@ -90,7 +87,7 @@ hyphyJob.prototype.spawn = function() {
   });
 
   // On errors, report to datamonkey-js
-  hyphy_job_runner.on("script error", function(error) {
+  hyphy_job_runner.on("script error", function() {
     // Check that job was not manually cancelled
     client.hget(self.id, "status", function(err, status) {
       if (status != "cancelled") {
@@ -100,7 +97,7 @@ hyphyJob.prototype.spawn = function() {
   });
 
   // When the analysis completes, return the results to datamonkey.
-  hyphy_job_runner.on("completed", function(results) {
+  hyphy_job_runner.on("completed", function() {
     self.onComplete();
   });
 
@@ -123,7 +120,7 @@ hyphyJob.prototype.spawn = function() {
   });
 
   // Global event that triggers all jobs to cancel
-  process.on("cancelJob", function(msg) {
+  process.on("cancelJob", function() {
     self.warn("cancel called!");
     self.cancel_once = _.once(self.cancel);
     self.cancel_once();
@@ -138,14 +135,12 @@ hyphyJob.prototype.spawn = function() {
 hyphyJob.prototype.onJobCreated = function(torque_id) {
   var self = this;
 
-  self.push_active_job = function(id) {
+  self.push_active_job = function() {
     client.rpush("active_jobs", self.id);
   };
 
   self.push_job_once = _.once(self.push_active_job);
   self.setTorqueParameters(torque_id);
-
-  var redis_packet = torque_id;
 
   var str_redis_packet = JSON.stringify(torque_id);
 
@@ -156,16 +151,11 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   client.hset(self.torque_id, "datamonkey_id", self.id);
   client.hset(self.torque_id, "type", self.type);
   client.hset(self.torque_id, "sites", self.params.msa[0].sites);
-  client.hset(
-    self.torque_id,
-    "sequences",
-    self.params.msa[0].sequences
-  );
+  client.hset(self.torque_id, "sequences", self.params.msa[0].sequences);
   self.push_job_once(self.id);
 };
 
 hyphyJob.prototype.onComplete = function() {
-
   var self = this;
 
   fs.readFile(self.results_fn, "utf8", function(err, data) {
@@ -213,7 +203,8 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   // Prepare redis packet for delivery
   var redis_packet = status_update;
   redis_packet.type = "status update";
-  str_redis_packet = JSON.stringify(status_update);
+
+  var str_redis_packet = JSON.stringify(status_update);
 
   // Store packet in redis and publish to channel
   client.hset(self.id, "status update", str_redis_packet);
@@ -249,7 +240,8 @@ hyphyJob.prototype.onError = function(error) {
     redis_packet.stderr = results[0].value;
     redis_packet.progress = results[1].value;
     redis_packet.stdout = results[2].value;
-    str_redis_packet = JSON.stringify(redis_packet);
+
+    var str_redis_packet = JSON.stringify(redis_packet);
 
     // log error with a warning
     self.warn("script error", str_redis_packet);
@@ -285,7 +277,7 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
 hyphyJob.prototype.cancel = function() {
   var self = this;
 
-  var cb = function(err, code) {
+  var cb = function() {
     self.onError("job cancelled");
   };
 
