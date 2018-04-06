@@ -1,11 +1,9 @@
 var config = require("../config.json"),
   spawn = require("child_process").spawn,
-  fs = require("fs"),
   redis = require("redis"),
   cs = require("../lib/clientsocket.js"),
   winston = require("winston"),
   jobdel = require("../lib/jobdel.js"),
-  ss = require("socket.io-stream"),
   util = require("util"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   EventEmitter = require("events").EventEmitter;
@@ -35,11 +33,12 @@ var resubscribe = function(socket, id) {
           "info",
           self.id + " : job : resubscribe : job pending, resuming"
         );
+
         var clientSocket = new cs.ClientSocket(socket, self.id);
       } else if (current_status == "completed") {
         // if job completed, emit results
         winston.info(self.id + " : job : resubscribe : job completed");
-        json_results = JSON.parse(obj.results);
+        var json_results = JSON.parse(obj.results);
         socket.emit("completed", json_results);
         socket.disconnect();
       } else {
@@ -53,68 +52,54 @@ var resubscribe = function(socket, id) {
 };
 
 var cancel = function(socket, id) {
-
   var self = this;
   self.id = id;
 
   var callback = function(err, obj) {
-
     if (err || !obj) {
-
       winston.warn(self.id + " : cancel : " + err);
       socket.emit("cancelled", { success: "no", error: err });
-
     } else {
-
       // check job status
       var current_status = obj.status,
-          torque_id = "";
+        torque_id = "";
 
       try {
-
         torque_id = JSON.parse(obj.torque_id).torque_id;
-
       } catch (e) {
-
-        winston.info(self.id + " : job : cancel : could not retrieve torque information");
-        socket.emit("cancelled", { success: "no", error: "could not retrieve torque id" });
-
+        winston.info(
+          self.id + " : job : cancel : could not retrieve torque information"
+        );
+        socket.emit("cancelled", {
+          success: "no",
+          error: "could not retrieve torque id"
+        });
       }
 
       if (current_status != "completed" && current_status != "exiting") {
-
         // if job is still pending, cancel
         winston.warn("info", self.id + " : job : cancel : cancelling job");
 
         jobdel.jobDelete(torque_id, function() {
-
           winston.warn("info", self.id + " : job : cancel : job cancelled");
           client.hset(self.id, "status", "aborted");
           socket.emit("cancelled", { success: "ok" });
           socket.disconnect();
-
         });
-
       } else if (current_status == "completed") {
-
         // if job completed, emit results
         winston.info(self.id + " : job : cancel : job completed");
-        json_results = JSON.parse(obj.results);
         socket.emit("cancelled", { success: "ok" });
         socket.disconnect();
-
       } else {
-
         // if job aborted, emit error
         winston.info(self.id + " : job : cancel : job does not exist");
         socket.emit("cancelled", { success: "no", error: "no job" });
-
       }
     }
   };
 
   client.hgetall(self.id, callback);
-
 };
 
 var jobRunner = function(script, params) {
@@ -147,7 +132,7 @@ jobRunner.prototype.submit = function(params, cwd) {
   });
 
   qsub.stdout.on("data", function(data) {
-    torque_id = String(data).replace(/\n$/, "");
+    var torque_id = String(data).replace(/\n$/, "");
     self.torque_id = torque_id;
     self.emit("job created", { torque_id: torque_id });
   });
