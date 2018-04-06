@@ -13,7 +13,7 @@
     "test-busted": "mocha -R spec ./tests/busted/busted.js"
   },
   "dependencies": {
-    "moment": "x.x.x",
+    "moment": "2.x.x",
     "moment-timezone": "x.x.x",
     "q": "^1.2.1",
     "redis": "0.12.x",
