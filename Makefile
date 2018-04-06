@@ -3,14 +3,14 @@
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone http://github.com/veg/hyphy.git ./.hyphy/; fi
-	@cd ./.hyphy && git pull && git checkout 2.3.7 && cmake . && make -j 4 HYPHYMP && cd ../
+	@cd ./.hyphy && git checkout master && git pull && git checkout 2.3.11 && cmake . && make -j 4 HYPHYMP && make -j 4 HYPHYMPI && cd ../
 
 hivtrace:
 	@mkdir -p ./.python
 	@virtualenv-3.4 ./.python/env/
 	@./.python/env/bin/pip install numpy
 	@./.python/env/bin/pip install biopython
-	@./.python/env/bin/pip install hivtrace
+	@./.python/env/bin/pip install hivtrace==0.3.2
 
 npm:
 	echo "running npm"

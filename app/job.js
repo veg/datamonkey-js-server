@@ -1,40 +1,9 @@
-/*
-
-  Datamonkey - An API for comparative analysis of sequence alignments using state-of-the-art statistical models.
-
-  Copyright (C) 2015
-  Sergei L Kosakovsky Pond (spond@ucsd.edu)
-  Steven Weaver (sweaver@ucsd.edu)
-
-  Permission is hereby granted, free of charge, to any person obtaining a
-  copy of this software and associated documentation files (the
-  "Software"), to deal in the Software without restriction, including
-  without limitation the rights to use, copy, modify, merge, publish,
-  distribute, sublicense, and/or sell copies of the Software, and to
-  permit persons to whom the Software is furnished to do so, subject to
-  the following conditions:
-
-  The above copyright notice and this permission notice shall be included
-  in all copies or substantial portions of the Software.
-
-  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-  OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-  CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-  TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-*/
-
 var config = require("../config.json"),
   spawn = require("child_process").spawn,
-  fs = require("fs"),
   redis = require("redis"),
   cs = require("../lib/clientsocket.js"),
   winston = require("winston"),
   jobdel = require("../lib/jobdel.js"),
-  ss = require("socket.io-stream"),
   util = require("util"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   EventEmitter = require("events").EventEmitter;
@@ -64,11 +33,12 @@ var resubscribe = function(socket, id) {
           "info",
           self.id + " : job : resubscribe : job pending, resuming"
         );
+
         var clientSocket = new cs.ClientSocket(socket, self.id);
       } else if (current_status == "completed") {
         // if job completed, emit results
         winston.info(self.id + " : job : resubscribe : job completed");
-        json_results = JSON.parse(obj.results);
+        var json_results = JSON.parse(obj.results);
         socket.emit("completed", json_results);
         socket.disconnect();
       } else {
@@ -91,8 +61,20 @@ var cancel = function(socket, id) {
       socket.emit("cancelled", { success: "no", error: err });
     } else {
       // check job status
-      var current_status = obj.status;
-      var torque_id = JSON.parse(obj.torque_id).torque_id;
+      var current_status = obj.status,
+        torque_id = "";
+
+      try {
+        torque_id = JSON.parse(obj.torque_id).torque_id;
+      } catch (e) {
+        winston.info(
+          self.id + " : job : cancel : could not retrieve torque information"
+        );
+        socket.emit("cancelled", {
+          success: "no",
+          error: "could not retrieve torque id"
+        });
+      }
 
       if (current_status != "completed" && current_status != "exiting") {
         // if job is still pending, cancel
@@ -107,12 +89,11 @@ var cancel = function(socket, id) {
       } else if (current_status == "completed") {
         // if job completed, emit results
         winston.info(self.id + " : job : cancel : job completed");
-        json_results = JSON.parse(obj.results);
         socket.emit("cancelled", { success: "ok" });
         socket.disconnect();
       } else {
         // if job aborted, emit error
-        winston.info(self.id + " : job : cancel : job doesnt exist");
+        winston.info(self.id + " : job : cancel : job does not exist");
         socket.emit("cancelled", { success: "no", error: "no job" });
       }
     }
@@ -145,14 +126,13 @@ jobRunner.prototype.submit = function(params, cwd) {
   var self = this;
 
   var qsub = spawn("qsub", params, { cwd: cwd });
-  console.log(params);
 
   qsub.stderr.on("data", function(data) {
     winston.info(data.toString("utf8"));
   });
 
   qsub.stdout.on("data", function(data) {
-    torque_id = String(data).replace(/\n$/, "");
+    var torque_id = String(data).replace(/\n$/, "");
     self.torque_id = torque_id;
     self.emit("job created", { torque_id: torque_id });
   });

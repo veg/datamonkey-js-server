@@ -1,13 +1,8 @@
 var config = require("../../config.json"),
-  cs = require("../../lib/clientsocket.js"),
-  job = require("../job.js"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
-  jobdel = require("../../lib/jobdel.js"),
   util = require("util"),
-  _ = require("underscore"),
   fs = require("fs"),
-  path = require("path"),
-  ss = require("socket.io-stream");
+  path = require("path");
 
 var absrel = function(socket, stream, params) {
   var self = this;
@@ -37,7 +32,7 @@ var absrel = function(socket, stream, params) {
 
   self.qsub_params = [
     "-q",
-    config.qsub_queue,
+    config.qsub_avx_queue,
     "-v",
     "fn=" +
       self.fn +
