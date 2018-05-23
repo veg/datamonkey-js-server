@@ -19,7 +19,7 @@ Dependencies are mostly handled by the package.json file and `yarn` or `npm`. Ou
 
 Installation should be fairly straightforward as long as the dependencies are met.
 
-* `git clone git@github.com:veg/datamonkey-js-server.git`
+* `git clone https://github.com/veg/datamonkey-js-server.git`
 * `cp config.json.tpl config.json`
  
  Please make appropriate edits to the config.json.
