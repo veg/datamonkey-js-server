@@ -1,5 +1,5 @@
 var config = require("./config.json"),
-  io = require("socket.io").listen(config.port),
+  program = require('commander'),
   path = require("path"),
   winston = require("winston"),
   absrel = require("./app/absrel/absrel.js"),
@@ -17,6 +17,23 @@ var config = require("./config.json"),
   redis = require("redis"),
   router = require(path.join(__dirname, "/lib/router.js")),
   JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue;
+
+
+//Script parameter for defining port number.
+program
+  .version('0.1.0')
+  .usage('[options] <file ...>')
+  .option('-p, --port <n>', 'Port number', parseInt)
+  .parse(process.argv);
+
+
+//Assigns port number to variable, if none then refer to config.json
+if (program.port) {
+  var io = require("socket.io").listen(program.port);
+} else{
+  io = require("socket.io").listen(config.port);
+};
+
 
 winston.level = config.loglevel;
 
@@ -183,5 +200,7 @@ io.sockets.on("connection", function(socket) {
   // Acknowledge new connection
   socket.emit("connected", { hello: "Ready to serve" });
 });
+
+
 
 process.setMaxListeners(0);
