@@ -7,7 +7,7 @@ hyphy:
 
 hivtrace:
 	@mkdir -p ./.python
-	@virtualenv-3.4 ./.python/env/
+	@virtualenv ./.python/env/
 	@./.python/env/bin/pip install numpy
 	@./.python/env/bin/pip install biopython
 	@./.python/env/bin/pip install hivtrace==0.3.2
