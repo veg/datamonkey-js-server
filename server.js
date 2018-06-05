@@ -31,7 +31,7 @@ program
 if (program.port) {
   var io = require("socket.io").listen(program.port);
 } else{
-  io = require("socket.io").listen(config.port);
+  var io = require("socket.io").listen(config.port);
 };
 
 
