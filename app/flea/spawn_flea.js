@@ -57,8 +57,7 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
       "-c",
       self.flea_config,
       "--infile",
-      self.file_list,
-      "-resume"
+      self.file_list
     ];
 
     // check if session json and zip file already exist. If so, do simply state the job has been completed
