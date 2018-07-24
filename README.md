@@ -21,8 +21,9 @@ Installation should be fairly straightforward as long as the dependencies are me
 
 * `git clone https://github.com/veg/datamonkey-js-server.git`
 * `cp config.json.tpl config.json`
+* `cp pm2.config.js.tpl pm2.config.js`
  
- Please make appropriate edits to the config.json.
+ Please make appropriate edits to config.json and pm2.config.js.
  
  ### Configuration overview
  ```
@@ -37,7 +38,7 @@ Installation should be fairly straightforward as long as the dependencies are me
  
 
 * `make install`
-* `supervisor server.js`
+* `pm2 start pm2.config.js`
 
 ## Tests
 Tests can be run using `mocha`. These tests are especially useful in ensuring that your system is configured correctly and that you are able to dispatch jobs for all analyses. Please see the `test/` directory
