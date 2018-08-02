@@ -1,25 +1,18 @@
-module.exports = {
-  apps : [
-      {
-      name: "datamonkey:7000",
+const main_port = 7000;
+const number_of_processes = 4;
+
+const apps = Array(number_of_processes)
+  .fill()
+  .map(function(d,i){
+    const port = main_port+i;
+    return {
+      name: "datamonkey:"+port,
       script: "./server.js",
       watch: false,
-      args: ["-p", 7000],
-     },{
-      name: "datamonkey:7001",
-      script: "./server.js",
-      watch: false,
-      args: ["-p", 7001],
-    },{
-      name: "datamonkey:7002",
-      script: "./server.js",
-      watch: false,
-      args: ["-p", 7002],
-    },{
-      name: "datamonkey:7003",
-      script: "./server.js",
-      watch: false,
-      args: ["-p", 7003],
+      args: ["-p", port]
     }
-  ]
+  });
+
+module.exports = {
+  apps: apps
 }
