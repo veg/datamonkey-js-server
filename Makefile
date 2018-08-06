@@ -20,6 +20,7 @@ npm:
 
 directories:
 	mkdir -p app/absrel/output
+	mkdir -p app/bgm/output
 	mkdir -p app/busted/output
 	mkdir -p app/fade/output
 	mkdir -p app/fel/output

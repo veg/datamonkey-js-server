@@ -211,6 +211,19 @@ io.sockets.on("connection", function(socket) {
     }
   });
 
+  // BGM
+  r.route("bgm", {
+    spawn: function(stream, params) {
+      new bgm.bgm(socket, stream, params.job);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
   // Acknowledge new connection
   socket.emit("connected", { hello: "Ready to serve" });
 });
