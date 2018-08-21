@@ -2,6 +2,7 @@ var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   util = require("util"),
   fs = require("fs"),
+  winston = require("winston"),
   path = require("path");
 
 var bgm = function(socket, stream, params) {
@@ -20,6 +21,7 @@ var bgm = function(socket, stream, params) {
   self.id = self.params.analysis._id;
   self.genetic_code = self.params.msa[0].gencodeid + 1;
   self.nj = self.params.msa[0].nj;
+  self.datatype = self.params.analysis.datatype;
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -29,6 +31,14 @@ var bgm = function(socket, stream, params) {
   self.results_fn = self.fn + ".BGM.json";
   self.progress_fn = self.fn + ".bgm.progress";
   self.tree_fn = self.fn + ".tre";
+
+  // advanced options
+  self.length_of_each_chain = self.params.analysis.length_of_each_chain;
+  self.number_of_burn_in_samples =
+    self.params.analysis.number_of_burn_in_samples;
+  self.number_of_samples = self.params.analysis.number_of_samples;
+  self.maximum_parents_per_node = self.params.analysis.maximum_parents_per_node;
+  self.minimum_subs_per_site = self.params.analysis.minimum_subs_per_site;
 
   self.qsub_params = [
     "-q",
@@ -53,7 +63,19 @@ var bgm = function(socket, stream, params) {
       ",cwd=" +
       __dirname +
       ",msaid=" +
-      self.msaid,
+      self.msaid + 
+      ",datatype=" +
+      self.datatype +
+      ",length_of_each_chain=" +
+      self.length_of_each_chain  +
+      ",number_of_burn_in_samples=" +
+      self.number_of_burn_in_samples  +
+      ",number_of_samples=" +
+      self.number_of_samples +
+      ",maximum_parents_per_node=" +
+      self.maximum_parents_per_node  +
+      ",minimum_subs_per_site=" +
+      self.minimum_subs_per_site ,
     "-o",
     self.output_dir,
     "-e",
