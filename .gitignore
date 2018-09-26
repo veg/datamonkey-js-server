@@ -40,4 +40,5 @@ nosetests.xml
 *Full model*
 __pycache__
 config.json
+pm2.config.js
 STDIN*
