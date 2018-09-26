@@ -5,7 +5,7 @@ export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
 
 module load openmpi/gnu/3.0
-module load aocc/1.2.1
+#module load aocc/1.2.1
 
 FN=$fn
 CWD=$cwd
