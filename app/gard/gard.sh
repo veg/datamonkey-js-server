@@ -5,7 +5,7 @@ export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
 
 module load openmpi/gnu/3.0
-#module load aocc/1.2.1
+module load gcc/6.1.0
 
 FN=$fn
 CWD=$cwd
@@ -17,8 +17,9 @@ GENETIC_CODE=$genetic_code
 RATE_VARIATION=$rate_var
 RATE_CLASSES=$rate_classes
 
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
-HYPHY_PATH=$CWD/../../.hyphy/res/
+# As of 10/24/18 we are using version 2.3.11 of HyPhy instead of 2.3.14 for GARD analyses until we work out getting GARD working on 2.3.14 (likely an issue with aocc) 
+HYPHY=$CWD/../../.hyphy_gard_version2_3_11/HYPHYMPI
+HYPHY_PATH=$CWD/../../.hyphy_gard_version2_3_11/res/
 
 # Needs an MPI environment
 GARD=$HYPHY_PATH/TemplateBatchFiles/GARD.bf
