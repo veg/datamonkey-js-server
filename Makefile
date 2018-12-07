@@ -32,5 +32,5 @@ directories:
 	mkdir -p app/slac/output
 	mkdir -p app/hivtrace/output
 
-install: hyphy npm directories
+install: hyphy hivtrace npm directories
 
