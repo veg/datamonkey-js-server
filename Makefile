@@ -30,6 +30,7 @@ directories:
 	mkdir -p app/prime/output
 	mkdir -p app/relax/output
 	mkdir -p app/slac/output
+	mkdir -p app/hivtrace/output
 
-install: hyphy npm directories
+install: hyphy hivtrace npm directories
 
