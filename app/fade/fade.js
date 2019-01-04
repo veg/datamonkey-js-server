@@ -10,6 +10,7 @@ var fade = function(socket, stream, params) {
   self.stream = stream;
   self.params = params;
 
+
   // object specific attributes
   self.type = "fade";
   self.qsub_script_name = "fade.sh";
@@ -18,8 +19,11 @@ var fade = function(socket, stream, params) {
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
   self.nj = self.params.msa[0].nj;
+
+  // FADE specific attributes
+  self.substitution_model = self.params.substitution_model;
+  self.posterior_estimation_method = self.params.posterior_estimation_method;
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -56,8 +60,10 @@ var fade = function(socket, stream, params) {
       self.results_short_fn +
       ",treemode=" +
       self.treemode +
-      ",genetic_code=" +
-      self.genetic_code +
+      ",substitution_model=" +
+      self.substitution_model +
+      ",posterior_estimation_method=" +
+      self.posterior_estimation_method +
       ",analysis_type=" +
       self.type +
       ",cwd=" +
