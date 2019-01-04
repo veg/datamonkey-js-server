@@ -22,8 +22,8 @@ var fade = function(socket, stream, params) {
   self.nj = self.params.msa[0].nj;
 
   // FADE specific attributes
-  self.substitution_model = self.params.substitution_model;
-  self.posterior_estimation_method = self.params.posterior_estimation_method;
+  self.substitution_model = self.params.analysis.substitution_model;
+  self.posterior_estimation_method = self.params.analysis.posterior_estimation_method;
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -58,12 +58,12 @@ var fade = function(socket, stream, params) {
       self.progress_fn +
       ",rfn=" +
       self.results_short_fn +
-      ",treemode=" +
-      self.treemode +
       ",substitution_model=" +
       self.substitution_model +
       ",posterior_estimation_method=" +
       self.posterior_estimation_method +
+      ",treemode=" +
+      self.treemode +
       ",analysis_type=" +
       self.type +
       ",cwd=" +
