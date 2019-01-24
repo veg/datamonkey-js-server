@@ -7,6 +7,7 @@ var config = require("./config.json"),
   fel = require("./app/fel/fel.js"),
   flea = require("./app/flea/flea.js"),
   fubar = require("./app/fubar/fubar.js"),
+  fade = require("./app/fade/fade.js"),
   gard = require("./app/gard/gard.js"),
   hivtrace = require("./app/hivtrace/hivtrace.js"),
   meme = require("./app/meme/meme.js"),
@@ -188,6 +189,19 @@ io.sockets.on("connection", function(socket) {
   r.route("fubar", {
     spawn: function(stream, params) {
       new fubar.fubar(socket, stream, params.job);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // FADE
+  r.route("fade", {
+    spawn: function(stream, params) {
+      new fade.fade(socket, stream, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
