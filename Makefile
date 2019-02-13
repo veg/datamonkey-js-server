@@ -25,11 +25,13 @@ directories:
 	mkdir -p app/fel/output
 	mkdir -p app/flea/output
 	mkdir -p app/fubar/output
+	mkdir -p app/fade/output
 	mkdir -p app/gard/output
 	mkdir -p app/meme/output
 	mkdir -p app/prime/output
 	mkdir -p app/relax/output
 	mkdir -p app/slac/output
+	mkdir -p app/hivtrace/output
 
-install: hyphy npm directories
+install: hyphy hivtrace npm directories
 
