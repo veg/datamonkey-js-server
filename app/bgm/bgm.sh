@@ -15,6 +15,7 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 DATATYPE=$datatype
+SUBSTITUTION_MODEL=$substitution_model
 LENGTH=$length_of_each_chain
 BURNIN=$number_of_burn_in_samples
 SAMPLES=$number_of_samples
@@ -30,13 +31,18 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo FN $FN
-echo BURNIN $BURNIN
-echo LENGTH $LENGTH
-echo SAMPLES $SAMPLES 
-echo MAXIMUM_PARENTS $MAXIMUM_PARENTS
-echo MINIMUM_SUBSTITUTIONS $MINIMUM_SUBSTITUTIONS
-echo "(echo $DATATYPE; echo $GENETIC_CODE; echo $FN; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; ) | $HYPHY LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE"
-(echo $DATATYPE; echo $GENETIC_CODE; echo $FN; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; ) | $HYPHY LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE
+if [ $DATATYPE -eq 1 ]; then
+  # Nucleotide data
+  echo "(echo $DATATYPE; echo $FN; echo $TREE_FN; echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; ) | $HYPHY LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE"
+  (echo $DATATYPE; echo $FN; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; ) | $HYPHY LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE
+elif [ $DATATYPE -eq 2 ]; then
+  # Amino acid
+  echo "(echo $DATATYPE; echo $FN; echo $SUBSTITUTION_MODEL; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; ) | $HYPHY LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE"
+  (echo $DATATYPE; echo $FN; echo $SUBSTITUTION_MODEL; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; ) | $HYPHY LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE
+else
+  # Codon
+  echo "(echo $DATATYPE; echo $GENETIC_CODE; echo $FN; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; ) | $HYPHY LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE"
+  (echo $DATATYPE; echo $GENETIC_CODE; echo $FN; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; ) | $HYPHY LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE
+fi
 
 echo "Completed" > $STATUS_FILE

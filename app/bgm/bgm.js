@@ -21,7 +21,8 @@ var bgm = function(socket, stream, params) {
   self.id = self.params.analysis._id;
   self.genetic_code = self.params.msa[0].gencodeid + 1;
   self.nj = self.params.msa[0].nj;
-  self.datatype = self.params.analysis.datatype;
+  self.datatype = self.params.msa[0].datatype;
+  self.substitution_model = self.params.analysis.substitution_model;
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -66,6 +67,8 @@ var bgm = function(socket, stream, params) {
       self.msaid + 
       ",datatype=" +
       self.datatype +
+      ",substitution_model=" +
+      self.substitution_model+
       ",length_of_each_chain=" +
       self.length_of_each_chain  +
       ",number_of_burn_in_samples=" +
