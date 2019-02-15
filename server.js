@@ -3,6 +3,7 @@ var config = require("./config.json"),
   path = require("path"),
   winston = require("winston"),
   absrel = require("./app/absrel/absrel.js"),
+  bgm = require("./app/bgm/bgm.js"),
   busted = require("./app/busted/busted.js"),
   fel = require("./app/fel/fel.js"),
   flea = require("./app/flea/flea.js"),
@@ -202,6 +203,19 @@ io.sockets.on("connection", function(socket) {
   r.route("fade", {
     spawn: function(stream, params) {
       new fade.fade(socket, stream, params.job);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // BGM
+  r.route("bgm", {
+    spawn: function(stream, params) {
+      new bgm.bgm(socket, stream, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
