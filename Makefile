@@ -1,5 +1,7 @@
 .PHONY: clean all test publish
 
+all: install
+
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone http://github.com/veg/hyphy.git ./.hyphy/; fi
@@ -35,4 +37,3 @@ directories:
 	mkdir -p app/hivtrace/output
 
 install: hyphy hivtrace npm directories
-
