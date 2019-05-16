@@ -14,6 +14,7 @@ hivtrace:
 	@virtualenv ./.python/env/
 	@./.python/env/bin/pip install numpy
 	@./.python/env/bin/pip install biopython
+	@./.python/env/bin/pip install cython
 	@./.python/env/bin/pip install hivtrace==0.3.2
 
 npm:
