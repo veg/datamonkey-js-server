@@ -1,6 +1,7 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=32
-
+#PBS -l nodes=1:ppn=4
+#PBS -l walltime=1:00:00 
+ 
 export PATH=/usr/local/bin:$PATH
 
 module load openmpi/gnu/1.6.3
