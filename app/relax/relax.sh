@@ -1,9 +1,8 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=32
+#PBS -l nodes=1:ppn=8
 
 export PATH=/usr/local/bin:$PATH
-module load openmpi/gnu/1.6.3
-module load gcc/6.1.0
+module load aocc/1.2.1
 
 FN=$fn
 CWD=$cwd

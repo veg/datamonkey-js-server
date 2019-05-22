@@ -157,6 +157,7 @@ jobRunner.prototype.status_watcher = function() {
     } else if (status_packet.status == self.states.queued) {
       self.emit("job created", { torque_id: self.torque_id });
     } else {
+      status_packet.torque_id = self.torque_id;
       self.emit("job metadata", status_packet);
       self.emit("status update", status_packet);
     }
