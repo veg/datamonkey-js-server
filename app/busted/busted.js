@@ -30,7 +30,15 @@ var busted = function(socket, stream, busted_params) {
   self.results_fn = self.fn + ".BUSTED.json";
   self.tree_fn = self.fn + ".tre";
 
+  //1|datamonk | info: busted : 5ce5b46ce0493944e73da3ef : job created : {"torque_id":""}
+  //1|datamonk | info: emitting {"torque_id":""}
+  //1|datamonk | info: emitting {"torque_id":""}
+
   self.qsub_params = [
+    "-l walltime=" + 
+    config.busted_walltime + 
+    ",nodes=1:ppn=" + 
+    config.busted_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",
