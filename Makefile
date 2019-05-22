@@ -1,5 +1,7 @@
 .PHONY: clean all test publish
 
+all: install
+
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone http://github.com/veg/hyphy.git ./.hyphy/; fi
@@ -12,6 +14,7 @@ hivtrace:
 	@virtualenv ./.python/env/
 	@./.python/env/bin/pip install numpy
 	@./.python/env/bin/pip install biopython
+	@./.python/env/bin/pip install cython
 	@./.python/env/bin/pip install hivtrace==0.3.2
 
 npm:
@@ -35,4 +38,3 @@ directories:
 	mkdir -p app/hivtrace/output
 
 install: hyphy hivtrace npm directories
-

@@ -141,6 +141,7 @@ util.inherits(hivtrace, hyphyJob);
 hivtrace.prototype.spawn = function() {
   var self = this;
   self.send_aligned_fasta_once = _.once(self.sendAlignedFasta);
+  self.send_tn93_once = _.once(self.sendtn93);
 
   client.hset(self.id, "params", self.params);
 
@@ -165,6 +166,7 @@ hivtrace.prototype.spawn = function() {
 
     if (index >= 3 && status == 3) {
       self.send_aligned_fasta_once();
+      self.send_tn93_once();
     }
   });
 
@@ -338,6 +340,23 @@ hivtrace.prototype.sendAlignedFasta = function() {
       self.onError(self.aligned_fasta + ": no aligned fasta to send");
     }
   });
+};
+
+hivtrace.prototype.sendtn93 = function() {
+  var self = this;
+  var tn93_promise = Q.nfcall(fs.readFile, self.tn93_results);
+  var promises = [tn93_promise];
+
+  Q.allSettled(promises).then(function(results) {
+    if (results[0].state == "fulfilled" && results[0].value) {
+      self.socket.emit("tn93", { buffer: results[0].value });
+      // Log that the job has been completed
+      self.warn("sending tn93", self.tn93_results, "success");
+    } else {
+      self.onError(self.tn93_results + ": no tn93 to send");
+    }
+  });
+
 };
 
 // An object that manages the qsub process
