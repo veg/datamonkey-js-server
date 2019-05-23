@@ -41,6 +41,10 @@ var fubar = function(socket, stream, params) {
     self.params.analysis.concentration_of_dirichlet_prior;
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.fubar_walltime + 
+    ",nodes=1:ppn=" + 
+    config.fubar_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",

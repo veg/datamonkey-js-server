@@ -33,6 +33,10 @@ var relax = function(socket, stream, relax_params) {
   self.tree_fn = self.fn + ".tre";
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.relax_walltime + 
+    ",nodes=1:ppn=" + 
+    config.relax_procs,
     "-q",
     config.qsub_queue,
     "-v",

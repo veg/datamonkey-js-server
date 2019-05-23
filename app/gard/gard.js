@@ -49,6 +49,10 @@ var gard = function(socket, stream, params) {
   self.json_fn = self.results_fn + ".json";
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.gard_walltime + 
+    ",nodes=" + config.gard_nodes + ":ppn=" + 
+    config.gard_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",

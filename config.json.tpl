@@ -1,5 +1,5 @@
 {
-  "port"                   : 7010,
+  "port"		               : 7015,
   "redis_host"             : "192.168.0.2",
   "redis_port"             : 6379,
   "loglevel"               : "info",
@@ -9,5 +9,27 @@
   "flea_python"            : "/opt/flea-pipeline/flea-env/bin/python",
   "flea_pipeline"          : "/opt/flea-pipeline/flea-pipeline-git/flea.nf",
   "flea_config"            : "/opt/flea-pipeline/silverback.config",
-  "nextflow"               : "/opt/nextflow/nextflow"
+  "nextflow"               : "/opt/nextflow/nextflow",
+  "hivtrace_procs"         : "16",
+  "hivtrace_walltime"      : "3:00:00:00",
+  "absrel_procs"           : "32",
+  "absrel_walltime"        : "3:00:00:00",
+  "busted_procs"           : "32",
+  "busted_walltime"        : "3:00:00:00",
+  "fel_procs"              : "32",
+  "fel_walltime"           : "3:00:00:00",
+  "fubar_procs"            : "48",
+  "fubar_walltime"         : "3:00:00:00",
+  "gard_procs"             : "48",
+  "gard_walltime"          : "3:00:00:00",
+  "gard_nodes"             : "1",
+  "meme_procs"             : "32",
+  "meme_walltime"          : "3:00:00:00",
+  "prime_procs"            : "32",
+  "prime_walltime"         : "3:00:00:00",
+  "slac_procs"             : "32",
+  "slac_walltime"          : "3:00:00:00",
+  "relax_procs"            : "32",
+  "relax_walltime"         : "3:00:00:00"
+
 }

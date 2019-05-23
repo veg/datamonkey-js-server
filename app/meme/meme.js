@@ -31,6 +31,10 @@ var meme = function(socket, stream, params) {
   self.tree_fn = self.fn + ".tre";
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.meme_walltime + 
+    ",nodes=1:ppn=" + 
+    config.meme_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",

@@ -33,6 +33,10 @@ var prime = function(socket, stream, params) {
   self.tree_fn = self.fn + ".tre";
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.prime_walltime + 
+    ",nodes=1:ppn=" + 
+    config.prime_procs,
     "-q",
     config.qsub_queue,
     "-v",

@@ -42,6 +42,10 @@ var bgm = function(socket, stream, params) {
   self.minimum_subs_per_site = self.params.analysis.minimum_subs_per_site;
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.bgm_walltime + 
+    ",nodes=1:ppn=" + 
+    config.bgm_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",
