@@ -38,7 +38,7 @@ if (program.port) {
 
 
 winston.level = config.loglevel;
-console.log("***************************** FRESH START ********************************");
+
 var client = redis.createClient();
 
 // clear active_jobs list
