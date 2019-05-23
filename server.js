@@ -36,7 +36,16 @@ if (program.port) {
 
 
 winston.level = config.loglevel;
+
+
+
+///REMOVE BELOW BEFORE PULL REQUEST ////////////////////////////////////////////////////////
 console.log("***************************** FRESH START ********************************");
+
+
+
+
+
 var client = redis.createClient();
 
 // clear active_jobs list

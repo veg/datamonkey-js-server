@@ -354,6 +354,8 @@ hivtrace.prototype.sendtn93 = function() {
   Q.allSettled(promises).then(function(results) {
     if (results[0].state == "fulfilled" && results[0].value) {
       self.socket.emit("tn93", { buffer: results[0].value });
+      console.log("***************DEBUG**********************");
+      console.log(results[0].value);
       // Log that the job has been completed
       self.warn("sending tn93", self.tn93_results, "success");
     } else {
