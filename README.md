@@ -38,6 +38,7 @@ Installation should be fairly straightforward as long as the dependencies are me
  
 
 * `make install`
+* `npm install`
 * `pm2 start pm2.config.js`
 
 ## Tests
