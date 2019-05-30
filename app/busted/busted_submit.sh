@@ -31,10 +31,10 @@ count=$(echo "${output: -1}")
 
 if [ $count -eq 2 ]
 then
-  echo "(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesSomeSelected; echo $synRateVariation; echo $omegaClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED"
+  echo "(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesSomeSelected; echo $synRateVariation; echo $omegaClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED"
   (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesSomeSelected; echo $synRateVariation; echo $omegaClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED > $PROGRESS_FILE
 else
-echo "(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesAllSelected; echo $synRateVariation; echo $omegaClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED"
+echo "(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesAllSelected; echo $synRateVariation; echo $omegaClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED"
   (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesAllSelected; echo $synRateVariation; echo $omegaClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED > $PROGRESS_FILE
 e
 fi
