@@ -32,6 +32,7 @@ var gard = function(socket, stream, params) {
   self.rate_classes = self.params.analysis.rate_classes || 2;
   self.genetic_code = self.params.msa[0].gencodeid + 1;
   self.nj = self.params.msa[0].nj;
+  self.data_type = self.params.msa[0].datatype;
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -76,6 +77,8 @@ var gard = function(socket, stream, params) {
       self.rate_classes +
       ",analysis_type=" +
       self.type +
+      ",data_type=" +
+      self.data_type +
       ",cwd=" +
       __dirname +
       ",msaid=" +
