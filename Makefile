@@ -5,7 +5,7 @@ all: install
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone http://github.com/veg/hyphy.git ./.hyphy/; fi
-	@cd ./.hyphy && git checkout develop && git pull && cmake . && make -j 4 hyphy && cd ../
+	@cd ./.hyphy && git checkout 2.5.0 && cmake . && make -j 4 hyphy && make -j 4 HYPHYMPI && cd ../
 	
 hivtrace:
 	@mkdir -p ./.python
