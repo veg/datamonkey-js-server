@@ -1,20 +1,11 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
-  redis = require("redis"),
   util = require("util"),
-  winston = require("winston"),
   fs = require("fs"),
-  path = require("path"),
-  translate_gard = require("translate-gard");
-
-// Use redis as our key-value store
-var client = redis.createClient();
+  path = require("path");
 
 var gard = function(socket, stream, params) {
   var self = this;
-
-  var variation_map = { none: 1, general_discrete: 2, beta_gamma: 3 };
-
   self.socket = socket;
   self.stream = stream;
   self.params = params;
@@ -27,6 +18,7 @@ var gard = function(socket, stream, params) {
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
+  var variation_map = { none: 1, general_discrete: 2, beta_gamma: 3 };
   self.rate_variation =
     variation_map[self.params.analysis.site_to_site_variation];
   self.rate_classes = self.params.analysis.rate_classes || 2;
@@ -38,16 +30,10 @@ var gard = function(socket, stream, params) {
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
   self.status_fn = self.fn + ".status";
-  self.results_fn = self.fn + ".GARD";
+  self.results_short_fn = self.fn + "gard";
+  self.results_fn = self.fn + ".GARD.json";
   self.progress_fn = self.fn + ".GARD.progress";
   self.tree_fn = self.fn + ".tre";
-
-  // output fn
-  self.html_results_fn = self.results_fn;
-  self.finalout_results_fn = self.results_fn + "_finalout";
-  self.ga_details_results_fn = self.results_fn + "_ga_details";
-  self.splits = self.results_fn + "_splits";
-  self.json_fn = self.results_fn + ".json";
 
   self.qsub_params = [
     "-l walltime=" + 
@@ -63,6 +49,8 @@ var gard = function(socket, stream, params) {
       self.status_fn +
       ",pfn=" +
       self.progress_fn +
+      ",rfn=" +
+      self.results_short_fn +
       ",genetic_code=" +
       self.genetic_code +
       ",rate_var=" +
