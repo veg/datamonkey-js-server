@@ -13,8 +13,10 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 
-HYPHY=$CWD/../../.hyphy/HYPHYMP
+HYPHY=$CWD/../../.hyphy/hyphy
 HYPHY_PATH=$CWD/../../.hyphy/res/
+RESULTS_FILE=$fn.FUBAR.json
+CACHE_FILE=$fn.FUBAR.cache
 GRIDPOINTS=$number_of_grid_points
 POSTERIORESTIMATIONMETHOD=1
 CHAINS=$number_of_mcmc_chains
@@ -28,7 +30,7 @@ FUBAR=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FUBAR.bf
 export HYPHY_PATH=$HYPHY_PATH
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo '$GRIDPOINTS'; echo '$POSTERIORESTIMATIONMETHOD'; echo '$CHAINS'; echo '$LENGTH'; echo '$BURNIN'; echo '$SAMPLES'; echo '$CONCENTRATION';) | '$HYPHY' LIBPATH='$HYPHY_PATH' ' $FUBAR''
-(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $GRIDPOINTS; echo $POSTERIORESTIMATIONMETHOD; echo $CHAINS; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $CONCENTRATION;) | $HYPHY LIBPATH=$HYPHY_PATH $FUBAR > $PROGRESS_FILE
+echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo '$CACHE_FILE'; echo '$GRIDPOINTS'; echo '$POSTERIORESTIMATIONMETHOD'; echo '$CHAINS'; echo '$LENGTH'; echo '$BURNIN'; echo '$SAMPLES'; echo '$CONCENTRATION'; echo '$RESULTS_FILE';) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $FUBAR''
+(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $CACHE_FILE; echo $GRIDPOINTS; echo $POSTERIORESTIMATIONMETHOD; echo $CHAINS; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $CONCENTRATION; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $FUBAR > $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE
