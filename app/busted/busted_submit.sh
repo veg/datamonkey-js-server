@@ -12,7 +12,7 @@ GENETIC_CODE=$genetic_code
 RESULTS_FILE=$fn.BUSTED.json
 FG_BranchesAllSelected="4"
 FG_BranchesSomeSelected="5"
-synRateVariation="1"
+synRateVariation=$synRateVariation
 synRateClasses=3
 omegaClasses=3
 initialPointsInLikelihood=250
@@ -37,6 +37,5 @@ then
 else
 echo "(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesAllSelected; echo $synRateVariation; echo $omegaClasses; echo $synRateClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED"
   (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesAllSelected; echo $synRateVariation; echo $omegaClasses; echo $synRateClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED > $PROGRESS_FILE
-e
 fi
 echo "Completed" > $STATUS_FILE
