@@ -19,6 +19,7 @@ var busted = function(socket, stream, busted_params) {
   // parameter attributes
   self.msaid = busted_params.msa._id;
   self.id = busted_params.analysis._id;
+  self.ds_variation = busted_params.analysis.ds_variation;
   self.genetic_code = self.params.msa[0].gencodeid + 1;
   self.type = self.params.type;
 
@@ -54,6 +55,8 @@ var busted = function(socket, stream, busted_params) {
       self.treemode +
       ",genetic_code=" +
       self.genetic_code +
+      ",synRateVariation=" +
+      self.ds_variation +
       ",cwd=" +
       __dirname +
       ",msaid=" +
