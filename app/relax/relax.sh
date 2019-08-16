@@ -2,7 +2,7 @@
 #PBS -l nodes=1:ppn=8
 
 export PATH=/usr/local/bin:$PATH
-module load aocc/1.2.1
+module load aocc/1.3.0
 
 FN=$fn
 CWD=$cwd

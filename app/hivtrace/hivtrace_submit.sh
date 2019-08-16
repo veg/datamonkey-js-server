@@ -4,7 +4,7 @@
 export PATH=/usr/local/bin:$PATH
 
 module load openmpi/gnu/1.6.3
-module load aocc/1.2.1
+module load aocc/1.3.0
 
 FN=$fn
 AMBIGUITY=$ambiguity_handling
