@@ -19,6 +19,7 @@ var busted = function(socket, stream, busted_params) {
   // parameter attributes
   self.msaid = busted_params.msa._id;
   self.id = busted_params.analysis._id;
+  self.ds_variation = busted_params.analysis.ds_variation;
   self.genetic_code = self.params.msa[0].gencodeid + 1;
   self.type = self.params.type;
 
@@ -30,7 +31,15 @@ var busted = function(socket, stream, busted_params) {
   self.results_fn = self.fn + ".BUSTED.json";
   self.tree_fn = self.fn + ".tre";
 
+  //1|datamonk | info: busted : 5ce5b46ce0493944e73da3ef : job created : {"torque_id":""}
+  //1|datamonk | info: emitting {"torque_id":""}
+  //1|datamonk | info: emitting {"torque_id":""}
+
   self.qsub_params = [
+    "-l walltime=" + 
+    config.busted_walltime + 
+    ",nodes=1:ppn=" + 
+    config.busted_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",
@@ -46,6 +55,8 @@ var busted = function(socket, stream, busted_params) {
       self.treemode +
       ",genetic_code=" +
       self.genetic_code +
+      ",synRateVariation=" +
+      self.ds_variation +
       ",cwd=" +
       __dirname +
       ",msaid=" +

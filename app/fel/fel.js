@@ -32,6 +32,10 @@ var fel = function(socket, stream, params) {
   self.tree_fn = self.fn + ".tre";
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.fel_walltime + 
+    ",nodes=1:ppn=" + 
+    config.fel_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",

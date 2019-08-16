@@ -31,6 +31,10 @@ var absrel = function(socket, stream, params) {
   self.tree_fn = self.fn + ".tre";
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.absrel_walltime + 
+    ",nodes=1:ppn=" + 
+    config.absrel_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",

@@ -91,6 +91,10 @@ var hivtrace = function(socket, stream, params) {
   );
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.hivtrace_walltime + 
+    ",nodes=1:ppn=" + 
+    config.hivtrace_procs,
     "-q",
     config.qsub_queue,
     "-v",
@@ -437,7 +441,7 @@ HivTraceRunner.prototype.submit = function(qsub_params, cwd) {
   var self = this;
 
   var qsub_submit = function() {
-    var qsub = spawn("qsub", qsub_params, { cwd: cwd });
+    var qsub = spawn("qsub", qsub_params, { cwd: cwd }); //cwd = current working dir
 
     qsub.stderr.on("data", function(data) {
       // error when starting job
