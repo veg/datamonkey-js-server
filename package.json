@@ -23,7 +23,7 @@
     "socket.io": "1.4.x",
     "socket.io-stream": "0.6.x",
     "tail": "0.4.x",
-    "tar": "^2.0",
+    "tar": "^4.4",
     "translate-gard": "^1.0.4",
     "underscore": "1.8.x",
     "winston": "0.9.x"
