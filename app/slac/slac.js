@@ -31,6 +31,10 @@ var slac = function(socket, stream, params) {
   self.tree_fn = self.fn + ".tre";
 
   self.qsub_params = [
+    "-l walltime=" + 
+    config.slac_walltime + 
+    ",nodes=1:ppn=" + 
+    config.slac_procs,
     "-q",
     config.qsub_avx_queue,
     "-v",

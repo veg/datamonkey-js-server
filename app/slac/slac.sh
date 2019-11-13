@@ -1,5 +1,4 @@
 #!/bin/bash
-#PBS -l nodes=1:ppn=8
 
 export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
@@ -14,8 +13,9 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 
-HYPHY=$CWD/../../.hyphy/HYPHYMP
+HYPHY=$CWD/../../.hyphy/hyphy
 HYPHY_PATH=$CWD/../../.hyphy/res/
+RESULTS_FILE=$fn.SLAC.json
 
 SLAC=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/SLAC.bf
 
@@ -37,7 +37,7 @@ NUM_SAMPLES=100
 PVAL=0.1
 
 # Using 1 for now, but should accept labeled branches
-echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo '$BRANCHES'; echo '$NUM_SAMPLES'; echo '$PVAL';) | '$HYPHY' LIBPATH='$HYPHY_PATH' ' $SLAC''
-(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $BRANCHES; echo $NUM_SAMPLES; echo $PVAL;) | $HYPHY LIBPATH=$HYPHY_PATH $SLAC > $PROGRESS_FILE
+echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo '$BRANCHES'; echo '$NUM_SAMPLES'; echo '$PVAL'; echo '$RESULTS_FILE';) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $SLAC''
+(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $BRANCHES; echo $NUM_SAMPLES; echo $PVAL; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $SLAC > $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE
