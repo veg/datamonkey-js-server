@@ -3,8 +3,7 @@
 export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
 
-module load openmpi/gnu/3.0
-module load aocc/1.2.1
+module load aocc/1.3.0
 
 FN=$fn
 CWD=$cwd
@@ -18,7 +17,7 @@ RATE_VARIATION=$rate_var
 RATE_CLASSES=$rate_classes
 DATA_TYPE=$data_type
 
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
+HYPHY=$CWD/../../.hyphy/hyphy
 HYPHY_PATH=$CWD/../../.hyphy/res/
 GARD=$HYPHY_PATH/TemplateBatchFiles/GARD.bf
 
@@ -40,45 +39,13 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-# codon
-if [ $DATA_TYPE -eq 0 ]
+if [ $RATE_VARIATION == "None" ]
 then
-  if (($RATE_VARIATION < 2))
-  then
-    echo '(echo 3; echo '$GENETIC_CODE'; echo '$FN'; echo '$RATE_VARIATION'; echo '$RESULTS_FN'; echo '$SNAPSHOT_FILE';) | mpirun -np 16 '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $GARD''
-    (echo 3; echo $GENETIC_CODE; echo $FN; echo $RATE_VARIATION; echo $RESULTS_FN; echo $SNAPSHOT_FILE;) | mpirun -np 16 $HYPHY -i LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
-  else
-    echo '(echo 3; echo '$GENETIC_CODE'; echo '$FN'; echo '$RATE_VARIATION'; echo '$RATE_CLASSES'; echo '$RESULTS_FN'; echo '$SNAPSHOT_FILE';) | mpirun -np 16 '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $GARD''
-    (echo 3; echo $GENETIC_CODE; echo $FN; echo $RATE_VARIATION; echo $RATE_CLASSES; echo $RESULTS_FN; echo $SNAPSHOT_FILE) | mpirun -np 16 $HYPHY -i LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
-  fi
-fi
-
-# nucleotide
-if [ $DATA_TYPE -eq 1 ]
-then
-   if (($RATE_VARIATION < 2))
-  then
-    echo '(echo 1; echo '$FN'; echo '$RATE_VARIATION'; echo '$RESULTS_FN'; echo '$SNAPSHOT_FILE';) | mpirun -np 16 '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $GARD''
-    (echo 1; echo $FN; echo $RATE_VARIATION; echo $RESULTS_FN; echo $SNAPSHOT_FILE;) | mpirun -np 16 $HYPHY -i LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
-  else
-    echo '(echo 1; echo '$FN'; echo '$RATE_VARIATION'; echo '$RATE_CLASSES'; echo '$RESULTS_FN'; echo '$SNAPSHOT_FILE') | mpirun -np 16 '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $GARD''
-    (echo 1; echo $FN; echo $RATE_VARIATION; echo $RATE_CLASSES; echo $RESULTS_FN; $SNAPSHOT_FILE;) | mpirun -np 16 $HYPHY -i LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
-  fi
-fi
-
-# protein
-if [ $DATA_TYPE -eq 2 ]
-then
-   if (($RATE_VARIATION < 2))
-  then
-    echo '(echo 2; echo '$FN'; echo '$SUBSTITUTION_MODEL'; echo '$RATE_VARIATION'; echo '$RESULTS_FN'; echo '$SNAPSHOT_FILE';) | mpirun -np 16 '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $GARD''
-    (echo 2; echo $FN; echo $SUBSTITUTION_MODEL; echo $RATE_VARIATION; echo $RESULTS_FN; echo $SNAPSHOT_FILE;) | mpirun -np 16 $HYPHY -i LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
-  else
-    echo '(echo 2; echo '$FN'; echo '$SUBSTITUTION_MODEL'; echo '$RATE_VARIATION'; echo '$RATE_CLASSES'; echo '$RESULTS_FN'; echo '$SNAPSHOT_FILE';) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $GARD''
-    (echo 2; echo $FN; echo $SUBSTITUTION_MODEL; echo $RATE_VARIATION; echo $RATE_CLASSES; echo $RESULTS_FN; echo $SNAPSHOT_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
-  fi
+  echo "$HYPHY LIBPATH=$HYPHY_PATH gard --alignment $FN --type $DATA_TYPE --code $GENETIC_CODE --output $RESULTS_FN --output-lf $SNAPSHOT_FILE >> $PROGRESS_FILE"
+  $HYPHY LIBPATH=$HYPHY_PATH gard --alignment $FN  --type $DATA_TYPE --code $GENETIC_CODE --output $RESULTS_FN --output-lf $SNAPSHOT_FILE >> $PROGRESS_FILE
+else
+  echo "$HYPHY LIBPATH=$HYPHY_PATH gard --alignment $FN  --type $DATA_TYPE --code $GENETIC_CODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN --output-lf $SNAPSHOT_FILE >> $PROGRESS_FILE"
+  $HYPHY LIBPATH=$HYPHY_PATH gard --alignment $FN  --type $DATA_TYPE --code $GENETIC_CODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN --output-lf $SNAPSHOT_FILE >> $PROGRESS_FILE
 fi
 
 echo "Completed" > $STATUS_FILE
-
-

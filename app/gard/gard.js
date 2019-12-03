@@ -1,5 +1,6 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  code = require("../code").code,
   util = require("util"),
   fs = require("fs"),
   path = require("path");
@@ -18,13 +19,17 @@ var gard = function(socket, stream, params) {
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
-  var variation_map = { none: 1, general_discrete: 2, beta_gamma: 3 };
+  var variation_map = {
+    none: 'None', general_discrete: 'GDD', beta_gamma: 'Gamma'
+  };
   self.rate_variation =
     variation_map[self.params.analysis.site_to_site_variation];
   self.rate_classes = self.params.analysis.rate_classes || 2;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nj = self.params.msa[0].nj;
-  self.data_type = self.params.msa[0].datatype;
+  self.data_type = ['Codon', 'Nucleotide', 'Protein'][
+    self.params.msa[0].datatype
+  ];
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
