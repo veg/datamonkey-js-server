@@ -1074,9 +1074,10 @@ tr46@^1.0.0:
   dependencies:
     punycode "^2.1.0"
 
-translate-gard@^1.0.2:
-  version "1.0.2"
-  resolved "https://registry.yarnpkg.com/translate-gard/-/translate-gard-1.0.2.tgz#23b4225d6ff49c757ffb00236411692d487da4ef"
+translate-gard@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/translate-gard/-/translate-gard-1.0.4.tgz#b36e52720c7b2b9071e34d19873448326f053470"
+  integrity sha512-jT9uBS7A9FI2dJlG+KAneDbjGrQyQAEGlL/81ph9NcTO7VRJjvOLJr0vAU27rgWpPQnUafOl41i5yQdjG48xMA==
   dependencies:
     jsdom "^11.2.0"
     lodash "^4.17.4"

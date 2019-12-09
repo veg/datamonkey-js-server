@@ -1,5 +1,6 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  code = require("../code").code,
   util = require("util"),
   fs = require("fs"),
   path = require("path");
@@ -18,7 +19,7 @@ var absrel = function(socket, stream, params) {
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nwk = self.params.analysis.tagged_nwk_tree;
 
   // parameter-derived attributes

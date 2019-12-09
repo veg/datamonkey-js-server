@@ -15,7 +15,6 @@ GENETIC_CODE=$genetic_code
 HYPHY=$CWD/../../.hyphy/hyphy
 
 export HYPHY_PATH=$CWD/../../.hyphy/res/
-ABSREL=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf
 
-echo "(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 5; echo 4; echo $RESULTS_FN;) | $HYPHY -i LIBPATH=$HYPHY_PATH $ABSREL"
-(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo 5; echo 4; echo $RESULTS_FN;) | $HYPHY -i LIBPATH=$HYPHY_PATH $ABSREL >> $PROGRESS_FILE
+echo "$HYPHY LIBPATH=$HYPHY_PATH absrel --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --output $RESULTS_FN >> $PROGRESS_FILE"
+$HYPHY LIBPATH=$HYPHY_PATH absrel --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --output $RESULTS_FN >> $PROGRESS_FILE

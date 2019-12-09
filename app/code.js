@@ -1,0 +1,21 @@
+exports.code = {
+  "1": "Universal",
+  "2": "Vertebrate-mtDNA",
+  "3": "Yeast-mtDNA",
+  "4": "Mold-Protozoan-mtDNA",
+  "5": "Invertebrate-mtDNA",
+  "6": "Ciliate-Nuclear",
+  "7": "Echinoderm-mtDNA",
+  "8": "Euplotid-Nuclear",
+  "9": "Alt-Yeast-Nuclear",
+  "10": "Ascidian-mtDNA",
+  "11": "Flatworm-mtDNA",
+  "12": "Blepharisma-Nuclear",
+  "13": "Chlorophycean-mtDNA",
+  "14": "Trematode-mtDNA",
+  "15": "Scenedesmus-obliquus-mtDNA",
+  "16": "Thraustochytrium-mtDNA",
+  "17": "Pterobranchia-mtDNA",
+  "18": "SR1-and-Gracilibacteria",
+  "19": "Pachysolen-Nuclear"
+};
