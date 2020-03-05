@@ -1,5 +1,6 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  code = require("../code").code,
   util = require("util"),
   fs = require("fs"),
   path = require("path");
@@ -18,9 +19,9 @@ var fel = function(socket, stream, params) {
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nwk_tree = self.params.analysis.tagged_nwk_tree;
-  self.rate_variation = self.params.analysis.ds_variation;
+  self.rate_variation = self.params.analysis.ds_variation == 1 ? "Yes" : "No";
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -60,7 +61,9 @@ var fel = function(socket, stream, params) {
       ",cwd=" +
       __dirname +
       ",msaid=" +
-      self.msaid,
+      self.msaid +
+      ",procs=" +
+      config.fel_procs,
     "-o",
     self.output_dir,
     "-e",

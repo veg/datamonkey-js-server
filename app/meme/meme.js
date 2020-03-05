@@ -1,5 +1,6 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  code = require("../code").code,
   util = require("util"),
   fs = require("fs"),
   path = require("path");
@@ -18,7 +19,7 @@ var meme = function(socket, stream, params) {
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nj = self.params.msa[0].nj;
 
   // parameter-derived attributes
@@ -57,7 +58,9 @@ var meme = function(socket, stream, params) {
       ",cwd=" +
       __dirname +
       ",msaid=" +
-      self.msaid,
+      self.msaid +
+      ",procs=" +
+      config.meme_procs,
     "-o",
     self.output_dir,
     "-e",

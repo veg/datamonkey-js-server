@@ -58,7 +58,9 @@ var absrel = function(socket, stream, params) {
       ",cwd=" +
       __dirname +
       ",msaid=" +
-      self.msaid,
+      self.msaid +
+      ",procs=" +
+      config.absrel_procs,
     "-o",
     self.output_dir,
     "-e",

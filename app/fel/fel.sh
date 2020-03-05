@@ -4,6 +4,7 @@ export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
 
 module load aocc/1.3.0
+module load openmpi/gnu/3.0.2
 
 FN=$fn
 CWD=$cwd
@@ -13,26 +14,16 @@ PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
 RATE_VARIATION=$rate_variation
+PROCS=$procs
 
-HYPHY=$CWD/../../.hyphy/hyphy
+HYPHY=$CWD/../../.hyphy/HYPHYMPI
 HYPHY_PATH=$CWD/../../.hyphy/res/
 FEL=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FEL.bf
 RESULTS_FILE=$fn.FEL.json
-GETCOUNT=$CWD/../../lib/getAnnotatedCount.bf
 
 export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-output=$(echo $TREE_FN | $HYPHY $GETCOUNT )
-count=$(echo "${output: -1}")
-
-if [ $count -eq 2 ]
-then
-  echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 5; echo '$RATE_VARIATION'; echo '0.1'; echo $RESULTS_FILE;) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $FEL''
-  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo "5"; echo $RATE_VARIATION; echo "0.1"; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $FEL > $PROGRESS_FILE
-else
-  echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo 4; echo '$RATE_VARIATION'; echo '0.1'; echo $RESULTS_FILE;) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $FEL''
-  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo "4"; echo $RATE_VARIATION; echo "0.1"; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $FEL > $PROGRESS_FILE
-fi
+mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --srv $RATE_VARIATION --output $RESULTS_FILE >> $PROGRESS_FILE
 echo "Completed" > $STATUS_FILE
