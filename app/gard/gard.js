@@ -79,7 +79,9 @@ var gard = function(socket, stream, params) {
       ",cwd=" +
       __dirname +
       ",msaid=" +
-      self.msaid,
+      self.msaid +
+      ",procs=" +
+      config.gard_procs,
     "-o",
     self.output_dir,
     "-e",
