@@ -1,11 +1,21 @@
 .PHONY: clean all test publish
 
+## Do not specify patch version
+HYPHY_VERSION=2.5
+
+TAG:=$(shell git describe --tags `git rev-list --tags --max-count=1` --match="$(HYPHY_VERSION)".*)
+
 all: install
 
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone http://github.com/veg/hyphy.git ./.hyphy/; fi
 	@cd ./.hyphy && git checkout 2.5.5 && cmake -DNOAVX=ON . && make -j 4 hyphy && make -j 4 HYPHYMPI && cd ../
+
+update-hyphy:
+	echo "updating hyphy to latest release"
+	@cd ./.hyphy && git pull origin master && git checkout $(TAG) && cmake -DNOAVX=ON . && make -j 4 hyphy && make -j 4 HYPHYMPI && cd ../
+
 	
 hivtrace:
 	@mkdir -p ./.python
