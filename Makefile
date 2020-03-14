@@ -14,7 +14,7 @@ hyphy:
 
 update-hyphy:
 	echo "updating hyphy to latest release"
-	@cd ./.hyphy && git pull origin master && git checkout $(TAG) && cmake -DNOAVX=ON . && make -j 4 hyphy && make -j 4 HYPHYMPI && cd ../
+	@cd ./.hyphy && git pull origin master --tags && git checkout $(TAG) && cmake -DNOAVX=ON . && make -j 4 hyphy && make -j 4 HYPHYMPI && cd ../
 
 	
 hivtrace:
