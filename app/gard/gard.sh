@@ -4,7 +4,6 @@ export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
 
 module load openmpi/gnu/3.0
-module load gcc/6.1.0
 
 FN=$fn
 CWD=$cwd
