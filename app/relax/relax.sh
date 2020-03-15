@@ -8,7 +8,7 @@ CWD=$cwd
 TREE_FN=$tree_fn
 STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
-GENETIC_CODE=$genetic_code
+GENETIC_CODE="Universal"
 ANALYSIS_TYPE=$analysis_type
 OMEGA_RATE_CLASSES=3
 
@@ -19,7 +19,6 @@ export HYPHY_PATH=$CWD/../../.hyphy/res/
 RELAX=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/RELAX.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
-count=$(echo '(echo '$TREE_FN') | '$HYPHY' '$GETCOUNT'' 2> /dev/null)
 
-echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo --test TEST; echo --reference REFERENCE; echo --output $RESULT_FILE; echo '$OMEGA_RATE_CLASSES'; echo '$ANALYSIS_TYPE') | '$HYPHY' -i LIBPATH='$HYPHY_PATH' '$RELAX''
-(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo --test TEST; echo --reference REFERENCE; echo --output $RESULT_FILE; echo '$OMEGA_RATE_CLASSES'; echo '$ANALYSIS_TYPE') | '$HYPHY' -i LIBPATH='$HYPHY_PATH' '$RELAX' > $PROGRESS_FILE
+echo ''$HYPHY' -i LIBPATH='$HYPHY_PATH' '$RELAX' --code '$GENETIC_CODE' --alignment '$FN' --tree '$TREE_FN' --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates '$OMEGA_RATE_CLASSES' --output '$RESULT_FILE' > '$PROGRESS_FILE''
+sh -c ''$HYPHY' -i LIBPATH='$HYPHY_PATH' '$RELAX' --code '$GENETIC_CODE' --alignment '$FN' --tree '$TREE_FN' --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates '$OMEGA_RATE_CLASSES' --output '$RESULT_FILE' > '$PROGRESS_FILE''
