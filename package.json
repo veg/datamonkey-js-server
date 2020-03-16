@@ -2,6 +2,7 @@
   "name": "datamonkey-js-server",
   "description": "",
   "version": "1.5.1",
+  "engines" : { "node" : ">=13" },
   "private": true,
   "scripts": {
     "test": "npm run test-absrel && npm run test-busted && npm run test-jobs && npm run test-hivtrace",
