@@ -879,23 +879,11 @@ sax@^1.2.4:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
 
-should-equal@0.1.0:
-  version "0.1.0"
-  resolved "https://registry.npmjs.org/should-equal/-/should-equal-0.1.0.tgz#6db4a398a0d5a1a5806350b1de8cb4e964071dab"
-  dependencies:
-    should-type "0.0.1"
-
 should-equal@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/should-equal/-/should-equal-2.0.0.tgz#6072cf83047360867e68e98b09d71143d04ee0c3"
   dependencies:
     should-type "^1.4.0"
-
-should-format@0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/should-format/-/should-format-0.0.2.tgz#5c058691a1d6177f8b8fa8b8bba0b38cc05d346f"
-  dependencies:
-    should-type "0.0.1"
 
 should-format@^3.0.3:
   version "3.0.3"
@@ -911,10 +899,6 @@ should-type-adaptors@^1.0.1:
     should-type "^1.3.0"
     should-util "^1.0.0"
 
-should-type@0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/should-type/-/should-type-0.0.1.tgz#ec62a4eae75cabfab3734cd9925da49773cb9be8"
-
 should-type@^1.3.0, should-type@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/should-type/-/should-type-1.4.0.tgz#0756d8ce846dfd09843a6947719dfa0d4cff5cf3"
@@ -923,12 +907,16 @@ should-util@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/should-util/-/should-util-1.0.0.tgz#c98cda374aa6b190df8ba87c9889c2b4db620063"
 
-should@4.3.x:
-  version "4.3.1"
-  resolved "https://registry.yarnpkg.com/should/-/should-4.3.1.tgz#3a4b7de74c3d8fa787069075d65117c247e0099c"
+should@13.2.x:
+  version "13.2.3"
+  resolved "https://registry.yarnpkg.com/should/-/should-13.2.3.tgz#96d8e5acf3e97b49d89b51feaa5ae8d07ef58f10"
+  integrity sha512-ggLesLtu2xp+ZxI+ysJTmNjh2U0TsC+rQ/pfED9bUZZ4DKefP27D+7YJVVTvKsmjLpIi9jAa7itwDGkDDmt1GQ==
   dependencies:
-    should-equal "0.1.0"
-    should-format "0.0.2"
+    should-equal "^2.0.0"
+    should-format "^3.0.3"
+    should-type "^1.4.0"
+    should-type-adaptors "^1.0.1"
+    should-util "^1.0.0"
 
 should@^12.0.0:
   version "12.0.0"
