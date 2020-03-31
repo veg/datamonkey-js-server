@@ -25,7 +25,7 @@
     "should": "^13.2.3",
     "socket.io": "1.4.x",
     "socket.io-stream": "0.6.x",
-    "tail": "0.4.x",
+    "tail": "2.0.x",
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
     "underscore": "1.10.x",
