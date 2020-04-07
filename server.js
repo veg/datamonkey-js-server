@@ -6,6 +6,7 @@ var config = require("./config.json"),
   bgm = require("./app/bgm/bgm.js"),
   busted = require("./app/busted/busted.js"),
   fel = require("./app/fel/fel.js"),
+  cfel = require("./app/contrast-fel/cfel.js"),
   flea = require("./app/flea/flea.js"),
   fubar = require("./app/fubar/fubar.js"),
   fade = require("./app/fade/fade.js"),
@@ -125,6 +126,19 @@ io.sockets.on("connection", function(socket) {
   r.route("fel", {
     spawn: function(stream, params) {
       new fel.fel(socket, stream, params.job);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // Contrast-FEL
+  r.route("cfel", {
+    spawn: function(stream, params) {
+      new cfel.cfel(socket, stream, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
