@@ -63,7 +63,6 @@ describe('cfel jobrunner', function() {
       done();
     });
 
-
     cfel_socket.on('script error', function(data) {
       winston.warn(data);
       done();
