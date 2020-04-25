@@ -1,9 +1,17 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  code = require("../code").code,
+  model = require("../model").model,
   util = require("util"),
   fs = require("fs"),
   winston = require("winston"),
   path = require("path");
+
+const datatypes = {
+  "1": "nucleotide",
+  "2": "amino-acid",
+  "3": "codon"
+}
 
 var bgm = function(socket, stream, params) {
   var self = this;
@@ -19,10 +27,15 @@ var bgm = function(socket, stream, params) {
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nj = self.params.msa[0].nj;
-  self.datatype = self.params.msa[0].datatype;
-  self.substitution_model = self.params.analysis.substitution_model;
+  self.datatype = datatypes[self.params.msa[0].datatype];
+
+  if(self.params.analysis.substitution_model) {
+    self.substitution_model = model[self.params.analysis.substitution_model];
+  } else {
+    self.substitution_model = null;
+  }
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -38,8 +51,8 @@ var bgm = function(socket, stream, params) {
   self.number_of_burn_in_samples =
     self.params.analysis.number_of_burn_in_samples;
   self.number_of_samples = self.params.analysis.number_of_samples;
-  self.maximum_parents_per_node = self.params.analysis.maximum_parents_per_node;
-  self.minimum_subs_per_site = self.params.analysis.minimum_subs_per_site;
+  self.maximum_parents_per_node = parseInt(self.params.analysis.maximum_parents_per_node);
+  self.minimum_subs_per_site = parseInt(self.params.analysis.minimum_subs_per_site);
 
   self.qsub_params = [
     "-l walltime=" + 
