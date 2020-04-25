@@ -1,8 +1,15 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  model = require("../model").model,
   util = require("util"),
   fs = require("fs"),
   path = require("path");
+
+estimationMethod = {
+  "1" : "Metropolis-Hastings",
+  "2" : "Collapsed-Gibbs", 
+  "3" : "Variational-Bayes"
+}
 
 var fade = function(socket, stream, params) {
   var self = this;
@@ -22,8 +29,8 @@ var fade = function(socket, stream, params) {
   self.nj = self.params.msa[0].nj;
 
   // FADE specific attributes
-  self.substitution_model = self.params.analysis.substitution_model;
-  self.posterior_estimation_method = self.params.analysis.posterior_estimation_method;
+  self.substitution_model = model[self.params.analysis.substitution_model];
+  self.posterior_estimation_method = estimationMethod[self.params.analysis.posterior_estimation_method];
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
