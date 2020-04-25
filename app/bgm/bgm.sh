@@ -4,8 +4,8 @@
 export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
 
-module load openmpi/gnu/1.6.3
 module load aocc/1.3.0
+module load openmpi/gnu/3.0.2
 
 FN=$fn
 CWD=$cwd
@@ -32,18 +32,21 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-if [ $DATATYPE -eq 1 ]; then
+if [ $DATATYPE == "nucleotide" ]; then
   # Nucleotide data
-  echo "(echo $DATATYPE; echo $FN; echo $TREE_FN; echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE"
-  (echo $DATATYPE; echo $FN; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE
-elif [ $DATATYPE -eq 2 ]; then
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
+  $HYPHY -i LIBPATH=$HYPHY_PATH $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> $PROGRESS_FILE
+
+elif [ $DATATYPE == "amino-acid" ]; then
   # Amino acid
-  echo "(echo $DATATYPE; echo $FN; echo $SUBSTITUTION_MODEL; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE"
-  (echo $DATATYPE; echo $FN; echo $SUBSTITUTION_MODEL; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BGM --branches "All" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
+  $HYPHY -i LIBPATH=$HYPHY_PATH $BGM --branches "All" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> $PROGRESS_FILE
+
 else
   # Codon
-  echo "(echo $DATATYPE; echo $GENETIC_CODE; echo $FN; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE"
-  (echo $DATATYPE; echo $GENETIC_CODE; echo $FN; echo $TREE_FN;  echo 1; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $MAXIMUM_PARENTS; echo $MINIMUM_SUBSTITUTIONS; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $BGM >> $PROGRESS_FILE
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
+  $HYPHY -i LIBPATH=$HYPHY_PATH $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> $PROGRESS_FILE
+
 fi
 
 echo "Completed" > $STATUS_FILE

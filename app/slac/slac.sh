@@ -31,13 +31,12 @@ trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 # Branches to test 
 # Number of samples used (use default)
 # p-value
-
-BRANCHES=1
 NUM_SAMPLES=100
 PVAL=0.1
+KZERO="No"
 
 # Using 1 for now, but should accept labeled branches
-echo '(echo '$GENETIC_CODE'; echo '$FN'; echo '$TREE_FN'; echo '$BRANCHES'; echo '$NUM_SAMPLES'; echo '$PVAL'; echo '$RESULTS_FILE';) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' ' $SLAC''
-(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $BRANCHES; echo $NUM_SAMPLES; echo $PVAL; echo $RESULTS_FILE;) | $HYPHY -i LIBPATH=$HYPHY_PATH $SLAC > $PROGRESS_FILE
+echo $HYPHY -i LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE
+$HYPHY -i LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE > $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE

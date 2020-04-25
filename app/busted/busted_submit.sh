@@ -10,8 +10,8 @@ STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
 RESULTS_FILE=$fn.BUSTED.json
-FG_BranchesAllSelected="4"
-FG_BranchesSomeSelected="5"
+#FG_BranchesAllSelected="4"
+#FG_BranchesSomeSelected="5"
 synRateVariation=$synRateVariation
 synRateClasses=3
 omegaClasses=3
@@ -32,10 +32,11 @@ count=$(echo "${output: -1}")
 
 if [ $count -eq 2 ]
 then
-  echo "(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesSomeSelected; echo $synRateVariation; echo $omegaClasses; echo $synRateClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED"
-  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesSomeSelected; echo $synRateVariation; echo $omegaClasses; echo $synRateClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED > $PROGRESS_FILE
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --output $RESULTS_FILE"
+  $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --output $RESULTS_FILE > $PROGRESS_FILE
 else
-echo "(echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesAllSelected; echo $synRateVariation; echo $omegaClasses; echo $synRateClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED"
-  (echo $GENETIC_CODE; echo $FN; echo $TREE_FN; echo $FG_BranchesAllSelected; echo $synRateVariation; echo $omegaClasses; echo $synRateClasses; echo $initialPointsInLikelihood; echo $initialGuesses; echo $RESULTS_FILE; echo '/dev/null';) | $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED > $PROGRESS_FILE
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --output $RESULTS_FILE"
+  $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --output $RESULTS_FILE > $PROGRESS_FILE
 fi
+
 echo "Completed" > $STATUS_FILE

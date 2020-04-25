@@ -1,5 +1,6 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  code = require("../code").code,
   util = require("util"),
   fs = require("fs"),
   path = require("path");
@@ -19,8 +20,8 @@ var busted = function(socket, stream, busted_params) {
   // parameter attributes
   self.msaid = busted_params.msa._id;
   self.id = busted_params.analysis._id;
-  self.ds_variation = busted_params.analysis.ds_variation;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.ds_variation = busted_params.analysis.ds_variation || "Yes";
+  self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.type = self.params.type;
 
   // parameter-derived attributes
