@@ -16,6 +16,9 @@ update-hyphy:
 	echo "updating hyphy to latest release"
 	@cd ./.hyphy && git pull origin master --tags && git checkout $(TAG) && cmake -DNOAVX=ON . && make -j 4 hyphy && make -j 4 HYPHYMPI && cd ../
 
+hyphy-analyses:
+	echo "installing hyphy-analyses"
+	@if ! test -d ./.hyphy-analyses; then git clone http://github.com/veg/hyphy-analyses.git ./.hyphy-analyses/; fi
 	
 hivtrace:
 	@mkdir -p ./.python
@@ -45,4 +48,4 @@ directories:
 	mkdir -p app/slac/output
 	mkdir -p app/hivtrace/output
 
-install: hyphy hivtrace npm directories
+install: hyphy hyphy-analyses hivtrace npm directories
