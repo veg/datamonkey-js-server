@@ -17,7 +17,7 @@ synRateClasses=3
 omegaClasses=3
 initialPointsInLikelihood=250
 initialGuesses=1
-
+KZERO="No"
 
 GETCOUNT=$CWD/../../lib/getAnnotatedCount.bf
 HYPHY=$CWD/../../.hyphy/hyphy
@@ -30,13 +30,14 @@ trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 output=$(echo $TREE_FN | $HYPHY $GETCOUNT )
 count=$(echo "${output: -1}")
 
+
 if [ $count -eq 2 ]
 then
-  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --output $RESULTS_FILE"
-  $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --output $RESULTS_FILE > $PROGRESS_FILE
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE"
+  $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE > $PROGRESS_FILE
 else
-  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --output $RESULTS_FILE"
-  $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --output $RESULTS_FILE > $PROGRESS_FILE
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE"
+  $HYPHY -i LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE > $PROGRESS_FILE
 fi
 
 echo "Completed" > $STATUS_FILE
