@@ -1,7 +1,7 @@
 {
   "name": "datamonkey-js-server",
   "description": "",
-  "version": "1.5.3",
+  "version": "2.0.0",
   "engines": {
     "node": ">=13"
   },
@@ -28,7 +28,7 @@
     "tail": "0.4.x",
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
-    "underscore": "1.9.x",
+    "underscore": "1.10.x",
     "winston": "^3.2.1"
   },
   "devDependencies": {
