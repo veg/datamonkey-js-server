@@ -36,26 +36,27 @@ export HYPHY_PATH=$HYPHY_PATH
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 count=$(echo '(echo '$TREE_FN') | '$HYPHY' '$GETCOUNT'' 2> /dev/null)
 
+
 # Outer if then statment to deal with the different (reduced) menue options if variational bayes is selected as the posterior estimation method
 # The two inner if then statments to deal with the differnet order of the branch selection options depending on if all of the branches are selected as FG
 if [ $POSTERIORESTIMATIONMETHOD -eq 3 ]
 then
   if [ $count -eq 2]
   then
-    echo '(echo '$FN'; echo '$RESULTS_FILE'; echo '$CACHE_FILE';  echo '$FG_OPTION_NOT_ALL_SELECTED'; echo '$GRIDPOINTS'; echo '$SUBSTITUTIONMODEL'; echo '$POSTERIORESTIMATIONMETHOD'; echo '$CONCENTRATION';) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' '$FADE''
-    (echo $FN; echo $RESULTS_FILE; echo $CACHE_FILE; echo $FG_OPTION_NOT_ALL_SELECTED; echo $GRIDPOINTS; echo $SUBSTITUTIONMODEL; echo $POSTERIORESTIMATIONMETHOD; echo $CHAINS; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $CONCENTRATION;) | $HYPHY -i LIBPATH=$HYPHY_PATH $FADE > $PROGRESS_FILE
+    echo "$HYPHY -i LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "All" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE"
+    $HYPHY -i LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "All" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > $PROGRESS_FILE
   else
-    echo '(echo '$FN'; echo '$RESULTS_FILE'; echo '$CACHE_FILE'; echo '$FG_OPTION_ALL_SELECTED'; echo '$GRIDPOINTS'; echo '$SUBSTITUTIONMODEL'; echo '$POSTERIORESTIMATIONMETHOD'; echo '$CONCENTRATION';) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' '$FADE''
-    (echo $FN; echo $RESULTS_FILE; echo $CACHE_FILE; echo $FG_OPTION_ALL_SELECTED; echo $GRIDPOINTS; echo $SUBSTITUTIONMODEL; echo $POSTERIORESTIMATIONMETHOD; echo $CHAINS; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $CONCENTRATION; ) | $HYPHY -i LIBPATH=$HYPHY_PATH $FADE > $PROGRESS_FILE
+    echo "$HYPHY -i LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "All" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE"
+    $HYPHY -i LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "All" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > $PROGRESS_FILE
   fi
 else
   if [ $count -eq 2]
   then
-    echo '(echo '$FN'; echo '$RESULTS_FILE'; echo '$CACHE_FILE'; echo '$FG_OPTION_NOT_ALL_SELECTED'; echo '$GRIDPOINTS'; echo '$SUBSTITUTIONMODEL'; echo '$POSTERIORESTIMATIONMETHOD'; echo '$CHAINS'; echo '$LENGTH'; echo '$BURNIN'; echo '$SAMPLES'; echo '$CONCENTRATION'; ) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' '$FADE''
-    (echo $FN; echo $RESULTS_FILE; echo $CACHE_FILE; echo $FG_OPTION_NOT_ALL_SELECTED; echo $GRIDPOINTS; echo $SUBSTITUTIONMODEL; echo $POSTERIORESTIMATIONMETHOD; echo $CHAINS; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $CONCENTRATION;) | $HYPHY -i LIBPATH=$HYPHY_PATH $FADE > $PROGRESS_FILE
+    echo "$HYPHY -i LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "All" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE"
+    $HYPHY -i LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "All" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > $PROGRESS_FILE
   else
-    echo '(echo '$FN'; echo '$RESULTS_FILE'; echo '$CACHE_FILE'; echo '$FG_OPTION_ALL_SELECTED'; echo '$GRIDPOINTS'; echo '$SUBSTITUTIONMODEL'; echo '$POSTERIORESTIMATIONMETHOD'; echo '$CHAINS'; echo '$LENGTH'; echo '$BURNIN'; echo '$SAMPLES'; echo '$CONCENTRATION';) | '$HYPHY' -i LIBPATH='$HYPHY_PATH' '$FADE''
-    (echo $FN; echo $RESULTS_FILE; echo $CACHE_FILE; echo $FG_OPTION_ALL_SELECTED; echo $GRIDPOINTS; echo $SUBSTITUTIONMODEL; echo $POSTERIORESTIMATIONMETHOD; echo $CHAINS; echo $LENGTH; echo $BURNIN; echo $SAMPLES; echo $CONCENTRATION;) | $HYPHY -i LIBPATH=$HYPHY_PATH $FADE > $PROGRESS_FILE
+    echo "$HYPHY -i LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "All" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE"
+    $HYPHY -i LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "All" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > $PROGRESS_FILE
   fi
 fi
 
