@@ -13,7 +13,7 @@ var client = redis.createClient();
 var gard = function(socket, stream, params) {
   var self = this;
 
-  var variation_map = { none: 1, general_discrete: 2, beta_gamma: 3 };
+  var variation_map = { none: "None", general_discrete: "GDD", beta_gamma: "Gamma" };
 
   self.socket = socket;
   self.stream = stream;
@@ -37,16 +37,12 @@ var gard = function(socket, stream, params) {
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
   self.status_fn = self.fn + ".status";
-  self.results_fn = self.fn + ".GARD";
+  self.json_fn = self.fn + ".GARD.json";
   self.progress_fn = self.fn + ".GARD.progress";
   self.tree_fn = self.fn + ".tre";
 
   // output fn
-  self.html_results_fn = self.results_fn;
-  self.finalout_results_fn = self.results_fn + "_finalout";
-  self.ga_details_results_fn = self.results_fn + "_ga_details";
-  self.splits = self.results_fn + "_splits";
-  self.json_fn = self.results_fn + ".json";
+  self.finalout_results_fn = self.fn + ".best-gard";
 
   self.qsub_params = [
     "-l walltime=" + 
@@ -65,7 +61,7 @@ var gard = function(socket, stream, params) {
       ",pfn=" +
       self.progress_fn +
       ",rfn=" +
-      self.results_fn +
+      self.json_fn +
       ",treemode=" +
       self.treemode +
       ",genetic_code=" +
@@ -118,23 +114,25 @@ gard.prototype.onComplete = function() {
   var self = this;
 
   var files = {
-    html: self.html_results_fn,
     finalout: self.finalout_results_fn,
-    ga_details: self.ga_details_results_fn,
-    splits: self.splits,
     json: self.json_fn
   };
 
   winston.info("gard results files to translate : " + JSON.stringify(files));
 
   self.sendNexusFile((err, success) => {
-    translate_gard.toJSON(files, (err, data) => {
-      if (err) {
-        // Error reading results file
-        self.onError("unable to read results file. " + err);
-      } else {
-        if (data) {
-          var stringified_results = JSON.stringify(data);
+    if (err) {
+      // Error reading results file
+      self.onError("unable to read results file. " + err);
+    } else {
+      fs.readFile(self.json_fn, "utf8", function(err, data) {
+
+        if (err) {
+          // Error reading results file
+          self.onError("unable to read results file. " + err);
+        } else {
+
+          var stringified_results = String(data);
 
           // Prepare redis packet for delivery
           var redis_packet = { results: stringified_results };
@@ -151,12 +149,9 @@ gard.prototype.onComplete = function() {
 
           // Remove id from active_job queue
           client.lrem("active_jobs", 1, self.id);
-        } else {
-          // Empty results file
-          self.onError("job seems to have completed, but no results found");
-        }
-      }
-    });
+        }    
+      });
+    }
   });
 };
 

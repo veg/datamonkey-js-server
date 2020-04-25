@@ -1,9 +1,9 @@
-#!/bin/bash
+#/bin/bash
 
 export PATH=/usr/local/bin:$PATH
 source /etc/profile.d/modules.sh
-
-module load openmpi/gnu/3.0
+module load aocc/1.3.0
+module load openmpi/gnu/3.0.2
 
 FN=$fn
 CWD=$cwd
@@ -16,13 +16,12 @@ RATE_VARIATION=$rate_var
 RATE_CLASSES=$rate_classes
 PROCS=$procs
 
-# As of 10/24/18 we are using version 2.3.11 of HyPhy instead of 2.3.14 for GARD analyses until we work out getting GARD working on 2.3.14 (likely an issue with aocc) 
-HYPHY=$CWD/../../.hyphy_gard_version2_3_11/HYPHYMPI
-HYPHY_PATH=$CWD/../../.hyphy_gard_version2_3_11/res/
+HYPHY=$CWD/../../.hyphy/HYPHYMPI
+HYPHY_PATH=$CWD/../../.hyphy/res/
 
 # Needs an MPI environment
 GARD=$HYPHY_PATH/TemplateBatchFiles/GARD.bf
-MODEL=010010
+MODEL="JTT"
 
 #RATE_VARIATIONS
 # 1: None
@@ -34,14 +33,8 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-if (($RATE_VARIATION < 2))
-then
-  echo '(echo '$FN'; echo '$MODEL'; echo '$RATE_VARIATION'; echo '$RESULTS_FN') | mpirun -np $PROCS '$HYPHY' LIBPATH='$HYPHY_PATH' ' $GARD''
-  (echo $FN; echo $MODEL; echo $RATE_VARIATION; echo $RESULTS_FN;) | mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
-else
-  echo '(echo '$FN'; echo '$MODEL'; echo '$RATE_VARIATION'; echo '$RATE_CLASSES'; echo '$RESULTS_FN') | mpirun -np $PROCS '$HYPHY' LIBPATH='$HYPHY_PATH' ' $GARD''
-  (echo $FN; echo $MODEL; echo $RATE_VARIATION; echo $RATE_CLASSES; echo $RESULTS_FN;) | mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD > $PROGRESS_FILE
-fi
+echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --alignment $FN --model $MODEL --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN"
+mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --alignment $FN --model $MODEL --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE
 
