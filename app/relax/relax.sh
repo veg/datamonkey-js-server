@@ -11,6 +11,7 @@ PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
 ANALYSIS_TYPE=$analysis_type
 OMEGA_RATE_CLASSES=3
+KZERO="No"
 
 HYPHY=$CWD/../../.hyphy/HYPHYMP
 RESULT_FILE=$fn.RELAX.json
@@ -20,5 +21,5 @@ RELAX=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/RELAX.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo '(echo '$GENETIC_CODE') | '$HYPHY' -i LIBPATH='$HYPHY_PATH' '$RELAX' --alignment '$FN' --tree '$TREE_FN' --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates '$OMEGA_RATE_CLASSES' --output '$RESULT_FILE' > '$PROGRESS_FILE''
-sh -c '(echo '$GENETIC_CODE') | '$HYPHY' -i LIBPATH='$HYPHY_PATH' '$RELAX' --alignment '$FN' --tree '$TREE_FN' --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates '$OMEGA_RATE_CLASSES' --output '$RESULT_FILE' > '$PROGRESS_FILE''
+echo "$HYPHY -i LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES  --kill-zero-lengths $KZERO --output $RESULT_FILE"
+$HYPHY -i LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > $PROGRESS_FILE
