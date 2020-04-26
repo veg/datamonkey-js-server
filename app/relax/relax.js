@@ -1,6 +1,7 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   util = require("util"),
+  code = require("../code").code,
   fs = require("fs"),
   path = require("path");
 
@@ -20,7 +21,7 @@ var relax = function(socket, stream, relax_params) {
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.analysis_type = self.params.analysis.analysis_type;
   self.nwk_tree = self.params.analysis.tagged_nwk_tree;
 
