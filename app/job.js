@@ -123,9 +123,12 @@ util.inherits(jobRunner, EventEmitter);
 // Submits a job to TORQUE by spawning qsub_submit.sh
 // Emit events
 jobRunner.prototype.submit = function(params, cwd) {
+
   var self = this;
 
   var qsub = spawn("qsub", params, { cwd: cwd });
+
+  winston.info("qsub", params);
 
   qsub.stderr.on("data", function(data) {
     winston.info(data.toString("utf8"));

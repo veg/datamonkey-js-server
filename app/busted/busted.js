@@ -49,7 +49,7 @@ var busted = function(socket, stream, busted_params) {
     ",nodes=1:ppn=" + 
     config.busted_procs,
     "-q",
-    config.qsub_avx_queue,
+    config.qsub_queue,
     "-v",
     "fn=" +
       self.fn +
