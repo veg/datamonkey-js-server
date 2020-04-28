@@ -13,6 +13,7 @@ var config = require("./config.json"),
   gard = require("./app/gard/gard.js"),
   hivtrace = require("./app/hivtrace/hivtrace.js"),
   meme = require("./app/meme/meme.js"),
+  multihit = require("./app/multihit/multihit.js"),
   prime = require("./app/prime/prime.js"),
   relax = require("./app/relax/relax.js"),
   slac = require("./app/slac/slac.js"),
@@ -152,6 +153,19 @@ io.sockets.on("connection", function(socket) {
   r.route("absrel", {
     spawn: function(stream, params) {
       new absrel.absrel(socket, stream, params.job);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // MULTIHIT
+  r.route("multihit", {
+    spawn: function(stream, params) {
+      new multihit.multihit(socket, stream, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
