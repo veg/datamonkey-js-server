@@ -19,7 +19,6 @@
     "commander": "^5.0.0",
     "moment": "2.x.x",
     "moment-timezone": "x.x.x",
-    "ms": "~0.7",
     "q": "^1.2.1",
     "redis": "^3.0.2",
     "should": "^13.2.3",
