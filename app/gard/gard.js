@@ -50,7 +50,7 @@ var gard = function(socket, stream, params) {
     ",nodes=" + config.gard_nodes + ":ppn=" + 
     config.gard_procs,
     "-q",
-    config.qsub_avx_queue,
+    config.qsub_queue,
     "-v",
     "fn=" +
       self.fn +

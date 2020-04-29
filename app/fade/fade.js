@@ -53,7 +53,7 @@ var fade = function(socket, stream, params) {
 
   self.qsub_params = [
     "-q",
-    config.qsub_avx_queue,
+    config.qsub_queue,
     "-v",
     "fn=" +
       self.fn +

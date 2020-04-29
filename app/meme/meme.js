@@ -37,7 +37,7 @@ var meme = function(socket, stream, params) {
     ",nodes=1:ppn=" + 
     config.meme_procs,
     "-q",
-    config.qsub_avx_queue,
+    config.qsub_queue,
     "-v",
     "fn=" +
       self.fn +

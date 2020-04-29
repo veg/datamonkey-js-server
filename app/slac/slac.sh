@@ -36,7 +36,7 @@ PVAL=0.1
 KZERO="No"
 
 # Using 1 for now, but should accept labeled branches
-echo $HYPHY -i LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE
-$HYPHY -i LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE > $PROGRESS_FILE
+echo $HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE
+$HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE > $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE
