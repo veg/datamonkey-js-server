@@ -22,6 +22,7 @@ var config = require("./config.json"),
   router = require(path.join(__dirname, "/lib/router.js")),
   JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue;
 
+const heapdump = require("heapdump");
 
 //Script parameter for defining port number.
 program
@@ -55,6 +56,17 @@ io.sockets.on("connection", function(socket) {
       socket.emit("job queue", jobs);
     });
   });
+
+  // HEAPDUMP
+  socket.on("heapdump", () => {
+      let filename = "./heapdump.json";
+      heapdump.writeSnapshot((err, filename) => {
+      console.log("Heap dump written to", filename);
+      socket.emit('heapdumped');
+    });
+  });
+
+
 
   var r = new router.io(socket);
 
