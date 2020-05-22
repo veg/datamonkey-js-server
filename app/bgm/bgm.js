@@ -4,7 +4,6 @@ var config = require("../../config.json"),
   model = require("../model").model,
   util = require("util"),
   fs = require("fs"),
-  winston = require("winston"),
   path = require("path");
 
 const datatypes = {

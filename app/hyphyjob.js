@@ -1,15 +1,12 @@
-var config = require("../config.json"),
-  cs = require("../lib/clientsocket.js"),
+const cs = require("../lib/clientsocket.js"),
+  logger = require("../lib/logger.js").logger,
   job = require("./job.js"),
   jobdel = require("../lib/jobdel.js"),
   redis = require("redis"),
   Q = require("q"),
-  winston = require("winston"),
   _ = require("underscore"),
   fs = require("fs"),
   path = require("path");
-
-winston.level = config.loglevel;
 
 // Use redis as our key-value store
 var client = redis.createClient();
@@ -20,22 +17,22 @@ hyphyJob.prototype.log = function(notification, complementary_info) {
   var self = this;
 
   if (complementary_info) {
-    winston.info(
+    logger.info(
       [self.type, self.id, notification, complementary_info].join(" : ")
     );
   } else {
-    winston.info([self.type, self.id, notification].join(" : "));
+    logger.info([self.type, self.id, notification].join(" : "));
   }
 };
 
 hyphyJob.prototype.warn = function(notification, complementary_info) {
   var self = this;
   if (complementary_info) {
-    winston.warn(
+    logger.warn(
       [self.type, self.id, notification, complementary_info].join(" : ")
     );
   } else {
-    winston.warn([self.type, self.id, notification].join(" : "));
+    logger.warn([self.type, self.id, notification].join(" : "));
   }
 };
 
@@ -180,9 +177,11 @@ hyphyJob.prototype.onComplete = function() {
 
         // Remove id from active_job queue
         client.lrem("active_jobs", 1, self.id);
+        delete this;
       } else {
         // Empty results file
         self.onError("job seems to have completed, but no results found");
+        delete this;
       }
     }
   });
@@ -253,6 +252,7 @@ hyphyJob.prototype.onError = function(error) {
     client.llen("active_jobs", function(err, n) {
       process.emit("jobCancelled", n);
     });
+    delete this;
   });
 };
 

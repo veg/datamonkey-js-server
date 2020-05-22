@@ -10,7 +10,7 @@ var spawn = require("child_process").spawn,
   Q = require("q"),
   _ = require("underscore"),
   JobStatus = require("../../lib/jobstatus.js").JobStatus,
-  winston = require("winston"),
+  logger = require("../../lib/logger").logger,
   redis = require("redis");
 
 // Use redis as our key-value store
@@ -231,12 +231,12 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
 
     // validate new_status and index
     if (_.isUndefined(new_status)) {
-      winston.warn("hivtrace malformed status update: " + entire_status);
+      logger.warn("hivtrace malformed status update: " + entire_status);
       return;
     }
 
     if (_.isUndefined(new_status[data.index])) {
-      winston.warn("hivtrace malformed status update: " + entire_status);
+      logger.warn("hivtrace malformed status update: " + entire_status);
       return;
     }
 
@@ -382,7 +382,7 @@ HivTraceRunner.prototype.log_publisher = function() {
   var tail = new Tail(self.hivtrace_log);
 
   tail.on("line", function(data) {
-    winston.debug(data);
+    logger.debug(data);
 
     if (data.indexOf("INFO:") != -1) {
       var msg = "";
@@ -392,7 +392,7 @@ HivTraceRunner.prototype.log_publisher = function() {
         var info = data.split("INFO:")[1].split("root:")[1];
         msg = JSON.parse(info);
       } catch (e) {
-        winston.warn("error" + e + " for " + info);
+        logger.warn("error" + e + " for " + info);
       }
 
       // publish to redis
@@ -423,7 +423,7 @@ HivTraceRunner.prototype.status_watcher = function() {
 
   self.subscriber.on("message", function(channel, message) {
     var redis_packet = JSON.parse(message);
-    winston.info(redis_packet);
+    logger.info(redis_packet);
 
     if (message != self.last_status_update) {
       self.emit(redis_packet.type, redis_packet);
@@ -446,13 +446,13 @@ HivTraceRunner.prototype.submit = function(qsub_params, cwd) {
     qsub.stderr.on("data", function(data) {
       // error when starting job
       self.emit("script error", { error: "" + data });
-      //winston.warn(data);
+      //logger.warn(data);
     });
 
     qsub.stdout.on("data", function(data) {
       self.torque_id = String(data).replace(/\n$/, "");
       self.emit("job created", { torque_id: self.torque_id });
-      winston.info(self.torque_id);
+      logger.info(self.torque_id);
     });
 
     qsub.on("close", function(code) {

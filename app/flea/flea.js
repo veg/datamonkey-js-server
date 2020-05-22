@@ -1,14 +1,14 @@
 var spawn_job = require("./spawn_flea.js"),
   fs = require("fs"),
   path = require("path"),
-  winston = require("winston"),
+  logger = require("../../lib/logger").logger,
   ss = require("socket.io-stream");
 
 // Pass socket to flea job
 var flea = function(socket, stream, params) {
 
   var log = function(notification) {
-    winston.info(["flea", JSON.stringify(notification)].join(" : "));
+    logger.info(["flea", JSON.stringify(notification)].join(" : "));
   };
 
   // Setup Analysis
