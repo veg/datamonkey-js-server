@@ -63,7 +63,6 @@ io.sockets.on("connection", function(socket) {
         console.log("Heap dump written to", filename);
         socket.emit('heapdumped');
         socket.disconnect();
-        debugger;
     });
   });
 
