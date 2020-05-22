@@ -1,11 +1,10 @@
-var config = require("../../config.json"),
+const config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   redis = require("redis"),
   util = require("util"),
-  winston = require("winston"),
+  logger = require("../../lib/logger").logger,
   fs = require("fs"),
-  path = require("path"),
-  translate_gard = require("translate-gard");
+  path = require("path");
 
 // Use redis as our key-value store
 var client = redis.createClient();
@@ -118,7 +117,7 @@ gard.prototype.onComplete = function() {
     json: self.json_fn
   };
 
-  winston.info("gard results files to translate : " + JSON.stringify(files));
+  logger.info("gard results files to translate : " + JSON.stringify(files));
 
   self.sendNexusFile((err, success) => {
     if (err) {

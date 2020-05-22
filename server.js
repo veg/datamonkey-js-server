@@ -1,7 +1,6 @@
-var config = require("./config.json"),
-  program = require('commander'),
+const config = require("./config.json"),
+  program = require("commander"),
   path = require("path"),
-  winston = require("winston"),
   absrel = require("./app/absrel/absrel.js"),
   bgm = require("./app/bgm/bgm.js"),
   busted = require("./app/busted/busted.js"),
@@ -20,6 +19,7 @@ var config = require("./config.json"),
   job = require("./app/job.js"),
   redis = require("redis"),
   router = require(path.join(__dirname, "/lib/router.js")),
+  logger = require(path.join(__dirname, "/lib/logger.js")).logger,
   JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue;
 
 const heapdump = require("heapdump");
@@ -40,8 +40,6 @@ if (program.port) {
 };
 
 
-winston.level = config.loglevel;
-
 var client = redis.createClient();
 
 // clear active_jobs list
@@ -54,6 +52,7 @@ io.sockets.on("connection", function(socket) {
   socket.on("job queue", function(jobs) {
     JobQueue(function(jobs) {
       socket.emit("job queue", jobs);
+      socket.disconnect();
     });
   });
 
@@ -61,12 +60,11 @@ io.sockets.on("connection", function(socket) {
   socket.on("heapdump", () => {
       let filename = "./heapdump.json";
       heapdump.writeSnapshot((err, filename) => {
-      console.log("Heap dump written to", filename);
-      socket.emit('heapdumped');
+        console.log("Heap dump written to", filename);
+        socket.emit('heapdumped');
+        socket.disconnect();
     });
   });
-
-
 
   var r = new router.io(socket);
 

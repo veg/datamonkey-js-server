@@ -5,7 +5,7 @@ var spawn = require("child_process").spawn,
   config = require("../../config.json"),
   util = require("util"),
   moment = require("moment"),
-  winston = require("winston"),
+  logger = require("../../lib/logger").logger,
   EventEmitter = require("events").EventEmitter;
 
 var FleaRunner = function() {};
@@ -67,7 +67,7 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
         self.onComplete();
         return;
       } else {
-        winston.info(
+        logger.info(
           "flea : submitting job : " +
             self.nextflow +
             " " +
@@ -88,21 +88,21 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
 
         flea_pipeline.stdout.on("data", function(data) {
           self.stdout += String(data);
-          winston.info(self.id + " : flea : " + self.stdout);
+          logger.info(self.id + " : flea : " + self.stdout);
           var status_update_packet = { phase: "running", msg: self.stdout };
           self.emit("status update", status_update_packet);
         });
 
         flea_pipeline.stderr.on("data", function(data) {
           self.stderr += String(data);
-          winston.info(self.id + " : flea : " + self.stderr);
+          logger.info(self.id + " : flea : " + self.stderr);
           var status_update_packet = { phase: "running", msg: self.stderr };
           self.emit("status update", status_update_packet);
         });
 
         flea_pipeline.on("close", function(code) {
           // Read results files and send
-          winston.info("exit code: " + code);
+          logger.info("exit code: " + code);
 
           // should send over session files
 
@@ -122,13 +122,13 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
     //Unpack the tar file
     function onError(err) {
       err = err + " : " + self.filepath;
-      winston.warn("flea : script error: " + self.python + " " + err);
+      logger.warn("flea : script error: " + self.python + " " + err);
       self.emit("script error", err);
     }
 
     function onEnd() {
       fs.writeFileSync(self.file_list, "");
-      winston.log("flea : status update : creating list");
+      logger.log("flea : status update : creating list");
 
       // Create list inside filedir
       fs.readdir(self.filedir, function(err, files) {
@@ -146,7 +146,7 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
               msa.visit_code,
               formatted_visit_date
             );
-            winston.log("flea : appending list : " + string_to_write);
+            logger.log("flea : appending list : " + string_to_write);
             fs.appendFileSync(self.file_list, string_to_write);
           }
 

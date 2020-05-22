@@ -1,14 +1,12 @@
-var config = require("../config.json"),
-  spawn = require("child_process").spawn,
+var spawn = require("child_process").spawn,
   redis = require("redis"),
   cs = require("../lib/clientsocket.js"),
-  winston = require("winston"),
+  logger = require("../lib/logger.js").logger,
   jobdel = require("../lib/jobdel.js"),
   util = require("util"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   EventEmitter = require("events").EventEmitter;
 
-winston.level = config.loglevel;
 
 // Use redis as our key-value store
 var client = redis.createClient();
@@ -21,15 +19,15 @@ var resubscribe = function(socket, id) {
 
   var callback = function(err, obj) {
     if (err || !obj) {
-      winston.warn(self.id + " : resubscribe : " + err);
+      logger.warn(self.id + " : resubscribe : " + err);
       socket.emit("script error", { error: err });
     } else {
       // check job status
       var current_status = obj.status;
-      winston.info(self.id + " : job : current status : " + obj.status);
+      logger.info(self.id + " : job : current status : " + obj.status);
       if (current_status != "completed" && current_status != "exiting") {
         // if job is still pending, resubscribe
-        winston.warn(
+        logger.warn(
           "info",
           self.id + " : job : resubscribe : job pending, resuming"
         );
@@ -37,7 +35,7 @@ var resubscribe = function(socket, id) {
         var clientSocket = new cs.ClientSocket(socket, self.id);
       } else if (current_status == "completed") {
         // if job completed, emit results
-        winston.info(self.id + " : job : resubscribe : job completed");
+        logger.info(self.id + " : job : resubscribe : job completed");
         var json_results = JSON.parse(obj.results);
         socket.emit("completed", json_results);
         socket.disconnect();
@@ -57,7 +55,7 @@ var cancel = function(socket, id) {
 
   var callback = function(err, obj) {
     if (err || !obj) {
-      winston.warn(self.id + " : cancel : " + err);
+      logger.warn(self.id + " : cancel : " + err);
       socket.emit("cancelled", { success: "no", error: err });
     } else {
       // check job status
@@ -67,7 +65,7 @@ var cancel = function(socket, id) {
       try {
         torque_id = JSON.parse(obj.torque_id).torque_id;
       } catch (e) {
-        winston.info(
+        logger.info(
           self.id + " : job : cancel : could not retrieve torque information"
         );
         socket.emit("cancelled", {
@@ -78,22 +76,22 @@ var cancel = function(socket, id) {
 
       if (current_status != "completed" && current_status != "exiting") {
         // if job is still pending, cancel
-        winston.warn("info", self.id + " : job : cancel : cancelling job");
+        logger.warn("info", self.id + " : job : cancel : cancelling job");
 
         jobdel.jobDelete(torque_id, function() {
-          winston.warn("info", self.id + " : job : cancel : job cancelled");
+          logger.warn("info", self.id + " : job : cancel : job cancelled");
           client.hset(self.id, "status", "aborted");
           socket.emit("cancelled", { success: "ok" });
           socket.disconnect();
         });
       } else if (current_status == "completed") {
         // if job completed, emit results
-        winston.info(self.id + " : job : cancel : job completed");
+        logger.info(self.id + " : job : cancel : job completed");
         socket.emit("cancelled", { success: "ok" });
         socket.disconnect();
       } else {
         // if job aborted, emit error
-        winston.info(self.id + " : job : cancel : job does not exist");
+        logger.info(self.id + " : job : cancel : job does not exist");
         socket.emit("cancelled", { success: "no", error: "no job" });
       }
     }
@@ -125,13 +123,12 @@ util.inherits(jobRunner, EventEmitter);
 jobRunner.prototype.submit = function(params, cwd) {
 
   var self = this;
-
   var qsub = spawn("qsub", params, { cwd: cwd });
 
-  winston.info("qsub", params);
+  logger.info("qsub", params);
 
   qsub.stderr.on("data", function(data) {
-    winston.info(data.toString("utf8"));
+    logger.info(data.toString("utf8"));
   });
 
   qsub.stdout.on("data", function(data) {

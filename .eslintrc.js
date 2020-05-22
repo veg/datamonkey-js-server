@@ -20,6 +20,9 @@ module.exports = {
             "error",
             "double"
         ],
+        "no-undefined": [
+            "error"
+        ],
         "semi": [
             "off",
             "never"
