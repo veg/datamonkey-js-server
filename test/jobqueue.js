@@ -3,9 +3,12 @@ var fs = require('fs'),
     should = require('should'),
     path = require('path'),
     redis = require('redis'),
-    _ = require('underscore');
+    _ = require('underscore'),
+    config = require('../../config.json');
 
-var client = redis.createClient();
+var client = redis.createClient({
+  host: config.redis_host, port: config.redis_port
+});
 var JobQueue = require(path.join(__dirname, '/../lib/jobqueue.js')).JobQueue;
 
 describe('job queue', function() {

@@ -7,7 +7,7 @@ const config = require("../../config.json"),
   path = require("path");
 
 // Use redis as our key-value store
-var client = redis.createClient();
+var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
 
 var gard = function(socket, stream, params) {
   var self = this;
