@@ -28,7 +28,7 @@
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
     "underscore": "1.10.x",
-    "winston": "^3.2.1"
+    "winston": "^3.3.1"
   },
   "devDependencies": {
     "eslint": "^7.0.0",
