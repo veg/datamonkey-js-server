@@ -6,10 +6,14 @@ const cs = require("../lib/clientsocket.js"),
   Q = require("q"),
   _ = require("underscore"),
   fs = require("fs"),
-  path = require("path");
+  path = require("path"),
+  config = require("../config.json");
+
 
 // Use redis as our key-value store
-var client = redis.createClient();
+var client =redis.createClient({
+  host: config.redis_host, port: config.redis_port
+});
 
 var hyphyJob = function() {};
 

@@ -5,11 +5,14 @@ var spawn = require("child_process").spawn,
   jobdel = require("../lib/jobdel.js"),
   util = require("util"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
-  EventEmitter = require("events").EventEmitter;
+  EventEmitter = require("events").EventEmitter,
+  config = require("../config.json");
 
 
 // Use redis as our key-value store
-var client = redis.createClient();
+var client = redis.createClient({
+  host: config.redis_host, port: config.redis_port
+});
 
 // resubscribes a socket to an existing pending job,
 // otherwise reports contents from redis
