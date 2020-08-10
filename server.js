@@ -44,6 +44,7 @@ var client = redis.createClient({
   host: config.redis_host, port: config.redis_port
 });
 
+
 // clear active_jobs list
 // TODO: we should do more than just clear the active_jobs list
 client.del("active_jobs");
