@@ -4,15 +4,17 @@ const config = require("../../config.json"),
   util = require("util"),
   logger = require("../../lib/logger").logger,
   fs = require("fs"),
+  datatypes = require("../type").type,
   path = require("path");
 
 // Use redis as our key-value store
-var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
+const client = redis.createClient({ host: config.redis_host, port: config.redis_port });
 
 var gard = function(socket, stream, params) {
+
   var self = this;
 
-  var variation_map = { none: "None", general_discrete: "GDD", beta_gamma: "Gamma" };
+  const variation_map = { none: "None", general_discrete: "GDD", beta_gamma: "Gamma" };
 
   self.socket = socket;
   self.stream = stream;
@@ -30,7 +32,12 @@ var gard = function(socket, stream, params) {
     variation_map[self.params.analysis.site_to_site_variation];
   self.rate_classes = self.params.analysis.rate_classes || 2;
   self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.datatype = self.params.analysis.datatype || "0";
+  self.datatype = datatypes[self.datatype];
   self.nj = self.params.msa[0].nj;
+
+  debugger;
+  console.log(self.datatype);
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -69,6 +76,8 @@ var gard = function(socket, stream, params) {
       self.rate_variation +
       ",rate_classes=" +
       self.rate_classes +
+      ",datatype=" +
+      self.datatype+
       ",analysis_type=" +
       self.type +
       ",cwd=" +
@@ -92,6 +101,7 @@ var gard = function(socket, stream, params) {
   // Ensure the progress file exists
   fs.openSync(self.progress_fn, "w");
   self.init();
+
 };
 
 util.inherits(gard, hyphyJob);
