@@ -11,9 +11,12 @@ TREE_FN=$tree_fn
 STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
+
 GENETIC_CODE=$genetic_code
 RATE_VARIATION=$rate_var
 RATE_CLASSES=$rate_classes
+DATATYPE=$datatype
+
 PROCS=$procs
 
 HYPHY=$CWD/../../.hyphy/HYPHYMPI
@@ -33,8 +36,8 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --alignment $FN --model $MODEL --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN"
-mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --alignment $FN --model $MODEL --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
+echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN"
+mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE
 
