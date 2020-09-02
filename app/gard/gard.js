@@ -36,9 +36,6 @@ var gard = function(socket, stream, params) {
   self.datatype = datatypes[self.datatype];
   self.nj = self.params.msa[0].nj;
 
-  debugger;
-  console.log(self.datatype);
-
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
