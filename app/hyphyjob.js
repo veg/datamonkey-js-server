@@ -9,7 +9,6 @@ const cs = require("../lib/clientsocket.js"),
   path = require("path"),
   config = require("../config.json");
 
-
 // Use redis as our key-value store
 var client =redis.createClient({
   host: config.redis_host, port: config.redis_port
@@ -157,6 +156,7 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
 };
 
 hyphyJob.prototype.onComplete = function() {
+
   var self = this;
 
   fs.readFile(self.results_fn, "utf8", function(err, data) {
@@ -164,7 +164,7 @@ hyphyJob.prototype.onComplete = function() {
       // Error reading results file
       self.onError("unable to read results file. " + err);
     } else {
-      if (data) {
+      if (data && data.length > 0) {
         // Prepare redis packet for delivery
         var redis_packet = { results: data };
         redis_packet.type = "completed";
@@ -225,6 +225,7 @@ hyphyJob.prototype.onJobMetadata = function(data) {
 
 // If a job is cancelled early or the result contents cannot be read
 hyphyJob.prototype.onError = function(error) {
+
   var self = this;
 
   // The packet that will delivered to datamonkey via the publish command
@@ -239,6 +240,7 @@ hyphyJob.prototype.onError = function(error) {
   var promises = [std_err_promise, progress_fn_promise, std_out_promise];
 
   Q.allSettled(promises).then(function(results) {
+
     // Prepare redis packet for delivery
     redis_packet.stderr = results[0].value;
     redis_packet.progress = results[1].value;

@@ -126,7 +126,7 @@ gard.prototype.onComplete = function() {
     } else {
       fs.readFile(self.json_fn, "utf8", function(err, data) {
 
-        if (err) {
+        if (err || !data.length) {
           // Error reading results file
           self.onError("unable to read results file. " + err);
         } else {
