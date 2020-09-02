@@ -16,7 +16,7 @@
     "test-busted": "mocha -R spec ./tests/busted/busted.js"
   },
   "dependencies": {
-    "commander": "^5.1.0",
+    "commander": "^6.0.0",
     "moment": "2.x.x",
     "moment-timezone": "x.x.x",
     "q": "^1.2.1",
@@ -27,11 +27,11 @@
     "tail": "0.4.x",
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
-    "underscore": "1.10.x",
+    "underscore": "1.11.x",
     "winston": "^3.2.1"
   },
   "devDependencies": {
-    "eslint": "^7.0.0",
+    "eslint": "^7.6.0",
     "heapdump": "^0.3.15",
     "socket.io-client": "1.x.x"
   }
