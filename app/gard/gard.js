@@ -12,7 +12,7 @@ const client = redis.createClient({ host: config.redis_host, port: config.redis_
 
 var gard = function(socket, stream, params) {
 
-  var self = this;
+  const self = this;
 
   const variation_map = { none: "None", general_discrete: "GDD", beta_gamma: "Gamma" };
 
