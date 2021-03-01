@@ -12,7 +12,7 @@ const client = redis.createClient({ host: config.redis_host, port: config.redis_
 
 var gard = function(socket, stream, params) {
 
-  var self = this;
+  const self = this;
 
   const variation_map = { none: "None", general_discrete: "GDD", beta_gamma: "Gamma" };
 
@@ -32,6 +32,7 @@ var gard = function(socket, stream, params) {
     variation_map[self.params.analysis.site_to_site_variation];
   self.rate_classes = self.params.analysis.rate_classes || 2;
   self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.run_mode = self.params.analysis.run_mode == "1" ? "Faster": "Normal";
   self.datatype = self.params.analysis.datatype || "0";
   self.datatype = datatypes[self.datatype];
   self.nj = self.params.msa[0].nj;
@@ -75,6 +76,8 @@ var gard = function(socket, stream, params) {
       self.rate_classes +
       ",datatype=" +
       self.datatype+
+      ",run_mode=" +
+      self.run_mode+
       ",analysis_type=" +
       self.type +
       ",cwd=" +
