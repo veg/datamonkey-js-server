@@ -82,6 +82,7 @@ hyphyJob.prototype.spawn = function() {
         // No status update could be read,
         // but this could be due to the job just starting
         self.log("read progress file, but no data");
+        self.onStatusUpdate(data);
       }
     });
   });
