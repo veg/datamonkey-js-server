@@ -22,7 +22,7 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE"
-mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE
+echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE"
+mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE
