@@ -1,9 +1,10 @@
 var spawn = require("child_process").spawn,
   redis = require("redis"),
+  fs = require("fs"),
+  util = require("util"),
   cs = require("../lib/clientsocket.js"),
   logger = require("../lib/logger.js").logger,
   jobdel = require("../lib/jobdel.js"),
-  util = require("util"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   EventEmitter = require("events").EventEmitter,
   config = require("../config.json");
@@ -103,9 +104,14 @@ var cancel = function(socket, id) {
   client.hgetall(self.id, callback);
 };
 
-var jobRunner = function(script, params) {
+var jobRunner = function(params, results_fn) {
+
   var self = this;
   self.torque_id = "";
+  self.error_count = 0;
+  self.QSTAT_ERROR_LIMIT = 500;
+  self.results_fn = results_fn || "";
+  self.qsub_params = params;
 
   self.states = {
     completed: "completed",
@@ -117,6 +123,7 @@ var jobRunner = function(script, params) {
     waiting: "waiting",
     suspended: "suspended"
   };
+
 };
 
 util.inherits(jobRunner, EventEmitter);
@@ -126,6 +133,8 @@ util.inherits(jobRunner, EventEmitter);
 jobRunner.prototype.submit = function(params, cwd) {
 
   var self = this;
+  self.qsub_params = params;
+
   var qsub = spawn("qsub", params, { cwd: cwd });
 
   logger.info("qsub", params);
@@ -148,9 +157,36 @@ jobRunner.prototype.submit = function(params, cwd) {
 // Once the job has been scheduled, we need to watch the files that it
 // sends updates to.
 jobRunner.prototype.status_watcher = function() {
+
   var self = this;
   var job_status = new JobStatus(self.torque_id);
   self.metronome_id = job_status.watch(function(error, status_packet) {
+
+    // Check if results file exists if there is an error
+    if(error) {
+
+      fs.stat(self.results_fn, (err, res) => {
+
+        self.error_count += 1;
+
+        if(res.size > 0) {
+          clearInterval(self.metronome_id);
+          self.emit(self.states.completed, "");
+          return
+        }
+
+        if(self.error_count > self.QSTAT_ERROR_LIMIT) {
+          clearInterval(self.metronome_id);
+          self.emit("script error", "");
+          return
+        }
+
+      });
+
+    }
+
+    self.error_count = 0;
+
     if (
       status_packet.status == self.states.completed ||
       status_packet.status == self.states.exiting

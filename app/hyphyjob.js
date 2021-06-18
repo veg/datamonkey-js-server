@@ -7,6 +7,7 @@ const cs = require("../lib/clientsocket.js"),
   _ = require("underscore"),
   fs = require("fs"),
   path = require("path"),
+  JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   config = require("../config.json");
 
 // Use redis as our key-value store
@@ -45,21 +46,33 @@ hyphyJob.prototype.attachSocket = function() {
   new cs.ClientSocket(self.socket, self.id);
 };
 
+// Can either initialize a new job or check on previous one
 hyphyJob.prototype.init = function() {
+
   var self = this;
+
   // store parameters in redis
   client.hset(self.id, "params", JSON.stringify(self.params));
   self.attachSocket();
-  self.spawn();
+
+  // If check param set, don't start new job
+  if(self.params["checkOnly"]) {
+    self.torque_id = self.params["torque_id"];
+    self.checkJob();
+  } else {
+    self.spawn();
+  }
+
 };
 
 hyphyJob.prototype.spawn = function() {
+
   var self = this;
 
   self.log("spawning");
 
   // A class that spawns the process and emits status events
-  var hyphy_job_runner = new job.jobRunner(self.qsub_params);
+  var hyphy_job_runner = new job.jobRunner(self.qsub_params, self.results_fn);
 
   // On status updates, report to datamonkey-js
   hyphy_job_runner.on("status", function(status) {
@@ -131,9 +144,11 @@ hyphyJob.prototype.spawn = function() {
   self.socket.on("disconnect", function() {
     self.log("user disconnected");
   });
+
 };
 
 hyphyJob.prototype.onJobCreated = function(torque_id) {
+
   var self = this;
 
   self.push_active_job = function() {
@@ -154,6 +169,7 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   client.hset(self.torque_id, "sites", self.params.msa[0].sites);
   client.hset(self.torque_id, "sequences", self.params.msa[0].sequences);
   self.push_job_once(self.id);
+
 };
 
 hyphyJob.prototype.onComplete = function() {
@@ -190,9 +206,11 @@ hyphyJob.prototype.onComplete = function() {
       }
     }
   });
+
 };
 
 hyphyJob.prototype.onStatusUpdate = function(data) {
+
   var self = this;
   self.current_status = data;
 
@@ -216,12 +234,15 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
 
   // Log status update on server
   self.log("status update", str_redis_packet);
+
 };
 
 hyphyJob.prototype.onJobMetadata = function(data) {
+
   var self = this;
   self.stime = data.stime;
   self.ctime = data.ctime;
+
 };
 
 // If a job is cancelled early or the result contents cannot be read
@@ -259,13 +280,17 @@ hyphyJob.prototype.onError = function(error) {
     client.llen("active_jobs", function(err, n) {
       process.emit("jobCancelled", n);
     });
+
     delete this;
+
   });
+
 };
 
 // Called when a job is first created
 // Set id and output file names
 hyphyJob.prototype.setTorqueParameters = function(torque_id) {
+
   var self = this;
   self.torque_id = torque_id.torque_id;
 
@@ -278,10 +303,12 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
     path.join(self.output_dir, self.qsub_script_name) +
     ".o" +
     self.torque_id.split(".")[0];
+
 };
 
 // Cancel the job and report an error
 hyphyJob.prototype.cancel = function() {
+
   var self = this;
 
   var cb = function() {
@@ -292,6 +319,48 @@ hyphyJob.prototype.cancel = function() {
 
   self.cancel_once = _.once(jobdel.jobDelete);
   self.cancel_once(self.torque_id, cb);
+
+};
+
+// Return whether job has completed, still running, or aborted
+hyphyJob.prototype.checkJob = function() {
+
+  var self = this;
+
+  // Get results file stats
+  fs.stat(self.results_fn, (err, res) => { 
+
+    if(err || !res) {
+
+      // Get status of job
+      var jobStatus = new JobStatus(self.torque_id);
+      jobStatus.returnJobStatus(self.torque_id, function(err, status) {
+        if(err) {
+          // If job has no status returned and there are no results, return aborted
+          self.warn("no status, and no completed results; job aborted");
+          self.onError("no status, and no completed results; job aborted");
+          return
+        } else {
+          // If job has status returned, don't do anything
+          self.log("status", status);
+          self.onStatusUpdate(status);
+          return
+        }
+      
+      });
+
+    } else if (res.size > 0) {
+      //If job has no status returned and there are results, return completed
+      self.onComplete();
+      return
+    } else {
+      self.warn("no status, and no completed results; job aborted");
+      self.onError("no status, and no completed results; job aborted");
+      return;
+    }
+
+  });
+
 };
 
 exports.hyphyJob = hyphyJob;

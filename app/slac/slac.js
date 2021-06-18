@@ -6,10 +6,13 @@ var config = require("../../config.json"),
   path = require("path");
 
 var slac = function(socket, stream, params) {
+
+
   var self = this;
   self.socket = socket;
   self.stream = stream;
   self.params = params;
+
 
   // object specific attributes
   self.type = "slac";
@@ -74,6 +77,7 @@ var slac = function(socket, stream, params) {
   // Ensure the progress file exists
   fs.openSync(self.progress_fn, "w");
   self.init();
+
 };
 
 util.inherits(slac, hyphyJob);

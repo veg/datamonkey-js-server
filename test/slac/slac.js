@@ -1,4 +1,4 @@
-var fs        = require('fs'),
+const fs        = require('fs'),
     should    = require('should'),
     winston   = require('winston'),
     clientio  = require('socket.io-client');
@@ -29,6 +29,12 @@ describe('slac jobrunner', function() {
     socket.on('slac:resubscribe',function(params){
       winston.info('resubscribing slac');
       new job.resubscribe(socket, params.id);
+    });
+
+    socket.on('slac:check',function(params){
+      winston.info('checking slac');
+      params["checkOnly"] = true;
+      var slac_job = new slac.slac(socket, null, params);
     });
 
   });
@@ -67,5 +73,36 @@ describe('slac jobrunner', function() {
     });
 
   });
+
+  it('check job', function(done) {
+
+    this.timeout(120000);
+
+    var params = JSON.parse(fs.readFileSync(params_file));
+    var slac_socket = clientio.connect(socketURL, options);
+
+    slac_socket.on('connect', function(data){
+      winston.info('connected to server');
+      slac_socket.emit('slac:check', params);
+    });
+
+    slac_socket.on('status update', function(data){
+      winston.info('job successfully completed');
+      done();
+    });
+
+    slac_socket.on('completed', function(data) {
+      winston.warn('done');
+      done();
+    });
+
+    slac_socket.on('script error', function(data) {
+      winston.warn('script error');
+      done();
+    });
+
+  });
+
+
 
 });
