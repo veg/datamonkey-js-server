@@ -96,10 +96,13 @@ io.sockets.on("connection", function(socket) {
   });
 
   // PRIME
-  // TODO: Currently broken and route is commented out
   r.route("prime", {
     spawn: function(stream, params) {
       new prime.prime(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new prime.prime(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
@@ -114,6 +117,10 @@ io.sockets.on("connection", function(socket) {
     spawn: function(stream, params) {
       new busted.busted(socket, stream, params.job);
     },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new busted.busted(socket, null, params.job);
+    },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
     },
@@ -126,6 +133,10 @@ io.sockets.on("connection", function(socket) {
   r.route("relax", {
     spawn: function(stream, params) {
       new relax.relax(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new relax.relax(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
@@ -140,6 +151,10 @@ io.sockets.on("connection", function(socket) {
     spawn: function(stream, params) {
       new fel.fel(socket, stream, params.job);
     },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new fel.fel(socket, null, params.job);
+    },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
     },
@@ -152,6 +167,10 @@ io.sockets.on("connection", function(socket) {
   r.route("cfel", {
     spawn: function(stream, params) {
       new cfel.cfel(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new cfel.cfel(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
@@ -166,6 +185,10 @@ io.sockets.on("connection", function(socket) {
     spawn: function(stream, params) {
       new absrel.absrel(socket, stream, params.job);
     },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new absrel.absrel(socket, null, params.job);
+    },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
     },
@@ -178,6 +201,10 @@ io.sockets.on("connection", function(socket) {
   r.route("multihit", {
     spawn: function(stream, params) {
       new multihit.multihit(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new multihit.multihit(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
@@ -192,6 +219,10 @@ io.sockets.on("connection", function(socket) {
     spawn: function(stream, params) {
       new meme.meme(socket, stream, params.job);
     },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new meme.meme(socket, null, params.job);
+    },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
     },
@@ -204,6 +235,10 @@ io.sockets.on("connection", function(socket) {
   r.route("slac", {
     spawn: function(stream, params) {
       new slac.slac(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new slac.slac(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
@@ -218,6 +253,10 @@ io.sockets.on("connection", function(socket) {
     spawn: function(stream, params) {
       new gard.gard(socket, stream, params.job);
     },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new gard.gard(socket, null, params.job);
+    },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
     },
@@ -230,6 +269,10 @@ io.sockets.on("connection", function(socket) {
   r.route("fubar", {
     spawn: function(stream, params) {
       new fubar.fubar(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new fubar.fubar(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
@@ -244,6 +287,10 @@ io.sockets.on("connection", function(socket) {
     spawn: function(stream, params) {
       new fade.fade(socket, stream, params.job);
     },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new fade.fade(socket, null, params.job);
+    },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
     },
@@ -257,6 +304,10 @@ io.sockets.on("connection", function(socket) {
     spawn: function(stream, params) {
       new bgm.bgm(socket, stream, params.job);
     },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new bgm.bgm(socket, null, params.job);
+    },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
     },
@@ -267,6 +318,7 @@ io.sockets.on("connection", function(socket) {
 
   // Acknowledge new connection
   socket.emit("connected", { hello: "Ready to serve" });
+
 });
 
 
