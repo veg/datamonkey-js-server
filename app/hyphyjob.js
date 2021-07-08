@@ -11,7 +11,7 @@ const cs = require("../lib/clientsocket.js"),
   config = require("../config.json");
 
 // Use redis as our key-value store
-var client =redis.createClient({
+var client = redis.createClient({
   host: config.redis_host, port: config.redis_port
 });
 
@@ -125,9 +125,7 @@ hyphyJob.prototype.spawn = function() {
     self.onJobMetadata(status);
   });
 
-  self.stream.pipe(fs.createWriteStream(self.fn));
-
-  self.stream.on("end", function(err) {
+  fs.writeFile(self.fn, self.stream, (err) => {
     if (err) throw err;
     // Pass filename in as opposed to generating it in spawn_hyphyJob
     hyphy_job_runner.submit(self.qsub_params, self.output_dir);

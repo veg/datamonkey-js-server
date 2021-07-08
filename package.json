@@ -22,7 +22,7 @@
     "q": "^1.2.1",
     "redis": "^3.0.2",
     "should": "^13.2.3",
-    "socket.io": "1.4.x",
+    "socket.io": "4.1.2",
     "socket.io-stream": "0.6.x",
     "tail": "0.4.x",
     "tar": "^2.0",
