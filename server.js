@@ -19,26 +19,27 @@ const config = require("./config.json"),
   job = require("./app/job.js"),
   redis = require("redis"),
   router = require(path.join(__dirname, "/lib/router.js")),
-  logger = require(path.join(__dirname, "/lib/logger.js")).logger,
   JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue;
 
 const heapdump = require("heapdump");
 
 //Script parameter for defining port number.
 program
-  .version('0.1.0')
-  .usage('[options] <file ...>')
-  .option('-p, --port <n>', 'Port number', parseInt)
+  .version("2.1.3")
+  .usage("[options] <file ...>")
+  .option("-p, --port <n>", "Port number", parseInt)
   .parse(process.argv);
 
 
 //Assigns port number to variable, if none then refer to config.json
-if (program.port) {
-  var io = require("socket.io").listen(program.port);
-} else{
-  var io = require("socket.io").listen(config.port);
-};
+var ioOptions = { "maxHttpBufferSize" : 1e8 };
+var ioPort = config.port;
 
+if (program.port) {
+  ioPort = program.port;
+}
+
+const io = require("socket.io")(ioPort, ioOptions);
 
 var client = redis.createClient({
   host: config.redis_host, port: config.redis_port
