@@ -16,6 +16,10 @@ var fel = function(socket, stream, params) {
   self.qsub_script_name = "fel.sh";
   self.qsub_script = __dirname + "/" + self.qsub_script_name;
 
+  // bootstrap attributes
+  self.bootstrap = self.params.analysis.bootstrap;
+  self.resample = self.params.analysis.resample;
+
   // parameter attributes
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
@@ -52,6 +56,10 @@ var fel = function(socket, stream, params) {
       self.results_short_fn +
       ",treemode=" +
       self.treemode +
+      ",bootstrap=" +
+      self.bootstrap +
+      ",resample=" +
+      self.resample+
       ",genetic_code=" +
       self.genetic_code +
       ",analysis_type=" +
