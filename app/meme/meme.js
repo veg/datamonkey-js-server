@@ -22,6 +22,10 @@ var meme = function(socket, stream, params) {
   self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nj = self.params.msa[0].nj;
 
+  // bootstrap attributes
+  self.bootstrap = self.params.analysis.bootstrap;
+  self.resample = self.params.analysis.resample;
+
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
@@ -51,6 +55,10 @@ var meme = function(socket, stream, params) {
       self.results_short_fn +
       ",treemode=" +
       self.treemode +
+      ",bootstrap=" +
+      self.bootstrap +
+      ",resample=" +
+      self.resample +
       ",genetic_code=" +
       self.genetic_code +
       ",analysis_type=" +

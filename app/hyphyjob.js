@@ -175,11 +175,15 @@ hyphyJob.prototype.onComplete = function() {
   var self = this;
 
   fs.readFile(self.results_fn, "utf8", function(err, data) {
+
     if (err) {
       // Error reading results file
       self.onError("unable to read results file. " + err);
     } else {
+
       if (data && data.length > 0) {
+        console.log(data.length);
+
         // Prepare redis packet for delivery
         var redis_packet = { results: data };
         redis_packet.type = "completed";
@@ -197,6 +201,7 @@ hyphyJob.prototype.onComplete = function() {
         // Remove id from active_job queue
         client.lrem("active_jobs", 1, self.id);
         delete this;
+
       } else {
         // Empty results file
         self.onError("job seems to have completed, but no results found");
@@ -348,9 +353,11 @@ hyphyJob.prototype.checkJob = function() {
       });
 
     } else if (res.size > 0) {
+
       //If job has no status returned and there are results, return completed
       self.onComplete();
-      return
+      return;
+
     } else {
       self.warn("no status, and no completed results; job aborted");
       self.onError("no status, and no completed results; job aborted");
