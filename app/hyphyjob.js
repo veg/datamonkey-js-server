@@ -182,7 +182,6 @@ hyphyJob.prototype.onComplete = function() {
     } else {
 
       if (data && data.length > 0) {
-        console.log(data.length);
 
         // Prepare redis packet for delivery
         var redis_packet = { results: data };
