@@ -27,9 +27,6 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo $BOOTSTRAP
-echo $RESAMPLE
-
 if [ $BOOTSTRAP = "true" ]
 then
   echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE >> $PROGRESS_FILE"
