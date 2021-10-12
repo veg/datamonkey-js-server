@@ -152,6 +152,7 @@ jobRunner.prototype.submit = function(params, cwd) {
   qsub.on("close", function(code) {
     self.status_watcher();
   });
+
 };
 
 // Once the job has been scheduled, we need to watch the files that it
@@ -160,6 +161,7 @@ jobRunner.prototype.status_watcher = function() {
 
   var self = this;
   var job_status = new JobStatus(self.torque_id);
+
   self.metronome_id = job_status.watch(function(error, status_packet) {
 
     // Check if results file exists if there is an error
@@ -169,10 +171,14 @@ jobRunner.prototype.status_watcher = function() {
 
         self.error_count += 1;
 
-        if(res.size > 0) {
-          clearInterval(self.metronome_id);
-          self.emit(self.states.completed, "");
-          return
+        if(!err) {
+
+          if(res.size > 0) {
+            clearInterval(self.metronome_id);
+            self.emit(self.states.completed, "");
+            return
+          }
+
         }
 
         if(self.error_count > self.QSTAT_ERROR_LIMIT) {
@@ -200,9 +206,12 @@ jobRunner.prototype.status_watcher = function() {
       self.emit("job metadata", status_packet);
       self.emit("status update", status_packet);
     }
+
   });
+
 };
 
 exports.resubscribe = resubscribe;
 exports.cancel = cancel;
 exports.jobRunner = jobRunner;
+

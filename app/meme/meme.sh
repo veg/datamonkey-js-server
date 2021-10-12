@@ -11,6 +11,8 @@ CWD=$cwd
 TREE_FN=$tree_fn
 STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
+BOOTSTRAP=$bootstrap
+RESAMPLE=$resample
 RESULTS_FN=$fn.MEME.json
 GENETIC_CODE=$genetic_code
 PROCS=$procs
@@ -22,7 +24,13 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE"
-mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE
+if [ $BOOTSTRAP = "true" ]
+then
+  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --resample $RESAMPLE >> $PROGRESS_FILE"
+  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --resample $RESAMPLE >> $PROGRESS_FILE
+else
+  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE"
+  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE
+fi
 
 echo "Completed" > $STATUS_FILE
