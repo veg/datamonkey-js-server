@@ -26,6 +26,7 @@ var fel = function(socket, stream, params) {
   self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nwk_tree = self.params.analysis.tagged_nwk_tree;
   self.rate_variation = self.params.analysis.ds_variation == 1 ? "Yes" : "No";
+  self.ci = self.params.analysis.ci == true ? "Yes" : "No";
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -66,6 +67,8 @@ var fel = function(socket, stream, params) {
       self.type +
       ",rate_variation=" +
       self.rate_variation +
+      ",ci=" +
+      self.ci +
       ",cwd=" +
       __dirname +
       ",msaid=" +
