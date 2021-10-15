@@ -41,7 +41,7 @@ var gard = function(socket, stream, params) {
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
   self.status_fn = self.fn + ".status";
-  self.json_fn = self.fn + ".GARD.json";
+  self.results_fn = self.fn + ".GARD.json";
   self.progress_fn = self.fn + ".GARD.progress";
   self.tree_fn = self.fn + ".tre";
 
@@ -65,7 +65,7 @@ var gard = function(socket, stream, params) {
       ",pfn=" +
       self.progress_fn +
       ",rfn=" +
-      self.json_fn +
+      self.results_fn +
       ",treemode=" +
       self.treemode +
       ",genetic_code=" +
@@ -124,7 +124,7 @@ gard.prototype.onComplete = function() {
 
   var files = {
     finalout: self.finalout_results_fn,
-    json: self.json_fn
+    json: self.results_fn
   };
 
   logger.info("gard results files to translate : " + JSON.stringify(files));
@@ -134,7 +134,7 @@ gard.prototype.onComplete = function() {
       // Error reading results file
       self.onError("unable to read results file. " + err);
     } else {
-      fs.readFile(self.json_fn, "utf8", function(err, data) {
+      fs.readFile(self.results_fn, "utf8", function(err, data) {
 
         if (err || !data.length) {
           // Error reading results file
