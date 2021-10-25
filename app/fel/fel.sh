@@ -33,8 +33,8 @@ then
   echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI >> $PROGRESS_FILE"
   mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI >> $PROGRESS_FILE
 else
-  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --srv $RATE_VARIATION --output $RESULTS_FILE >> $PROGRESS_FILE"
-  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --srv $RATE_VARIATION --output $RESULTS_FILE >> $PROGRESS_FILE
+  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI >> $PROGRESS_FILE"
+  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI >> $PROGRESS_FILE
 fi
 
 echo "Completed" > $STATUS_FILE
