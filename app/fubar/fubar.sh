@@ -10,7 +10,7 @@ CWD=$cwd
 TREE_FN=$tree_fn
 STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
-RESULTS_FN=$rfn
+RESULTS_FN=$FN.FUBAR.json
 GENETIC_CODE=$genetic_code
 
 HYPHY=$CWD/../../.hyphy/hyphy
