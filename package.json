@@ -18,7 +18,7 @@
   "dependencies": {
     "commander": "^6.0.0",
     "moment": "2.x.x",
-    "moment-timezone": "0.5.33",
+    "moment-timezone": "0.5.34",
     "q": "^1.2.1",
     "redis": "^3.1.2",
     "should": "^13.2.3",
