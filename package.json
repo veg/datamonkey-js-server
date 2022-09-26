@@ -18,7 +18,7 @@
   "dependencies": {
     "commander": "^6.0.0",
     "moment": "2.x.x",
-    "moment-timezone": "0.5.33",
+    "moment-timezone": "0.5.37",
     "q": "^1.2.1",
     "redis": "^3.1.2",
     "should": "^13.2.3",
@@ -27,7 +27,7 @@
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
     "underscore": "1.11.x",
-    "winston": "^3.2.1"
+    "winston": "^3.8.2"
   },
   "devDependencies": {
     "eslint": "^7.32.0",
