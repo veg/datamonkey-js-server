@@ -6,11 +6,18 @@ var config = require("../../config.json"),
   path = require("path");
 
 
-synSubstitutionVar = {
+const synSubstitutionVar = {
   "1" : "Yes",
   "2" : "No",
   "3" : "Branch-site"
 }
+
+const multihitVar = {
+  "Default" : "None",
+  "Double" : "Double",
+  "Double+Triple" : "Double+Triple"
+}
+
 
 var busted = function(socket, stream, busted_params) {
 
@@ -28,6 +35,7 @@ var busted = function(socket, stream, busted_params) {
   self.msaid = busted_params.msa._id;
   self.id = busted_params.analysis._id;
   self.ds_variation = synSubstitutionVar[busted_params.analysis.ds_variation] || "Yes";
+  self.multihit = multihitVar[busted_params.analysis.multihit] || "None";
   self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.type = self.params.type;
 
@@ -65,6 +73,8 @@ var busted = function(socket, stream, busted_params) {
       self.genetic_code +
       ",synRateVariation=" +
       self.ds_variation +
+      ",multihit=" +
+      self.multihit+
       ",cwd=" +
       __dirname +
       ",msaid=" +
