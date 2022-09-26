@@ -26,8 +26,6 @@ var busted = function(socket, stream, busted_params) {
   self.stream = stream;
   self.params = busted_params;
 
-  console.log(busted_params);
-
   // object specific attributes
   self.type = "busted";
   self.qsub_script_name = "busted_submit.sh";
