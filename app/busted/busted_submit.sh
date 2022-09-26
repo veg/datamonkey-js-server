@@ -13,6 +13,7 @@ RESULTS_FILE=$fn.BUSTED.json
 #FG_BranchesAllSelected="4"
 #FG_BranchesSomeSelected="5"
 synRateVariation=$synRateVariation
+multihit=$multihit
 synRateClasses=3
 omegaClasses=3
 initialPointsInLikelihood=250
@@ -33,11 +34,11 @@ count=$(echo "${output: -1}")
 
 if [ $count -eq 2 ]
 then
-  echo "$HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE --save-fit /dev/null"
-  $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE  --save-fit /dev/null > $PROGRESS_FILE
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $multihit --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE --save-fit /dev/null"
+  $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "FG" --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $multihit --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE  --save-fit /dev/null > $PROGRESS_FILE
 else
-  echo "$HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE --save-fit /dev/null"
-  $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE --save-fit /dev/null > $PROGRESS_FILE
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $multihit --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE --save-fit /dev/null"
+  $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches "All" --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $multihit --srv $synRateVariation --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --output $RESULTS_FILE --save-fit /dev/null > $PROGRESS_FILE
 fi
 
 echo "Completed" > $STATUS_FILE
