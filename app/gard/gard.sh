@@ -37,8 +37,8 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN"
-mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
+echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV='TOLERATE_NUMERICAL_ERRORS=1;' $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN"
+mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD ENV='TOLERATE_NUMERICAL_ERRORS=1;' --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE
 
