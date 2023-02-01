@@ -24,7 +24,7 @@
     "should": "^13.2.3",
     "socket.io": "4.1.2",
     "tail": "0.4.x",
-    "tar": "^2.0",
+    "tar": "^4.4",
     "translate-gard": "^1.0.4",
     "underscore": "1.11.x",
     "winston": "^3.8.2"
