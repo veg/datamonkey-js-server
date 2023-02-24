@@ -44,6 +44,7 @@ directories:
 	mkdir -p app/gard/output
 	mkdir -p app/meme/output
 	mkdir -p app/multihit/output
+	mkdir -p app/nrm/output
 	mkdir -p app/prime/output
 	mkdir -p app/relax/output
 	mkdir -p app/slac/output

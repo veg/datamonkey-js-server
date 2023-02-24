@@ -13,6 +13,7 @@ const config = require("./config.json"),
   hivtrace = require("./app/hivtrace/hivtrace.js"),
   meme = require("./app/meme/meme.js"),
   multihit = require("./app/multihit/multihit.js"),
+  nrm = require("./app/nrm/nrm.js"),
   prime = require("./app/prime/prime.js"),
   relax = require("./app/relax/relax.js"),
   slac = require("./app/slac/slac.js"),
@@ -206,6 +207,23 @@ io.sockets.on("connection", function(socket) {
     check: function(params) {
       params.job["checkOnly"] = true;
       new multihit.multihit(socket, null, params.job);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+// NRM
+  r.route("nrm", {
+    spawn: function(stream, params) {
+      new nrm.nrm(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new nrm.nrm(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
