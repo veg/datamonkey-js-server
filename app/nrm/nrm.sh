@@ -16,7 +16,7 @@ GENETIC_CODE=$genetic_code
 RATE_CLASSES=$rate_classes
 PROCS=$procs
 
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
+HYPHY=$CWD/../../.hyphy/hyphy
 HYPHY_PATH=$CWD/../../.hyphy/res/
 HYPHY_ANALYSES_PATH=$CWD/../../.hyphy-analyses
 NRM=$HYPHY_ANALYSES_PATH/NucleotideNonREV/NRM.bf

@@ -12,7 +12,8 @@ const cs = require("../lib/clientsocket.js"),
 
 // Use redis as our key-value store
 var client = redis.createClient({
-  host: config.redis_host, port: config.redis_port
+  host: config.redis_host,
+  port: config.redis_port
 });
 
 var hyphyJob = function() {};
@@ -48,7 +49,6 @@ hyphyJob.prototype.attachSocket = function() {
 
 // Can either initialize a new job or check on previous one
 hyphyJob.prototype.init = function() {
-
   var self = this;
 
   // store parameters in redis
@@ -56,17 +56,15 @@ hyphyJob.prototype.init = function() {
   self.attachSocket();
 
   // If check param set, don't start new job
-  if(self.params["checkOnly"]) {
+  if (self.params["checkOnly"]) {
     self.torque_id = self.params["torque_id"];
     self.checkJob();
   } else {
     self.spawn();
   }
-
 };
 
 hyphyJob.prototype.spawn = function() {
-
   var self = this;
 
   self.log("spawning");
@@ -125,7 +123,7 @@ hyphyJob.prototype.spawn = function() {
     self.onJobMetadata(status);
   });
 
-  fs.writeFile(self.fn, self.stream, (err) => {
+  fs.writeFile(self.fn, self.stream, err => {
     if (err) throw err;
     // Pass filename in as opposed to generating it in spawn_hyphyJob
     hyphy_job_runner.submit(self.qsub_params, self.output_dir);
@@ -142,11 +140,9 @@ hyphyJob.prototype.spawn = function() {
   self.socket.on("disconnect", function() {
     self.log("user disconnected");
   });
-
 };
 
 hyphyJob.prototype.onJobCreated = function(torque_id) {
-
   var self = this;
 
   self.push_active_job = function() {
@@ -167,22 +163,17 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   client.hset(self.torque_id, "sites", self.params.msa[0].sites);
   client.hset(self.torque_id, "sequences", self.params.msa[0].sequences);
   self.push_job_once(self.id);
-
 };
 
 hyphyJob.prototype.onComplete = function() {
-
   var self = this;
 
   fs.readFile(self.results_fn, "utf8", function(err, data) {
-
     if (err) {
       // Error reading results file
       self.onError("unable to read results file. " + err);
     } else {
-
       if (data && data.length > 0) {
-
         // Prepare redis packet for delivery
         var redis_packet = { results: data };
         redis_packet.type = "completed";
@@ -200,7 +191,6 @@ hyphyJob.prototype.onComplete = function() {
         // Remove id from active_job queue
         client.lrem("active_jobs", 1, self.id);
         delete this;
-
       } else {
         // Empty results file
         self.onError("job seems to have completed, but no results found");
@@ -208,11 +198,9 @@ hyphyJob.prototype.onComplete = function() {
       }
     }
   });
-
 };
 
 hyphyJob.prototype.onStatusUpdate = function(data) {
-
   var self = this;
   self.current_status = data;
 
@@ -236,20 +224,16 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
 
   // Log status update on server
   self.log("status update", str_redis_packet);
-
 };
 
 hyphyJob.prototype.onJobMetadata = function(data) {
-
   var self = this;
   self.stime = data.stime;
   self.ctime = data.ctime;
-
 };
 
 // If a job is cancelled early or the result contents cannot be read
 hyphyJob.prototype.onError = function(error) {
-
   var self = this;
 
   // The packet that will delivered to datamonkey via the publish command
@@ -264,7 +248,6 @@ hyphyJob.prototype.onError = function(error) {
   var promises = [std_err_promise, progress_fn_promise, std_out_promise];
 
   Q.allSettled(promises).then(function(results) {
-
     // Prepare redis packet for delivery
     redis_packet.stderr = results[0].value;
     redis_packet.progress = results[1].value;
@@ -284,15 +267,12 @@ hyphyJob.prototype.onError = function(error) {
     });
 
     delete this;
-
   });
-
 };
 
 // Called when a job is first created
 // Set id and output file names
 hyphyJob.prototype.setTorqueParameters = function(torque_id) {
-
   var self = this;
   self.torque_id = torque_id.torque_id;
 
@@ -305,12 +285,10 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
     path.join(self.output_dir, self.qsub_script_name) +
     ".o" +
     self.torque_id.split(".")[0];
-
 };
 
 // Cancel the job and report an error
 hyphyJob.prototype.cancel = function() {
-
   var self = this;
 
   var cb = function() {
@@ -321,50 +299,40 @@ hyphyJob.prototype.cancel = function() {
 
   self.cancel_once = _.once(jobdel.jobDelete);
   self.cancel_once(self.torque_id, cb);
-
 };
 
 // Return whether job has completed, still running, or aborted
 hyphyJob.prototype.checkJob = function() {
-
   var self = this;
 
   // Get results file stats
-  fs.stat(self.results_fn, (err, res) => { 
-
-    if(err || !res) {
-
+  fs.stat(self.results_fn, (err, res) => {
+    if (err || !res) {
       // Get status of job
       var jobStatus = new JobStatus(self.torque_id);
       jobStatus.returnJobStatus(self.torque_id, function(err, status) {
-        if(err) {
+        if (err) {
           // If job has no status returned and there are no results, return aborted
           self.warn("no status, and no completed results; job aborted");
           self.onError("no status, and no completed results; job aborted");
-          return
+          return;
         } else {
           // If job has status returned, don't do anything
           self.log("status", status);
           self.onStatusUpdate(status);
-          return
+          return;
         }
-      
       });
-
     } else if (res.size > 0) {
-
       //If job has no status returned and there are results, return completed
       self.onComplete();
       return;
-
     } else {
       self.warn("no status, and no completed results; job aborted");
       self.onError("no status, and no completed results; job aborted");
       return;
     }
-
   });
-
 };
 
 exports.hyphyJob = hyphyJob;
