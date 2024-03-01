@@ -27,7 +27,7 @@ RESULTS_FILE=$fn.FEL.json
 export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
-echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH contrast-fel --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE"
-mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH contrast-fel --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE
+echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" contrast-fel --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE"
+mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" contrast-fel --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE
 echo "Completed" > $STATUS_FILE
 

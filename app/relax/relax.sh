@@ -22,5 +22,5 @@ RELAX=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/RELAX.bf
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo "$HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES  --kill-zero-lengths $KZERO --output $RESULT_FILE"
-$HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > $PROGRESS_FILE
+echo "$HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES  --kill-zero-lengths $KZERO --output $RESULT_FILE"
+$HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > $PROGRESS_FILE

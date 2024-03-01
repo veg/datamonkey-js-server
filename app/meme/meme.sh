@@ -26,11 +26,11 @@ trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
 #if [ $BOOTSTRAP = "true" ]
 #then
-echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE"
-mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE
+echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE"
+mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE
 #else
-#  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE"
-#  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE
+#  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE"
+#  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  meme --alignment $FN --tree $TREE_FN --code $GENETIC_CODE >> $PROGRESS_FILE
 #fi
 
 echo "Completed" > $STATUS_FILE
