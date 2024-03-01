@@ -18,5 +18,5 @@ HYPHY=$CWD/../../.hyphy/HYPHYMPI
 
 export HYPHY_PATH=$CWD/../../.hyphy/res/
 
-echo 'mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH absrel --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --output $RESULTS_FN ENV="TOLERATE_NUMERICAL_ERRORS=1;" >> $PROGRESS_FILE'
-mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH absrel --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --output $RESULTS_FN ENV="TOLERATE_NUMERICAL_ERRORS=1;" >> $PROGRESS_FILE
+echo 'mpirun -np $PROCS $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH absrel --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --output $RESULTS_FN ENV="TOLERATE_NUMERICAL_ERRORS=1;" >> $PROGRESS_FILE'
+mpirun -np $PROCS $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH absrel --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches FG --output $RESULTS_FN ENV="TOLERATE_NUMERICAL_ERRORS=1;" >> $PROGRESS_FILE
