@@ -27,7 +27,7 @@ MULTIHIT=$HYPHY_ANALYSES_PATH/FitMultiModel/FitMultiModel.bf
 export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
-echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  $MULTIHIT --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --rates $RATE_CLASSES --triple-islands $TRIPLE_ISLANDS --output $RESULTS_FN"
+echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH   $MULTIHIT --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --rates $RATE_CLASSES --triple-islands $TRIPLE_ISLANDS --output $RESULTS_FN"
 mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  $MULTIHIT --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --rates $RATE_CLASSES --triple-islands $TRIPLE_ISLANDS --output $RESULTS_FN > $PROGRESS_FILE
 echo "Completed" > $STATUS_FILE
 

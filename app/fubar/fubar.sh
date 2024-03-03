@@ -26,7 +26,7 @@ FUBAR=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FUBAR.bf
 export HYPHY_PATH=$HYPHY_PATH
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo "$HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN >> $PROGRESS_FILE"
+echo "$HYPHY LIBPATH=$HYPHY_PATH  fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN >> $PROGRESS_FILE"
 $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN >> $PROGRESS_FILE
 
 echo "Completed" > $STATUS_FILE

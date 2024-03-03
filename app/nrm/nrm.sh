@@ -24,7 +24,7 @@ NRM=$HYPHY_ANALYSES_PATH/NucleotideNonREV/NRM.bf
 export HYPHY_PATH=$HYPHY_PATH
 trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
-echo "$HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  $NRM --alignment $FN --output $RESULTS_FN"
+echo "$HYPHY LIBPATH=$HYPHY_PATH   $NRM --alignment $FN --output $RESULTS_FN"
 $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;"  $NRM --alignment $FN --output $RESULTS_FN > $PROGRESS_FILE
 echo "Completed" > $STATUS_FILE
 

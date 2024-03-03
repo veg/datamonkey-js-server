@@ -34,17 +34,17 @@ trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
 
 if [ $DATATYPE == "nucleotide" ]; then
   # Nucleotide data
-  echo "$HYPHY -i LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
   $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> $PROGRESS_FILE
 
 elif [ $DATATYPE == "amino-acid" ]; then
   # Amino acid
-  echo "$HYPHY -i LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" $BGM --branches "All" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH  $BGM --branches "All" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
   $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" $BGM --branches "All" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> $PROGRESS_FILE
 
 else
   # Codon
-  echo "$HYPHY -i LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
+  echo "$HYPHY -i LIBPATH=$HYPHY_PATH  $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE"
   $HYPHY LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" $BGM --branches "All" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> $PROGRESS_FILE
 
 fi
