@@ -35,6 +35,7 @@ var busted = function(socket, stream, busted_params) {
   self.msaid = busted_params.msa._id;
   self.id = busted_params.analysis._id;
   self.ds_variation = synSubstitutionVar[busted_params.analysis.ds_variation] || "Yes";
+  self.error_protection = busted_params.analysis.error_protection;
   self.multihit = multihitVar[busted_params.analysis.multihit] || "None";
   self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.type = self.params.type;
@@ -73,6 +74,8 @@ var busted = function(socket, stream, busted_params) {
       self.genetic_code +
       ",synRateVariation=" +
       self.ds_variation +
+      ",errorProtection=" +
+      self.error_protection+
       ",multihit=" +
       self.multihit+
       ",cwd=" +
