@@ -26,11 +26,11 @@ var meme = function (socket, stream, params) {
   self.bootstrap = self.params.analysis.bootstrap;
   self.resample = self.params.analysis.resample;
 
-  self.multiple_hits = self.params.multiple_hits;
-  self.site_multihit = self.params.site_multihit;
-  self.rates = self.params.rates;
-  self.resample = self.params.resample;
-  self.impute_states = self.params.impute_states;
+  // New attributes for multiple hits and site multihit
+  self.multiple_hits = self.params.analysis.multiple_hits || "None"; // e.g., [Double, Double+Triple, None]
+  self.site_multihit = self.params.analysis.site_multihit || "Estimate"; // e.g., [Estimate, Global]
+  self.rates = self.params.analysis.rates || 2;
+  self.impute_states = self.params.analysis.impute_states || "No";
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
