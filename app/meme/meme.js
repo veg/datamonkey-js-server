@@ -5,7 +5,7 @@ var config = require("../../config.json"),
   fs = require("fs"),
   path = require("path");
 
-var meme = function(socket, stream, params) {
+var meme = function (socket, stream, params) {
   var self = this;
   self.socket = socket;
   self.stream = stream;
@@ -26,6 +26,12 @@ var meme = function(socket, stream, params) {
   self.bootstrap = self.params.analysis.bootstrap;
   self.resample = self.params.analysis.resample;
 
+  // New attributes for multiple hits and site multihit
+  self.multiple_hits = self.params.analysis.multiple_hits || "None"; // e.g., [Double, Double+Triple, None]
+  self.site_multihit = self.params.analysis.site_multihit || "Estimate"; // e.g., [Estimate, Global]
+  self.rates = self.params.analysis.rates || 2;
+  self.impute_states = self.params.analysis.impute_states || "No";
+
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
@@ -36,10 +42,7 @@ var meme = function(socket, stream, params) {
   self.tree_fn = self.fn + ".tre";
 
   self.qsub_params = [
-    "-l walltime=" + 
-    config.meme_walltime + 
-    ",nodes=1:ppn=" + 
-    config.meme_procs,
+    "-l walltime=" + config.meme_walltime + ",nodes=1:ppn=" + config.meme_procs,
     "-q",
     config.qsub_queue,
     "-v",
@@ -59,6 +62,16 @@ var meme = function(socket, stream, params) {
       self.bootstrap +
       ",resample=" +
       self.resample +
+      ",multiple_hits=" +
+      self.multiple_hits +
+      ",site_multihit=" +
+      self.site_multihit +
+      ",rates=" +
+      self.rates +
+      ",resample=" +
+      self.resample +
+      ",impute_states=" +
+      self.impute_states +
       ",genetic_code=" +
       self.genetic_code +
       ",analysis_type=" +
@@ -73,11 +86,11 @@ var meme = function(socket, stream, params) {
     self.output_dir,
     "-e",
     self.output_dir,
-    self.qsub_script
+    self.qsub_script,
   ];
 
   // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nj, function(err) {
+  fs.writeFile(self.tree_fn, self.nj, function (err) {
     if (err) throw err;
   });
 
