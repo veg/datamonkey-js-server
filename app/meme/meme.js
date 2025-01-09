@@ -5,7 +5,7 @@ var config = require("../../config.json"),
   fs = require("fs"),
   path = require("path");
 
-var meme = function (socket, stream, params) {
+var meme = function(socket, stream, params) {
   var self = this;
   self.socket = socket;
   self.stream = stream;
@@ -86,11 +86,33 @@ var meme = function (socket, stream, params) {
     self.output_dir,
     "-e",
     self.output_dir,
-    self.qsub_script,
+    self.qsub_script
   ];
 
+  self.selectedTree = self.nj;
+
+  if (
+    self.params &&
+    self.params.analysis &&
+    self.params.analysis.msa &&
+    typeof self.params.analysis.msa === "object"
+  ) {
+    const msa = self.params.analysis.msa;
+
+    if (msa.usertree && msa.usertree.trim()) {
+      // Use the usertree if it is populated
+      self.selectedTree = msa.usertree;
+    } else {
+      // Handle the case where neither usertree nor nj is available
+      // console.warn("Neither usertree nor neighbor-joining tree is available.");
+    }
+    // console.log("MEME selected Tree:", self.selectedTree);
+  } else {
+    //console.log("self.params.analysis.msa structure is missing.");
+  }
+
   // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nj, function (err) {
+  fs.writeFile(self.tree_fn, self.selectedTree, function(err) {
     if (err) throw err;
   });
 
