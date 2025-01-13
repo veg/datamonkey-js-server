@@ -97,18 +97,18 @@ var meme = function(socket, stream, params) {
     self.params.analysis.msa &&
     typeof self.params.analysis.msa === "object"
   ) {
-    const msa = self.params.analysis.msa;
+    const msa = self.params.analysis.msa[0];
 
     if (msa.usertree && msa.usertree.trim()) {
       // Use the usertree if it is populated
       self.selectedTree = msa.usertree;
     } else {
       // Handle the case where neither usertree nor nj is available
-      // console.warn("Neither usertree nor neighbor-joining tree is available.");
+      console.warn("Neither usertree nor neighbor-joining tree is available.");
     }
-    // console.log("MEME selected Tree:", self.selectedTree);
+    console.log("MEME selected Tree:", self.selectedTree);
   } else {
-    //console.log("self.params.analysis.msa structure is missing.");
+    console.log("self.params.analysis.msa structure is missing.");
   }
 
   // Write tree to a file
