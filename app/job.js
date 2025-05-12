@@ -105,13 +105,13 @@ var cancel = function(socket, id) {
 };
 
 var jobRunner = function(params, results_fn) {
-
   var self = this;
   self.torque_id = "";
   self.error_count = 0;
   self.QSTAT_ERROR_LIMIT = 500;
   self.results_fn = results_fn || "";
   self.qsub_params = params;
+  self.submit_type = config.submit_type || "qsub";
 
   self.states = {
     completed: "completed",
@@ -123,28 +123,39 @@ var jobRunner = function(params, results_fn) {
     waiting: "waiting",
     suspended: "suspended"
   };
-
 };
 
 util.inherits(jobRunner, EventEmitter);
 
-// Submits a job to TORQUE by spawning qsub_submit.sh
+// Extracts the TORQUE job ID from the command output.
+function get_torque_id_from_data(data) {
+  return String(data).replace(/\n$/, "");
+}
+
+// Extracts the SLURM job ID from the command output.
+function get_slurm_id_from_data(data) {
+  return String(data).replace(/\n$/, "").split(" ")[3];
+}
+
+// Submits a job to the scheduler (TORQUE or SLURM) by spawning a submission script.
 // Emit events
 jobRunner.prototype.submit = function(params, cwd) {
-
   var self = this;
   self.qsub_params = params;
 
-  var qsub = spawn("qsub", params, { cwd: cwd });
+  const scheduler = self.submit_type === "qsub" ? "qsub" : "sbatch";
+  var qsub = spawn(scheduler, params, { cwd: cwd });
 
-  logger.info("qsub", params);
+  logger.info(scheduler, params);
 
   qsub.stderr.on("data", function(data) {
     logger.info(data.toString("utf8"));
   });
 
   qsub.stdout.on("data", function(data) {
-    var torque_id = String(data).replace(/\n$/, "");
+    var torque_id = self.submit_type === "qsub" 
+      ? get_torque_id_from_data(data) 
+      : get_slurm_id_from_data(data);
     self.torque_id = torque_id;
     self.emit("job created", { torque_id: torque_id });
   });
@@ -152,63 +163,116 @@ jobRunner.prototype.submit = function(params, cwd) {
   qsub.on("close", function(code) {
     self.status_watcher();
   });
+};
 
+// Local job submission - used when submit_type is 'local'
+jobRunner.prototype.submit_local = function(script, params, cwd) {
+  var self = this;
+  
+  logger.info("Local job submission", script, cwd);
+  
+  var proc = spawn(script, { cwd: cwd, env: params });
+  
+  // Use process id as a job identifier for local runs
+  self.torque_id = "local_" + process.pid;
+  self.emit("job created", { torque_id: self.torque_id });
+  
+  proc.stderr.on("data", function(data) {
+    logger.info("Local job stderr: " + data.toString("utf8"));
+  });
+  
+  proc.stdout.on("data", function(data) {
+    logger.info("Local job stdout: " + data.toString("utf8"));
+  });
+  
+  proc.on("close", function(code) {
+    logger.info("Local job completed with code: " + code);
+    self.emit(self.states.completed, "");
+  });
+};
+
+// SLURM job submission with specific parameters
+jobRunner.prototype.submit_slurm = function(script, cwd, slurm_params) {
+  var self = this;
+  
+  logger.info("SLURM job submission", script, slurm_params);
+  
+  var sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
+  
+  sbatch.stderr.on("data", function(data) {
+    logger.info("SLURM stderr: " + data.toString("utf8"));
+  });
+  
+  sbatch.stdout.on("data", function(data) {
+    var job_id = get_slurm_id_from_data(data);
+    self.torque_id = job_id;
+    self.emit("job created", { torque_id: job_id });
+  });
+  
+  sbatch.on("close", function(code) {
+    self.status_watcher();
+  });
 };
 
 // Once the job has been scheduled, we need to watch the files that it
 // sends updates to.
 jobRunner.prototype.status_watcher = function() {
-
   var self = this;
+  
+  // Don't create a job status watcher for local jobs
+  if (self.submit_type === "local") {
+    return;
+  }
+  
   var job_status = new JobStatus(self.torque_id);
 
   self.metronome_id = job_status.watch(function(error, status_packet) {
-
     // Check if results file exists if there is an error
     if(error) {
+      // If a results file was specified, check if it exists and has content
+      if (self.results_fn) {
+        fs.stat(self.results_fn, (err, res) => {
+          self.error_count += 1;
 
-      fs.stat(self.results_fn, (err, res) => {
-
-        self.error_count += 1;
-
-        if(!err) {
-
-          if(res.size > 0) {
+          if(!err && res.size > 0) {
             clearInterval(self.metronome_id);
             self.emit(self.states.completed, "");
-            return
+            return;
           }
 
-        }
-
+          if(self.error_count > self.QSTAT_ERROR_LIMIT) {
+            clearInterval(self.metronome_id);
+            self.emit("script error", "");
+            return;
+          }
+        });
+      } else {
+        self.error_count += 1;
+        
         if(self.error_count > self.QSTAT_ERROR_LIMIT) {
           clearInterval(self.metronome_id);
           self.emit("script error", "");
-          return
+          return;
         }
-
-      });
-
-    }
-
-    self.error_count = 0;
-
-    if (
-      status_packet.status == self.states.completed ||
-      status_packet.status == self.states.exiting
-    ) {
-      clearInterval(self.metronome_id);
-      self.emit(self.states.completed, "");
-    } else if (status_packet.status == self.states.queued) {
-      self.emit("job created", { torque_id: self.torque_id });
+      }
     } else {
-      status_packet.torque_id = self.torque_id;
-      self.emit("job metadata", status_packet);
-      self.emit("status update", status_packet);
+      self.error_count = 0;
+
+      if (
+        status_packet.status == self.states.completed ||
+        status_packet.status == self.states.exiting
+      ) {
+        clearInterval(self.metronome_id);
+        self.emit(self.states.completed, "");
+      } else if (status_packet.status == self.states.queued) {
+        self.emit("job created", { torque_id: self.torque_id });
+      } else {
+        status_packet.torque_id = self.torque_id;
+        self.emit("job metadata", status_packet);
+        self.emit("status update", status_packet);
+      }
     }
-
   });
-
 };
 
 exports.resubscribe = resubscribe;

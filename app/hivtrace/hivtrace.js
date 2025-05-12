@@ -44,6 +44,7 @@ var hivtrace = function(socket, stream, params) {
   self.hivtrace = path.join(__dirname, "../../.python/env/bin/hivtrace");
   self.custom_reference_fn = "";
   self.type = "hivtrace";
+  self.submit_type = config.submit_type || "qsub";
 
   // parameter attributes
   self.id = params._id;
@@ -90,6 +91,41 @@ var hivtrace = function(socket, stream, params) {
     JSON.stringify(initial_statuses)
   );
 
+  // Create parameter string for job submission
+  self.params_string = "fn=" +
+    self.filepath +
+    ",python=" +
+    self.python +
+    ",hivtrace=" +
+    self.hivtrace +
+    ",dt=" +
+    self.distance_threshold +
+    ",ambiguity_handling=" +
+    self.ambiguity_handling +
+    ",fraction=" +
+    self.fraction +
+    ",reference=" +
+    self.reference +
+    ",mo=" +
+    self.min_overlap +
+    ",filter=" +
+    self.filter_edges +
+    ",comparelanl=" +
+    self.lanl_compare +
+    ",reference_strip=" +
+    self.reference_strip +
+    ",strip_drams=" +
+    self.strip_drams +
+    ",prealigned=" +
+    self.prealigned +
+    ",output=" +
+    self.output_cluster_output +
+    ",hivtrace_log=" +
+    self.hivtrace_log +
+    ",custom_reference_fn=" +
+    self.custom_reference_fn;
+
+  // Prepare qsub params
   self.qsub_params = [
     "-l walltime=" + 
     config.hivtrace_walltime + 
@@ -98,42 +134,20 @@ var hivtrace = function(socket, stream, params) {
     "-q",
     config.qsub_queue,
     "-v",
-    "fn=" +
-      self.filepath +
-      ",python=" +
-      self.python +
-      ",hivtrace=" +
-      self.hivtrace +
-      ",dt=" +
-      self.distance_threshold +
-      ",ambiguity_handling=" +
-      self.ambiguity_handling +
-      ",fraction=" +
-      self.fraction +
-      ",reference=" +
-      self.reference +
-      ",mo=" +
-      self.min_overlap +
-      ",filter=" +
-      self.filter_edges +
-      ",comparelanl=" +
-      self.lanl_compare +
-      ",reference_strip=" +
-      self.reference_strip +
-      ",strip_drams=" +
-      self.strip_drams +
-      ",prealigned=" +
-      self.prealigned +
-      ",output=" +
-      self.output_cluster_output +
-      ",hivtrace_log=" +
-      self.hivtrace_log +
-      ",custom_reference_fn=" +
-      self.custom_reference_fn,
+    self.params_string,
     "-o",
     self.output_dir,
     "-e",
     self.output_dir,
+    self.qsub_script
+  ];
+
+  // Prepare sbatch params for SLURM
+  self.slurm_params = [
+    "--ntasks=1",
+    "--cpus-per-task=" + config.hivtrace_procs,
+    "--time=" + config.hivtrace_walltime,
+    "--export=" + self.params_string,
     self.qsub_script
   ];
 
@@ -205,7 +219,25 @@ hivtrace.prototype.spawn = function() {
   self.stream.pipe(
     fs.createWriteStream(path.join(__dirname, "/output/", self.id))
   );
-  trace_runner.submit(self.qsub_params, self.output_dir);
+  
+  // Choose the appropriate submission method based on config.submit_type
+  if (self.submit_type === "local") {
+    // For local submission, create job parameters as environment variables
+    var job_params = {};
+    self.params_string.split(",").forEach(function(param) {
+      var parts = param.split("=");
+      if (parts.length === 2) {
+        job_params[parts[0]] = parts[1];
+      }
+    });
+    
+    trace_runner.submit_local(self.qsub_script, job_params, self.output_dir);
+  } else if (self.submit_type === "qsub") {
+    trace_runner.submit(self.qsub_params, self.output_dir);
+  } else {
+    // Assume slurm
+    trace_runner.submit_slurm(self.slurm_params, self.output_dir);
+  }
 };
 
 hivtrace.prototype.onStatusUpdate = function(data, index) {
@@ -360,10 +392,9 @@ hivtrace.prototype.sendtn93 = function() {
       self.onError(self.tn93_results + ": no tn93 to send");
     }
   });
-
 };
 
-// An object that manages the qsub process
+// An object that manages the job submission process
 var HivTraceRunner = function(id, hivtrace_log) {
   var self = this;
   self.python_redis_channel = "python_" + id;
@@ -373,6 +404,7 @@ var HivTraceRunner = function(id, hivtrace_log) {
   });
   self.subscriber.subscribe(self.python_redis_channel);
   self.last_status_update = "";
+  self.submit_type = config.submit_type || "qsub";
 };
 
 util.inherits(HivTraceRunner, EventEmitter);
@@ -409,11 +441,15 @@ HivTraceRunner.prototype.log_publisher = function() {
  */
 HivTraceRunner.prototype.status_watcher = function() {
   var self = this;
+  
+  // For local jobs, no status watcher is needed
+  if (self.submit_type === "local") {
+    return;
+  }
 
   var job_status = new JobStatus(self.torque_id);
 
   self.metronome_id = job_status.watch(function(error, status) {
-
     var new_status = status.status;
 
     if (new_status == "completed" || new_status == "exiting") {
@@ -435,20 +471,18 @@ HivTraceRunner.prototype.status_watcher = function() {
 };
 
 /**
- * Submits a job to TORQUE by spawning qsub_submit.sh
- * The job is executed as specified in ./hivcluster/README
- * Emit events that are being listened for by ./server.js
+ * Submits a job to TORQUE using qsub command
+ * Emit events that are being listened for by the calling class
  */
 HivTraceRunner.prototype.submit = function(qsub_params, cwd) {
   var self = this;
 
   var qsub_submit = function() {
-    var qsub = spawn("qsub", qsub_params, { cwd: cwd }); //cwd = current working dir
+    var qsub = spawn("qsub", qsub_params, { cwd: cwd });
 
     qsub.stderr.on("data", function(data) {
       // error when starting job
       self.emit("script error", { error: "" + data });
-      //logger.warn(data);
     });
 
     qsub.stdout.on("data", function(data) {
@@ -464,6 +498,78 @@ HivTraceRunner.prototype.submit = function(qsub_params, cwd) {
 
   fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
   qsub_submit();
+  self.log_publisher();
+};
+
+/**
+ * Submits a job to SLURM using sbatch command
+ * Emit events that are being listened for by the calling class
+ */
+HivTraceRunner.prototype.submit_slurm = function(slurm_params, cwd) {
+  var self = this;
+  
+  logger.info("Submitting job to SLURM", slurm_params);
+
+  var sbatch_submit = function() {
+    var sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
+
+    sbatch.stderr.on("data", function(data) {
+      // error when starting job
+      logger.error("SLURM stderr: " + data.toString("utf8"));
+      self.emit("script error", { error: "" + data });
+    });
+
+    sbatch.stdout.on("data", function(data) {
+      logger.info("SLURM stdout: " + data.toString("utf8"));
+      // Extract job ID from SLURM output (format: "Submitted batch job 123456")
+      self.torque_id = String(data).replace(/\n$/, "").split(" ").pop();
+      self.emit("job created", { torque_id: self.torque_id });
+      logger.info("SLURM job ID: " + self.torque_id);
+    });
+
+    sbatch.on("close", function(code) {
+      logger.info("SLURM sbatch process closed with code: " + code);
+      self.status_watcher();
+    });
+  };
+
+  fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
+  sbatch_submit();
+  self.log_publisher();
+};
+
+/**
+ * Submits a job locally without using a job scheduler
+ * Emit events that are being listened for by the calling class
+ */
+HivTraceRunner.prototype.submit_local = function(script, params, cwd) {
+  var self = this;
+  
+  logger.info("Submitting job locally", script, params);
+
+  var local_submit = function() {
+    var proc = spawn(script, { cwd: cwd, env: params });
+    
+    // Use process id as job identifier
+    self.torque_id = "local_" + process.pid;
+    self.emit("job created", { torque_id: self.torque_id });
+
+    proc.stderr.on("data", function(data) {
+      logger.info("Local job stderr: " + data.toString("utf8"));
+    });
+
+    proc.stdout.on("data", function(data) {
+      logger.info("Local job stdout: " + data.toString("utf8"));
+    });
+
+    proc.on("close", function(code) {
+      logger.info("Local job completed with code: " + code);
+      self.emit("completed", "");
+    });
+  };
+
+  fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
+  local_submit();
   self.log_publisher();
 };
 

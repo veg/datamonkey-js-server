@@ -3,6 +3,7 @@
   "redis_host"             : "192.168.0.2",
   "redis_port"             : 6379,
   "loglevel"               : "warn",
+  "submit_type"            : "qsub",
   "tn93dist"               : "/opt/hivtrace/TN93/tn93",
   "qsub_queue"             : "datamonkey",
   "qsub_avx_queue"         : "datamonkey",
