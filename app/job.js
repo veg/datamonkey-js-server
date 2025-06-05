@@ -287,23 +287,39 @@ jobRunner.prototype.status_watcher = function() {
     return;
   }
   
+  logger.info(`Starting job status watcher for job ID: ${self.torque_id}`);
   var job_status = new JobStatus(self.torque_id);
 
   self.metronome_id = job_status.watch(function(error, status_packet) {
+    // Log status updates for debugging
+    if (status_packet) {
+      logger.info(`Status update for job ${self.torque_id}: ${JSON.stringify(status_packet)}`);
+    }
+    
     // Check if results file exists if there is an error
-    if(error) {
+    if (error) {
+      logger.warn(`Status error for job ${self.torque_id}: ${error}`);
+      
       // If a results file was specified, check if it exists and has content
       if (self.results_fn) {
         fs.stat(self.results_fn, (err, res) => {
+          if (err) {
+            logger.warn(`Error checking results file: ${err.message}`);
+          } else {
+            logger.info(`Results file exists with size ${res.size}`);
+          }
+          
           self.error_count += 1;
 
-          if(!err && res.size > 0) {
+          if (!err && res.size > 0) {
+            logger.info(`Job ${self.torque_id} completed based on results file`);
             clearInterval(self.metronome_id);
             self.emit(self.states.completed, "");
             return;
           }
 
-          if(self.error_count > self.QSTAT_ERROR_LIMIT) {
+          if (self.error_count > self.QSTAT_ERROR_LIMIT) {
+            logger.error(`Job ${self.torque_id} exceeded error limit`);
             clearInterval(self.metronome_id);
             self.emit("script error", "");
             return;
@@ -312,7 +328,8 @@ jobRunner.prototype.status_watcher = function() {
       } else {
         self.error_count += 1;
         
-        if(self.error_count > self.QSTAT_ERROR_LIMIT) {
+        if (self.error_count > self.QSTAT_ERROR_LIMIT) {
+          logger.error(`Job ${self.torque_id} exceeded error limit with no results file`);
           clearInterval(self.metronome_id);
           self.emit("script error", "");
           return;
@@ -325,12 +342,39 @@ jobRunner.prototype.status_watcher = function() {
         status_packet.status == self.states.completed ||
         status_packet.status == self.states.exiting
       ) {
+        logger.info(`Job ${self.torque_id} completed with status: ${status_packet.status}`);
         clearInterval(self.metronome_id);
         self.emit(self.states.completed, "");
       } else if (status_packet.status == self.states.queued) {
-        self.emit("job created", { torque_id: self.torque_id });
+        logger.info(`Job ${self.torque_id} is queued`);
+        
+        // Include more information in the job created event
+        const jobInfo = { 
+          torque_id: self.torque_id,
+          status: status_packet.status,
+          scheduler: self.submit_type === "qsub" ? "torque" : "slurm"
+        };
+        
+        // Add any extra information from the status packet
+        if (status_packet.raw_status) {
+          jobInfo.raw_status = status_packet.raw_status;
+        }
+        
+        if (status_packet.ctime) {
+          jobInfo.ctime = status_packet.ctime;
+        }
+        
+        self.emit("job created", jobInfo);
       } else {
+        logger.info(`Job ${self.torque_id} status update: ${status_packet.status}`);
+        
+        // Ensure torque_id is included
         status_packet.torque_id = self.torque_id;
+        
+        // Add scheduler type
+        status_packet.scheduler = self.submit_type === "qsub" ? "torque" : "slurm";
+        
+        // Emit the job metadata and status update events
         self.emit("job metadata", status_packet);
         self.emit("status update", status_packet);
       }

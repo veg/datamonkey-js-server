@@ -172,16 +172,56 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   self.push_job_once = _.once(self.push_active_job);
   self.setTorqueParameters(torque_id);
 
-  var str_redis_packet = JSON.stringify(torque_id);
+  // Enhanced job info for client
+  const scheduler = torque_id.scheduler || "unknown";
+  
+  // Create a status update packet
+  const status_update = {
+    type: "job created",
+    torque_id: self.torque_id,
+    id: self.id,
+    status: torque_id.status || "queued",
+    analysis_type: self.type,
+    scheduler: scheduler,
+    created_time: torque_id.ctime || new Date().toISOString(),
+    sites: self.params.msa[0].sites,
+    sequences: self.params.msa[0].sequences
+  };
+  
+  // Add raw status if available
+  if (torque_id.raw_status) {
+    status_update.raw_status = torque_id.raw_status;
+  }
+  
+  var str_redis_packet = JSON.stringify(status_update);
 
   self.log("job created", str_redis_packet);
 
-  client.hset(self.id, "torque_id", str_redis_packet);
+  // Store job info in Redis
+  client.hset(self.id, "torque_id", JSON.stringify({ torque_id: self.torque_id }));
+  client.hset(self.id, "status", status_update.status);
+  client.hset(self.id, "scheduler", scheduler);
   client.publish(self.id, str_redis_packet);
-  client.hset(self.torque_id, "datamonkey_id", self.id);
-  client.hset(self.torque_id, "type", self.type);
-  client.hset(self.torque_id, "sites", self.params.msa[0].sites);
-  client.hset(self.torque_id, "sequences", self.params.msa[0].sequences);
+  
+  // Store cross-references in a single hset call to avoid errors
+  client.hset(
+    self.torque_id, 
+    "datamonkey_id", self.id,
+    "type", self.type,
+    "scheduler", scheduler
+  );
+  
+  // Safely add msa properties if they exist
+  if (self.params && self.params.msa && self.params.msa[0]) {
+    if (self.params.msa[0].sites !== undefined) {
+      client.hset(self.torque_id, "sites", self.params.msa[0].sites);
+    }
+    if (self.params.msa[0].sequences !== undefined) {
+      client.hset(self.torque_id, "sequences", self.params.msa[0].sequences);
+    }
+  }
+  
+  // Add to active jobs
   self.push_job_once(self.id);
 };
 
@@ -204,8 +244,11 @@ hyphyJob.prototype.onComplete = function() {
         self.log("complete", "success");
 
         // Store packet in redis and publish to channel
-        client.hset(self.id, "results", str_redis_packet);
-        client.hset(self.id, "status", "completed");
+        client.hset(
+          self.id, 
+          "results", str_redis_packet,
+          "status", "completed"
+        );
         client.publish(self.id, str_redis_packet);
 
         // Remove id from active_job queue
@@ -222,24 +265,58 @@ hyphyJob.prototype.onComplete = function() {
 
 hyphyJob.prototype.onStatusUpdate = function(data) {
   var self = this;
-  self.current_status = data;
+  
+  // If data is an object, extract the message
+  let statusMessage = data;
+  if (typeof data === 'object') {
+    if (data.status) {
+      statusMessage = `Status: ${data.status}`;
+      if (data.raw_status) {
+        statusMessage += ` (${data.raw_status})`;
+      }
+    } else {
+      statusMessage = JSON.stringify(data);
+    }
+  }
+  
+  self.current_status = statusMessage;
 
+  // Create enhanced status update with scheduler info
   var status_update = {
     msg: self.current_status,
     torque_id: self.torque_id,
+    id: self.id,
+    analysis_type: self.type,
     stime: self.stime,
     ctime: self.ctime,
-    phase: "running"
+    phase: "running",
+    scheduler: typeof data === 'object' && data.scheduler ? 
+               data.scheduler : 
+               (self.submit_type === "qsub" ? "torque" : "slurm")
   };
+  
+  // Add detailed status information if available
+  if (typeof data === 'object') {
+    if (data.status) {
+      status_update.status = data.status;
+    }
+    if (data.raw_status) {
+      status_update.raw_status = data.raw_status;
+    }
+  }
 
   // Prepare redis packet for delivery
   var redis_packet = status_update;
   redis_packet.type = "status update";
 
-  var str_redis_packet = JSON.stringify(status_update);
+  var str_redis_packet = JSON.stringify(redis_packet);
 
   // Store packet in redis and publish to channel
-  client.hset(self.id, "status update", str_redis_packet);
+  client.hset(
+    self.id, 
+    "status update", str_redis_packet,
+    "current_status", self.current_status
+  );
   client.publish(self.id, str_redis_packet);
 
   // Log status update on server
@@ -250,6 +327,38 @@ hyphyJob.prototype.onJobMetadata = function(data) {
   var self = this;
   self.stime = data.stime;
   self.ctime = data.ctime;
+  
+  // Publish job metadata to Redis for client updates
+  if (data && (data.status || data.raw_status)) {
+    // Create a metadata update packet
+    const metadata_update = {
+      type: "job metadata",
+      torque_id: self.torque_id,
+      id: self.id,
+      status: data.status || "running",
+      analysis_type: self.type,
+      scheduler: data.scheduler || (self.submit_type === "qsub" ? "torque" : "slurm"),
+      stime: self.stime,
+      ctime: self.ctime
+    };
+    
+    // Add raw status if available
+    if (data.raw_status) {
+      metadata_update.raw_status = data.raw_status;
+    }
+    
+    var str_redis_packet = JSON.stringify(metadata_update);
+    
+    self.log("job metadata", str_redis_packet);
+    
+    // Store and publish metadata in a single call
+    client.hset(
+      self.id, 
+      "status", metadata_update.status,
+      "metadata", str_redis_packet
+    );
+    client.publish(self.id, str_redis_packet);
+  }
 };
 
 // If a job is cancelled early or the result contents cannot be read
@@ -279,7 +388,7 @@ hyphyJob.prototype.onError = function(error) {
     self.warn("script error", str_redis_packet);
 
     // Publish error messages to redis
-    client.hset(self.id, "error", str_redis_packet);
+    client.hset(self.id, "error", str_redis_packet, "status", "error");
     client.publish(self.id, str_redis_packet);
     client.lrem("active_jobs", 1, self.id);
     client.llen("active_jobs", function(err, n) {
@@ -294,17 +403,36 @@ hyphyJob.prototype.onError = function(error) {
 // Set id and output file names
 hyphyJob.prototype.setTorqueParameters = function(torque_id) {
   var self = this;
-  self.torque_id = torque_id.torque_id;
-
-  // The standard out and error logs of the job
-  self.std_err =
-    path.join(self.output_dir, self.qsub_script_name) +
-    ".e" +
-    self.torque_id.split(".")[0];
-  self.std_out =
-    path.join(self.output_dir, self.qsub_script_name) +
-    ".o" +
-    self.torque_id.split(".")[0];
+  
+  // Extract the ID, considering both object and string formats
+  if (typeof torque_id === 'object' && torque_id.torque_id) {
+    self.torque_id = torque_id.torque_id;
+  } else if (typeof torque_id === 'string') {
+    self.torque_id = torque_id;
+  } else {
+    // Default case
+    self.torque_id = torque_id.toString();
+  }
+  
+  // Determine scheduler type
+  const isSlurm = config.submit_type === "sbatch";
+  self.scheduler = isSlurm ? "slurm" : "torque";
+  
+  // Set output file paths based on scheduler type
+  if (isSlurm) {
+    // SLURM: logs are stored with job ID as suffix
+    self.std_err = path.join(self.output_dir, `${self.qsub_script_name.replace(".sh", "")}.err`);
+    self.std_out = path.join(self.output_dir, `${self.qsub_script_name.replace(".sh", "")}.out`);
+  } else {
+    // Torque: logs have .e and .o prefixes with job ID
+    self.std_err = path.join(self.output_dir, self.qsub_script_name) + ".e" + self.torque_id.split(".")[0];
+    self.std_out = path.join(self.output_dir, self.qsub_script_name) + ".o" + self.torque_id.split(".")[0];
+  }
+  
+  // Log the paths for debugging
+  logger.info(`Job ${self.id} (${self.torque_id}) using ${self.scheduler} scheduler`);
+  logger.info(`Standard error log: ${self.std_err}`);
+  logger.info(`Standard output log: ${self.std_out}`);
 };
 
 // Cancel the job and report an error
