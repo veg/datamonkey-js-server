@@ -111,8 +111,8 @@ var gard = function(socket, stream, params) {
       self.msaid +
       ",procs=" +
       config.gard_procs,
-      `--output=${self.output_dir}/gard.out`,
-      `--error=${self.output_dir}/gard.err`,
+      `--output=${self.output_dir}/gard_${self.id}_%j.out`,
+      `--error=${self.output_dir}/gard_${self.id}_%j.err`,
       self.qsub_script
     ];
   } else {

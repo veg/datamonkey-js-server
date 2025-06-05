@@ -112,8 +112,8 @@ var busted = function(socket, stream, busted_params) {
       self.msaid +
       ",procs=" +
       config.busted_procs,
-      `--output=${self.output_dir}/busted.out`,
-      `--error=${self.output_dir}/busted.err`,
+      `--output=${self.output_dir}/busted_${self.id}_%j.out`,
+      `--error=${self.output_dir}/busted_${self.id}_%j.err`,
       self.qsub_script
     ];
   } else {

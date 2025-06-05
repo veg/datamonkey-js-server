@@ -11,7 +11,8 @@ var spawn = require("child_process").spawn,
   _ = require("underscore"),
   JobStatus = require("../../lib/jobstatus.js").JobStatus,
   logger = require("../../lib/logger").logger,
-  redis = require("redis");
+  redis = require("redis"),
+  utilities = require("../../lib/utilities");
 
 // Use redis as our key-value store
 var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
@@ -125,7 +126,7 @@ var hivtrace = function(socket, stream, params) {
     ",custom_reference_fn=" +
     self.custom_reference_fn;
 
-  // Prepare qsub params
+  // Prepare qsub params with unique output/error file names
   self.qsub_params = [
     "-l walltime=" + 
     config.hivtrace_walltime + 
@@ -136,17 +137,19 @@ var hivtrace = function(socket, stream, params) {
     "-v",
     self.params_string,
     "-o",
-    self.output_dir,
+    path.join(self.output_dir, `hivtrace_${self.id}.o`),
     "-e",
-    self.output_dir,
+    path.join(self.output_dir, `hivtrace_${self.id}.e`),
     self.qsub_script
   ];
 
-  // Prepare sbatch params for SLURM
+  // Prepare sbatch params for SLURM with unique output/error file names
   self.slurm_params = [
     "--ntasks=1",
     "--cpus-per-task=" + config.hivtrace_procs,
     "--time=" + config.hivtrace_walltime,
+    "--output=" + path.join(self.output_dir, `hivtrace_${self.id}_%j.out`),
+    "--error=" + path.join(self.output_dir, `hivtrace_${self.id}_%j.err`),
     "--export=" + self.params_string,
     self.qsub_script
   ];
@@ -214,6 +217,9 @@ hivtrace.prototype.spawn = function() {
     self.cancel_once = _.once(self.cancel);
     self.cancel_once();
   });
+
+  // Ensure output directory exists
+  utilities.ensureDirectoryExists(self.output_dir);
 
   // Setup has been completed, run the job with the parameters from datamonkey
   self.stream.pipe(
@@ -496,6 +502,9 @@ HivTraceRunner.prototype.submit = function(qsub_params, cwd) {
     });
   };
 
+  // Ensure log directory exists
+  utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
+  
   fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
   qsub_submit();
   self.log_publisher();
@@ -533,6 +542,9 @@ HivTraceRunner.prototype.submit_slurm = function(slurm_params, cwd) {
     });
   };
 
+  // Ensure log directory exists
+  utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
+  
   fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
   sbatch_submit();
   self.log_publisher();
@@ -568,6 +580,9 @@ HivTraceRunner.prototype.submit_local = function(script, params, cwd) {
     });
   };
 
+  // Ensure log directory exists
+  utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
+  
   fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
   local_submit();
   self.log_publisher();

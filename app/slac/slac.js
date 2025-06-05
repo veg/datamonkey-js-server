@@ -86,8 +86,8 @@ var slac = function(socket, stream, params) {
       self.msaid +
       ",procs=" +
       config.slac_procs,
-      `--output=${self.output_dir}/slac.out`,
-      `--error=${self.output_dir}/slac.err`,
+      `--output=${self.output_dir}/slac_${self.id}_%j.out`,
+      `--error=${self.output_dir}/slac_${self.id}_%j.err`,
       self.qsub_script
     ];
   } else {

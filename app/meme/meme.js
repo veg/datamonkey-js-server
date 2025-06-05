@@ -108,8 +108,8 @@ var meme = function(socket, stream, params) {
       self.msaid +
       ",procs=" +
       config.meme_procs,
-      `--output=${self.output_dir}/meme.out`,
-      `--error=${self.output_dir}/meme.err`,
+      `--output=${self.output_dir}/meme_${self.id}_%j.out`,
+      `--error=${self.output_dir}/meme_${self.id}_%j.err`,
       self.qsub_script
     ];
   } else {

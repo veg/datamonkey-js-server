@@ -112,8 +112,8 @@ var fel = function (socket, stream, params) {
       self.multiple_hits +
       ",site_multihit=" +
       self.site_multihit,
-      `--output=${self.output_dir}/fel.out`,
-      `--error=${self.output_dir}/fel.err`,
+      `--output=${self.output_dir}/fel_${self.id}_%j.out`,
+      `--error=${self.output_dir}/fel_${self.id}_%j.err`,
       self.qsub_script
     ];
   } else {

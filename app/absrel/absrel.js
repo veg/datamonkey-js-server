@@ -64,8 +64,8 @@ var absrel = function(socket, stream, params) {
       (config.slurm_mpi_type || "pmix") + 
       "," +
       "fn=" + self.fn + ",tree_fn=" + self.tree_fn + ",sfn=" + self.status_fn + ",pfn=" + self.progress_fn + ",rfn=" + self.results_short_fn + ",treemode=" + self.treemode + ",genetic_code=" + self.genetic_code + ",analysis_type=" + self.type + ",cwd=" + __dirname + ",msaid=" + self.msaid + ",procs=" + config.absrel_procs,
-      `--output=${self.output_dir}/absrel.out`,
-      `--error=${self.output_dir}/absrel.err`,
+      `--output=${self.output_dir}/absrel_${self.id}_%j.out`,
+      `--error=${self.output_dir}/absrel_${self.id}_%j.err`,
       self.qsub_script
     ];
   } else {

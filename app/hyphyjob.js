@@ -420,9 +420,10 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
   
   // Set output file paths based on scheduler type
   if (isSlurm) {
-    // SLURM: logs are stored with job ID as suffix
-    self.std_err = path.join(self.output_dir, `${self.qsub_script_name.replace(".sh", "")}.err`);
-    self.std_out = path.join(self.output_dir, `${self.qsub_script_name.replace(".sh", "")}.out`);
+    // SLURM: logs are stored with method name and job ID as suffix for uniqueness
+    const baseFileName = self.qsub_script_name.replace(".sh", "");
+    self.std_err = path.join(self.output_dir, `${baseFileName}_${self.id}_${self.torque_id}.err`);
+    self.std_out = path.join(self.output_dir, `${baseFileName}_${self.id}_${self.torque_id}.out`);
   } else {
     // Torque: logs have .e and .o prefixes with job ID
     self.std_err = path.join(self.output_dir, self.qsub_script_name) + ".e" + self.torque_id.split(".")[0];
