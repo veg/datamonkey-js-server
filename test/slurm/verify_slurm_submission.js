@@ -9,7 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const utilities = require('./lib/utilities');
+const utilities = require('../../lib/utilities');
 
 // Create a test directory
 const testDir = path.join(__dirname, 'test_output');

@@ -13,8 +13,8 @@
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const job = require('./app/job.js');
-const logger = require('./lib/logger.js').logger;
+const job = require('../../app/job.js');
+const logger = require('../../lib/logger.js').logger;
 const redis = require('redis');
 const program = require('commander');
 

@@ -1,9 +1,9 @@
 // Test script for MEME job submission with SLURM
 const fs = require('fs');
 const path = require('path');
-const utilities = require('./lib/utilities');
-const logger = require('./lib/logger').logger;
-const config = require('./config.json');
+const utilities = require('../../lib/utilities');
+const logger = require('../../lib/logger').logger;
+const config = require('../../config.json');
 
 // Create mock data for testing
 const mockMsa = [{
@@ -32,7 +32,7 @@ const fastaPath = path.join(testDir, mockAnalysis._id);
 fs.writeFileSync(fastaPath, '>A\nATGACCGAAGGT\n>B\nATGACTGAAGGT\n>C\nATGACCGATGGT\n>D\nATGACCGAAGAT\n');
 
 // Import the MEME module
-const MEME = require('./app/meme/meme.js').meme;
+const MEME = require('../../app/meme/meme.js').meme;
 
 // Create a mock socket and stream
 const mockSocket = {
