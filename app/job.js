@@ -15,6 +15,11 @@ var client = redis.createClient({
   host: config.redis_host, port: config.redis_port
 });
 
+// Add error handler for Redis client
+client.on("error", function(err) {
+  logger.error("Redis job.js client error: " + err.message);
+});
+
 // resubscribes a socket to an existing pending job,
 // otherwise reports contents from redis
 var resubscribe = function(socket, id) {
@@ -134,7 +139,21 @@ function get_torque_id_from_data(data) {
 
 // Extracts the SLURM job ID from the command output.
 function get_slurm_id_from_data(data) {
-  return String(data).replace(/\n$/, "").split(" ")[3];
+  const output = String(data).replace(/\n$/, "");
+  console.log(`Parsing SLURM job ID from output: "${output}"`);
+  
+  // Standard format is "Submitted batch job 123456"
+  const match = output.match(/Submitted batch job (\d+)/i);
+  
+  if (match && match[1]) {
+    console.log(`Found SLURM job ID: ${match[1]}`);
+    return match[1];
+  }
+  
+  // Fallback to the old method
+  const splitOutput = output.split(" ");
+  console.log(`Falling back to split method with ${splitOutput.length} parts: ${JSON.stringify(splitOutput)}`);
+  return splitOutput[3];
 }
 
 // Submits a job to the scheduler (TORQUE or SLURM) by spawning a submission script.
@@ -144,24 +163,68 @@ jobRunner.prototype.submit = function(params, cwd) {
   self.qsub_params = params;
 
   const scheduler = self.submit_type === "qsub" ? "qsub" : "sbatch";
-  var qsub = spawn(scheduler, params, { cwd: cwd });
-
-  logger.info(scheduler, params);
+  
+  // Create formatted command for logging
+  const fullCommand = `${scheduler} ${params.join(' ')}`;
+  logger.info(`COMMAND TO EXECUTE: ${fullCommand}`);
+  logger.info(`Job submission using ${scheduler} with params: ${JSON.stringify(params)}`);
+  logger.info(`Working directory: ${cwd}`);
+  
+  try {
+    console.log(`EXECUTING: ${fullCommand}`);
+    var qsub = spawn(scheduler, params, { cwd: cwd });
+    logger.info(`${scheduler} process spawned successfully with pid: ${qsub.pid}`);
+  } catch (error) {
+    logger.error(`Error spawning ${scheduler} process: ${error.message}`);
+    logger.error(error.stack);
+    self.emit("script error", `Failed to spawn ${scheduler} process: ${error.message}`);
+    return;
+  }
 
   qsub.stderr.on("data", function(data) {
-    logger.info(data.toString("utf8"));
+    const output = data.toString("utf8");
+    logger.info(`${scheduler} stderr: ${output}`);
+    console.log(`${scheduler} STDERR: ${output}`);
+    if (output.includes("error") || output.includes("not found")) {
+      logger.error(`${scheduler} error: ${output}`);
+    }
   });
 
   qsub.stdout.on("data", function(data) {
-    var torque_id = self.submit_type === "qsub" 
-      ? get_torque_id_from_data(data) 
-      : get_slurm_id_from_data(data);
-    self.torque_id = torque_id;
-    self.emit("job created", { torque_id: torque_id });
+    const output = data.toString("utf8");
+    logger.info(`${scheduler} stdout: ${output}`);
+    console.log(`${scheduler} STDOUT: ${output}`);
+    
+    try {
+      var torque_id = self.submit_type === "qsub" 
+        ? get_torque_id_from_data(data) 
+        : get_slurm_id_from_data(data);
+      
+      logger.info(`Job ID extracted: ${torque_id}`);
+      console.log(`Job ID extracted: ${torque_id}`);
+      self.torque_id = torque_id;
+      self.emit("job created", { torque_id: torque_id });
+    } catch (error) {
+      logger.error(`Error extracting job ID: ${error.message}`);
+      logger.error(`Raw output was: ${output}`);
+      console.log(`ERROR extracting job ID: ${error.message}, Raw output: ${output}`);
+    }
   });
 
   qsub.on("close", function(code) {
-    self.status_watcher();
+    logger.info(`${scheduler} process closed with code: ${code}`);
+    console.log(`${scheduler} process closed with code: ${code}`);
+    
+    if (code !== 0) {
+      logger.error(`${scheduler} process exited with non-zero status: ${code}`);
+      console.log(`ERROR: ${scheduler} process exited with non-zero status: ${code}`);
+      // Still try to extract any error information
+      self.emit("script error", `${scheduler} process failed with exit code: ${code}`);
+    } else {
+      logger.info(`Starting status watcher for job: ${self.torque_id}`);
+      console.log(`Starting status watcher for job: ${self.torque_id}`);
+      self.status_watcher();
+    }
   });
 };
 

@@ -3,7 +3,8 @@ var config = require("../../config.json"),
   code = require("../code").code,
   util = require("util"),
   fs = require("fs"),
-  path = require("path");
+  path = require("path"),
+  utilities = require("../../lib/utilities");
 
 var cfel = function(socket, stream, params) {
 
@@ -33,6 +34,8 @@ var cfel = function(socket, stream, params) {
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
+  // Ensure output directory exists
+  utilities.ensureDirectoryExists(self.output_dir);
   self.status_fn = self.fn + ".status";
   self.results_short_fn = self.fn + ".cfel";
   self.results_fn = self.fn + ".FEL.json";

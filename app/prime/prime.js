@@ -2,7 +2,8 @@ var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   util = require("util"),
   fs = require("fs"),
-  path = require("path");
+  path = require("path"),
+  utilities = require("../../lib/utilities");
 
 var prime = function(socket, stream, params) {
   var self = this;
@@ -26,6 +27,8 @@ var prime = function(socket, stream, params) {
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
+  // Ensure output directory exists
+  utilities.ensureDirectoryExists(self.output_dir);
   self.status_fn = self.fn + ".status";
   self.results_short_fn = self.fn + ".prime";
   self.results_fn = self.fn + ".prime.json";

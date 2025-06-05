@@ -16,6 +16,11 @@ var client = redis.createClient({
   port: config.redis_port
 });
 
+// Add error handler for Redis client
+client.on("error", function(err) {
+  logger.error("Redis hyphyjob client error: " + err.message);
+});
+
 var hyphyJob = function() {};
 
 hyphyJob.prototype.log = function(notification, complementary_info) {
@@ -52,14 +57,19 @@ hyphyJob.prototype.init = function() {
   var self = this;
 
   // store parameters in redis
+  logger.info(`Job ${self.id}: Storing parameters in redis`);
   client.hset(self.id, "params", JSON.stringify(self.params));
+  
+  logger.info(`Job ${self.id}: Attaching socket`);
   self.attachSocket();
 
   // If check param set, don't start new job
   if (self.params["checkOnly"]) {
+    logger.info(`Job ${self.id}: Check only mode, looking up job ${self.params["torque_id"]}`);
     self.torque_id = self.params["torque_id"];
     self.checkJob();
   } else {
+    logger.info(`Job ${self.id}: Spawning new job`);
     self.spawn();
   }
 };
@@ -70,6 +80,7 @@ hyphyJob.prototype.spawn = function() {
   self.log("spawning");
 
   // A class that spawns the process and emits status events
+  logger.info(`Job ${self.id}: Creating job runner with qsub_params=${JSON.stringify(self.qsub_params)}`);
   var hyphy_job_runner = new job.jobRunner(self.qsub_params, self.results_fn);
 
   // On status updates, report to datamonkey-js
@@ -123,10 +134,19 @@ hyphyJob.prototype.spawn = function() {
     self.onJobMetadata(status);
   });
 
+  logger.info(`Job ${self.id}: Writing input file to ${self.fn}`);
   fs.writeFile(self.fn, self.stream, err => {
-    if (err) throw err;
+    if (err) {
+      logger.error(`Job ${self.id}: Error writing input file: ${err.message}`);
+      throw err;
+    }
+    
+    logger.info(`Job ${self.id}: Input file written successfully, submitting job`);
+    
     // Pass filename in as opposed to generating it in spawn_hyphyJob
     hyphy_job_runner.submit(self.qsub_params, self.output_dir);
+    
+    logger.info(`Job ${self.id}: Job submitted to runner`);
   });
 
   // Global event that triggers all jobs to cancel
