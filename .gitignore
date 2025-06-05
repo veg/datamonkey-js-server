@@ -42,3 +42,5 @@ __pycache__
 config.json
 pm2.config.js
 STDIN*
+
+**/.claude/settings.local.json

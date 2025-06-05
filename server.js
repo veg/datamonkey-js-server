@@ -22,8 +22,6 @@ const config = require("./config.json"),
   router = require(path.join(__dirname, "/lib/router.js")),
   JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue;
 
-const heapdump = require("heapdump");
-
 //Script parameter for defining port number.
 program
   .version("2.1.3")
@@ -46,6 +44,11 @@ var client = redis.createClient({
   host: config.redis_host, port: config.redis_port
 });
 
+// Add error handler for Redis client
+client.on("error", function(err) {
+  logger.error("Redis client error: " + err.message);
+});
+
 // clear active_jobs list
 // TODO: we should do more than just clear the active_jobs list
 client.del("active_jobs");
@@ -57,16 +60,6 @@ io.sockets.on("connection", function(socket) {
     JobQueue(function(jobs) {
       socket.emit("job queue", jobs);
       socket.disconnect();
-    });
-  });
-
-  // HEAPDUMP
-  socket.on("heapdump", () => {
-      let filename = "./heapdump.json";
-      heapdump.writeSnapshot((err, filename) => {
-        console.log("Heap dump written to", filename);
-        socket.emit('heapdumped');
-        socket.disconnect();
     });
   });
 
