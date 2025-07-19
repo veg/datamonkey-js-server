@@ -156,11 +156,21 @@ function get_slurm_id_from_data(data) {
   return splitOutput[3];
 }
 
-// Submits a job to the scheduler (TORQUE or SLURM) by spawning a submission script.
+// Submits a job to the scheduler (TORQUE, SLURM, or local) by spawning a submission script.
 // Emit events
 jobRunner.prototype.submit = function(params, cwd) {
   var self = this;
   self.qsub_params = params;
+
+  // Handle local execution
+  if (self.submit_type === "local") {
+    // For local execution, params[0] should be the script to execute
+    const script = params[0];
+    logger.info(`LOCAL EXECUTION: ${script}`);
+    logger.info(`Working directory: ${cwd}`);
+    
+    return self.submit_local(script, params.slice(1), cwd);
+  }
 
   const scheduler = self.submit_type === "qsub" ? "qsub" : "sbatch";
   
@@ -232,26 +242,55 @@ jobRunner.prototype.submit = function(params, cwd) {
 jobRunner.prototype.submit_local = function(script, params, cwd) {
   var self = this;
   
-  logger.info("Local job submission", script, cwd);
+  logger.info("Local job submission", script, params, cwd);
   
-  var proc = spawn(script, { cwd: cwd, env: params });
-  
-  // Use process id as a job identifier for local runs
-  self.torque_id = "local_" + process.pid;
-  self.emit("job created", { torque_id: self.torque_id });
-  
-  proc.stderr.on("data", function(data) {
-    logger.info("Local job stderr: " + data.toString("utf8"));
-  });
-  
-  proc.stdout.on("data", function(data) {
-    logger.info("Local job stdout: " + data.toString("utf8"));
-  });
-  
-  proc.on("close", function(code) {
-    logger.info("Local job completed with code: " + code);
-    self.emit(self.states.completed, "");
-  });
+  try {
+    // For local execution, pass params as command line arguments
+    var proc = spawn(script, params, { cwd: cwd });
+    
+    // Use a unique job identifier for local runs
+    self.torque_id = "local_" + Date.now() + "_" + proc.pid;
+    self.emit("job created", { torque_id: self.torque_id });
+    
+    // Store process reference for cancellation
+    self.local_process = proc;
+    
+    proc.stderr.on("data", function(data) {
+      const output = data.toString("utf8");
+      logger.info("Local job stderr: " + output);
+      // Emit status updates for stderr (can indicate progress)
+      if (output.trim()) {
+        self.emit("status update", { msg: output.trim() });
+      }
+    });
+    
+    proc.stdout.on("data", function(data) {
+      const output = data.toString("utf8");
+      logger.info("Local job stdout: " + output);
+      // Emit status updates for stdout
+      if (output.trim()) {
+        self.emit("status update", { msg: output.trim() });
+      }
+    });
+    
+    proc.on("error", function(error) {
+      logger.error("Local job error: " + error.message);
+      self.emit("script error", "Local execution failed: " + error.message);
+    });
+    
+    proc.on("close", function(code) {
+      logger.info("Local job completed with code: " + code);
+      if (code === 0) {
+        self.emit(self.states.completed, "");
+      } else {
+        self.emit("script error", "Local job failed with exit code: " + code);
+      }
+    });
+    
+  } catch (error) {
+    logger.error("Error starting local job: " + error.message);
+    self.emit("script error", "Failed to start local job: " + error.message);
+  }
 };
 
 // SLURM job submission with specific parameters
