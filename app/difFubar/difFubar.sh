@@ -21,58 +21,30 @@ echo "MCMC iterations: $mcmc_iterations"
 echo "Burnin samples: $burnin_samples"
 echo "Positive threshold: $pos_threshold"
 
-# Create Julia script for difFUBAR analysis
-cat > difFubar_analysis.jl << EOF
-using MolecularEvolution, FASTX, CodonMolecularEvolution, JSON
+# Export environment variables for Julia script
+export fn tree_fn rfn sfn pos_threshold mcmc_iterations burnin_samples concentration_of_dirichlet_prior
 
-try
-    # Read input files
-    seqnames, seqs = read_fasta("$fn.fasta")
-    
-    # Parse tagged tree from NEXUS or Newick file
-    if endswith("$tree_fn", ".nex")
-        treestring, tags, tag_colors = import_colored_figtree_nexus_as_tagged_tree("$tree_fn")
-    else
-        # For Newick files, use default tags
-        treestring = read("$tree_fn", String)
-        tags = ["{FG1}", "{FG2}"]  # Default tags - should be configurable
-    end
-    
-    # Run difFUBAR analysis
-    df, results = difFUBAR(
-        seqnames, seqs, treestring, tags, 
-        "$rfn",
-        pos_thresh=$pos_threshold, 
-        iters=$mcmc_iterations, 
-        burnin=$burnin_samples, 
-        concentration=$concentration_of_dirichlet_prior,
-        verbosity=1, 
-        exports=true, 
-        exports2json=true
-    )
-    
-    # Write completion status
-    write("$sfn", "completed")
-    println("difFUBAR analysis completed successfully")
-    println("Sites analyzed: \$(size(df, 1))")
-    println("Output files: \$(rfn).json, \$(rfn)_posteriors.csv")
-    
-catch e
-    # Write error status
-    write("$sfn", "error: \$e")
-    println("difFUBAR analysis failed: \$e")
-    exit(1)
-end
-EOF
+# Get the directory where this script is located to find the Julia script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Run Julia analysis
 echo "starting Julia analysis" > $sfn
-julia --project -t auto difFubar_analysis.jl
+julia --project -t auto "$SCRIPT_DIR/difFubar_analysis.jl"
 
 # Check if analysis completed successfully
 if [ $? -eq 0 ]; then
-    echo "difFUBAR analysis completed successfully"
+    echo "✅ difFUBAR analysis completed successfully"
+    
+    # Verify output files exist
+    if [ -f "${rfn}.json" ] && [ -f "${rfn}_posteriors.csv" ]; then
+        echo "✓ Output files verified"
+    else
+        echo "WARNING: Expected output files not found"
+    fi
 else
-    echo "difFUBAR analysis failed" > $sfn
-    echo "error: Julia analysis failed" > $rfn
+    echo "❌ difFUBAR analysis failed"
+    if [ -f "$sfn" ]; then
+        echo "Error status: $(cat $sfn)"
+    fi
+    exit 1
 fi

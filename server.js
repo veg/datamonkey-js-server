@@ -4,6 +4,7 @@ const config = require("./config.json"),
   absrel = require("./app/absrel/absrel.js"),
   bgm = require("./app/bgm/bgm.js"),
   busted = require("./app/busted/busted.js"),
+  difFubar = require("./app/difFubar/difFubar.js"),
   fel = require("./app/fel/fel.js"),
   cfel = require("./app/contrast-fel/cfel.js"),
   flea = require("./app/flea/flea.js"),
@@ -319,6 +320,23 @@ io.sockets.on("connection", function(socket) {
     check: function(params) {
       params.job["checkOnly"] = true;
       new bgm.bgm(socket, null, params.job);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // difFUBAR
+  r.route("difFubar", {
+    spawn: function(stream, params) {
+      new difFubar.difFubar(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new difFubar.difFubar(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
