@@ -27,9 +27,22 @@ export fn tree_fn rfn sfn pos_threshold mcmc_iterations burnin_samples concentra
 # Get the directory where this script is located to find the Julia script
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Use configured Julia path and project environment
+JULIA_CMD="${julia_path:-julia}"
+JULIA_PROJECT_PATH="${julia_project:-$SCRIPT_DIR/../../.julia_env}"
+
+echo "Using Julia: $JULIA_CMD"
+echo "Julia project: $JULIA_PROJECT_PATH"
+
+# Verify Julia is available
+if ! command -v "$JULIA_CMD" &> /dev/null; then
+    echo "ERROR: Julia not found at $JULIA_CMD" > $sfn
+    exit 1
+fi
+
 # Run Julia analysis
 echo "starting Julia analysis" > $sfn
-julia --project -t auto "$SCRIPT_DIR/difFubar_analysis.jl"
+"$JULIA_CMD" --project="$JULIA_PROJECT_PATH" -t auto "$SCRIPT_DIR/difFubar_analysis.jl"
 
 # Check if analysis completed successfully
 if [ $? -eq 0 ]; then

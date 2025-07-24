@@ -40,8 +40,9 @@ var difFubar = function(socket, stream, params) {
   self.qsub_params = [
     "-l walltime=" + 
     config.difFubar_walltime + 
-    ",nodes=1:ppn=" + 
-    config.difFubar_procs,
+    ",nodes=" + config.difFubar_nodes + ":ppn=" + 
+    config.difFubar_procs + 
+    ",mem=" + config.difFubar_memory,
     "-q",
     config.qsub_queue,
     "-v",
@@ -72,7 +73,11 @@ var difFubar = function(socket, stream, params) {
       ",burnin_samples=" +
       self.burnin_samples +
       ",pos_threshold=" +
-      self.pos_threshold,
+      self.pos_threshold +
+      ",julia_path=" +
+      config.julia_path +
+      ",julia_project=" +
+      config.julia_project,
     "-o",
     self.output_dir,
     "-e",
