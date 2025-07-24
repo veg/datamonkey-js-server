@@ -3,6 +3,10 @@
 ## Do not specify patch version
 HYPHY_VERSION=2.5
 
+# Julia configuration for difFUBAR
+JULIA_VERSION=1.11
+JULIA_PROJECT_DIR=./.julia_env
+
 TAG:=$(shell git describe --tags `git rev-list --tags --max-count=1` --match="$(HYPHY_VERSION)".*)
 
 all: install
@@ -28,6 +32,20 @@ hivtrace:
 	@./.python/env/bin/pip install cython
 	@./.python/env/bin/pip install hivtrace==0.3.2
 
+julia:
+	echo "Setting up Julia environment for difFUBAR"
+	@if ! command -v julia &> /dev/null; then \
+		echo "ERROR: Julia not found. Please install Julia $(JULIA_VERSION)+ first"; \
+		echo "Visit: https://julialang.org/downloads/"; \
+		echo "Or run: curl -fsSL https://install.julialang.org | sh"; \
+		exit 1; \
+	fi
+	@echo "Creating Julia project environment at $(JULIA_PROJECT_DIR)"
+	@mkdir -p $(JULIA_PROJECT_DIR)
+	@cd $(JULIA_PROJECT_DIR) && julia -e "using Pkg; Pkg.activate(\".\"); Pkg.add(url=\"https://github.com/MurrellGroup/CodonMolecularEvolution.jl\"); Pkg.add(\"FASTX\"); Pkg.add(\"JSON\"); Pkg.add(\"MolecularEvolution\")"
+	@echo "Julia environment setup complete"
+	@cd $(JULIA_PROJECT_DIR) && julia --project -e "using CodonMolecularEvolution; println(\"✓ difFUBAR package ready\")"
+
 npm:
 	echo "running npm"
 	@npm install
@@ -36,6 +54,7 @@ directories:
 	mkdir -p app/absrel/output
 	mkdir -p app/bgm/output
 	mkdir -p app/busted/output
+	mkdir -p app/difFubar/output
 	mkdir -p app/fade/output
 	mkdir -p app/fel/output
 	mkdir -p app/flea/output
@@ -50,4 +69,4 @@ directories:
 	mkdir -p app/slac/output
 	mkdir -p app/hivtrace/output
 
-install: hyphy hyphy-analyses hivtrace npm directories
+install: hyphy hyphy-analyses hivtrace npm julia directories
