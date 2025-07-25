@@ -39,7 +39,7 @@ try
     println("Starting difFUBAR analysis...")
     
     # Run difFUBAR analysis
-    df, results = difFUBAR(
+    df, results, plots = difFUBAR(
         seqnames, seqs, treestring, tags, 
         rfn,
         pos_thresh=pos_threshold, 
@@ -50,6 +50,27 @@ try
         exports=true, 
         exports2json=true
     )
+    
+    # Save plot objects for visualization
+    println("Saving visualization data...")
+    
+    # Try to save plots if they exist and have savefig method
+    try
+        if hasproperty(plots, :overview)
+            savefig(plots.overview, "$(rfn)_overview.png")
+            println("  - $(rfn)_overview.png")
+        end
+        if hasproperty(plots, :posterior_alpha_and_omegas)
+            savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.png")
+            println("  - $(rfn)_posteriors.png")
+        end
+        if hasproperty(plots, :detections)
+            savefig(plots.detections, "$(rfn)_detections.png")
+            println("  - $(rfn)_detections.png")
+        end
+    catch e
+        println("Note: Could not save plot images: $e")
+    end
     
     # Write completion status
     write(sfn, "completed")
