@@ -58,15 +58,21 @@ try
     try
         if hasproperty(plots, :overview)
             savefig(plots.overview, "$(rfn)_overview.png")
+            savefig(plots.overview, "$(rfn)_overview.svg")
             println("  - $(rfn)_overview.png")
+            println("  - $(rfn)_overview.svg")
         end
         if hasproperty(plots, :posterior_alpha_and_omegas)
             savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.png")
+            savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.svg")
             println("  - $(rfn)_posteriors.png")
+            println("  - $(rfn)_posteriors.svg")
         end
         if hasproperty(plots, :detections)
             savefig(plots.detections, "$(rfn)_detections.png")
+            savefig(plots.detections, "$(rfn)_detections.svg")
             println("  - $(rfn)_detections.png")
+            println("  - $(rfn)_detections.svg")
         end
     catch e
         println("Note: Could not save plot images: $e")

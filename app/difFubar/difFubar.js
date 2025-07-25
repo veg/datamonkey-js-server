@@ -95,5 +95,75 @@ var difFubar = function(socket, stream, params) {
   self.init();
 };
 
+difFubar.prototype.sendPlotFiles = function(cb) {
+  var self = this;
+  
+  // Define the plot files to send
+  var plotFiles = [
+    { name: 'overview.png', path: self.results_short_fn + '_overview.png', event: 'difFubar overview png' },
+    { name: 'overview.svg', path: self.results_short_fn + '_overview.svg', event: 'difFubar overview svg' },
+    { name: 'posteriors.png', path: self.results_short_fn + '_posteriors.png', event: 'difFubar posteriors png' },
+    { name: 'posteriors.svg', path: self.results_short_fn + '_posteriors.svg', event: 'difFubar posteriors svg' },
+    { name: 'detections.png', path: self.results_short_fn + '_detections.png', event: 'difFubar detections png' },
+    { name: 'detections.svg', path: self.results_short_fn + '_detections.svg', event: 'difFubar detections svg' }
+  ];
+  
+  var promises = plotFiles.map(file => {
+    return new Promise((resolve, reject) => {
+      fs.readFile(file.path, (err, data) => {
+        if (err || !data) {
+          resolve(null); // File doesn't exist, but don't fail
+        } else {
+          self.socket.emit(file.event, { buffer: data });
+          resolve(file.name);
+        }
+      });
+    });
+  });
+  
+  Promise.all(promises).then(results => {
+    var sentFiles = results.filter(f => f !== null);
+    self.log("sent plot files", sentFiles.join(', '));
+    cb(null, "success");
+  }).catch(err => {
+    cb(err, null);
+  });
+};
+
+difFubar.prototype.onComplete = function() {
+  var self = this;
+  
+  // First send plot files
+  self.sendPlotFiles((err, success) => {
+    if (err) {
+      self.warn("error sending plot files", err);
+    }
+    
+    // Then proceed with standard completion (send main JSON results)
+    fs.readFile(self.results_fn, "utf8", function(err, data) {
+      if (err) {
+        self.onError("unable to read results file. " + err);
+      } else {
+        if (data && data.length > 0) {
+          var redis_packet = { results: data };
+          redis_packet.type = "completed";
+          var str_redis_packet = JSON.stringify(redis_packet);
+          
+          self.log("complete", "success");
+          
+          var client = require("../../lib/database.js").active();
+          client.hset(self.id, "results", str_redis_packet, "status", "completed");
+          client.publish(self.id, str_redis_packet);
+          client.lrem("active_jobs", 1, self.id);
+          delete this;
+        } else {
+          self.onError("job seems to have completed, but no results found");
+          delete this;
+        }
+      }
+    });
+  });
+};
+
 util.inherits(difFubar, hyphyJob);
 exports.difFubar = difFubar;
