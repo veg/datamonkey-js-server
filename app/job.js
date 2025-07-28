@@ -242,7 +242,10 @@ jobRunner.prototype.submit = function(params, cwd) {
 jobRunner.prototype.submit_local = function(script, params, cwd) {
   var self = this;
   
-  logger.info("Local job submission", script, params, cwd);
+  logger.info(`[LOCAL JOB] Starting local job submission`);
+  logger.info(`[LOCAL JOB] Script: ${script}`);
+  logger.info(`[LOCAL JOB] Params: ${JSON.stringify(params)}`);
+  logger.info(`[LOCAL JOB] Working directory: ${cwd}`);
   
   try {
     // For local execution, pass params as command line arguments
@@ -257,7 +260,7 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     
     proc.stderr.on("data", function(data) {
       const output = data.toString("utf8");
-      logger.info("Local job stderr: " + output);
+      logger.error(`[LOCAL JOB STDERR] ${output.trim()}`);
       // Emit status updates for stderr (can indicate progress)
       if (output.trim()) {
         self.emit("status update", { msg: output.trim() });
@@ -266,7 +269,7 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     
     proc.stdout.on("data", function(data) {
       const output = data.toString("utf8");
-      logger.info("Local job stdout: " + output);
+      logger.info(`[LOCAL JOB STDOUT] ${output.trim()}`);
       // Emit status updates for stdout
       if (output.trim()) {
         self.emit("status update", { msg: output.trim() });
@@ -274,21 +277,25 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     });
     
     proc.on("error", function(error) {
-      logger.error("Local job error: " + error.message);
+      logger.error(`[LOCAL JOB ERROR] Failed to spawn process: ${error.message}`);
+      logger.error(`[LOCAL JOB ERROR] Error details: ${JSON.stringify(error)}`);
       self.emit("script error", "Local execution failed: " + error.message);
     });
     
     proc.on("close", function(code) {
-      logger.info("Local job completed with code: " + code);
+      logger.info(`[LOCAL JOB] Process completed with exit code: ${code}`);
       if (code === 0) {
+        logger.info(`[LOCAL JOB] Job completed successfully`);
         self.emit(self.states.completed, "");
       } else {
+        logger.error(`[LOCAL JOB] Job failed with exit code: ${code}`);
         self.emit("script error", "Local job failed with exit code: " + code);
       }
     });
     
   } catch (error) {
-    logger.error("Error starting local job: " + error.message);
+    logger.error(`[LOCAL JOB] Exception starting local job: ${error.message}`);
+    logger.error(`[LOCAL JOB] Exception details: ${JSON.stringify(error)}`);
     self.emit("script error", "Failed to start local job: " + error.message);
   }
 };
