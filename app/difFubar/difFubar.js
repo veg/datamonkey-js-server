@@ -19,6 +19,7 @@ var difFubar = function(socket, stream, params) {
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
   self.nj = self.params.msa[0].nj;
+  self.treemode = "nj"; // Default tree mode for difFUBAR
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -37,53 +38,78 @@ var difFubar = function(socket, stream, params) {
   self.burnin_samples = self.params.analysis.burnin_samples;
   self.pos_threshold = self.params.analysis.pos_threshold;
 
-  self.qsub_params = [
-    "-l walltime=" + 
-    config.difFubar_walltime + 
-    ",nodes=" + config.difFubar_nodes + ":ppn=" + 
-    config.difFubar_procs + 
-    ",mem=" + config.difFubar_memory,
-    "-q",
-    config.qsub_queue,
-    "-v",
-    "fn=" +
-      self.fn +
-      ",tree_fn=" +
-      self.tree_fn +
-      ",sfn=" +
-      self.status_fn +
-      ",pfn=" +
-      self.progress_fn +
-      ",rfn=" +
-      self.results_short_fn +
-      ",treemode=" +
-      self.treemode +
-      ",analysis_type=" +
-      self.type +
-      ",cwd=" +
-      __dirname +
-      ",msaid=" +
-      self.msaid +
-      ",number_of_grid_points=" +
-      self.number_of_grid_points +
-      ",concentration_of_dirichlet_prior=" +
-      self.concentration_of_dirichlet_prior +
-      ",mcmc_iterations=" +
-      self.mcmc_iterations +
-      ",burnin_samples=" +
-      self.burnin_samples +
-      ",pos_threshold=" +
-      self.pos_threshold +
-      ",julia_path=" +
-      config.julia_path +
-      ",julia_project=" +
-      config.julia_project,
-    "-o",
-    self.output_dir,
-    "-e",
-    self.output_dir,
-    self.qsub_script
-  ];
+  // Configure parameters based on execution type
+  if (config.submit_type === "local") {
+    // For local execution, pass the script first followed by environment variables
+    self.qsub_params = [
+      self.qsub_script,
+      "fn=" + self.fn,
+      "tree_fn=" + self.tree_fn,
+      "sfn=" + self.status_fn,
+      "pfn=" + self.progress_fn,
+      "rfn=" + self.results_short_fn,
+      "treemode=" + self.treemode,
+      "analysis_type=" + self.type,
+      "cwd=" + __dirname,
+      "msaid=" + self.msaid,
+      "number_of_grid_points=" + self.number_of_grid_points,
+      "concentration_of_dirichlet_prior=" + self.concentration_of_dirichlet_prior,
+      "mcmc_iterations=" + self.mcmc_iterations,
+      "burnin_samples=" + self.burnin_samples,
+      "pos_threshold=" + self.pos_threshold,
+      "julia_path=" + config.julia_path,
+      "julia_project=" + config.julia_project
+    ];
+  } else {
+    // For cluster execution (qsub/sbatch)
+    self.qsub_params = [
+      "-l walltime=" + 
+      config.difFubar_walltime + 
+      ",nodes=" + config.difFubar_nodes + ":ppn=" + 
+      config.difFubar_procs + 
+      ",mem=" + config.difFubar_memory,
+      "-q",
+      config.qsub_queue,
+      "-v",
+      "fn=" +
+        self.fn +
+        ",tree_fn=" +
+        self.tree_fn +
+        ",sfn=" +
+        self.status_fn +
+        ",pfn=" +
+        self.progress_fn +
+        ",rfn=" +
+        self.results_short_fn +
+        ",treemode=" +
+        self.treemode +
+        ",analysis_type=" +
+        self.type +
+        ",cwd=" +
+        __dirname +
+        ",msaid=" +
+        self.msaid +
+        ",number_of_grid_points=" +
+        self.number_of_grid_points +
+        ",concentration_of_dirichlet_prior=" +
+        self.concentration_of_dirichlet_prior +
+        ",mcmc_iterations=" +
+        self.mcmc_iterations +
+        ",burnin_samples=" +
+        self.burnin_samples +
+        ",pos_threshold=" +
+        self.pos_threshold +
+        ",julia_path=" +
+        config.julia_path +
+        ",julia_project=" +
+        config.julia_project,
+      "-o",
+      self.output_dir,
+      "-e",
+      self.output_dir,
+      self.qsub_script
+    ];
+  }
 
   // Write tree to a file
   fs.writeFile(self.tree_fn, self.nj, function(err) {
