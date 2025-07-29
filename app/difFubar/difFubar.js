@@ -48,25 +48,20 @@ var difFubar = function(socket, stream, params) {
 
   // Configure parameters based on execution type
   if (config.submit_type === "local") {
-    // For local execution, pass the script first followed by environment variables
+    // For local execution, pass arguments directly to the script
     self.qsub_params = [
       self.qsub_script,
-      "fn=" + self.fn,
-      "tree_fn=" + self.tree_fn,
-      "sfn=" + self.status_fn,
-      "pfn=" + self.progress_fn,
-      "rfn=" + self.results_short_fn,
-      "treemode=" + self.treemode,
-      "analysis_type=" + self.type,
-      "cwd=" + __dirname,
-      "msaid=" + self.msaid,
-      "number_of_grid_points=" + self.number_of_grid_points,
-      "concentration_of_dirichlet_prior=" + self.concentration_of_dirichlet_prior,
-      "mcmc_iterations=" + self.mcmc_iterations,
-      "burnin_samples=" + self.burnin_samples,
-      "pos_threshold=" + self.pos_threshold,
-      "julia_path=" + config.julia_path,
-      "julia_project=" + config.julia_project
+      self.fn,
+      self.tree_fn,
+      self.status_fn,
+      self.progress_fn,
+      self.results_short_fn,
+      self.pos_threshold,
+      self.mcmc_iterations,
+      self.burnin_samples,
+      self.concentration_of_dirichlet_prior,
+      config.julia_path,
+      config.julia_project
     ];
   } else {
     // For cluster execution (qsub/sbatch)
