@@ -13,7 +13,57 @@ concentration_of_dirichlet_prior = parse(Float64, ENV["concentration_of_dirichle
 try
     # Read input files
     println("Reading input files...")
-    seqnames, seqs = read_fasta("$(fn).fasta")
+    println("Attempting to read: $fn")
+    
+    # Check if file exists and determine format
+    if isfile(fn)
+        file_content = read(fn, String)
+        if occursin("#NEXUS", file_content)
+            println("Detected NEXUS format, parsing sequences...")
+            # Parse NEXUS manually to extract sequences
+            seqnames = String[]
+            seqs = String[]
+            
+            lines = split(file_content, '\n')
+            in_matrix = false
+            
+            for line in lines
+                line = strip(line)
+                if occursin("MATRIX", uppercase(line))
+                    in_matrix = true
+                    continue
+                elseif occursin("END;", line) && in_matrix
+                    break
+                elseif in_matrix && !isempty(line) && !startswith(line, ";")
+                    # Parse sequence line: 'Name' SEQUENCE
+                    if occursin("'", line)
+                        parts = split(line, "' ")
+                        if length(parts) >= 2
+                            name = replace(parts[1], "'" => "")
+                            seq = strip(parts[2])
+                            push!(seqnames, name)
+                            push!(seqs, seq)
+                        end
+                    end
+                end
+            end
+            
+            if isempty(seqnames)
+                error("No sequences found in NEXUS file")
+            end
+        else
+            # Try as FASTA
+            println("Trying to read as FASTA format...")
+            seqnames, seqs = read_fasta(fn)
+        end
+    elseif isfile("$(fn).fasta")
+        # Fallback to .fasta extension
+        println("Trying $(fn).fasta...")
+        seqnames, seqs = read_fasta("$(fn).fasta")
+    else
+        error("Input file not found: $fn or $(fn).fasta")
+    end
+    
     println("✓ Read $(length(seqnames)) sequences")
     
     # Parse tagged tree from NEXUS or Newick file
