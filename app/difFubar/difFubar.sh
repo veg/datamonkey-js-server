@@ -52,7 +52,15 @@ echo "info" > "$PFN"
 
 echo "Running difFUBAR analysis with Julia..."
 
-# Run Julia analysis with command line arguments
+# Create log files for stdout and stderr
+STDOUT_LOG="${RFN}.stdout.log"
+STDERR_LOG="${RFN}.stderr.log"
+
+echo "Stdout log: $STDOUT_LOG"
+echo "Stderr log: $STDERR_LOG"
+
+# Run Julia analysis with command line arguments and capture output
+echo "Executing Julia command..."
 "$JULIA_PATH" --project="$JULIA_PROJECT" "$SCRIPT_DIR/difFubar_analysis.jl" \
   "$FN" \
   "$TREE_FN" \
@@ -61,6 +69,26 @@ echo "Running difFUBAR analysis with Julia..."
   "$POS_THRESHOLD" \
   "$MCMC_ITERATIONS" \
   "$BURNIN_SAMPLES" \
-  "$CONCENTRATION_OF_DIRICHLET_PRIOR"
+  "$CONCENTRATION_OF_DIRICHLET_PRIOR" \
+  2>&1 | tee "$STDOUT_LOG"
 
-echo "difFUBAR analysis completed"
+# Capture exit code
+JULIA_EXIT_CODE=${PIPESTATUS[0]}
+
+echo "Julia exit code: $JULIA_EXIT_CODE"
+
+# Print the Julia command for debugging
+echo "=== DEBUGGING COMMAND ==="
+echo "cd $SCRIPT_DIR && $JULIA_PATH --project=\"$JULIA_PROJECT\" difFubar_analysis.jl \\"
+echo "  \"$FN\" \\"
+echo "  \"$TREE_FN\" \\"
+echo "  \"$RFN\" \\"
+echo "  \"$SFN\" \\"
+echo "  \"$POS_THRESHOLD\" \\"
+echo "  \"$MCMC_ITERATIONS\" \\"
+echo "  \"$BURNIN_SAMPLES\" \\"
+echo "  \"$CONCENTRATION_OF_DIRICHLET_PRIOR\""
+echo "========================="
+
+echo "difFUBAR analysis completed with exit code: $JULIA_EXIT_CODE"
+exit $JULIA_EXIT_CODE
