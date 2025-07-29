@@ -61,7 +61,15 @@ echo "Stderr log: $STDERR_LOG"
 
 # Run Julia analysis with command line arguments and capture output
 echo "=== EXECUTING JULIA COMMAND ===" | tee -a "$STDOUT_LOG"
-echo "Command: $JULIA_PATH --project=\"$JULIA_PROJECT\" difFubar_analysis.jl ..." | tee -a "$STDOUT_LOG"
+echo "Command: $JULIA_PATH --project=\"$JULIA_PROJECT\" difFubar_analysis.jl \\" | tee -a "$STDOUT_LOG"
+echo "  \"$FN\" \\" | tee -a "$STDOUT_LOG"
+echo "  \"$TREE_FN\" \\" | tee -a "$STDOUT_LOG"
+echo "  \"$RFN\" \\" | tee -a "$STDOUT_LOG"
+echo "  \"$SFN\" \\" | tee -a "$STDOUT_LOG"
+echo "  \"$POS_THRESHOLD\" \\" | tee -a "$STDOUT_LOG"
+echo "  \"$MCMC_ITERATIONS\" \\" | tee -a "$STDOUT_LOG"
+echo "  \"$BURNIN_SAMPLES\" \\" | tee -a "$STDOUT_LOG"
+echo "  \"$CONCENTRATION_OF_DIRICHLET_PRIOR\"" | tee -a "$STDOUT_LOG"
 echo "==================================" | tee -a "$STDOUT_LOG"
 
 "$JULIA_PATH" --project="$JULIA_PROJECT" "$SCRIPT_DIR/difFubar_analysis.jl" \
