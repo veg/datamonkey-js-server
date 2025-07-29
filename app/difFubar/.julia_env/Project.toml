@@ -1,0 +1,5 @@
+[deps]
+CodonMolecularEvolution = "6511b2a3-0bb8-4def-a118-560a7e125e34"
+FASTX = "c2308a5c-f048-11e8-3e8a-31650f418d12"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+MolecularEvolution = "9f975960-e239-4209-8aa0-3d3ad5a82892"
