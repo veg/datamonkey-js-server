@@ -52,17 +52,15 @@ echo "info" > "$PFN"
 
 echo "Running difFUBAR analysis with Julia..."
 
-# Export variables for Julia script
-export fn="$FN"
-export tree_fn="$TREE_FN"
-export sfn="$SFN"
-export rfn="$RFN"
-export pos_threshold="$POS_THRESHOLD"
-export mcmc_iterations="$MCMC_ITERATIONS"
-export burnin_samples="$BURNIN_SAMPLES"
-export concentration_of_dirichlet_prior="$CONCENTRATION_OF_DIRICHLET_PRIOR"
-
-# Run Julia analysis
-"$JULIA_PATH" --project="$JULIA_PROJECT" "$SCRIPT_DIR/difFubar_analysis.jl"
+# Run Julia analysis with command line arguments
+"$JULIA_PATH" --project="$JULIA_PROJECT" "$SCRIPT_DIR/difFubar_analysis.jl" \
+  "$FN" \
+  "$TREE_FN" \
+  "$RFN" \
+  "$SFN" \
+  "$POS_THRESHOLD" \
+  "$MCMC_ITERATIONS" \
+  "$BURNIN_SAMPLES" \
+  "$CONCENTRATION_OF_DIRICHLET_PRIOR"
 
 echo "difFUBAR analysis completed"

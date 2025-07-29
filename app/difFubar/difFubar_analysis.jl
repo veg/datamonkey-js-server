@@ -1,14 +1,31 @@
 using MolecularEvolution, FASTX, CodonMolecularEvolution, JSON
 
-# Get parameters from environment variables
-fn = ENV["fn"]
-tree_fn = ENV["tree_fn"]
-rfn = ENV["rfn"]
-sfn = ENV["sfn"]
-pos_threshold = parse(Float64, ENV["pos_threshold"])
-mcmc_iterations = parse(Int, ENV["mcmc_iterations"])
-burnin_samples = parse(Int, ENV["burnin_samples"])
-concentration_of_dirichlet_prior = parse(Float64, ENV["concentration_of_dirichlet_prior"])
+# Get parameters from command line arguments
+if length(ARGS) < 8
+    println("Usage: julia difFubar_analysis.jl <fn> <tree_fn> <rfn> <sfn> <pos_threshold> <mcmc_iterations> <burnin_samples> <concentration_of_dirichlet_prior>")
+    println("Example: julia difFubar_analysis.jl /path/to/alignment /path/to/tree /path/to/results /path/to/status 0.95 2500 500 0.5")
+    exit(1)
+end
+
+fn = ARGS[1]
+tree_fn = ARGS[2]
+rfn = ARGS[3]
+sfn = ARGS[4]
+pos_threshold = parse(Float64, ARGS[5])
+mcmc_iterations = parse(Int, ARGS[6])
+burnin_samples = parse(Int, ARGS[7])
+concentration_of_dirichlet_prior = parse(Float64, ARGS[8])
+
+println("=== JULIA DIFUBAR PARAMETERS ===")
+println("Alignment file: $fn")
+println("Tree file: $tree_fn")
+println("Results file: $rfn")
+println("Status file: $sfn")
+println("Positive threshold: $pos_threshold")
+println("MCMC iterations: $mcmc_iterations")
+println("Burnin samples: $burnin_samples")
+println("Dirichlet concentration: $concentration_of_dirichlet_prior")
+println("===================================")
 
 try
     # Read input files
@@ -90,15 +107,11 @@ try
     
     # Run difFUBAR analysis
     df, results, plots = difFUBAR(
-        seqnames, seqs, treestring, tags, 
-        rfn,
+        seqnames, seqs, treestring, tags, rfn,
         pos_thresh=pos_threshold, 
         iters=mcmc_iterations, 
-        burnin=burnin_samples, 
-        concentration=concentration_of_dirichlet_prior,
         verbosity=1, 
-        exports=true, 
-        exports2json=true
+        exports=true
     )
     
     # Save plot objects for visualization
