@@ -46,8 +46,8 @@ echo "=========================="
 cd "$SCRIPT_DIR"
 echo "Changed to directory: $PWD"
 
-# Start the analysis
-echo "starting difFUBAR" > "$SFN"
+# Start the analysis - append to status file instead of overwriting
+echo "[BASH] starting difFUBAR" >> "$SFN"
 echo "info" > "$PFN"
 
 echo "Running difFUBAR analysis with Julia..."
@@ -60,7 +60,10 @@ echo "Stdout log: $STDOUT_LOG"
 echo "Stderr log: $STDERR_LOG"
 
 # Run Julia analysis with command line arguments and capture output
-echo "Executing Julia command..."
+echo "=== EXECUTING JULIA COMMAND ===" | tee -a "$STDOUT_LOG"
+echo "Command: $JULIA_PATH --project=\"$JULIA_PROJECT\" difFubar_analysis.jl ..." | tee -a "$STDOUT_LOG"
+echo "==================================" | tee -a "$STDOUT_LOG"
+
 "$JULIA_PATH" --project="$JULIA_PROJECT" "$SCRIPT_DIR/difFubar_analysis.jl" \
   "$FN" \
   "$TREE_FN" \
@@ -70,7 +73,7 @@ echo "Executing Julia command..."
   "$MCMC_ITERATIONS" \
   "$BURNIN_SAMPLES" \
   "$CONCENTRATION_OF_DIRICHLET_PRIOR" \
-  2>&1 | tee "$STDOUT_LOG"
+  2>&1 | tee -a "$STDOUT_LOG"
 
 # Capture exit code
 JULIA_EXIT_CODE=${PIPESTATUS[0]}
@@ -89,6 +92,9 @@ echo "  \"$MCMC_ITERATIONS\" \\"
 echo "  \"$BURNIN_SAMPLES\" \\"
 echo "  \"$CONCENTRATION_OF_DIRICHLET_PRIOR\""
 echo "========================="
+
+# Append final status to status file
+echo "[BASH] difFUBAR analysis completed with exit code: $JULIA_EXIT_CODE" >> "$SFN"
 
 echo "difFUBAR analysis completed with exit code: $JULIA_EXIT_CODE"
 exit $JULIA_EXIT_CODE

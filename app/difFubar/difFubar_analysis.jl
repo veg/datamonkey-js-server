@@ -141,8 +141,10 @@ try
         println("Note: Could not save plot images: $e")
     end
     
-    # Write completion status
-    write(sfn, "completed")
+    # Write completion status (append, don't overwrite)
+    open(sfn, "a") do f
+        write(f, "\n[JULIA] completed")
+    end
     println("\ndifFUBAR analysis completed successfully")
     println("Sites analyzed: $(size(df, 1))")
     println("Sites with differential selection: $(sum(df[!, "P(ω1 > ω2)"] .> pos_threshold) + sum(df[!, "P(ω2 > ω1)"] .> pos_threshold))")
@@ -151,9 +153,11 @@ try
     println("  - $(rfn)_posteriors.csv")
     
 catch e
-    # Write error status with informative message
-    error_msg = "error: $e"
-    write(sfn, error_msg)
+    # Write error status with informative message (append, don't overwrite)
+    error_msg = "\n[JULIA] error: $e"
+    open(sfn, "a") do f
+        write(f, error_msg)
+    end
     println("\ndifFUBAR analysis failed: $e")
     
     # Provide helpful error messages
