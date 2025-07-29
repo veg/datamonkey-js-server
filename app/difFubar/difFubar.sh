@@ -4,6 +4,16 @@ source /etc/profile
 echo "Initiating difFUBAR analysis"
 echo $PWD
 
+# Parse command line arguments in the format key=value
+for arg in "$@"; do
+    if [[ $arg == *"="* ]]; then
+        key=$(echo $arg | cut -d'=' -f1)
+        value=$(echo $arg | cut -d'=' -f2-)
+        export $key="$value"
+        echo "Set environment variable: $key=$value"
+    fi
+done
+
 # Change to the working directory
 cd $cwd
 echo "Changed directory to: $PWD"
@@ -36,7 +46,7 @@ echo "Julia project: $JULIA_PROJECT_PATH"
 
 # Verify Julia is available
 if ! command -v "$JULIA_CMD" &> /dev/null; then
-    echo "ERROR: Julia not found at $JULIA_CMD" > $sfn
+    echo "ERROR: Julia not found at $JULIA_CMD" > "$sfn"
     exit 1
 fi
 
