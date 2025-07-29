@@ -4,21 +4,31 @@ source /etc/profile
 echo "Initiating difFUBAR analysis"
 echo $PWD
 
+# Get the directory where this script is located FIRST
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+echo "Script directory: $SCRIPT_DIR"
+
 # Parse command line arguments in the format key=value
 for arg in "$@"; do
     if [[ $arg == *"="* ]]; then
         key=$(echo $arg | cut -d'=' -f1)
         value=$(echo $arg | cut -d'=' -f2-)
+        # Convert relative paths to absolute paths
+        if [[ $key == *"fn" ]] || [[ $key == *"_fn" ]]; then
+            if [[ ! "$value" = /* ]]; then
+                value="$SCRIPT_DIR/$value"
+            fi
+        fi
         export $key="$value"
         echo "Set environment variable: $key=$value"
     fi
 done
 
 # Change to the working directory
-cd $cwd
+cd "$cwd"
 echo "Changed directory to: $PWD"
 
-# Start the analysis
+# Start the analysis - use absolute paths
 echo "starting difFUBAR" > "$sfn"
 echo "info" > "$pfn"
 
@@ -34,10 +44,7 @@ echo "Positive threshold: $pos_threshold"
 # Export environment variables for Julia script
 export fn tree_fn rfn sfn pos_threshold mcmc_iterations burnin_samples concentration_of_dirichlet_prior
 
-# Get the directory where this script is located to find the Julia script
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-# Use configured Julia path and project environment
+# Use configured Julia path and project environment (SCRIPT_DIR already set above)
 JULIA_CMD="${julia_path:-julia}"
 JULIA_PROJECT_PATH="${julia_project:-$SCRIPT_DIR/../../.julia_env}"
 
