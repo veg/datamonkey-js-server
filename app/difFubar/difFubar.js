@@ -19,7 +19,15 @@ var difFubar = function(socket, stream, params) {
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
   self.nj = self.params.msa[0].nj;
-  self.treemode = "nj"; // Default tree mode for difFUBAR
+  
+  // Use tagged tree if available, otherwise fall back to neighbor-joining tree
+  if (self.params.analysis.tagged_nwk_tree) {
+    self.nwk_tree = self.params.analysis.tagged_nwk_tree;
+    self.treemode = "user";
+  } else {
+    self.nwk_tree = self.nj;
+    self.treemode = "nj";
+  }
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -112,7 +120,7 @@ var difFubar = function(socket, stream, params) {
   }
 
   // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nj, function(err) {
+  fs.writeFile(self.tree_fn, self.nwk_tree, function(err) {
     if (err) throw err;
   });
 
