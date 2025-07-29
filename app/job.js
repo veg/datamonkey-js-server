@@ -176,9 +176,9 @@ jobRunner.prototype.submit = function(params, cwd) {
   
   // Create formatted command for logging
   const fullCommand = `${scheduler} ${params.join(' ')}`;
-  logger.info(`COMMAND TO EXECUTE: ${fullCommand}`);
-  logger.info(`Job submission using ${scheduler} with params: ${JSON.stringify(params)}`);
-  logger.info(`Working directory: ${cwd}`);
+  logger.info(`[${scheduler.toUpperCase()} JOB] FULL COMMAND: ${fullCommand}`);
+  logger.info(`[${scheduler.toUpperCase()} JOB] Job submission using ${scheduler} with params: ${JSON.stringify(params)}`);
+  logger.info(`[${scheduler.toUpperCase()} JOB] Working directory: ${cwd}`);
   
   try {
     console.log(`EXECUTING: ${fullCommand}`);
@@ -246,6 +246,18 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
   logger.info(`[LOCAL JOB] Script: ${script}`);
   logger.info(`[LOCAL JOB] Params: ${JSON.stringify(params)}`);
   logger.info(`[LOCAL JOB] Working directory: ${cwd}`);
+  
+  // Log the full command that will be executed
+  const fullCommand = `${script} ${params.join(' ')}`;
+  logger.info(`[LOCAL JOB] FULL COMMAND: ${fullCommand}`);
+  
+  // Log environment variables that will be passed
+  if (params.length > 0) {
+    logger.info(`[LOCAL JOB] Environment variables/arguments:`);
+    params.forEach((param, index) => {
+      logger.info(`[LOCAL JOB]   [${index}]: ${param}`);
+    });
+  }
   
   try {
     // For local execution, pass params as command line arguments

@@ -9,8 +9,8 @@ cd $cwd
 echo "Changed directory to: $PWD"
 
 # Start the analysis
-echo "starting difFUBAR" > $sfn
-echo "info" > $pfn
+echo "starting difFUBAR" > "$sfn"
+echo "info" > "$pfn"
 
 echo "Running difFUBAR analysis with the following parameters:"
 echo "Tree file: $tree_fn"
@@ -41,7 +41,7 @@ if ! command -v "$JULIA_CMD" &> /dev/null; then
 fi
 
 # Run Julia analysis
-echo "starting Julia analysis" > $sfn
+echo "starting Julia analysis" > "$sfn"
 "$JULIA_CMD" --project="$JULIA_PROJECT_PATH" -t auto "$SCRIPT_DIR/difFubar_analysis.jl"
 
 # Check if analysis completed successfully
