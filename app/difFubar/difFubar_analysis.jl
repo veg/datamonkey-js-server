@@ -38,7 +38,8 @@ try
         if occursin("#NEXUS", file_content)
             println("Detected NEXUS format, parsing sequences...")
             
-            lines = split(file_content, '\n')
+            # Handle different line endings (Unix \n, Windows \r\n, Mac \r)
+            lines = split(replace(file_content, '\r' => '\n'), '\n')
             seqnames = String[]
             seqs = String[]
             
@@ -108,10 +109,32 @@ try
                 elseif occursin("END;", line) && in_matrix
                     break
                 elseif in_matrix && !isempty(line) && !startswith(line, ";")
-                    # This is a sequence line (no labels, just sequence)
+                    # This could be either:
+                    # 1. NOLABELS format: just sequence
+                    # 2. Labeled format: 'taxon_name' sequence_data
+                    
                     seq = strip(line)
-                    if !isempty(seq)
-                        push!(seqs, seq)
+                    # Remove any trailing semicolon that might be part of END; statement
+                    seq = replace(seq, ";" => "")
+                    
+                    # Check if this line starts with a quoted taxon name
+                    if startswith(seq, "'") || startswith(seq, "\"")
+                        # Labeled format: extract sequence part after taxon name
+                        # Find the end of the quoted name
+                        quote_char = seq[1]
+                        end_quote = findnext(quote_char, seq, 2)
+                        if end_quote !== nothing
+                            # Extract sequence part after the taxon name and any whitespace
+                            seq_part = strip(seq[end_quote+1:end])
+                            if !isempty(seq_part)
+                                push!(seqs, seq_part)
+                            end
+                        end
+                    else
+                        # NOLABELS format: entire line is sequence
+                        if !isempty(seq)
+                            push!(seqs, seq)
+                        end
                     end
                 end
             end
@@ -161,6 +184,10 @@ try
     end
     
     println("Starting difFUBAR analysis...")
+
+    for (name, seq) in zip(seqnames, seqs)
+        println("$(name): length = $(length(seq))")
+    end
     
     # Run difFUBAR analysis
     df, results, plots = difFUBAR(

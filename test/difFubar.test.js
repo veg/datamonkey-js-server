@@ -416,6 +416,43 @@ ATGCTGATGATG
       });
     });
 
+    it('should handle NEXUS format with Windows line endings', function(done) {
+      const testId = Date.now().toString();
+      const testFile = path.join(testDir, `${testId}_windows.nex`);
+      // Create NEXUS file with Windows line endings (\r only)
+      const windowsNexus = sampleNexusNoLabels.replace(/\n/g, '\r');
+      fs.writeFileSync(testFile, windowsNexus);
+
+      const proc = spawn('/usr/local/bin/julia', [
+        '--project=./.julia_env',
+        '-e',
+        `
+        file_content = read("${testFile}", String)
+        # Test original vs fixed line parsing
+        original_lines = split(file_content, '\\n')
+        fixed_lines = split(replace(file_content, '\\r' => '\\n'), '\\n')
+        println("Original lines: \", length(original_lines))
+        println("Fixed lines: \", length(fixed_lines))
+        println("Has CR line endings: \", occursin('\\r', file_content))
+        `
+      ], {
+        cwd: difFubarDir
+      });
+
+      let output = '';
+      proc.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      proc.on('close', (code) => {
+        expect(output).to.include('Original lines: 1');
+        expect(output).to.include('Fixed lines:');
+        expect(output).to.include('Has CR line endings: true');
+        fs.unlinkSync(testFile);
+        done();
+      });
+    });
+
     it('should handle NEXUS format with NOLABELS', function(done) {
       const testId = Date.now().toString();
       const testFile = path.join(testDir, `${testId}_nolabels.nex`);
