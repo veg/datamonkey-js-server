@@ -187,10 +187,15 @@ ATGCTGATGATG
       
       expect(job.qsub_params).to.be.an('array');
       expect(job.qsub_params[0]).to.include('difFubar.sh');
-      expect(job.qsub_params[5]).to.equal(0.9); // pos_threshold
-      expect(job.qsub_params[6]).to.equal(100); // mcmc_iterations
-      expect(job.qsub_params[7]).to.equal(25); // burnin_samples
-      expect(job.qsub_params[8]).to.equal(0.5); // concentration_of_dirichlet_prior
+      expect(job.qsub_params[1]).to.include('test789'); // fn
+      expect(job.qsub_params[2]).to.include('.tre'); // tree_fn
+      expect(job.qsub_params[3]).to.include('.status'); // status_fn
+      expect(job.qsub_params[4]).to.include('.progress'); // progress_fn
+      expect(job.qsub_params[5]).to.include('.difFubar'); // results_short_fn
+      expect(job.qsub_params[6]).to.equal(0.9); // pos_threshold
+      expect(job.qsub_params[7]).to.equal(100); // mcmc_iterations
+      expect(job.qsub_params[8]).to.equal(25); // burnin_samples
+      expect(job.qsub_params[9]).to.equal(0.5); // concentration_of_dirichlet_prior
 
       // Restore
       fs.writeFile = originalWriteFile;
