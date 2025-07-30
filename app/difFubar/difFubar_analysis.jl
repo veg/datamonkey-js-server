@@ -37,13 +37,69 @@ try
         file_content = read(fn, String)
         if occursin("#NEXUS", file_content)
             println("Detected NEXUS format, parsing sequences...")
-            # Parse NEXUS manually to extract sequences
+            
+            lines = split(file_content, '\n')
             seqnames = String[]
             seqs = String[]
             
-            lines = split(file_content, '\n')
-            in_matrix = false
+            # First, extract taxon names from TAXLABELS
+            in_taxa = false
+            for line in lines
+                line = strip(line)
+                if occursin("TAXLABELS", uppercase(line))
+                    in_taxa = true
+                    # Check if labels are on the same line
+                    if occursin(";", line)
+                        labels_part = split(line, "TAXLABELS")[2]
+                        labels_part = replace(labels_part, ";" => "")
+                        taxa = split(strip(labels_part))
+                        for taxon in taxa
+                            if !isempty(strip(taxon))
+                                # Remove quotes from taxon names
+                                clean_taxon = replace(strip(taxon), "'" => "")
+                                if !isempty(clean_taxon)
+                                    push!(seqnames, clean_taxon)
+                                end
+                            end
+                        end
+                        break
+                    end
+                    continue
+                elseif in_taxa
+                    if occursin(";", line)
+                        # Last line of taxa
+                        labels_part = replace(line, ";" => "")
+                        taxa = split(strip(labels_part))
+                        for taxon in taxa
+                            if !isempty(strip(taxon))
+                                # Remove quotes from taxon names
+                                clean_taxon = replace(strip(taxon), "'" => "")
+                                if !isempty(clean_taxon)
+                                    push!(seqnames, clean_taxon)
+                                end
+                            end
+                        end
+                        break
+                    else
+                        # Continue reading taxa
+                        taxa = split(strip(line))
+                        for taxon in taxa
+                            if !isempty(strip(taxon))
+                                # Remove quotes from taxon names
+                                clean_taxon = replace(strip(taxon), "'" => "")
+                                if !isempty(clean_taxon)
+                                    push!(seqnames, clean_taxon)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
             
+            println("Found $(length(seqnames)) taxa: $(seqnames)")
+            
+            # Then extract sequences from MATRIX
+            in_matrix = false
             for line in lines
                 line = strip(line)
                 if occursin("MATRIX", uppercase(line))
@@ -52,17 +108,18 @@ try
                 elseif occursin("END;", line) && in_matrix
                     break
                 elseif in_matrix && !isempty(line) && !startswith(line, ";")
-                    # Parse sequence line: 'Name' SEQUENCE
-                    if occursin("'", line)
-                        parts = split(line, "' ")
-                        if length(parts) >= 2
-                            name = replace(parts[1], "'" => "")
-                            seq = strip(parts[2])
-                            push!(seqnames, name)
-                            push!(seqs, seq)
-                        end
+                    # This is a sequence line (no labels, just sequence)
+                    seq = strip(line)
+                    if !isempty(seq)
+                        push!(seqs, seq)
                     end
                 end
+            end
+            
+            println("Found $(length(seqs)) sequences")
+            
+            if length(seqnames) != length(seqs)
+                error("Mismatch: $(length(seqnames)) taxa but $(length(seqs)) sequences")
             end
             
             if isempty(seqnames)
