@@ -125,7 +125,24 @@ io.sockets.on("connection", function(socket) {
   // BUSTED
   r.route("busted", {
     spawn: function(stream, params) {
-      new busted.busted(socket, stream, params.job);
+      if (!params || !params.job) {
+        logger.error("BUSTED spawn: Invalid parameters received", { params });
+        socket.emit("script error", { error: "Invalid job parameters" });
+        return;
+      }
+      logger.info("BUSTED route spawn called with:", {
+        stream_type: typeof stream,
+        stream_length: stream ? stream.length : 0,
+        stream_preview: stream ? stream.substring(0, 100) : "null",
+        params_job: JSON.stringify(params.job),
+        params_tree_length: params.tree ? params.tree.length : 0
+      });
+      // Merge tree data into job params for BUSTED constructor
+      var jobWithTree = Object.assign({}, params.job);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new busted.busted(socket, stream, jobWithTree);
     },
     check: function(params) {
       params.job["checkOnly"] = true;
@@ -142,7 +159,24 @@ io.sockets.on("connection", function(socket) {
   // RELAX
   r.route("relax", {
     spawn: function(stream, params) {
-      new relax.relax(socket, stream, params.job);
+      if (!params || !params.job) {
+        logger.error("RELAX spawn: Invalid parameters received", { params });
+        socket.emit("script error", { error: "Invalid job parameters" });
+        return;
+      }
+      logger.info("RELAX route spawn called with:", {
+        stream_type: typeof stream,
+        stream_length: stream ? stream.length : 0,
+        stream_preview: stream ? stream.substring(0, 100) : "null",
+        params_job: JSON.stringify(params.job),
+        params_tree_length: params.tree ? params.tree.length : 0
+      });
+      // Merge tree data into job params for RELAX constructor
+      var jobWithTree = Object.assign({}, params.job);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new relax.relax(socket, stream, jobWithTree);
     },
     check: function(params) {
       params.job["checkOnly"] = true;
@@ -210,7 +244,24 @@ io.sockets.on("connection", function(socket) {
   // aBSREL
   r.route("absrel", {
     spawn: function(stream, params) {
-      new absrel.absrel(socket, stream, params.job);
+      if (!params || !params.job) {
+        logger.error("ABSREL spawn: Invalid parameters received", { params });
+        socket.emit("script error", { error: "Invalid job parameters" });
+        return;
+      }
+      logger.info("ABSREL route spawn called with:", {
+        stream_type: typeof stream,
+        stream_length: stream ? stream.length : 0,
+        stream_preview: stream ? stream.substring(0, 100) : "null",
+        params_job: JSON.stringify(params.job),
+        params_tree_length: params.tree ? params.tree.length : 0
+      });
+      // Merge tree data into job params for ABSREL constructor
+      var jobWithTree = Object.assign({}, params.job);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new absrel.absrel(socket, stream, jobWithTree);
     },
     check: function(params) {
       params.job["checkOnly"] = true;
@@ -261,7 +312,24 @@ io.sockets.on("connection", function(socket) {
   // MEME
   r.route("meme", {
     spawn: function(stream, params) {
-      new meme.meme(socket, stream, params.job);
+      if (!params || !params.job) {
+        logger.error("MEME spawn: Invalid parameters received", { params });
+        socket.emit("script error", { error: "Invalid job parameters" });
+        return;
+      }
+      logger.info("MEME route spawn called with:", {
+        stream_type: typeof stream,
+        stream_length: stream ? stream.length : 0,
+        stream_preview: stream ? stream.substring(0, 100) : "null",
+        params_job: JSON.stringify(params.job),
+        params_tree_length: params.tree ? params.tree.length : 0
+      });
+      // Merge tree data into job params for MEME constructor
+      var jobWithTree = Object.assign({}, params.job);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new meme.meme(socket, stream, jobWithTree);
     },
     check: function(params) {
       params.job["checkOnly"] = true;
@@ -278,7 +346,24 @@ io.sockets.on("connection", function(socket) {
   // SLAC
   r.route("slac", {
     spawn: function(stream, params) {
-      new slac.slac(socket, stream, params.job);
+      if (!params || !params.job) {
+        logger.error("SLAC spawn: Invalid parameters received", { params });
+        socket.emit("script error", { error: "Invalid job parameters" });
+        return;
+      }
+      logger.info("SLAC route spawn called with:", {
+        stream_type: typeof stream,
+        stream_length: stream ? stream.length : 0,
+        stream_preview: stream ? stream.substring(0, 100) : "null",
+        params_job: JSON.stringify(params.job),
+        params_tree_length: params.tree ? params.tree.length : 0
+      });
+      // Merge tree data into job params for SLAC constructor
+      var jobWithTree = Object.assign({}, params.job);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new slac.slac(socket, stream, jobWithTree);
     },
     check: function(params) {
       params.job["checkOnly"] = true;

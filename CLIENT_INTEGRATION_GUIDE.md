@@ -139,22 +139,22 @@ ATGCGATCGATCG...`;
 runStandardAnalysis('busted', fastaContent, jobParams);
 ```
 
-#### FEL Analysis Format (Special Case)
-FEL analysis uses a different data format that includes both alignment and tree data:
+#### Unified Data Format (All Analyses)
+All analyses now support a unified data format that includes alignment and tree data in a single payload. This provides consistency and better data handling across all analysis types:
 
 ```javascript
-// FEL analysis requires both alignment and tree data in a single payload
-function runFELAnalysis(alignmentData, treeData, jobParams) {
+// Unified format works for all analyses: FEL, BUSTED, ABSREL, MEME, SLAC, RELAX, etc.
+function runUnifiedAnalysis(analysisType, alignmentData, treeData, jobParams) {
   const payload = {
     alignment: alignmentData,  // FASTA format string
     tree: treeData,           // Newick format string
     job: jobParams            // Analysis parameters
   };
   
-  socket.emit('fel:spawn', payload);
+  socket.emit(`${analysisType}:spawn`, payload);
 }
 
-// Example FEL analysis
+// Example FEL analysis using unified format
 const alignmentData = `>Human
 GCCTTGGAAACCTGGGGTGCCTTGGGTCAGGACATCAACTTGGACATTCCT
 >Chimp
@@ -190,7 +190,53 @@ const felParams = {
   synonymous_rate_variation: false
 };
 
-runFELAnalysis(alignmentData, treeData, felParams);
+// Run FEL analysis
+runUnifiedAnalysis('fel', alignmentData, treeData, felParams);
+
+// Example BUSTED analysis using unified format
+const bustedParams = {
+  analysis_type: 'busted',
+  genetic_code: 'Universal',
+  ds_variation: 1,           // 1=Yes, 2=No, 3=Branch-site
+  error_protection: false,
+  multihit: 'None'          // Options: 'None', 'Double', 'Double+Triple'
+};
+
+runUnifiedAnalysis('busted', alignmentData, treeData, bustedParams);
+
+// Example ABSREL analysis using unified format
+const absrelParams = {
+  analysis_type: 'absrel',
+  genetic_code: 'Universal'
+};
+
+runUnifiedAnalysis('absrel', alignmentData, treeData, absrelParams);
+
+// Example MEME analysis using unified format
+const memeParams = {
+  analysis_type: 'meme',
+  genetic_code: 'Universal',
+  p_value: 0.1
+};
+
+runUnifiedAnalysis('meme', alignmentData, treeData, memeParams);
+
+// Example SLAC analysis using unified format
+const slacParams = {
+  analysis_type: 'slac',
+  genetic_code: 'Universal',
+  p_value: 0.1
+};
+
+runUnifiedAnalysis('slac', alignmentData, treeData, slacParams);
+
+// Example RELAX analysis using unified format
+const relaxParams = {
+  analysis_type: 'relax',
+  genetic_code: 'Universal'
+};
+
+runUnifiedAnalysis('relax', alignmentData, treeData, relaxParams);
 ```
 
 ### 6. Event Handling Details
@@ -258,12 +304,12 @@ socket.on('script error', (error) => {
 });
 ```
 
-### 7. Complete FEL Analysis Example
+### 7. Complete Analysis Client Example
 
 ```javascript
 import io from 'socket.io-client';
 
-class FELAnalysisClient {
+class DataMonkeyAnalysisClient {
   constructor(serverUrl = 'http://localhost:7015') {
     this.socket = io(serverUrl);
     this.setupEventHandlers();
@@ -279,7 +325,7 @@ class FELAnalysisClient {
     });
     
     this.socket.on('job created', (data) => {
-      console.log(`FEL job created: ${data.id} (${data.torque_id})`);
+      console.log(`${data.analysis_type.toUpperCase()} job created: ${data.id} (${data.torque_id})`);
       console.log(`Sequences: ${data.sequences}, Sites: ${data.sites}`);
     });
     
@@ -290,30 +336,23 @@ class FELAnalysisClient {
     });
     
     this.socket.on('completed', (results) => {
-      console.log('FEL analysis completed!');
-      const felResults = JSON.parse(results.results);
-      console.log('Results:', felResults);
+      console.log('Analysis completed!');
+      const analysisResults = JSON.parse(results.results);
+      console.log('Results:', analysisResults);
       this.socket.disconnect();
     });
     
     this.socket.on('script error', (error) => {
-      console.error('FEL analysis failed:', error.error);
+      console.error('Analysis failed:', error.error);
       if (error.stderr) console.error('STDERR:', error.stderr);
       this.socket.disconnect();
     });
   }
   
-  runFELAnalysis(alignmentData, treeData, parameters = {}) {
+  runAnalysis(analysisType, alignmentData, treeData, parameters = {}) {
     const defaultParams = {
-      analysis_type: 'fel',
-      genetic_code: 'Universal',
-      p_value: 0.1,
-      branches: 'All',
-      bootstrap: 100,
-      resample: 1,
-      model: 'HKY85',
-      rate_classes: 3,
-      synonymous_rate_variation: false
+      analysis_type: analysisType,
+      genetic_code: 'Universal'
     };
     
     const jobParams = { ...defaultParams, ...parameters };
@@ -324,11 +363,63 @@ class FELAnalysisClient {
       job: jobParams
     };
     
-    console.log('Submitting FEL analysis...');
-    this.socket.emit('fel:spawn', payload);
+    console.log(`Submitting ${analysisType.toUpperCase()} analysis...`);
+    this.socket.emit(`${analysisType}:spawn`, payload);
   }
   
-  validateParameters(parameters) {
+  runFELAnalysis(alignmentData, treeData, parameters = {}) {
+    const felParams = {
+      p_value: 0.1,
+      branches: 'All',
+      bootstrap: 100,
+      resample: 1,
+      model: 'HKY85',
+      rate_classes: 3,
+      synonymous_rate_variation: false,
+      ...parameters
+    };
+    
+    this.runAnalysis('fel', alignmentData, treeData, felParams);
+  }
+  
+  runBUSTEDAnalysis(alignmentData, treeData, parameters = {}) {
+    const bustedParams = {
+      ds_variation: 1,
+      error_protection: false,
+      multihit: 'None',
+      ...parameters
+    };
+    
+    this.runAnalysis('busted', alignmentData, treeData, bustedParams);
+  }
+  
+  runABSRELAnalysis(alignmentData, treeData, parameters = {}) {
+    this.runAnalysis('absrel', alignmentData, treeData, parameters);
+  }
+  
+  runMEMEAnalysis(alignmentData, treeData, parameters = {}) {
+    const memeParams = {
+      p_value: 0.1,
+      ...parameters
+    };
+    
+    this.runAnalysis('meme', alignmentData, treeData, memeParams);
+  }
+  
+  runSLACAnalysis(alignmentData, treeData, parameters = {}) {
+    const slacParams = {
+      p_value: 0.1,
+      ...parameters
+    };
+    
+    this.runAnalysis('slac', alignmentData, treeData, slacParams);
+  }
+  
+  runRELAXAnalysis(alignmentData, treeData, parameters = {}) {
+    this.runAnalysis('relax', alignmentData, treeData, parameters);
+  }
+  
+  validateParameters(analysisType, parameters) {
     return new Promise((resolve, reject) => {
       this.socket.once('validated', (result) => {
         if (result.valid) {
@@ -338,13 +429,13 @@ class FELAnalysisClient {
         }
       });
       
-      this.socket.emit('fel:check', { job: parameters });
+      this.socket.emit(`${analysisType}:check`, { job: parameters });
     });
   }
 }
 
-// Usage example
-const client = new FELAnalysisClient('http://localhost:7015');
+// Usage examples
+const client = new DataMonkeyAnalysisClient('http://localhost:7015');
 
 const alignment = `>Human
 GCCTTGGAAACCTGGGGTGCCTTGGGTCAGGACATCAACTTGGACATTCCT
@@ -353,19 +444,34 @@ GCCTTGGAAACCTGGGGTGCCTTGGGTCAGGACATCAACTTGGACATTCCT`;
 
 const tree = `(Human:0.004349,Chimp:0.000799);`;
 
-// Run analysis after connection
+// Run different analyses after connection
 client.socket.on('connected', () => {
+  // Run FEL analysis
   client.runFELAnalysis(alignment, tree, {
     branches: 'All',
-    resample: 1  // Fast execution
+    resample: 1
   });
+  
+  // Or run BUSTED analysis
+  // client.runBUSTEDAnalysis(alignment, tree, {
+  //   ds_variation: 1,
+  //   multihit: 'None'
+  // });
+  
+  // Or run ABSREL analysis
+  // client.runABSRELAnalysis(alignment, tree);
+  
+  // Or run MEME analysis
+  // client.runMEMEAnalysis(alignment, tree, {
+  //   p_value: 0.05
+  // });
 });
 ```
 
 ### 8. Parameter Validation
 
 ```javascript
-// Validate FEL parameters before running analysis
+// Validate parameters for any analysis before running
 socket.on('validated', (result) => {
   if (result.valid) {
     console.log('Parameters are valid');
@@ -375,12 +481,34 @@ socket.on('validated', (result) => {
   }
 });
 
+// Validate FEL parameters
 socket.emit('fel:check', {
   job: {
     analysis_type: 'fel',
     genetic_code: 'Universal',
     branches: 'All'
   }
+});
+
+// Validate BUSTED parameters
+socket.emit('busted:check', {
+  job: {
+    analysis_type: 'busted',
+    genetic_code: 'Universal',
+    ds_variation: 1
+  }
+});
+
+// Or use the client class method
+const client = new DataMonkeyAnalysisClient();
+client.validateParameters('fel', {
+  analysis_type: 'fel',
+  genetic_code: 'Universal',
+  branches: 'All'
+}).then(result => {
+  console.log('Validation passed:', result);
+}).catch(error => {
+  console.error('Validation failed:', error.message);
 });
 ```
 

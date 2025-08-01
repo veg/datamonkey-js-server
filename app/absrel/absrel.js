@@ -12,30 +12,91 @@ var absrel = function(socket, stream, params) {
   self.socket = socket;
   self.stream = stream;
   self.params = params;
+  
+  // Check if this is a check-only operation
+  var isCheckOnly = params.checkOnly || false;
+  
+  logger.info("ABSREL constructor called with:", {
+    stream_type: typeof stream,
+    stream_length: stream ? stream.length : 0,
+    stream_content: stream ? (stream.length > 100 ? stream.substring(0, 100) + "..." : stream) : "null",
+    params_keys: Object.keys(params),
+    params_full: JSON.stringify(params),
+    checkOnly: isCheckOnly
+  });
 
   // object specific attributes
   self.type = "absrel";
   self.qsub_script_name = "absrel.sh";
   self.qsub_script = __dirname + "/" + self.qsub_script_name;
 
-  // parameter attributes
-  self.msaid = self.params.msa._id;
-  self.id = self.params.analysis._id;
-  self.genetic_code = code[self.params.msa[0].gencodeid + 1];
-  self.nwk = self.params.analysis.tagged_nwk_tree;
-
-  // parameter-derived attributes
-  self.fn = __dirname + "/output/" + self.id;
-  self.output_dir = path.dirname(self.fn);
-  self.status_fn = self.fn + ".status";
-  self.results_short_fn = self.fn + ".absrel";
-  self.results_fn = self.fn + ".ABSREL.json";
-  self.progress_fn = self.fn + ".absrel.progress";
-  self.tree_fn = self.fn + ".tre";
+  // For check operations, we only need minimal initialization
+  if (isCheckOnly) {
+    // Set defaults for required fields
+    self.id = "check-" + Date.now();
+    self.msaid = "check";
+    self.genetic_code = params.genetic_code || "Universal";
+    self.nwk = "";
+    self.fn = __dirname + "/output/" + self.id;
+    self.output_dir = path.dirname(self.fn);
+    self.status_fn = self.fn + ".status";
+    self.results_short_fn = self.fn + ".absrel";
+    self.results_fn = self.fn + ".ABSREL.json";
+    self.progress_fn = self.fn + ".absrel.progress";
+    self.tree_fn = self.fn + ".tre";
+  } else {
+    // Normal operation with full parameters
+    var analysisParams = self.params.analysis || self.params;
+    
+    // parameter attributes with fallbacks
+    if (self.params.msa) {
+      self.msaid = self.params.msa._id;
+      self.genetic_code = self.params.msa[0] ? code[self.params.msa[0].gencodeid + 1] : "Universal";
+    } else {
+      self.msaid = self.params.msaid || "unknown";
+      self.genetic_code = self.params.genetic_code || "Universal";
+    }
+    
+    if (self.params.analysis) {
+      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.nwk = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
+    } else {
+      self.id = self.params.id || "unknown-" + Date.now();
+      self.nwk = self.params.nwk_tree || self.params.tree || "";
+    }
+    
+    // parameter-derived attributes
+    self.fn = __dirname + "/output/" + self.id;
+    self.output_dir = path.dirname(self.fn);
+    self.status_fn = self.fn + ".status";
+    self.results_short_fn = self.fn + ".absrel";
+    self.results_fn = self.fn + ".ABSREL.json";
+    self.progress_fn = self.fn + ".absrel.progress";
+    self.tree_fn = self.fn + ".tre";
+  }
+  
+  // Set treemode with default value
+  self.treemode = self.params.treemode || "0";
 
   
-  // Define parameters for job submission (different formats for qsub vs slurm)
-  if (config.submit_type === "slurm") {
+  // Define parameters for job submission (different formats for qsub vs slurm vs local)
+  if (config.submit_type === "local") {
+    // For local execution, the script path must be first
+    self.qsub_params = [
+      self.qsub_script,
+      "fn=" + self.fn,
+      "tree_fn=" + self.tree_fn,
+      "sfn=" + self.status_fn,
+      "pfn=" + self.progress_fn,
+      "rfn=" + self.results_short_fn,
+      "treemode=" + self.treemode,
+      "genetic_code=" + self.genetic_code,
+      "analysis_type=" + self.type,
+      "cwd=" + __dirname,
+      "msaid=" + self.msaid,
+      "procs=" + (config.absrel_procs || 1)
+    ];
+  } else if (config.submit_type === "slurm") {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
     let slurmTime = "72:00:00"; // Default 3 days
     if (config.absrel_walltime) {
@@ -103,18 +164,36 @@ var absrel = function(socket, stream, params) {
       self.qsub_script
     ];
   }
+  
+  // Log the parameters being used
+  logger.info(`ABSREL job ${self.id}: Using ${config.submit_type} parameters: ${JSON.stringify(self.qsub_params)}`);
 
-  // Ensure output directory exists
-  utilities.ensureDirectoryExists(self.output_dir);
+  // Skip file operations for check-only mode
+  if (!isCheckOnly) {
+    // Write tree to a file
+    logger.info(`ABSREL job ${self.id}: Writing tree file to ${self.tree_fn}`, {
+      tree_content: self.nwk ? (self.nwk.length > 100 ? self.nwk.substring(0, 100) + "..." : self.nwk) : "null"
+    });
+    fs.writeFile(self.tree_fn, self.nwk, function (err) {
+      if (err) {
+        logger.error(`ABSREL job ${self.id}: Error writing tree file: ${err.message}`);
+        throw err;
+      }
+      logger.info(`ABSREL job ${self.id}: Tree file written successfully`);
+    });
 
-  // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nwk, function(err) {
-    if (err) throw err;
-  });
+    // Ensure output directory exists
+    logger.info(`ABSREL job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
+    utilities.ensureDirectoryExists(self.output_dir);
 
-  // Ensure the progress file exists
-  fs.openSync(self.progress_fn, "w");
+    // Ensure the progress file exists
+    logger.info(`ABSREL job ${self.id}: Creating progress file at ${self.progress_fn}`);
+    fs.openSync(self.progress_fn, "w");
+  }
+  
+  logger.info(`ABSREL job ${self.id}: Initializing job`);
   self.init();
+  logger.info(`ABSREL job ${self.id}: Job initialized`);
 };
 
 util.inherits(absrel, hyphyJob);
