@@ -65,9 +65,9 @@ hyphyJob.prototype.init = function() {
 
   // If check param set, don't start new job
   if (self.params["checkOnly"]) {
-    logger.info(`Job ${self.id}: Check only mode, looking up job ${self.params["torque_id"]}`);
-    self.torque_id = self.params["torque_id"];
-    self.checkJob();
+    logger.info(`Job ${self.id}: Check only mode - validating parameters`);
+    // For check-only, just validate parameters and emit result
+    self.validateParameters();
   } else {
     logger.info(`Job ${self.id}: Spawning new job`);
     self.spawn();
@@ -134,8 +134,37 @@ hyphyJob.prototype.spawn = function() {
     self.onJobMetadata(status);
   });
 
-  logger.info(`Job ${self.id}: Writing input file to ${self.fn}`);
-  fs.writeFile(self.fn, self.stream, err => {
+  logger.info(`Job ${self.id}: Writing input file to ${self.fn}`, {
+    stream_type: typeof self.stream,
+    stream_length: self.stream ? (typeof self.stream === 'string' ? self.stream.length : 'not string') : 0,
+    stream_is_null: self.stream === null,
+    stream_is_undefined: self.stream === undefined
+  });
+  
+  // Handle different types of stream data
+  let dataToWrite = '';
+  if (self.stream) {
+    if (typeof self.stream === 'string') {
+      dataToWrite = self.stream;
+      logger.info(`Job ${self.id}: Using string stream data, length: ${dataToWrite.length}`);
+    } else if (Buffer.isBuffer(self.stream)) {
+      dataToWrite = self.stream;
+      logger.info(`Job ${self.id}: Using buffer stream data, length: ${dataToWrite.length}`);
+    } else if (typeof self.stream === 'object') {
+      // If stream is an object, stringify it
+      dataToWrite = JSON.stringify(self.stream);
+      logger.info(`Job ${self.id}: Using object stream data, stringified length: ${dataToWrite.length}`);
+    } else {
+      dataToWrite = String(self.stream);
+      logger.info(`Job ${self.id}: Using converted string stream data, length: ${dataToWrite.length}`);
+    }
+  } else {
+    logger.warn(`Job ${self.id}: Stream is null/undefined, writing empty file`);
+  }
+  
+  logger.info(`Job ${self.id}: About to write ${dataToWrite.length} bytes to ${self.fn}`);
+  
+  fs.writeFile(self.fn, dataToWrite, err => {
     if (err) {
       logger.error(`Job ${self.id}: Error writing input file: ${err.message}`);
       throw err;
@@ -184,8 +213,8 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
     analysis_type: self.type,
     scheduler: scheduler,
     created_time: torque_id.ctime || new Date().toISOString(),
-    sites: self.params.msa[0].sites,
-    sequences: self.params.msa[0].sequences
+    sites: (self.params.msa && self.params.msa[0]) ? self.params.msa[0].sites : 0,
+    sequences: (self.params.msa && self.params.msa[0]) ? self.params.msa[0].sequences : 0
   };
   
   // Add raw status if available
@@ -448,6 +477,35 @@ hyphyJob.prototype.cancel = function() {
 
   self.cancel_once = _.once(jobdel.jobDelete);
   self.cancel_once(self.torque_id, cb);
+};
+
+// Validate parameters for check-only mode
+hyphyJob.prototype.validateParameters = function() {
+  var self = this;
+  
+  // Basic validation - can be overridden by specific analysis types
+  var errors = [];
+  var valid = true;
+  
+  // Check required parameters based on analysis type
+  if (!self.params.analysis_type) {
+    errors.push("analysis_type is required");
+    valid = false;
+  }
+  
+  if (!self.params.genetic_code) {
+    errors.push("genetic_code is required");
+    valid = false;
+  }
+  
+  // Emit validation result
+  self.socket.emit("validated", {
+    valid: valid,
+    errors: errors
+  });
+  
+  // Disconnect after validation
+  self.socket.disconnect();
 };
 
 // Return whether job has completed, still running, or aborted

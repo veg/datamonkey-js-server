@@ -20,7 +20,8 @@ const config = require("./config.json"),
   job = require("./app/job.js"),
   redis = require("redis"),
   router = require(path.join(__dirname, "/lib/router.js")),
-  JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue;
+  JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue,
+  logger = require("./lib/logger.js").logger;
 
 //Script parameter for defining port number.
 program
@@ -31,7 +32,13 @@ program
 
 
 //Assigns port number to variable, if none then refer to config.json
-var ioOptions = { "maxHttpBufferSize" : 1e8 };
+var ioOptions = { 
+  "maxHttpBufferSize" : 1e8,
+  cors: {
+    origin: ["http://localhost:5173", "http://localhost:3000"],
+    methods: ["GET", "POST"]
+  }
+};
 var ioPort = config.port;
 
 if (program.port) {
@@ -40,9 +47,17 @@ if (program.port) {
 
 const io = require("socket.io")(ioPort, ioOptions);
 
-var client = redis.createClient({
-  host: config.redis_host, port: config.redis_port
-});
+// Configure Redis client with optional password
+var redisConfig = {
+  host: config.redis_host, 
+  port: config.redis_port
+};
+
+if (config.redis_password) {
+  redisConfig.password = config.redis_password;
+}
+
+var client = redis.createClient(redisConfig);
 
 // Add error handler for Redis client
 client.on("error", function(err) {
@@ -144,7 +159,24 @@ io.sockets.on("connection", function(socket) {
   // FEL
   r.route("fel", {
     spawn: function(stream, params) {
-      new fel.fel(socket, stream, params.job);
+      if (!params || !params.job) {
+        logger.error("FEL spawn: Invalid parameters received", { params });
+        socket.emit("script error", { error: "Invalid job parameters" });
+        return;
+      }
+      logger.info("FEL route spawn called with:", {
+        stream_type: typeof stream,
+        stream_length: stream ? stream.length : 0,
+        stream_preview: stream ? stream.substring(0, 100) : "null",
+        params_job: JSON.stringify(params.job),
+        params_tree_length: params.tree ? params.tree.length : 0
+      });
+      // Merge tree data into job params for FEL constructor
+      var jobWithTree = Object.assign({}, params.job);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new fel.fel(socket, stream, jobWithTree);
     },
     check: function(params) {
       params.job["checkOnly"] = true;
