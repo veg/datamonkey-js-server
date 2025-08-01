@@ -216,7 +216,11 @@ runUnifiedAnalysis('busted', alignmentData, treeData, bustedParams);
 // Example ABSREL analysis using unified format
 const absrelParams = {
   analysis_type: 'absrel',
-  genetic_code: 'Universal'
+  genetic_code: 'Universal',
+  branches: 'All',                       // Branches to test: 'All', 'FG' (default: 'All')
+  multiple_hits: 'None',                 // Multiple nucleotide substitutions: 'None', 'Double', 'Double+Triple' (default: 'None')
+  srv: 'Yes',                           // Synonymous rate variation: 'Yes', 'No' (default: 'Yes')
+  blb: 1.0                              // Bootstrap alignment resampling rate (default: 1.0)
 };
 
 runUnifiedAnalysis('absrel', alignmentData, treeData, absrelParams);
@@ -428,7 +432,15 @@ class DataMonkeyAnalysisClient {
   }
   
   runABSRELAnalysis(alignmentData, treeData, parameters = {}) {
-    this.runAnalysis('absrel', alignmentData, treeData, parameters);
+    const absrelParams = {
+      branches: 'All',
+      multiple_hits: 'None',
+      srv: 'Yes',
+      blb: 1.0,
+      ...parameters
+    };
+    
+    this.runAnalysis('absrel', alignmentData, treeData, absrelParams);
   }
   
   runMEMEAnalysis(alignmentData, treeData, parameters = {}) {
@@ -506,7 +518,12 @@ client.socket.on('connected', () => {
   // });
   
   // Or run ABSREL analysis
-  // client.runABSRELAnalysis(alignment, tree);
+  // client.runABSRELAnalysis(alignment, tree, {
+  //   branches: 'FG',
+  //   multiple_hits: 'Double',
+  //   srv: 'No',
+  //   blb: 0.5
+  // });
   
   // Or run MEME analysis
   // client.runMEMEAnalysis(alignment, tree, {

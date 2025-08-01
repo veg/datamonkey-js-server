@@ -32,10 +32,14 @@ var absrel = function(socket, stream, params) {
 
   // For check operations, we only need minimal initialization
   if (isCheckOnly) {
-    // Set defaults for required fields
+    // Set defaults for required fields with complete parameter coverage
+    self.genetic_code = params.genetic_code || "Universal";
+    self.multiple_hits = params.multiple_hits || "None";
+    self.srv = params.srv || "Yes";
+    self.blb = params.blb || 1.0;
+    self.branches = params.branches || "All";
     self.id = "check-" + Date.now();
     self.msaid = "check";
-    self.genetic_code = params.genetic_code || "Universal";
     self.nwk = "";
     self.fn = __dirname + "/output/" + self.id;
     self.output_dir = path.dirname(self.fn);
@@ -60,9 +64,17 @@ var absrel = function(socket, stream, params) {
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
       self.nwk = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
+      self.multiple_hits = analysisParams.multiple_hits || "None";
+      self.srv = analysisParams.srv || "Yes";
+      self.blb = analysisParams.blb || 1.0;
+      self.branches = analysisParams.branches || "All";
     } else {
       self.id = self.params.id || "unknown-" + Date.now();
       self.nwk = self.params.nwk_tree || self.params.tree || "";
+      self.multiple_hits = self.params.multiple_hits || "None";
+      self.srv = self.params.srv || "Yes";
+      self.blb = self.params.blb || 1.0;
+      self.branches = self.params.branches || "All";
     }
     
     // parameter-derived attributes
@@ -91,6 +103,10 @@ var absrel = function(socket, stream, params) {
       "rfn=" + self.results_short_fn,
       "treemode=" + self.treemode,
       "genetic_code=" + self.genetic_code,
+      "multiple_hits=" + self.multiple_hits,
+      "srv=" + self.srv,
+      "blb=" + self.blb,
+      "branches=" + self.branches,
       "analysis_type=" + self.type,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
@@ -124,7 +140,7 @@ var absrel = function(socket, stream, params) {
       "--export=ALL,slurm_mpi_type=" + 
       (config.slurm_mpi_type || "pmix") + 
       "," +
-      "fn=" + self.fn + ",tree_fn=" + self.tree_fn + ",sfn=" + self.status_fn + ",pfn=" + self.progress_fn + ",rfn=" + self.results_short_fn + ",treemode=" + self.treemode + ",genetic_code=" + self.genetic_code + ",analysis_type=" + self.type + ",cwd=" + __dirname + ",msaid=" + self.msaid + ",procs=" + config.absrel_procs,
+      "fn=" + self.fn + ",tree_fn=" + self.tree_fn + ",sfn=" + self.status_fn + ",pfn=" + self.progress_fn + ",rfn=" + self.results_short_fn + ",treemode=" + self.treemode + ",genetic_code=" + self.genetic_code + ",multiple_hits=" + self.multiple_hits + ",srv=" + self.srv + ",blb=" + self.blb + ",branches=" + self.branches + ",analysis_type=" + self.type + ",cwd=" + __dirname + ",msaid=" + self.msaid + ",procs=" + config.absrel_procs,
       `--output=${self.output_dir}/absrel_${self.id}_%j.out`,
       `--error=${self.output_dir}/absrel_${self.id}_%j.err`,
       self.qsub_script
@@ -149,6 +165,14 @@ var absrel = function(socket, stream, params) {
         self.treemode +
         ",genetic_code=" +
         self.genetic_code +
+        ",multiple_hits=" +
+        self.multiple_hits +
+        ",srv=" +
+        self.srv +
+        ",blb=" +
+        self.blb +
+        ",branches=" +
+        self.branches +
         ",analysis_type=" +
         self.type +
         ",cwd=" +
@@ -170,6 +194,10 @@ var absrel = function(socket, stream, params) {
 
   // Skip file operations for check-only mode
   if (!isCheckOnly) {
+    // Ensure output directory exists BEFORE writing files
+    logger.info(`ABSREL job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
+    utilities.ensureDirectoryExists(self.output_dir);
+
     // Write tree to a file
     logger.info(`ABSREL job ${self.id}: Writing tree file to ${self.tree_fn}`, {
       tree_content: self.nwk ? (self.nwk.length > 100 ? self.nwk.substring(0, 100) + "..." : self.nwk) : "null"
@@ -181,10 +209,6 @@ var absrel = function(socket, stream, params) {
       }
       logger.info(`ABSREL job ${self.id}: Tree file written successfully`);
     });
-
-    // Ensure output directory exists
-    logger.info(`ABSREL job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
-    utilities.ensureDirectoryExists(self.output_dir);
 
     // Ensure the progress file exists
     logger.info(`ABSREL job ${self.id}: Creating progress file at ${self.progress_fn}`);
