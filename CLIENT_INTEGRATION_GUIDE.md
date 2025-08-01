@@ -93,36 +93,25 @@ Each analysis follows this event pattern:
 - `{analysis}:cancel` - Cancel running job
 
 #### Events to Listen For:
-- `status update` - Job progress updates
+- `job created` - Job submitted to scheduler
+- `status update` - Job progress updates  
 - `completed` - Analysis finished successfully
 - `script error` - Analysis failed
+- `validated` - Parameter validation result (for check operations)
 
-### 5. Example: Running BUSTED Analysis
+### 5. Data Submission Formats
+
+#### Standard Format (Most Analyses)
+Most analyses use the socket.io-stream format:
 
 ```javascript
-import fs from 'fs';
+import ss from 'socket.io-stream';
 
-// Listen for results
-socket.on('completed', (results) => {
-  console.log('Analysis completed:', results);
-  socket.disconnect();
-});
-
-socket.on('status update', (status) => {
-  console.log('Status:', status.msg);
-  if (status.phase) console.log('Phase:', status.phase);
-});
-
-socket.on('script error', (error) => {
-  console.error('Analysis failed:', error);
-});
-
-// Submit BUSTED analysis
-function runBustedAnalysis(fastaData, jobParams) {
+function runStandardAnalysis(analysisType, fastaData, jobParams) {
   const stream = ss.createStream();
   
   // Send the analysis request
-  socket.emit('busted:spawn', stream, {
+  socket.emit(`${analysisType}:spawn`, stream, {
     job: jobParams
   });
   
@@ -135,7 +124,7 @@ function runBustedAnalysis(fastaData, jobParams) {
   stream.end();
 }
 
-// Example job parameters
+// Example: BUSTED analysis
 const jobParams = {
   analysis_type: 'busted',
   genetic_code: 'Universal',
@@ -147,13 +136,236 @@ ATGCGATCGATCG...
 >sequence2
 ATGCGATCGATCG...`;
 
-runBustedAnalysis(fastaContent, jobParams);
+runStandardAnalysis('busted', fastaContent, jobParams);
 ```
 
-### 6. Example: Checking Analysis Parameters
+#### FEL Analysis Format (Special Case)
+FEL analysis uses a different data format that includes both alignment and tree data:
 
 ```javascript
-// Validate parameters before running analysis
+// FEL analysis requires both alignment and tree data in a single payload
+function runFELAnalysis(alignmentData, treeData, jobParams) {
+  const payload = {
+    alignment: alignmentData,  // FASTA format string
+    tree: treeData,           // Newick format string
+    job: jobParams            // Analysis parameters
+  };
+  
+  socket.emit('fel:spawn', payload);
+}
+
+// Example FEL analysis
+const alignmentData = `>Human
+GCCTTGGAAACCTGGGGTGCCTTGGGTCAGGACATCAACTTGGACATTCCT
+>Chimp
+GCCTTGGAAACCTGGGGTGCCTTGGGTCAGGACATCAACTTGGACATTCCT
+>Baboon
+GCTTTGGAAACCTGGGGAGCGCTGGGTCAGGACATCGACTTGGACATTCCT
+>RhMonkey
+GCTTTGGAAACCTGGGGAGCGCTGGGTCAGGACATCGACTTGGACATTCCT
+>Cow
+AGCATTGTCGTCTGGGGTGCCCTGGATCATGACCTCAACCTGGACATTCCT
+>Pig
+ACTGAGGTTGTCTGGGGCATCGTGGATCAAGACATCAACCTGGACATTCCT
+>Horse
+AATATCACCATCTTGGGTGCCCTGGAACGTGATATCAACCTGGACATTCCT
+>Cat
+GATGATATCGTCTGGGGTACCCTGGGTCAGGACATCAACCTGGACATTCCT
+>Mouse
+AATGAGACCATCTGGGGTGTCTTGGGTCATGGCATCACCCUGAACATCCCC
+>Rat
+AGTGGGACCGTCTGGGGTGCCCTGGGTCATGGCATCAACCTGAACATCCCT`;
+
+const treeData = `((((Pig:0.147969,Cow:0.213430):0.085099,Horse:0.165787,Cat:0.264806):0.058611,((RhMonkey:0.002015,Baboon:0.003108):0.022733,(Human:0.004349,Chimp:0.000799):0.011873):0.101856):0.340802,Rat:0.050958,Mouse:0.097950);`;
+
+const felParams = {
+  analysis_type: 'fel',
+  genetic_code: 'Universal',
+  p_value: 0.1,
+  branches: 'All',        // Options: 'All', 'Internal', 'Leaves', 'Unlabeled branches'
+  bootstrap: 100,
+  resample: 1,           // Default: 1 (faster execution)
+  model: 'HKY85',
+  rate_classes: 3,
+  synonymous_rate_variation: false
+};
+
+runFELAnalysis(alignmentData, treeData, felParams);
+```
+
+### 6. Event Handling Details
+
+#### Job Created Event
+```javascript
+socket.on('job created', (data) => {
+  console.log('Job submitted:', data);
+  // data = {
+  //   type: "job created",
+  //   torque_id: "local_1234567890_12345",
+  //   id: "unknown-1234567890", 
+  //   status: "queued",
+  //   analysis_type: "fel",
+  //   scheduler: "local",
+  //   created_time: "2025-08-01T04:22:26.947Z",
+  //   sites: 17,
+  //   sequences: 10
+  // }
+});
+```
+
+#### Status Update Event
+```javascript
+socket.on('status update', (data) => {
+  console.log('Status update:', data);
+  // data = {
+  //   msg: "Status message or progress info",
+  //   torque_id: "local_1234567890_12345",
+  //   id: "unknown-1234567890",
+  //   analysis_type: "fel", 
+  //   phase: "running",
+  //   scheduler: "local",
+  //   type: "status update"
+  // }
+});
+```
+
+#### Completion Event
+```javascript
+socket.on('completed', (results) => {
+  console.log('Analysis completed:', results);
+  // results = {
+  //   results: "JSON string of analysis results",
+  //   type: "completed"
+  // }
+  
+  // Parse the actual results
+  const analysisResults = JSON.parse(results.results);
+  console.log('Parsed results:', analysisResults);
+});
+```
+
+#### Error Event
+```javascript
+socket.on('script error', (error) => {
+  console.error('Analysis failed:', error);
+  // error = {
+  //   error: "Error description",
+  //   stderr: "Standard error output",
+  //   stdout: "Standard output",
+  //   progress: "Progress file contents", 
+  //   type: "script error"
+  // }
+});
+```
+
+### 7. Complete FEL Analysis Example
+
+```javascript
+import io from 'socket.io-client';
+
+class FELAnalysisClient {
+  constructor(serverUrl = 'http://localhost:7015') {
+    this.socket = io(serverUrl);
+    this.setupEventHandlers();
+  }
+  
+  setupEventHandlers() {
+    this.socket.on('connect', () => {
+      console.log('Connected to DataMonkey server');
+    });
+    
+    this.socket.on('connected', (data) => {
+      console.log('Server ready:', data.hello);
+    });
+    
+    this.socket.on('job created', (data) => {
+      console.log(`FEL job created: ${data.id} (${data.torque_id})`);
+      console.log(`Sequences: ${data.sequences}, Sites: ${data.sites}`);
+    });
+    
+    this.socket.on('status update', (data) => {
+      if (data.msg && data.msg.trim()) {
+        console.log('Progress:', data.msg.trim());
+      }
+    });
+    
+    this.socket.on('completed', (results) => {
+      console.log('FEL analysis completed!');
+      const felResults = JSON.parse(results.results);
+      console.log('Results:', felResults);
+      this.socket.disconnect();
+    });
+    
+    this.socket.on('script error', (error) => {
+      console.error('FEL analysis failed:', error.error);
+      if (error.stderr) console.error('STDERR:', error.stderr);
+      this.socket.disconnect();
+    });
+  }
+  
+  runFELAnalysis(alignmentData, treeData, parameters = {}) {
+    const defaultParams = {
+      analysis_type: 'fel',
+      genetic_code: 'Universal',
+      p_value: 0.1,
+      branches: 'All',
+      bootstrap: 100,
+      resample: 1,
+      model: 'HKY85',
+      rate_classes: 3,
+      synonymous_rate_variation: false
+    };
+    
+    const jobParams = { ...defaultParams, ...parameters };
+    
+    const payload = {
+      alignment: alignmentData,
+      tree: treeData,
+      job: jobParams
+    };
+    
+    console.log('Submitting FEL analysis...');
+    this.socket.emit('fel:spawn', payload);
+  }
+  
+  validateParameters(parameters) {
+    return new Promise((resolve, reject) => {
+      this.socket.once('validated', (result) => {
+        if (result.valid) {
+          resolve(result);
+        } else {
+          reject(new Error(`Invalid parameters: ${result.errors.join(', ')}`));
+        }
+      });
+      
+      this.socket.emit('fel:check', { job: parameters });
+    });
+  }
+}
+
+// Usage example
+const client = new FELAnalysisClient('http://localhost:7015');
+
+const alignment = `>Human
+GCCTTGGAAACCTGGGGTGCCTTGGGTCAGGACATCAACTTGGACATTCCT
+>Chimp  
+GCCTTGGAAACCTGGGGTGCCTTGGGTCAGGACATCAACTTGGACATTCCT`;
+
+const tree = `(Human:0.004349,Chimp:0.000799);`;
+
+// Run analysis after connection
+client.socket.on('connected', () => {
+  client.runFELAnalysis(alignment, tree, {
+    branches: 'All',
+    resample: 1  // Fast execution
+  });
+});
+```
+
+### 8. Parameter Validation
+
+```javascript
+// Validate FEL parameters before running analysis
 socket.on('validated', (result) => {
   if (result.valid) {
     console.log('Parameters are valid');
@@ -163,24 +375,25 @@ socket.on('validated', (result) => {
   }
 });
 
-socket.emit('busted:check', {
+socket.emit('fel:check', {
   job: {
-    analysis_type: 'busted',
-    genetic_code: 'Universal'
+    analysis_type: 'fel',
+    genetic_code: 'Universal',
+    branches: 'All'
   }
 });
 ```
 
-### 7. Reconnecting to Existing Jobs
+### 9. Reconnecting to Existing Jobs
 
 ```javascript
 // Reconnect to a job using its ID
-socket.emit('busted:resubscribe', {
+socket.emit('fel:resubscribe', {
   id: 'job_id_here'
 });
 ```
 
-### 8. Error Handling
+### 10. Error Handling
 
 ```javascript
 socket.on('disconnect', () => {
@@ -197,7 +410,7 @@ socket.on('script error', (error) => {
 });
 ```
 
-### 9. Job Queue Status
+### 11. Job Queue Status
 
 ```javascript
 // Get current job queue status
@@ -208,27 +421,66 @@ socket.on('job queue', (jobs) => {
 });
 ```
 
+## Data Format Requirements
+
+### FEL Analysis Data Validation
+
+#### Alignment Data (FASTA Format)
+- Must be valid FASTA format with sequence headers starting with `>`
+- Sequences must be in-frame codons (length divisible by 3)
+- Sequence names must match tree tip labels exactly
+- Minimum 4 sequences recommended for meaningful analysis
+- Example:
+```
+>Human
+ATGCGATCGATCGATCG...
+>Chimp
+ATGCGATCGATCGATCG...
+```
+
+#### Tree Data (Newick Format)
+- Must be valid Newick format phylogenetic tree
+- Tip labels must match sequence names in alignment exactly
+- Branch lengths should be present for accurate analysis
+- Tree can be rooted or unrooted (HyPhy handles both)
+- Example:
+```
+((Human:0.004349,Chimp:0.000799):0.011873);
+```
+
+#### Parameter Validation
+- `analysis_type`: Must be "fel"
+- `genetic_code`: Must be valid genetic code name ("Universal", "Vertebrate Mitochondrial", etc.)
+- `branches`: Must be one of: "All", "Internal", "Leaves", "Unlabeled branches"
+- `resample`: Positive integer (default: 1 for faster execution)
+- `bootstrap`: Boolean or positive integer
+- `p_value`: Number between 0 and 1
+
 ## Implementation Notes
 
 ### File Handling
-- Use `socket.io-stream` for file uploads
-- Files are streamed to the server during analysis submission
-- Results are returned as JSON objects
+- **Standard analyses**: Use `socket.io-stream` for file uploads
+- **FEL analysis**: Use direct payload format (no streaming required)
+- Results are returned as JSON objects in the `completed` event
 
 ### Job Management
 - Each job gets a unique ID for tracking
 - Jobs can be cancelled using the `cancel` event
 - Use `resubscribe` to reconnect to long-running jobs
+- Local execution jobs have IDs like `local_timestamp_pid`
 
 ### Performance Considerations
 - Analyses can be computationally intensive and long-running
-- Implement proper timeout handling
+- FEL analysis with `resample: 1` is much faster than `resample: 100`
+- Implement proper timeout handling for long-running jobs
 - Consider showing progress indicators using status updates
+- Large alignments (>1000 sequences) may require significant processing time
 
 ### Security
 - The server runs bioinformatics tools that execute on the system
 - Ensure the server is properly secured and isolated
 - Validate all input data before submission
+- Consider implementing rate limiting for API endpoints
 
 ## Troubleshooting
 
