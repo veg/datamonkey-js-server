@@ -40,6 +40,15 @@ for arg in "$@"; do
     procs=*)
       procs="${arg#*=}"
       ;;
+    branches=*)
+      branches="${arg#*=}"
+      ;;
+    samples=*)
+      samples="${arg#*=}"
+      ;;
+    pvalue=*)
+      pvalue="${arg#*=}"
+      ;;
   esac
 done
 
@@ -73,7 +82,10 @@ STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
 GENETIC_CODE=$genetic_code
-PROCS=$procs
+BRANCHES=${branches:-"All"}
+SAMPLES=${samples:-100}
+PVALUE=${pvalue:-0.1}
+PROCS=${procs:-1}
 
 # Set HYPHY executable - prefer regular hyphy for local execution
 HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
@@ -107,9 +119,9 @@ export HYPHY_PATH=$HYPHY_PATH
 
 trap 'echo "Error" > "$STATUS_FILE"; exit 1' ERR
 
-# SLAC-specific parameters
-NUM_SAMPLES=100
-PVAL=0.1
+# SLAC-specific parameters (use passed values or defaults)
+NUM_SAMPLES=$SAMPLES
+PVAL=$PVALUE
 KZERO="No"
 
 # We don't need the MPI_COMMAND variable anymore as we're using direct commands
@@ -130,6 +142,9 @@ echo "STATUS_FILE: '$STATUS_FILE'"
 echo "FN: '$FN'"
 echo "TREE_FN: '$TREE_FN'"
 echo "RESULTS_FILE: '$RESULTS_FILE'"
+echo "BRANCHES: '$BRANCHES'"
+echo "SAMPLES: '$SAMPLES'"
+echo "PVALUE: '$PVALUE'"
 
 if [ -n "$SLURM_JOB_ID" ]; then
   # Using SLURM srun with dedicated arguments
@@ -141,20 +156,20 @@ if [ -n "$SLURM_JOB_ID" ]; then
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches All --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches All --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> "$PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> "$PROGRESS_FILE"
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches All --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches All --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> "$PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> "$PROGRESS_FILE"
   fi
 else
   # For local execution, use the HYPHY executable determined above
   echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "$HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches All --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-  $HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches All --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> "$PROGRESS_FILE"
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH $SLAC --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --samples $NUM_SAMPLES --pvalue $PVAL --kill-zero-lengths $KZERO --output $RESULTS_FILE >> "$PROGRESS_FILE"
 fi
 
 echo "Completed" > "$STATUS_FILE"

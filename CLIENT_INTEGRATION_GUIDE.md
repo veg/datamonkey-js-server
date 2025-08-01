@@ -225,7 +225,9 @@ runUnifiedAnalysis('meme', alignmentData, treeData, memeParams);
 const slacParams = {
   analysis_type: 'slac',
   genetic_code: 'Universal',
-  p_value: 0.1
+  p_value: 0.1,                   // P-value threshold for significance (default: 0.1)
+  branches: 'All',                // Branches to test: 'All' (default)
+  samples: 100                    // Samples for ancestral reconstruction uncertainty (default: 100)
 };
 
 runUnifiedAnalysis('slac', alignmentData, treeData, slacParams);
