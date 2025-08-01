@@ -37,6 +37,24 @@ for arg in "$@"; do
     multihit=*)
       multihit="${arg#*=}"
       ;;
+    branches=*)
+      branches="${arg#*=}"
+      ;;
+    rates=*)
+      rates="${arg#*=}"
+      ;;
+    syn_rates=*)
+      syn_rates="${arg#*=}"
+      ;;
+    grid_size=*)
+      grid_size="${arg#*=}"
+      ;;
+    starting_points=*)
+      starting_points="${arg#*=}"
+      ;;
+    save_fit=*)
+      save_fit="${arg#*=}"
+      ;;
     analysis_type=*)
       analysis_type="${arg#*=}"
       ;;
@@ -85,11 +103,13 @@ RESULTS_FILE=$fn.BUSTED.json
 SYN_RATE_VARIATION=${synRateVariation:-"Yes"}
 ERROR_SINK=${errorProtection:-false}
 MULTIHIT=${multihit:-"None"}
+BRANCHES_PARAM=${branches:-""}
 PROCS=${procs:-1}
-synRateClasses=3
-omegaClasses=3
-initialPointsInLikelihood=250
-initialGuesses=1
+synRateClasses=${syn_rates:-3}
+omegaClasses=${rates:-3}
+initialPointsInLikelihood=${grid_size:-250}
+initialGuesses=${starting_points:-1}
+SAVE_FIT=${save_fit:-"/dev/null"}
 KZERO="No"
 
 GETCOUNT=$CWD/../../lib/getAnnotatedCount.bf
@@ -147,14 +167,19 @@ echo "RESULTS_FILE: '$RESULTS_FILE'"
 output=$(echo $TREE_FN | $HYPHY $GETCOUNT )
 count=$(echo "${output: -1}")
 
-if [ $count -eq 2 ]
-then
-  BRANCHES="FG"
+# Use parameter-specified branches if provided, otherwise auto-detect
+if [ -n "$BRANCHES_PARAM" ]; then
+  BRANCHES="$BRANCHES_PARAM"
+  echo "Using parameter-specified branches: $BRANCHES"
 else
-  BRANCHES="All"
+  if [ $count -eq 2 ]
+  then
+    BRANCHES="FG"
+  else
+    BRANCHES="All"
+  fi
+  echo "Auto-detected branches: $BRANCHES"
 fi
-
-echo "Using branches: $BRANCHES"
 
 if [ -n "$SLURM_JOB_ID" ]; then
   # Using SLURM srun with dedicated arguments
@@ -166,20 +191,20 @@ if [ -n "$SLURM_JOB_ID" ]; then
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit /dev/null >> \"$PROGRESS_FILE\""
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit /dev/null >> "$PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit $SAVE_FIT >> \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit $SAVE_FIT >> "$PROGRESS_FILE"
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit /dev/null >> \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit /dev/null >> "$PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit $SAVE_FIT >> \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit $SAVE_FIT >> "$PROGRESS_FILE"
   fi
 else
   # For local execution, use the HYPHY executable determined above
   echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "$HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit /dev/null >> \"$PROGRESS_FILE\""
-  $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit /dev/null >> "$PROGRESS_FILE"
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit $SAVE_FIT >> \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH $BUSTED --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --branches $BRANCHES --rates $omegaClasses --syn-rates $synRateClasses --multiple-hits $MULTIHIT --srv $SYN_RATE_VARIATION --grid-size $initialPointsInLikelihood --starting-points $initialGuesses --kill-zero-lengths $KZERO --error-sink $ERROR_SINK --output $RESULTS_FILE --save-fit $SAVE_FIT >> "$PROGRESS_FILE"
 fi
 
 echo "Completed" > "$STATUS_FILE"

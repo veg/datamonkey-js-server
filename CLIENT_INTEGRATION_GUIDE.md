@@ -197,9 +197,18 @@ runUnifiedAnalysis('fel', alignmentData, treeData, felParams);
 const bustedParams = {
   analysis_type: 'busted',
   genetic_code: 'Universal',
-  ds_variation: 1,           // 1=Yes, 2=No, 3=Branch-site
-  error_protection: false,
-  multihit: 'None'          // Options: 'None', 'Double', 'Double+Triple'
+  ds_variation: 1,                    // Synonymous rate variation: 1=Yes, 2=No, 3=Branch-site (default: 1/Yes)
+  srv: 'Yes',                        // Alternative parameter name for ds_variation
+  error_protection: false,            // BUSTED-E error protection (default: false)
+  error_sink: false,                 // Alternative parameter name for error_protection
+  multihit: 'None',                  // Multiple hits: 'None', 'Double', 'Double+Triple' (default: 'None')
+  multiple_hits: 'None',             // Alternative parameter name for multihit
+  branches: 'All',                   // Branches to test: 'All', 'FG' (default: auto-detect)
+  rates: 3,                          // Number of omega rate classes (default: 3)
+  syn_rates: 3,                      // Number of synonymous rate classes (default: 3)
+  grid_size: 250,                    // Initial grid size for likelihood fitting (default: 250)
+  starting_points: 1,                // Number of initial random guesses (default: 1)
+  save_fit: '/dev/null'              // Path to save model fit (default: '/dev/null')
 };
 
 runUnifiedAnalysis('busted', alignmentData, treeData, bustedParams);
@@ -244,6 +253,18 @@ const relaxParams = {
 };
 
 runUnifiedAnalysis('relax', alignmentData, treeData, relaxParams);
+
+// Example FUBAR analysis using unified format
+const fubarParams = {
+  analysis_type: 'fubar',
+  genetic_code: 'Universal',
+  number_of_grid_points: 20,              // Grid points for Bayesian analysis (default: 20, range: 5-50)
+  grid: 20,                               // Alternative parameter name for number_of_grid_points
+  concentration_of_dirichlet_prior: 0.5,  // Concentration parameter for Dirichlet prior (default: 0.5, range: 0.001-1)
+  concentration_parameter: 0.5             // Alternative parameter name for concentration_of_dirichlet_prior
+};
+
+runUnifiedAnalysis('fubar', alignmentData, treeData, fubarParams);
 ```
 
 ### 6. Event Handling Details
@@ -394,6 +415,12 @@ class DataMonkeyAnalysisClient {
       ds_variation: 1,
       error_protection: false,
       multihit: 'None',
+      branches: 'All',
+      rates: 3,
+      syn_rates: 3,
+      grid_size: 250,
+      starting_points: 1,
+      save_fit: '/dev/null',
       ...parameters
     };
     
@@ -424,6 +451,16 @@ class DataMonkeyAnalysisClient {
   
   runRELAXAnalysis(alignmentData, treeData, parameters = {}) {
     this.runAnalysis('relax', alignmentData, treeData, parameters);
+  }
+  
+  runFUBARAnalysis(alignmentData, treeData, parameters = {}) {
+    const fubarParams = {
+      number_of_grid_points: 20,
+      concentration_of_dirichlet_prior: 0.5,
+      ...parameters
+    };
+    
+    this.runAnalysis('fubar', alignmentData, treeData, fubarParams);
   }
   
   validateParameters(analysisType, parameters) {
@@ -462,7 +499,10 @@ client.socket.on('connected', () => {
   // Or run BUSTED analysis
   // client.runBUSTEDAnalysis(alignment, tree, {
   //   ds_variation: 1,
-  //   multihit: 'None'
+  //   multihit: 'Double',
+  //   branches: 'FG',
+  //   rates: 4,
+  //   grid_size: 500
   // });
   
   // Or run ABSREL analysis
@@ -471,6 +511,12 @@ client.socket.on('connected', () => {
   // Or run MEME analysis
   // client.runMEMEAnalysis(alignment, tree, {
   //   p_value: 0.05
+  // });
+  
+  // Or run FUBAR analysis
+  // client.runFUBARAnalysis(alignment, tree, {
+  //   number_of_grid_points: 25,
+  //   concentration_of_dirichlet_prior: 0.3
   // });
 });
 ```

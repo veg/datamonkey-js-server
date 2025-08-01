@@ -47,10 +47,16 @@ var busted = function(socket, stream, params) {
 
   // For check operations, we only need minimal initialization
   if (isCheckOnly) {
-    // Set defaults for required fields
-    self.ds_variation = "Yes";
-    self.error_protection = false;
-    self.multihit = "None";
+    // Set defaults for required fields with complete parameter coverage
+    self.ds_variation = synSubstitutionVar[params.ds_variation] || params.srv || "Yes";
+    self.error_protection = params.error_protection || params.error_sink || false;
+    self.multihit = multihitVar[params.multihit] || params.multiple_hits || "None";
+    self.branches = params.branches || "All";
+    self.rates = params.rates || 3;
+    self.syn_rates = params.syn_rates || params.syn_rates || 3;
+    self.grid_size = params.grid_size || 250;
+    self.starting_points = params.starting_points || 1;
+    self.save_fit = params.save_fit || "/dev/null";
     self.id = "check-" + Date.now();
     self.msaid = "check";
     self.genetic_code = params.genetic_code || "Universal";
@@ -75,15 +81,27 @@ var busted = function(socket, stream, params) {
     
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
-      self.ds_variation = synSubstitutionVar[self.params.analysis.ds_variation] || "Yes";
-      self.error_protection = self.params.analysis.error_protection;
-      self.multihit = multihitVar[self.params.analysis.multihit] || "None";
+      self.ds_variation = synSubstitutionVar[self.params.analysis.ds_variation] || analysisParams.srv || "Yes";
+      self.error_protection = self.params.analysis.error_protection || analysisParams.error_sink || false;
+      self.multihit = multihitVar[self.params.analysis.multihit] || analysisParams.multiple_hits || "None";
+      self.branches = self.params.analysis.branches || "All";
+      self.rates = self.params.analysis.rates || 3;
+      self.syn_rates = self.params.analysis.syn_rates || 3;
+      self.grid_size = self.params.analysis.grid_size || 250;
+      self.starting_points = self.params.analysis.starting_points || 1;
+      self.save_fit = self.params.analysis.save_fit || "/dev/null";
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
     } else {
       self.id = self.params.id || "unknown-" + Date.now();
-      self.ds_variation = synSubstitutionVar[self.params.ds_variation] || "Yes";
-      self.error_protection = self.params.error_protection || false;
-      self.multihit = multihitVar[self.params.multihit] || "None";
+      self.ds_variation = synSubstitutionVar[self.params.ds_variation] || self.params.srv || "Yes";
+      self.error_protection = self.params.error_protection || self.params.error_sink || false;
+      self.multihit = multihitVar[self.params.multihit] || self.params.multiple_hits || "None";
+      self.branches = self.params.branches || "All";
+      self.rates = self.params.rates || 3;
+      self.syn_rates = self.params.syn_rates || 3;
+      self.grid_size = self.params.grid_size || 250;
+      self.starting_points = self.params.starting_points || 1;
+      self.save_fit = self.params.save_fit || "/dev/null";
       self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
     }
     
@@ -120,6 +138,12 @@ var busted = function(socket, stream, params) {
       "synRateVariation=" + self.ds_variation,
       "errorProtection=" + self.error_protection,
       "multihit=" + self.multihit,
+      "branches=" + self.branches,
+      "rates=" + self.rates,
+      "syn_rates=" + self.syn_rates,
+      "grid_size=" + self.grid_size,
+      "starting_points=" + self.starting_points,
+      "save_fit=" + self.save_fit,
       "analysis_type=" + self.type,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
@@ -173,6 +197,18 @@ var busted = function(socket, stream, params) {
       self.error_protection +
       ",multihit=" +
       self.multihit +
+      ",branches=" +
+      self.branches +
+      ",rates=" +
+      self.rates +
+      ",syn_rates=" +
+      self.syn_rates +
+      ",grid_size=" +
+      self.grid_size +
+      ",starting_points=" +
+      self.starting_points +
+      ",save_fit=" +
+      self.save_fit +
       ",cwd=" +
       __dirname +
       ",msaid=" +
@@ -209,6 +245,18 @@ var busted = function(socket, stream, params) {
         self.error_protection +
         ",multihit=" +
         self.multihit +
+        ",branches=" +
+        self.branches +
+        ",rates=" +
+        self.rates +
+        ",syn_rates=" +
+        self.syn_rates +
+        ",grid_size=" +
+        self.grid_size +
+        ",starting_points=" +
+        self.starting_points +
+        ",save_fit=" +
+        self.save_fit +
         ",cwd=" +
         __dirname +
         ",msaid=" +
@@ -228,6 +276,10 @@ var busted = function(socket, stream, params) {
 
   // Skip file operations for check-only mode
   if (!isCheckOnly) {
+    // Ensure output directory exists BEFORE writing files
+    logger.info(`BUSTED job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
+    utilities.ensureDirectoryExists(self.output_dir);
+
     // Write tree to a file
     logger.info(`BUSTED job ${self.id}: Writing tree file to ${self.tree_fn}`, {
       tree_content: self.nwk_tree ? (self.nwk_tree.length > 100 ? self.nwk_tree.substring(0, 100) + "..." : self.nwk_tree) : "null"
@@ -239,10 +291,6 @@ var busted = function(socket, stream, params) {
       }
       logger.info(`BUSTED job ${self.id}: Tree file written successfully`);
     });
-
-    // Ensure output directory exists
-    logger.info(`BUSTED job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
-    utilities.ensureDirectoryExists(self.output_dir);
 
     // Ensure the progress file exists
     logger.info(`BUSTED job ${self.id}: Creating progress file at ${self.progress_fn}`);
