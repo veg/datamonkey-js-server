@@ -216,7 +216,12 @@ runUnifiedAnalysis('absrel', alignmentData, treeData, absrelParams);
 const memeParams = {
   analysis_type: 'meme',
   genetic_code: 'Universal',
-  p_value: 0.1
+  p_value: 0.1,                    // P-value threshold for significance (default: 0.1)
+  multiple_hits: 'None',            // Options: 'None', 'Double', 'Double+Triple' (default: 'None')
+  site_multihit: 'Estimate',        // Site-level multiple hits: 'Estimate', 'Global' (default: 'Estimate')
+  rates: 2,                         // Number of omega rate categories (default: 2)
+  resample: 0,                      // Bootstrap replicates (default: 0)
+  impute_states: 'No'               // Impute missing data: 'Yes', 'No' (default: 'No')
 };
 
 runUnifiedAnalysis('meme', alignmentData, treeData, memeParams);

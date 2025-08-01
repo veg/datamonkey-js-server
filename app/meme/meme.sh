@@ -58,6 +58,9 @@ for arg in "$@"; do
     procs=*)
       procs="${arg#*=}"
       ;;
+    pvalue=*)
+      pvalue="${arg#*=}"
+      ;;
   esac
 done
 
@@ -91,13 +94,14 @@ STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 BOOTSTRAP=$bootstrap
 RESAMPLE=$resample
-MULTIPLE_HITS="$multiple_hits"
-SITE_MULTIHIT="$site_multihit"
-RATES="$rates"
-IMPUTE_STATES="$impute_states"
+MULTIPLE_HITS="${multiple_hits:-None}"
+SITE_MULTIHIT="${site_multihit:-Estimate}"
+RATES="${rates:-2}"
+IMPUTE_STATES="${impute_states:-No}"
+PVALUE="${pvalue:-0.1}"
 RESULTS_FN=$fn.MEME.json
 GENETIC_CODE=$genetic_code
-PROCS=$procs
+PROCS=${procs:-1}
 
 # Set HYPHY executable - prefer regular hyphy for local execution
 HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
@@ -148,6 +152,11 @@ echo "STATUS_FILE: '$STATUS_FILE'"
 echo "FN: '$FN'"
 echo "TREE_FN: '$TREE_FN'"
 echo "RESULTS_FN: '$RESULTS_FN'"
+echo "PVALUE: '$PVALUE'"
+echo "MULTIPLE_HITS: '$MULTIPLE_HITS'"
+echo "SITE_MULTIHIT: '$SITE_MULTIHIT'"
+echo "RATES: '$RATES'"
+echo "IMPUTE_STATES: '$IMPUTE_STATES'"
 
 if [ "$BOOTSTRAP" != "false" ] && [ "$BOOTSTRAP" != "0" ] && [ -n "$BOOTSTRAP" ]
 then

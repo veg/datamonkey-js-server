@@ -36,7 +36,8 @@ var meme = function (socket, stream, params) {
     self.rates = params.rates || 2;
     self.impute_states = params.impute_states || "No";
     self.bootstrap = params.bootstrap || false;
-    self.resample = params.resample || 1;
+    self.resample = params.resample || 0;  // Changed to match docs default
+    self.p_value = params.p_value || 0.1;
     self.id = "check-" + Date.now();
     self.msaid = "check";
     self.genetic_code = params.genetic_code || "Universal";
@@ -54,10 +55,11 @@ var meme = function (socket, stream, params) {
     self.site_multihit = analysisParams.site_multihit || "Estimate";
     self.rates = analysisParams.rates || 2;
     self.impute_states = analysisParams.impute_states || "No";
+    self.p_value = analysisParams.p_value || 0.1;  // P-value threshold
     
     // bootstrap attributes
     self.bootstrap = analysisParams.bootstrap || false;
-    self.resample = analysisParams.resample || 1;
+    self.resample = analysisParams.resample || 0;  // Changed to match docs default
     
     // parameter attributes
     if (self.params.msa) {
@@ -109,6 +111,7 @@ var meme = function (socket, stream, params) {
       "site_multihit=" + self.site_multihit,
       "rates=" + self.rates,
       "impute_states=" + self.impute_states,
+      "pvalue=" + self.p_value,
       "genetic_code=" + self.genetic_code,
       "analysis_type=" + self.type,
       "cwd=" + __dirname,
@@ -165,10 +168,10 @@ var meme = function (socket, stream, params) {
       self.site_multihit +
       ",rates=" +
       self.rates +
-      ",resample=" +
-      self.resample +
       ",impute_states=" +
       self.impute_states +
+      ",pvalue=" +
+      self.p_value +
       ",genetic_code=" +
       self.genetic_code +
       ",analysis_type=" +
@@ -211,10 +214,10 @@ var meme = function (socket, stream, params) {
         self.site_multihit +
         ",rates=" +
         self.rates +
-        ",resample=" +
-        self.resample +
         ",impute_states=" +
         self.impute_states +
+        ",pvalue=" +
+        self.p_value +
         ",genetic_code=" +
         self.genetic_code +
         ",analysis_type=" +
@@ -264,6 +267,10 @@ var meme = function (socket, stream, params) {
       logger.warn(`MEME job ${self.id}: self.params.analysis.msa structure is missing.`);
     }
 
+    // Ensure output directory exists BEFORE writing files
+    logger.info(`MEME job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
+    utilities.ensureDirectoryExists(self.output_dir);
+
     // Write tree to a file
     logger.info(`MEME job ${self.id}: Writing tree file to ${self.tree_fn}`, {
       tree_content: self.selectedTree ? (self.selectedTree.length > 100 ? self.selectedTree.substring(0, 100) + "..." : self.selectedTree) : "null"
@@ -275,10 +282,6 @@ var meme = function (socket, stream, params) {
       }
       logger.info(`MEME job ${self.id}: Tree file written successfully`);
     });
-
-    // Ensure output directory exists
-    logger.info(`MEME job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
-    utilities.ensureDirectoryExists(self.output_dir);
 
     // Ensure the progress file exists
     logger.info(`MEME job ${self.id}: Creating progress file at ${self.progress_fn}`);
