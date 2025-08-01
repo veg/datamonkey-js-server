@@ -33,7 +33,11 @@ var slac = function (socket, stream, params) {
     // Set defaults for required fields
     self.id = "check-" + Date.now();
     self.msaid = "check";
-    self.genetic_code = params.genetic_code || "Universal";
+    self.genetic_code = params.genetic_code || params.code || "Universal";
+    self.branches = params.branches || "All";
+    self.samples = params.samples || 100;
+    self.p_value = params.p_value || params.pvalue || 0.1;
+    self.nj = "";
     self.fn = __dirname + "/output/" + self.id;
     self.output_dir = path.dirname(self.fn);
     self.status_fn = self.fn + ".status";
@@ -52,7 +56,7 @@ var slac = function (socket, stream, params) {
       self.nj = self.params.msa[0] ? self.params.msa[0].nj : "";
     } else {
       self.msaid = self.params.msaid || "unknown";
-      self.genetic_code = self.params.genetic_code || "Universal";
+      self.genetic_code = self.params.genetic_code || self.params.code || "Universal";
       self.nj = self.params.nj || self.params.tree || "";
     }
     
@@ -61,6 +65,11 @@ var slac = function (socket, stream, params) {
     } else {
       self.id = self.params.id || "unknown-" + Date.now();
     }
+    
+    // SLAC-specific parameters with defaults (support both naming conventions)
+    self.branches = self.params.branches || "All";
+    self.samples = self.params.samples || 100;  // Number of samples for ancestral reconstruction
+    self.p_value = self.params.p_value || self.params.pvalue || 0.1;  // P-value threshold
     
     // parameter-derived attributes
     self.fn = __dirname + "/output/" + self.id;
@@ -91,6 +100,9 @@ var slac = function (socket, stream, params) {
       "treemode=" + self.treemode,
       "genetic_code=" + self.genetic_code,
       "analysis_type=" + self.type,
+      "branches=" + self.branches,
+      "samples=" + self.samples,
+      "pvalue=" + self.p_value,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
       "procs=" + (config.slac_procs || 1)
@@ -139,6 +151,12 @@ var slac = function (socket, stream, params) {
       self.genetic_code +
       ",analysis_type=" +
       self.type +
+      ",branches=" +
+      self.branches +
+      ",samples=" +
+      self.samples +
+      ",pvalue=" +
+      self.p_value +
       ",cwd=" +
       __dirname +
       ",msaid=" +
@@ -171,6 +189,12 @@ var slac = function (socket, stream, params) {
         self.genetic_code +
         ",analysis_type=" +
         self.type +
+        ",branches=" +
+        self.branches +
+        ",samples=" +
+        self.samples +
+        ",pvalue=" +
+        self.p_value +
         ",cwd=" +
         __dirname +
         ",msaid=" +
