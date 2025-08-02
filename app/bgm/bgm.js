@@ -45,7 +45,7 @@ var bgm = function(socket, stream, params) {
     self.substitution_model = params.substitution_model || params.baseline_model || null;
     self.length_of_each_chain = params.length_of_each_chain || params.steps || 1000000;
     self.number_of_burn_in_samples = params.number_of_burn_in_samples || params.burn_in || 100000;
-    self.number_of_samples = params.number_of_samples || params.samples || 100;
+    self.number_of_samples = params.number_of_samples || params.samples || params['chain-sample'] || 100;
     self.maximum_parents_per_node = parseInt(params.maximum_parents_per_node || params.max_parents || 1);
     self.minimum_subs_per_site = parseInt(params.minimum_subs_per_site || params.min_subs || 1);
     self.branches = params.branches || "All";
@@ -82,7 +82,7 @@ var bgm = function(socket, stream, params) {
       // Advanced options with complete parameter coverage
       self.length_of_each_chain = analysisParams.length_of_each_chain || analysisParams.steps || 1000000;
       self.number_of_burn_in_samples = analysisParams.number_of_burn_in_samples || analysisParams.burn_in || 100000;
-      self.number_of_samples = analysisParams.number_of_samples || analysisParams.samples || 100;
+      self.number_of_samples = analysisParams.number_of_samples || analysisParams.samples || analysisParams['chain-sample'] || 100;
       self.maximum_parents_per_node = parseInt(analysisParams.maximum_parents_per_node || analysisParams.max_parents || 1);
       self.minimum_subs_per_site = parseInt(analysisParams.minimum_subs_per_site || analysisParams.min_subs || 1);
       self.branches = analysisParams.branches || "All";
@@ -92,7 +92,7 @@ var bgm = function(socket, stream, params) {
       // Advanced options with complete parameter coverage
       self.length_of_each_chain = self.params.length_of_each_chain || self.params.steps || 1000000;
       self.number_of_burn_in_samples = self.params.number_of_burn_in_samples || self.params.burn_in || 100000;
-      self.number_of_samples = self.params.number_of_samples || self.params.samples || 100;
+      self.number_of_samples = self.params.number_of_samples || self.params.samples || self.params['chain-sample'] || 100;
       self.maximum_parents_per_node = parseInt(self.params.maximum_parents_per_node || self.params.max_parents || 1);
       self.minimum_subs_per_site = parseInt(self.params.minimum_subs_per_site || self.params.min_subs || 1);
       self.branches = self.params.branches || "All";
