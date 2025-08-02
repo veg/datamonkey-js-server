@@ -397,11 +397,14 @@ io.sockets.on("connection", function(socket) {
   // FUBAR
   r.route("fubar", {
     spawn: function(stream, params) {
-      new fubar.fubar(socket, stream, params.job);
+      // Handle both unified format (direct params) and legacy format (params.job)
+      const jobParams = params.job || params;
+      new fubar.fubar(socket, stream, jobParams);
     },
     check: function(params) {
-      params.job["checkOnly"] = true;
-      new fubar.fubar(socket, null, params.job);
+      const jobParams = params.job || params;
+      jobParams["checkOnly"] = true;
+      new fubar.fubar(socket, null, jobParams);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
