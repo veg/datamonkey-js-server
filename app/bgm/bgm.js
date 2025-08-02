@@ -14,6 +14,9 @@ const datatypes = {
   "3": "codon"
 }
 
+// TODO: BGM implementation is currently broken/incomplete
+// BGM.bf uses hardcoded io.PromptUser calls that ignore KeywordArguments
+// and always prompt interactively, even with -i flag. Needs investigation.
 var bgm = function(socket, stream, params) {
   var self = this;
   self.socket = socket;
