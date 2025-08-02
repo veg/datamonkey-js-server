@@ -3,7 +3,8 @@ var config = require("../../config.json"),
   code = require("../code").code,
   util = require("util"),
   fs = require("fs"),
-  path = require("path");
+  path = require("path"),
+  logger = require("../../lib/logger").logger;
 
 var fubar = function(socket, stream, params) {
   var self = this;
