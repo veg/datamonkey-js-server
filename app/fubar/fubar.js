@@ -192,9 +192,10 @@ var fubar = function(socket, stream, params) {
 
   // Skip file operations for check-only mode
   if (!isCheckOnly) {
-    // Determine the tree to use
+    // Determine the tree to use - support both unified format and legacy format
     self.selectedTree = self.nj;
 
+    // For legacy format, check for usertree in msa
     if (
       self.params &&
       self.params.analysis &&
@@ -208,6 +209,9 @@ var fubar = function(socket, stream, params) {
         self.selectedTree = msa.usertree;
       }
     }
+    
+    // For unified format, tree is already in self.nj (from params.tree)
+    // No additional override needed as self.nj is correctly set above
 
     // Ensure output directory exists BEFORE writing files
     const utilities = require("../../lib/utilities");
@@ -216,9 +220,13 @@ var fubar = function(socket, stream, params) {
     // Clean tree data to ensure it's in Newick format
     const cleanTree = utilities.cleanTreeToNewick(self.selectedTree);
     
-    logger.info(`FUBAR job ${self.id}: Writing cleaned tree to ${self.tree_fn}`, {
+    logger.info(`FUBAR job ${self.id}: Tree processing details`, {
+      tree_source: self.params.tree ? "unified_format" : "legacy_format",
+      has_params_tree: !!self.params.tree,
+      has_msa: !!self.params.msa,
       original_length: self.selectedTree ? self.selectedTree.length : 0,
       cleaned_length: cleanTree ? cleanTree.length : 0,
+      is_nexus: self.selectedTree ? self.selectedTree.trim().startsWith('#NEXUS') : false,
       tree_preview: cleanTree ? (cleanTree.length > 100 ? cleanTree.substring(0, 100) + "..." : cleanTree) : "null"
     });
 
