@@ -434,7 +434,24 @@ io.sockets.on("connection", function(socket) {
   // BGM
   r.route("bgm", {
     spawn: function(stream, params) {
-      new bgm.bgm(socket, stream, params.job);
+      if (!params || !params.job) {
+        logger.error("BGM spawn: Invalid parameters received", { params });
+        socket.emit("script error", { error: "Invalid job parameters" });
+        return;
+      }
+      logger.info("BGM route spawn called with:", {
+        stream_type: typeof stream,
+        stream_length: stream ? stream.length : 0,
+        stream_preview: stream ? stream.substring(0, 100) : "null",
+        params_job: JSON.stringify(params.job),
+        params_tree_length: params.tree ? params.tree.length : 0
+      });
+      // Merge tree data into job params for BGM constructor
+      var jobWithTree = Object.assign({}, params.job);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new bgm.bgm(socket, stream, jobWithTree);
     },
     check: function(params) {
       params.job["checkOnly"] = true;
