@@ -212,9 +212,22 @@ var fubar = function(socket, stream, params) {
     const utilities = require("../../lib/utilities");
     utilities.ensureDirectoryExists(self.output_dir);
 
+    // Clean tree data to ensure it's in Newick format
+    const cleanTree = utilities.cleanTreeToNewick(self.selectedTree);
+    
+    logger.info(`FUBAR job ${self.id}: Writing cleaned tree to ${self.tree_fn}`, {
+      original_length: self.selectedTree ? self.selectedTree.length : 0,
+      cleaned_length: cleanTree ? cleanTree.length : 0,
+      tree_preview: cleanTree ? (cleanTree.length > 100 ? cleanTree.substring(0, 100) + "..." : cleanTree) : "null"
+    });
+
     // Write tree to a file
-    fs.writeFile(self.tree_fn, self.selectedTree, function(err) {
-      if (err) throw err;
+    fs.writeFile(self.tree_fn, cleanTree, function(err) {
+      if (err) {
+        logger.error(`FUBAR job ${self.id}: Error writing tree file: ${err.message}`);
+        throw err;
+      }
+      logger.info(`FUBAR job ${self.id}: Tree file written successfully`);
     });
 
     // Ensure the progress file exists

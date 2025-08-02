@@ -232,11 +232,14 @@ var bgm = function(socket, stream, params) {
     logger.info(`BGM job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
     utilities.ensureDirectoryExists(self.output_dir);
 
-    // Write tree to a file
-    logger.info(`BGM job ${self.id}: Writing tree file to ${self.tree_fn}`, {
-      tree_content: self.nwk_tree ? (self.nwk_tree.length > 100 ? self.nwk_tree.substring(0, 100) + "..." : self.nwk_tree) : "null"
+    // Clean tree data and write to file
+    const cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
+    logger.info(`BGM job ${self.id}: Writing cleaned tree file to ${self.tree_fn}`, {
+      original_length: self.nwk_tree ? self.nwk_tree.length : 0,
+      cleaned_length: cleanTree ? cleanTree.length : 0,
+      tree_preview: cleanTree ? (cleanTree.length > 100 ? cleanTree.substring(0, 100) + "..." : cleanTree) : "null"
     });
-    fs.writeFile(self.tree_fn, self.nwk_tree, function (err) {
+    fs.writeFile(self.tree_fn, cleanTree, function (err) {
       if (err) {
         logger.error(`BGM job ${self.id}: Error writing tree file: ${err.message}`);
         throw err;
