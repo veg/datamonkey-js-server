@@ -142,20 +142,20 @@ if [ -n "$SLURM_JOB_ID" ]; then
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $NRM --alignment $FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> \"$PROGRESS_FILE\""
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $NRM --alignment $FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> "$PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $NRM --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $NRM --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> "$PROGRESS_FILE"
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $NRM --alignment $FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $NRM --alignment $FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> "$PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $NRM --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $NRM --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> "$PROGRESS_FILE"
   fi
 else
   # For local execution, use the HYPHY executable determined above
   echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "$HYPHY LIBPATH=$HYPHY_PATH $NRM --alignment $FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> \"$PROGRESS_FILE\""
-  $HYPHY LIBPATH=$HYPHY_PATH $NRM --alignment $FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> "$PROGRESS_FILE"
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $NRM --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH $NRM --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> "$PROGRESS_FILE"
 fi
 
 echo "Completed" > "$STATUS_FILE"
