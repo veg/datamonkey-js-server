@@ -39,21 +39,23 @@ var fubar = function(socket, stream, params) {
     // Normal operation with full parameters
     var analysisParams = self.params.analysis || self.params;
     
-    // parameter attributes - support both old and new formats
+    // parameter attributes - support both old and new formats (like FEL)
     if (self.params.msa) {
       self.msaid = self.params.msa._id;
       self.genetic_code = self.params.msa[0] ? code[self.params.msa[0].gencodeid + 1] : "Universal";
-      self.nj = self.params.msa[0] ? self.params.msa[0].nj : "";
     } else {
       self.msaid = self.params.msaid || "unknown";
       self.genetic_code = self.params.genetic_code || "Universal";
-      self.nj = self.params.nj || self.params.tree || "";
     }
     
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      // Use FEL-style tree assignment
+      self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
     } else {
       self.id = self.params.id || "unknown-" + Date.now();
+      // Use FEL-style tree assignment
+      self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
     }
 
     // parameter-derived attributes
@@ -192,47 +194,18 @@ var fubar = function(socket, stream, params) {
 
   // Skip file operations for check-only mode
   if (!isCheckOnly) {
-    // Determine the tree to use - support both unified format and legacy format
-    self.selectedTree = self.nj;
-
-    // For legacy format, check for usertree in msa
-    if (
-      self.params &&
-      self.params.analysis &&
-      self.params.analysis.msa &&
-      typeof self.params.analysis.msa === "object"
-    ) {
-      const msa = self.params.analysis.msa[0];
-
-      if (msa.usertree && msa.usertree.trim()) {
-        // Use the usertree if it is populated
-        self.selectedTree = msa.usertree;
-      }
-    }
-    
-    // For unified format, tree is already in self.nj (from params.tree)
-    // No additional override needed as self.nj is correctly set above
-
     // Ensure output directory exists BEFORE writing files
     const utilities = require("../../lib/utilities");
     utilities.ensureDirectoryExists(self.output_dir);
 
-    // Clean tree data to ensure it's in Newick format
-    const cleanTree = utilities.cleanTreeToNewick(self.selectedTree);
-    
-    logger.info(`FUBAR job ${self.id}: Tree processing details`, {
-      tree_source: self.params.tree ? "unified_format" : "legacy_format",
-      has_params_tree: !!self.params.tree,
-      has_msa: !!self.params.msa,
-      original_length: self.selectedTree ? self.selectedTree.length : 0,
-      cleaned_length: cleanTree ? cleanTree.length : 0,
-      is_nexus: self.selectedTree ? self.selectedTree.trim().startsWith('#NEXUS') : false,
-      tree_preview: cleanTree ? (cleanTree.length > 100 ? cleanTree.substring(0, 100) + "..." : cleanTree) : "null"
+    // Use FEL-style tree handling - simple and direct
+    logger.info(`FUBAR job ${self.id}: Writing tree file to ${self.tree_fn}`, {
+      tree_content: self.nwk_tree ? (self.nwk_tree.length > 100 ? self.nwk_tree.substring(0, 100) + "..." : self.nwk_tree) : "null"
     });
 
-    // Write tree to a file synchronously to avoid race conditions
+    // Write tree to a file synchronously (like FEL)
     try {
-      fs.writeFileSync(self.tree_fn, cleanTree);
+      fs.writeFileSync(self.tree_fn, self.nwk_tree);
       logger.info(`FUBAR job ${self.id}: Tree file written successfully`);
     } catch (err) {
       logger.error(`FUBAR job ${self.id}: Error writing tree file: ${err.message}`);
