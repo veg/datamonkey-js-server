@@ -56,6 +56,10 @@ var multihit = function(socket, stream, params) {
       self.msaid = self.params.msa._id;
       self.genetic_code = self.params.msa[0] ? code[self.params.msa[0].gencodeid + 1] : "Universal";
       self.nwk_tree = self.params.msa[0] ? (self.params.msa[0].usertree || self.params.msa[0].nj) : "";
+      // Use analysis.tagged_nwk_tree if available (for unified format)
+      if (self.params.analysis && self.params.analysis.tagged_nwk_tree) {
+        self.nwk_tree = self.params.analysis.tagged_nwk_tree;
+      }
     } else {
       self.msaid = self.params.msaid || "unknown";
       self.genetic_code = self.params.genetic_code || "Universal";
@@ -64,6 +68,8 @@ var multihit = function(socket, stream, params) {
     
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      // Use FEL-style tree assignment for unified format compatibility
+      self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       // MultiHit specific attributes with complete parameter coverage
       self.rate_classes = analysisParams.rate_classes || analysisParams.rates || 1;
       self.triple_islands = analysisParams.triple_islands || "No";

@@ -295,7 +295,24 @@ io.sockets.on("connection", function(socket) {
   // MULTIHIT
   r.route("multihit", {
     spawn: function(stream, params) {
-      new multihit.multihit(socket, stream, params.job);
+      if (!params || !params.job) {
+        logger.error("MULTIHIT spawn: Invalid parameters received", { params });
+        socket.emit("script error", { error: "Invalid job parameters" });
+        return;
+      }
+      logger.info("MULTIHIT route spawn called with:", {
+        stream_type: typeof stream,
+        stream_length: stream ? stream.length : 0,
+        stream_preview: stream ? stream.substring(0, 100) : "null",
+        params_job: JSON.stringify(params.job),
+        params_tree_length: params.tree ? params.tree.length : 0
+      });
+      // Merge tree data into job params for MULTIHIT constructor
+      var jobWithTree = Object.assign({}, params.job);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new multihit.multihit(socket, stream, jobWithTree);
     },
     check: function(params) {
       params.job["checkOnly"] = true;
