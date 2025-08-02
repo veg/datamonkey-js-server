@@ -212,13 +212,13 @@ var cfel = function(socket, stream, params) {
       cleaned_length: cleanTree ? cleanTree.length : 0,
       tree_preview: cleanTree ? (cleanTree.length > 100 ? cleanTree.substring(0, 100) + "..." : cleanTree) : "null"
     });
-    fs.writeFile(self.tree_fn, cleanTree, function (err) {
-      if (err) {
-        logger.error(`Contrast-FEL job ${self.id}: Error writing tree file: ${err.message}`);
-        throw err;
-      }
+    try {
+      fs.writeFileSync(self.tree_fn, cleanTree);
       logger.info(`Contrast-FEL job ${self.id}: Tree file written successfully`);
-    });
+    } catch (err) {
+      logger.error(`Contrast-FEL job ${self.id}: Error writing tree file: ${err.message}`);
+      throw err;
+    }
 
     // Ensure the progress file exists
     logger.info(`Contrast-FEL job ${self.id}: Creating progress file at ${self.progress_fn}`);

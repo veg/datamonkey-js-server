@@ -230,20 +230,22 @@ var fubar = function(socket, stream, params) {
       tree_preview: cleanTree ? (cleanTree.length > 100 ? cleanTree.substring(0, 100) + "..." : cleanTree) : "null"
     });
 
-    // Write tree to a file
-    fs.writeFile(self.tree_fn, cleanTree, function(err) {
-      if (err) {
-        logger.error(`FUBAR job ${self.id}: Error writing tree file: ${err.message}`);
-        throw err;
-      }
+    // Write tree to a file synchronously to avoid race conditions
+    try {
+      fs.writeFileSync(self.tree_fn, cleanTree);
       logger.info(`FUBAR job ${self.id}: Tree file written successfully`);
-    });
+    } catch (err) {
+      logger.error(`FUBAR job ${self.id}: Error writing tree file: ${err.message}`);
+      throw err;
+    }
 
     // Ensure the progress file exists
     fs.openSync(self.progress_fn, "w");
   }
   
+  logger.info(`FUBAR job ${self.id}: Initializing job`);
   self.init();
+  logger.info(`FUBAR job ${self.id}: Job initialized`);
 };
 
 util.inherits(fubar, hyphyJob);
