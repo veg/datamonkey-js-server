@@ -211,7 +211,6 @@ else
     $HYPHY -i LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" $BGM --branches "$BRANCHES" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
   else
     # Nucleotide or codon data
-    echo "BGM parameters: LENGTH=$LENGTH, BURNIN=$BURNIN, SAMPLES=$SAMPLES, MAX_PARENTS=$MAXIMUM_PARENTS, MIN_SUBS=$MINIMUM_SUBSTITUTIONS"
     echo "$HYPHY -i LIBPATH=$HYPHY_PATH $BGM --branches \"$BRANCHES\" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
     $HYPHY -i LIBPATH=$HYPHY_PATH ENV="TOLERATE_NUMERICAL_ERRORS=1;" $BGM --branches "$BRANCHES" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
   fi
