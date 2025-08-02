@@ -25,6 +25,24 @@ for arg in "$@"; do
     genetic_code=*)
       genetic_code="${arg#*=}"
       ;;
+    mode=*)
+      mode="${arg#*=}"
+      ;;
+    test_branches=*)
+      test_branches="${arg#*=}"
+      ;;
+    reference_branches=*)
+      reference_branches="${arg#*=}"
+      ;;
+    models=*)
+      models="${arg#*=}"
+      ;;
+    rates=*)
+      rates="${arg#*=}"
+      ;;
+    kill_zero_lengths=*)
+      kill_zero_lengths="${arg#*=}"
+      ;;
     analysis_type=*)
       analysis_type="${arg#*=}"
       ;;
@@ -69,9 +87,13 @@ TREE_FN=$tree_fn
 STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 GENETIC_CODE=$genetic_code
+MODE="${mode:-Classic mode}"
+TEST_BRANCHES="${test_branches:-TEST}"
+REFERENCE_BRANCHES="${reference_branches:-REFERENCE}"
+MODELS="${models:-All}"
+OMEGA_RATE_CLASSES="${rates:-3}"
+KZERO="${kill_zero_lengths:-No}"
 ANALYSIS_TYPE=$analysis_type
-OMEGA_RATE_CLASSES=3
-KZERO="No"
 PROCS=$procs
 
 # Set HYPHY executable - prefer regular hyphy for local execution
@@ -123,6 +145,12 @@ echo "STATUS_FILE: '$STATUS_FILE'"
 echo "FN: '$FN'"
 echo "TREE_FN: '$TREE_FN'"
 echo "RESULT_FILE: '$RESULT_FILE'"
+echo "MODE: '$MODE'"
+echo "TEST_BRANCHES: '$TEST_BRANCHES'"
+echo "REFERENCE_BRANCHES: '$REFERENCE_BRANCHES'"
+echo "MODELS: '$MODELS'"
+echo "OMEGA_RATE_CLASSES: '$OMEGA_RATE_CLASSES'"
+echo "KZERO: '$KZERO'"
 
 if [ -n "$SLURM_JOB_ID" ]; then
   # Using SLURM srun with dedicated arguments
@@ -134,20 +162,20 @@ if [ -n "$SLURM_JOB_ID" ]; then
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"Classic mode\" --test TEST --reference REFERENCE --models \"All\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"Classic mode\" --test TEST --reference REFERENCE --models \"All\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
   fi
 else
   # For local execution, use the HYPHY executable determined above
   echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "$HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"Classic mode\" --test TEST --reference REFERENCE --models \"All\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
-  $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "Classic mode" --test TEST --reference REFERENCE --models "All" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
 fi
 
 echo "Completed" > "$STATUS_FILE"

@@ -253,7 +253,16 @@ runUnifiedAnalysis('slac', alignmentData, treeData, slacParams);
 // Example RELAX analysis using unified format
 const relaxParams = {
   analysis_type: 'relax',
-  genetic_code: 'Universal'
+  genetic_code: 'Universal',
+  mode: 'Classic mode',                    // Run mode: 'Classic mode' (default)
+  test: 'TEST',                           // Test branches designation (default: 'TEST')
+  test_branches: 'TEST',                  // Alternative parameter name for test
+  reference: 'REFERENCE',                 // Reference branches designation (default: 'REFERENCE')
+  reference_branches: 'REFERENCE',        // Alternative parameter name for reference
+  models: 'All',                          // Analysis type: 'All', 'Minimal' (default: 'All')
+  rates: 3,                               // Number of omega rate classes (default: 3)
+  omega_rate_classes: 3,                  // Alternative parameter name for rates
+  kill_zero_lengths: 'No'                // Handle zero-length branches: 'Yes', 'No' (default: 'No')
 };
 
 runUnifiedAnalysis('relax', alignmentData, treeData, relaxParams);
@@ -462,7 +471,17 @@ class DataMonkeyAnalysisClient {
   }
   
   runRELAXAnalysis(alignmentData, treeData, parameters = {}) {
-    this.runAnalysis('relax', alignmentData, treeData, parameters);
+    const relaxParams = {
+      mode: 'Classic mode',
+      test: 'TEST',
+      reference: 'REFERENCE',
+      models: 'All',
+      rates: 3,
+      kill_zero_lengths: 'No',
+      ...parameters
+    };
+    
+    this.runAnalysis('relax', alignmentData, treeData, relaxParams);
   }
   
   runFUBARAnalysis(alignmentData, treeData, parameters = {}) {
@@ -528,6 +547,16 @@ client.socket.on('connected', () => {
   // Or run MEME analysis
   // client.runMEMEAnalysis(alignment, tree, {
   //   p_value: 0.05
+  // });
+  
+  // Or run RELAX analysis
+  // client.runRELAXAnalysis(alignment, tree, {
+  //   mode: 'Classic mode',
+  //   test: 'FG',
+  //   reference: 'BG', 
+  //   models: 'Minimal',
+  //   rates: 4,
+  //   kill_zero_lengths: 'Yes'
   // });
   
   // Or run FUBAR analysis

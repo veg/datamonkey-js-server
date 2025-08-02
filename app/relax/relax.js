@@ -30,11 +30,16 @@ var relax = function (socket, stream, relax_params) {
 
   // For check operations, we only need minimal initialization
   if (isCheckOnly) {
-    // Set defaults for required fields
+    // Set defaults for required fields with complete parameter coverage
+    self.genetic_code = relax_params.genetic_code || "Universal";
+    self.mode = relax_params.mode || "Classic mode";
+    self.test_branches = relax_params.test || relax_params.test_branches || "TEST";
+    self.reference_branches = relax_params.reference || relax_params.reference_branches || "REFERENCE";
+    self.models = relax_params.models || relax_params.analysis_type || "All";
+    self.rates = relax_params.rates || relax_params.omega_rate_classes || 3;
+    self.kill_zero_lengths = relax_params.kill_zero_lengths || "No";
     self.id = "check-" + Date.now();
     self.msaid = "check";
-    self.genetic_code = relax_params.genetic_code || "Universal";
-    self.analysis_type = relax_params.analysis_type || "All";
     self.nwk_tree = relax_params.nwk_tree || relax_params.tree || "";
     self.fn = __dirname + "/output/" + self.id;
     self.output_dir = path.dirname(self.fn);
@@ -57,11 +62,21 @@ var relax = function (socket, stream, relax_params) {
     
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
-      self.analysis_type = self.params.analysis.analysis_type || "All";
+      self.mode = analysisParams.mode || "Classic mode";
+      self.test_branches = analysisParams.test || analysisParams.test_branches || "TEST";
+      self.reference_branches = analysisParams.reference || analysisParams.reference_branches || "REFERENCE";
+      self.models = analysisParams.models || analysisParams.analysis_type || "All";
+      self.rates = analysisParams.rates || analysisParams.omega_rate_classes || 3;
+      self.kill_zero_lengths = analysisParams.kill_zero_lengths || "No";
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
     } else {
       self.id = self.params.id || "unknown-" + Date.now();
-      self.analysis_type = self.params.analysis_type || "All";
+      self.mode = self.params.mode || "Classic mode";
+      self.test_branches = self.params.test || self.params.test_branches || "TEST";
+      self.reference_branches = self.params.reference || self.params.reference_branches || "REFERENCE";
+      self.models = self.params.models || self.params.analysis_type || "All";
+      self.rates = self.params.rates || self.params.omega_rate_classes || 3;
+      self.kill_zero_lengths = self.params.kill_zero_lengths || "No";
       self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
     }
     
@@ -91,7 +106,12 @@ var relax = function (socket, stream, relax_params) {
       "pfn=" + self.progress_fn,
       "treemode=" + self.treemode,
       "genetic_code=" + self.genetic_code,
-      "analysis_type=" + self.analysis_type,
+      "mode=" + self.mode,
+      "test_branches=" + self.test_branches,
+      "reference_branches=" + self.reference_branches,
+      "models=" + self.models,
+      "rates=" + self.rates,
+      "kill_zero_lengths=" + self.kill_zero_lengths,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
       "procs=" + (config.relax_procs || 1)
@@ -136,8 +156,18 @@ var relax = function (socket, stream, relax_params) {
       self.treemode +
       ",genetic_code=" +
       self.genetic_code +
-      ",analysis_type=" +
-      self.analysis_type +
+      ",mode=" +
+      self.mode +
+      ",test_branches=" +
+      self.test_branches +
+      ",reference_branches=" +
+      self.reference_branches +
+      ",models=" +
+      self.models +
+      ",rates=" +
+      self.rates +
+      ",kill_zero_lengths=" +
+      self.kill_zero_lengths +
       ",cwd=" +
       __dirname +
       ",msaid=" +
@@ -169,8 +199,18 @@ var relax = function (socket, stream, relax_params) {
         self.treemode +
         ",genetic_code=" +
         self.genetic_code +
-        ",analysis_type=" +
-        self.analysis_type +
+        ",mode=" +
+        self.mode +
+        ",test_branches=" +
+        self.test_branches +
+        ",reference_branches=" +
+        self.reference_branches +
+        ",models=" +
+        self.models +
+        ",rates=" +
+        self.rates +
+        ",kill_zero_lengths=" +
+        self.kill_zero_lengths +
         ",cwd=" +
         __dirname +
         ",msaid=" +
@@ -191,6 +231,10 @@ var relax = function (socket, stream, relax_params) {
 
   // Skip file operations for check-only mode
   if (!isCheckOnly) {
+    // Ensure output directory exists BEFORE writing files
+    logger.info(`RELAX job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
+    utilities.ensureDirectoryExists(self.output_dir);
+
     // Write tree to a file
     logger.info(`RELAX job ${self.id}: Writing tree file to ${self.tree_fn}`, {
       tree_content: self.nwk_tree ? (self.nwk_tree.length > 100 ? self.nwk_tree.substring(0, 100) + "..." : self.nwk_tree) : "null"
@@ -202,10 +246,6 @@ var relax = function (socket, stream, relax_params) {
       }
       logger.info(`RELAX job ${self.id}: Tree file written successfully`);
     });
-
-    // Ensure output directory exists
-    logger.info(`RELAX job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
-    utilities.ensureDirectoryExists(self.output_dir);
 
     // Ensure the progress file exists
     logger.info(`RELAX job ${self.id}: Creating progress file at ${self.progress_fn}`);
