@@ -3,6 +3,64 @@
 # Set the PATH but skip module loading - system specific
 export PATH=/usr/local/bin:$PATH
 
+# Parse command line arguments and set environment variables
+# For local execution, parameters are passed as command line arguments like "fn=/path/to/file"
+for arg in "$@"; do
+  case $arg in
+    fn=*)
+      fn="${arg#*=}"
+      ;;
+    tree_fn=*)
+      tree_fn="${arg#*=}"
+      ;;
+    sfn=*)
+      sfn="${arg#*=}"
+      ;;
+    pfn=*)
+      pfn="${arg#*=}"
+      ;;
+    rfn=*)
+      rfn="${arg#*=}"
+      ;;
+    treemode=*)
+      treemode="${arg#*=}"
+      ;;
+    genetic_code=*)
+      genetic_code="${arg#*=}"
+      ;;
+    rate_var=*)
+      rate_var="${arg#*=}"
+      ;;
+    rate_classes=*)
+      rate_classes="${arg#*=}"
+      ;;
+    datatype=*)
+      datatype="${arg#*=}"
+      ;;
+    run_mode=*)
+      run_mode="${arg#*=}"
+      ;;
+    max_breakpoints=*)
+      max_breakpoints="${arg#*=}"
+      ;;
+    model=*)
+      model="${arg#*=}"
+      ;;
+    analysis_type=*)
+      analysis_type="${arg#*=}"
+      ;;
+    cwd=*)
+      cwd="${arg#*=}"
+      ;;
+    msaid=*)
+      msaid="${arg#*=}"
+      ;;
+    procs=*)
+      procs="${arg#*=}"
+      ;;
+  esac
+done
+
 # Try to load modules if they exist, but don't fail if they don't
 if [ -f /etc/profile.d/modules.sh ]; then
   source /etc/profile.d/modules.sh
@@ -32,21 +90,42 @@ TREE_FN=$tree_fn
 STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 RESULTS_FN=$rfn
+GENETIC_CODE="${genetic_code:-Universal}"
+RATE_VARIATION="${rate_var:-None}"
+RATE_CLASSES="${rate_classes:-2}"
+DATATYPE="${datatype:-codon}"
+RUN_MODE="${run_mode:-Normal}"
+MAX_BREAKPOINTS="${max_breakpoints:-10000}"
+MODEL="${model:-JTT}"
+PROCS=${procs:-48}
 
-GENETIC_CODE=$genetic_code
-RATE_VARIATION=$rate_var
-RATE_CLASSES=$rate_classes
-DATATYPE=$datatype
-RUN_MODE=$run_mode
+# Set HYPHY executable - prefer regular hyphy for local execution
+HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
+HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
+HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
 
-PROCS=$procs
+# Check which HYPHY version to use
+if [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_REGULAR" ]; then
+  # Local execution and regular hyphy exists - use it
+  HYPHY=$HYPHY_REGULAR
+  echo "Using regular HYPHY for local execution: $HYPHY"
+elif [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_NON_MPI" ]; then
+  # Local execution and non-MPI version exists - use it
+  HYPHY=$HYPHY_NON_MPI
+  echo "Using non-MPI HYPHY for local execution: $HYPHY"
+elif [ -f "$HYPHY_MPI" ]; then
+  # Use MPI version (for cluster execution or if others not available)
+  HYPHY=$HYPHY_MPI
+  echo "Using MPI HYPHY: $HYPHY"
+else
+  # Fallback - try to find any HYPHY executable
+  HYPHY=$(which hyphy 2>/dev/null || echo "$CWD/../../.hyphy/hyphy")
+  echo "Using fallback HYPHY: $HYPHY"
+fi
 
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
 HYPHY_PATH=$CWD/../../.hyphy/res/
-
-# Needs an MPI environment
-GARD=$HYPHY_PATH/TemplateBatchFiles/GARD.bf
-MODEL="JTT"
+HYPHY_ANALYSES_PATH=$CWD/../../.hyphy-analyses
+GARD=$HYPHY_ANALYSES_PATH/GARD/GARD.bf
 
 #RATE_VARIATIONS
 # 1: None
@@ -70,6 +149,18 @@ fi
 echo "PROCS: $PROCS"
 echo "SLURM_JOB_ID: $SLURM_JOB_ID"
 echo "slurm_mpi_type: $slurm_mpi_type"
+echo "PROGRESS_FILE: '$PROGRESS_FILE'"
+echo "STATUS_FILE: '$STATUS_FILE'"
+echo "FN: '$FN'"
+echo "TREE_FN: '$TREE_FN'"
+echo "RESULTS_FN: '$RESULTS_FN'"
+echo "GENETIC_CODE: '$GENETIC_CODE'"
+echo "RATE_VARIATION: '$RATE_VARIATION'"
+echo "RATE_CLASSES: '$RATE_CLASSES'"
+echo "DATATYPE: '$DATATYPE'"
+echo "RUN_MODE: '$RUN_MODE'"
+echo "MAX_BREAKPOINTS: '$MAX_BREAKPOINTS'"
+echo "MODEL: '$MODEL'"
 
 if [ -n "$SLURM_JOB_ID" ]; then
   # Using SLURM srun with dedicated arguments
@@ -80,20 +171,28 @@ if [ -n "$SLURM_JOB_ID" ]; then
   
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN >> "$PROGRESS_FILE"
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN >> "$PROGRESS_FILE"
   fi
 else
-  # Using mpirun for non-SLURM environments
-  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
+  # For local execution, use the HYPHY executable determined above
+  echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
+  
+  # Check if we can use MPI for local execution (if using MPI version)
+  if [[ "$HYPHY" == *"HYPHYMPI"* ]] && command -v mpirun &> /dev/null; then
+    echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+    mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN >> "$PROGRESS_FILE"
+  else
+    echo "$HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+    $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN >> "$PROGRESS_FILE"
+  fi
 fi
 
 echo "Completed" > $STATUS_FILE

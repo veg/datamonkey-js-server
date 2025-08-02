@@ -36,6 +36,12 @@
   "slac_procs"             : "32",
   "slac_walltime"          : "3:00:00:00",
   "relax_procs"            : "32",
-  "relax_walltime"         : "3:00:00:00"
+  "relax_walltime"         : "3:00:00:00",
+  "multihit_procs"         : "32",
+  "multihit_walltime"      : "3:00:00:00",
+  "nrm_procs"              : "1",
+  "nrm_walltime"           : "3:00:00:00",
+  "cfel_procs"             : "32", 
+  "cfel_walltime"          : "3:00:00:00"
 
 }

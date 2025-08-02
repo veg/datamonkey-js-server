@@ -278,6 +278,45 @@ const fubarParams = {
 };
 
 runUnifiedAnalysis('fubar', alignmentData, treeData, fubarParams);
+
+// Example BGM analysis using unified format
+const bgmParams = {
+  analysis_type: 'bgm',
+  genetic_code: 'Universal',
+  datatype: 'codon',                           // Data type: 'nucleotide', 'amino-acid', 'codon' (default: 'codon')
+  type: 'codon',                               // Alternative parameter name for datatype
+  substitution_model: null,                    // Substitution model (for amino-acid data only)
+  baseline_model: null,                        // Alternative parameter name for substitution_model
+  branches: 'All',                             // Branches to analyze (default: 'All')
+  length_of_each_chain: 1000000,               // Length of each MCMC chain (default: 1000000)
+  steps: 1000000,                              // Alternative parameter name for length_of_each_chain
+  number_of_burn_in_samples: 100000,           // Number of burn-in samples (default: 100000)
+  burn_in: 100000,                             // Alternative parameter name for number_of_burn_in_samples
+  number_of_samples: 100,                      // Number of samples to collect (default: 100)
+  samples: 100,                                // Alternative parameter name for number_of_samples
+  maximum_parents_per_node: 1,                 // Maximum parents per node in Bayesian network (default: 1)
+  max_parents: 1,                              // Alternative parameter name for maximum_parents_per_node
+  minimum_subs_per_site: 1,                    // Minimum substitutions per site (default: 1)
+  min_subs: 1                                  // Alternative parameter name for minimum_subs_per_site
+};
+
+runUnifiedAnalysis('bgm', alignmentData, treeData, bgmParams);
+
+// Example Contrast-FEL analysis using unified format
+const cfelParams = {
+  analysis_type: 'cfel',
+  genetic_code: 'Universal',
+  branch_sets: ['Foreground', 'Background'],     // Array of branch set names (required)
+  ds_variation: 1,                               // Synonymous rate variation: 1=Yes, 2=No (default: 1/Yes)
+  srv: 'Yes',                                    // Alternative parameter name for ds_variation: 'Yes', 'No' (default: 'Yes')
+  permutations: 'Yes',                           // Perform permutation tests: 'Yes', 'No' (default: 'Yes')
+  p_value: 0.05,                                 // P-value threshold for significance (default: 0.05, range: 0-1)
+  pvalue: 0.05,                                  // Alternative parameter name for p_value
+  q_value: 0.20,                                 // Q-value threshold for FDR (default: 0.20, range: 0-1)
+  qvalue: 0.20                                   // Alternative parameter name for q_value
+};
+
+runUnifiedAnalysis('cfel', alignmentData, treeData, cfelParams);
 ```
 
 ### 6. Event Handling Details
@@ -494,6 +533,34 @@ class DataMonkeyAnalysisClient {
     this.runAnalysis('fubar', alignmentData, treeData, fubarParams);
   }
   
+  runBGMAnalysis(alignmentData, treeData, parameters = {}) {
+    const bgmParams = {
+      datatype: 'codon',
+      branches: 'All',
+      length_of_each_chain: 1000000,
+      number_of_burn_in_samples: 100000,
+      number_of_samples: 100,
+      maximum_parents_per_node: 1,
+      minimum_subs_per_site: 1,
+      ...parameters
+    };
+    
+    this.runAnalysis('bgm', alignmentData, treeData, bgmParams);
+  }
+  
+  runContrastFELAnalysis(alignmentData, treeData, parameters = {}) {
+    const cfelParams = {
+      branch_sets: ['Foreground', 'Background'],
+      srv: 'Yes',
+      permutations: 'Yes',
+      p_value: 0.05,
+      q_value: 0.20,
+      ...parameters
+    };
+    
+    this.runAnalysis('cfel', alignmentData, treeData, cfelParams);
+  }
+  
   validateParameters(analysisType, parameters) {
     return new Promise((resolve, reject) => {
       this.socket.once('validated', (result) => {
@@ -563,6 +630,25 @@ client.socket.on('connected', () => {
   // client.runFUBARAnalysis(alignment, tree, {
   //   number_of_grid_points: 25,
   //   concentration_of_dirichlet_prior: 0.3
+  // });
+  
+  // Or run BGM analysis
+  // client.runBGMAnalysis(alignment, tree, {
+  //   datatype: 'nucleotide',
+  //   length_of_each_chain: 500000,
+  //   number_of_burn_in_samples: 50000,
+  //   number_of_samples: 200,
+  //   maximum_parents_per_node: 2,
+  //   minimum_subs_per_site: 2
+  // });
+  
+  // Or run Contrast-FEL analysis
+  // client.runContrastFELAnalysis(alignment, tree, {
+  //   branch_sets: ['test1', 'test2', 'control'],
+  //   srv: 'No',
+  //   permutations: 'No',
+  //   p_value: 0.01,
+  //   q_value: 0.10
   // });
 });
 ```
