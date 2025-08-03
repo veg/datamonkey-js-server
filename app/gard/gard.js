@@ -66,6 +66,10 @@ var gard = function(socket, stream, params) {
       self.msaid = self.params.msa._id;
       self.genetic_code = self.params.msa[0] ? (self.params.msa[0].gencodeid + 1) : "Universal";
       self.nwk_tree = self.params.msa[0] ? (self.params.msa[0].usertree || self.params.msa[0].nj) : "";
+      // Use analysis.tagged_nwk_tree if available (for unified format)
+      if (self.params.analysis && self.params.analysis.tagged_nwk_tree) {
+        self.nwk_tree = self.params.analysis.tagged_nwk_tree;
+      }
     } else {
       self.msaid = self.params.msaid || "unknown";
       self.genetic_code = self.params.genetic_code || "Universal";
@@ -74,6 +78,8 @@ var gard = function(socket, stream, params) {
     
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      // Use FEL-style tree assignment for unified format compatibility
+      self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       // GARD specific attributes with complete parameter coverage
       self.site_to_site_variation = analysisParams.site_to_site_variation || "none";
       self.rate_variation = variation_map[self.site_to_site_variation] || "None";
