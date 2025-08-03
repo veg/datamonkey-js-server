@@ -41,8 +41,8 @@ var fade = function(socket, stream, params) {
   if (isCheckOnly) {
     // Set defaults for required fields with complete parameter coverage
     self.genetic_code = params.genetic_code || "Universal";
-    self.substitution_model = params.substitution_model ? model[params.substitution_model] : (params.model || "HKY85");
-    self.posterior_estimation_method = params.posterior_estimation_method ? estimationMethod[params.posterior_estimation_method] : (params.method || "Metropolis-Hastings");
+    self.substitution_model = (params.substitution_model && model[params.substitution_model]) || params.model || "LG";
+    self.posterior_estimation_method = (params.posterior_estimation_method && estimationMethod[params.posterior_estimation_method]) || params.method || "Metropolis-Hastings";
     self.branches = params.branches || "All";
     self.number_of_grid_points = params.number_of_grid_points || params.grid || 20;
     self.number_of_mcmc_chains = params.number_of_mcmc_chains || params.chains || 5;
@@ -69,6 +69,10 @@ var fade = function(socket, stream, params) {
       self.msaid = self.params.msa._id;
       self.genetic_code = self.params.msa[0] ? code[self.params.msa[0].gencodeid + 1] : "Universal";
       self.nwk_tree = self.params.msa[0] ? self.params.msa[0].nj : "";
+      // Use analysis.tagged_nwk_tree if available (for unified format)
+      if (self.params.analysis && self.params.analysis.tagged_nwk_tree) {
+        self.nwk_tree = self.params.analysis.tagged_nwk_tree;
+      }
     } else {
       self.msaid = self.params.msaid || "unknown";
       self.genetic_code = self.params.genetic_code || "Universal";
@@ -77,9 +81,11 @@ var fade = function(socket, stream, params) {
     
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      // Use FEL-style tree assignment for unified format compatibility
+      self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       // FADE specific attributes with complete parameter coverage
-      self.substitution_model = self.params.analysis.substitution_model ? model[self.params.analysis.substitution_model] : (analysisParams.model || "HKY85");
-      self.posterior_estimation_method = self.params.analysis.posterior_estimation_method ? estimationMethod[self.params.analysis.posterior_estimation_method] : (analysisParams.method || "Metropolis-Hastings");
+      self.substitution_model = (self.params.analysis.substitution_model && model[self.params.analysis.substitution_model]) || analysisParams.model || "LG";
+      self.posterior_estimation_method = (self.params.analysis.posterior_estimation_method && estimationMethod[self.params.analysis.posterior_estimation_method]) || analysisParams.method || "Metropolis-Hastings";
       self.branches = analysisParams.branches || "All";
       self.number_of_grid_points = analysisParams.number_of_grid_points || analysisParams.grid || 20;
       self.number_of_mcmc_chains = analysisParams.number_of_mcmc_chains || analysisParams.chains || 5;
@@ -90,8 +96,8 @@ var fade = function(socket, stream, params) {
     } else {
       self.id = self.params.id || "unknown-" + Date.now();
       // FADE specific attributes with complete parameter coverage
-      self.substitution_model = self.params.substitution_model ? model[self.params.substitution_model] : (self.params.model || "HKY85");
-      self.posterior_estimation_method = self.params.posterior_estimation_method ? estimationMethod[self.params.posterior_estimation_method] : (self.params.method || "Metropolis-Hastings");
+      self.substitution_model = (self.params.substitution_model && model[self.params.substitution_model]) || self.params.model || "LG";
+      self.posterior_estimation_method = (self.params.posterior_estimation_method && estimationMethod[self.params.posterior_estimation_method]) || self.params.method || "Metropolis-Hastings";
       self.branches = self.params.branches || "All";
       self.number_of_grid_points = self.params.number_of_grid_points || self.params.grid || 20;
       self.number_of_mcmc_chains = self.params.number_of_mcmc_chains || self.params.chains || 5;
