@@ -124,8 +124,7 @@ else
 fi
 
 HYPHY_PATH=$CWD/../../.hyphy/res/
-HYPHY_ANALYSES_PATH=$CWD/../../.hyphy-analyses
-GARD=$HYPHY_ANALYSES_PATH/GARD/GARD.bf
+GARD=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/GARD.bf
 
 #RATE_VARIATIONS
 # 1: None
