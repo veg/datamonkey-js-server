@@ -97,10 +97,13 @@ try
                 end
             end
             
-            println("Found $(length(seqnames)) taxa: $(seqnames)")
+            println("Found $(length(seqnames)) taxa from TAXLABELS: $(seqnames)")
             
             # Then extract sequences from MATRIX
             in_matrix = false
+            matrix_seqnames = String[]  # Names extracted from MATRIX section
+            matrix_seqs = String[]      # Sequences from MATRIX section
+            
             for line in lines
                 line = strip(line)
                 if occursin("MATRIX", uppercase(line))
@@ -119,24 +122,50 @@ try
                     
                     # Check if this line starts with a quoted taxon name
                     if startswith(seq, "'") || startswith(seq, "\"")
-                        # Labeled format: extract sequence part after taxon name
-                        # Find the end of the quoted name
+                        # Labeled format: extract both name and sequence
                         quote_char = seq[1]
                         end_quote = findnext(quote_char, seq, 2)
                         if end_quote !== nothing
-                            # Extract sequence part after the taxon name and any whitespace
+                            # Extract taxon name and sequence
+                            taxon_name = strip(seq[2:end_quote-1])  # Remove quotes
                             seq_part = strip(seq[end_quote+1:end])
-                            if !isempty(seq_part)
-                                push!(seqs, seq_part)
+                            if !isempty(seq_part) && !isempty(taxon_name)
+                                push!(matrix_seqnames, taxon_name)
+                                push!(matrix_seqs, seq_part)
                             end
                         end
                     else
-                        # NOLABELS format: entire line is sequence
-                        if !isempty(seq)
-                            push!(seqs, seq)
+                        # NOLABELS format: use TAXLABELS names with sequence data
+                        if !isempty(seq) && length(matrix_seqs) < length(seqnames)
+                            push!(matrix_seqs, seq)
                         end
                     end
                 end
+            end
+            
+            # Determine which names and sequences to use
+            if !isempty(matrix_seqnames)
+                # Labeled format: use names and sequences from MATRIX
+                seqnames = matrix_seqnames
+                seqs = matrix_seqs
+                println("Using labeled format with $(length(seqnames)) taxa from MATRIX section")
+            else
+                # NOLABELS format: use TAXLABELS names with MATRIX sequences
+                seqs = matrix_seqs
+                println("Using NOLABELS format with $(length(seqnames)) taxa from TAXLABELS section")
+            end
+            
+            # Normalize case for phylogenetic software compatibility
+            seqnames = uppercase.(seqnames)
+            println("Final taxa names (uppercase): $(seqnames[1:min(5, length(seqnames))])...")
+            
+            # Check if sequences need case normalization
+            has_lowercase = any(seq -> any(islowercase, seq), seqs)
+            if has_lowercase
+                println("⚠️  Sequences contain lowercase characters, converting to uppercase")
+                seqs = uppercase.(seqs)
+            else
+                println("✓ All sequences are already uppercase")
             end
             
             println("Found $(length(seqs)) sequences")
@@ -183,10 +212,40 @@ try
         end
     end
     
+    # Validate that sequence names match tree taxa (case-insensitive)
+    println("Validating sequence-tree name matching...")
+    tree_upper = uppercase(treestring)
+    missing_in_tree = String[]
+    
+    for seqname in seqnames
+        if !occursin(seqname, tree_upper)
+            push!(missing_in_tree, seqname)
+        end
+    end
+    
+    if !isempty(missing_in_tree)
+        println("⚠️  WARNING: The following sequence names are not found in the tree:")
+        for name in missing_in_tree
+            println("  - $name")
+        end
+        println("This may cause numerical errors during analysis.")
+        println("Tree content (first 200 chars): $(treestring[1:min(200, length(treestring))])")
+        error("Sequence-tree name mismatch detected. Please ensure all sequence names appear in the tree.")
+    else
+        println("✓ All sequence names found in tree")
+    end
+    
     println("Starting difFUBAR analysis...")
 
     for (name, seq) in zip(seqnames, seqs)
         println("$(name): length = $(length(seq))")
+        # Check for lowercase characters in sequence
+        lowercase_chars = filter(c -> islowercase(c), collect(seq))
+        if !isempty(lowercase_chars)
+            println("  ⚠️  Contains lowercase: $(unique(lowercase_chars))")
+        end
+        # Show first 20 characters of sequence
+        println("  Sequence: $(seq[1:min(20, length(seq))])...")
     end
     
     # Run difFUBAR analysis
@@ -194,6 +253,8 @@ try
         seqnames, seqs, treestring, tags, rfn,
         pos_thresh=pos_threshold, 
         iters=mcmc_iterations, 
+        burnin=burnin_samples,
+        concentration=concentration_of_dirichlet_prior,
         verbosity=1, 
         exports=true
     )
