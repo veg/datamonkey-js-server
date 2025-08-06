@@ -60,18 +60,19 @@ echo "Stdout log: $STDOUT_LOG"
 echo "Stderr log: $STDERR_LOG"
 
 # Run Julia analysis with command line arguments and capture output
-echo "=== EXECUTING JULIA COMMAND ===" | tee -a "$STDOUT_LOG"
-echo "Command: $JULIA_PATH --project=\"$JULIA_PROJECT\" difFubar_analysis.jl \\" | tee -a "$STDOUT_LOG"
-echo "  \"$FN\" \\" | tee -a "$STDOUT_LOG"
-echo "  \"$TREE_FN\" \\" | tee -a "$STDOUT_LOG"
-echo "  \"$RFN\" \\" | tee -a "$STDOUT_LOG"
-echo "  \"$SFN\" \\" | tee -a "$STDOUT_LOG"
-echo "  \"$POS_THRESHOLD\" \\" | tee -a "$STDOUT_LOG"
-echo "  \"$MCMC_ITERATIONS\" \\" | tee -a "$STDOUT_LOG"
-echo "  \"$BURNIN_SAMPLES\" \\" | tee -a "$STDOUT_LOG"
-echo "  \"$CONCENTRATION_OF_DIRICHLET_PRIOR\"" | tee -a "$STDOUT_LOG"
-echo "==================================" | tee -a "$STDOUT_LOG"
+echo "=== EXECUTING JULIA COMMAND ===" >> "$STDOUT_LOG"
+echo "Command: $JULIA_PATH --project=\"$JULIA_PROJECT\" difFubar_analysis.jl \\" >> "$STDOUT_LOG"
+echo "  \"$FN\" \\" >> "$STDOUT_LOG"
+echo "  \"$TREE_FN\" \\" >> "$STDOUT_LOG"
+echo "  \"$RFN\" \\" >> "$STDOUT_LOG"
+echo "  \"$SFN\" \\" >> "$STDOUT_LOG"
+echo "  \"$POS_THRESHOLD\" \\" >> "$STDOUT_LOG"
+echo "  \"$MCMC_ITERATIONS\" \\" >> "$STDOUT_LOG"
+echo "  \"$BURNIN_SAMPLES\" \\" >> "$STDOUT_LOG"
+echo "  \"$CONCENTRATION_OF_DIRICHLET_PRIOR\"" >> "$STDOUT_LOG"
+echo "==================================" >> "$STDOUT_LOG"
 
+# Run Julia with output redirection instead of piping through tee
 "$JULIA_PATH" --project="$JULIA_PROJECT" "$SCRIPT_DIR/difFubar_analysis.jl" \
   "$FN" \
   "$TREE_FN" \
@@ -81,10 +82,10 @@ echo "==================================" | tee -a "$STDOUT_LOG"
   "$MCMC_ITERATIONS" \
   "$BURNIN_SAMPLES" \
   "$CONCENTRATION_OF_DIRICHLET_PRIOR" \
-  2>&1 | tee -a "$STDOUT_LOG"
+  >> "$STDOUT_LOG" 2>&1
 
 # Capture exit code
-JULIA_EXIT_CODE=${PIPESTATUS[0]}
+JULIA_EXIT_CODE=$?
 
 echo "Julia exit code: $JULIA_EXIT_CODE"
 

@@ -1,8 +1,21 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  logger = require("../../lib/logger.js").logger,
+  redis = require("redis"),
   util = require("util"),
   fs = require("fs"),
   path = require("path");
+
+// Create Redis client
+var redis_client = redis.createClient({
+  host: config.redis_host,
+  port: config.redis_port
+});
+
+// Add error handler for Redis client
+redis_client.on("error", function(err) {
+  logger.error("Redis difFubar client error: " + err.message);
+});
 
 var difFubar = function(socket, stream, params) {
   var self = this;
@@ -180,10 +193,9 @@ difFubar.prototype.onComplete = function() {
           
           self.log("complete", "success");
           
-          var client = require("../../lib/database.js").active();
-          client.hset(self.id, "results", str_redis_packet, "status", "completed");
-          client.publish(self.id, str_redis_packet);
-          client.lrem("active_jobs", 1, self.id);
+          redis_client.hset(self.id, "results", str_redis_packet, "status", "completed");
+          redis_client.publish(self.id, str_redis_packet);
+          redis_client.lrem("active_jobs", 1, self.id);
           delete this;
         } else {
           self.onError("job seems to have completed, but no results found");

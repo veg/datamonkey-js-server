@@ -1,20 +1,95 @@
-using MolecularEvolution, FASTX, CodonMolecularEvolution, JSON
+println("=== JULIA STARTUP DEBUG ===")
+println("Julia version: $(VERSION)")
+println("Working directory: $(pwd())")
+println("Number of arguments: $(length(ARGS))")
+println("Arguments: $(ARGS)")
+println("==========================")
+
+println("Loading packages...")
+try
+    println("  - Loading MolecularEvolution...")
+    using MolecularEvolution
+    println("  ✓ MolecularEvolution loaded")
+    
+    println("  - Loading FASTX...")  
+    using FASTX
+    println("  ✓ FASTX loaded")
+    
+    println("  - Loading CodonMolecularEvolution...")
+    using CodonMolecularEvolution
+    println("  ✓ CodonMolecularEvolution loaded")
+    
+    println("  - Loading JSON...")
+    using JSON
+    println("  ✓ JSON loaded")
+    
+    println("✓ All packages loaded successfully")
+catch e
+    println("❌ PACKAGE LOADING FAILED: $e")
+    println("Stack trace:")
+    for (exc, bt) in Base.catch_stack()
+        showerror(stdout, exc, bt)
+        println()
+    end
+    exit(1)
+end
 
 # Get parameters from command line arguments
+println("Checking command line arguments...")
 if length(ARGS) < 8
+    println("❌ Insufficient arguments provided")
+    println("Expected: 8, Got: $(length(ARGS))")
     println("Usage: julia difFubar_analysis.jl <fn> <tree_fn> <rfn> <sfn> <pos_threshold> <mcmc_iterations> <burnin_samples> <concentration_of_dirichlet_prior>")
     println("Example: julia difFubar_analysis.jl /path/to/alignment /path/to/tree /path/to/results /path/to/status 0.95 2500 500 0.5")
     exit(1)
 end
+println("✓ Sufficient arguments provided")
 
-fn = ARGS[1]
-tree_fn = ARGS[2]
-rfn = ARGS[3]
-sfn = ARGS[4]
-pos_threshold = parse(Float64, ARGS[5])
-mcmc_iterations = parse(Int, ARGS[6])
-burnin_samples = parse(Int, ARGS[7])
-concentration_of_dirichlet_prior = parse(Float64, ARGS[8])
+# Declare variables in global scope
+fn = ""
+tree_fn = ""
+rfn = ""
+sfn = ""
+pos_threshold = 0.0
+mcmc_iterations = 0
+burnin_samples = 0
+concentration_of_dirichlet_prior = 0.0
+
+println("Parsing command line arguments...")
+try
+    global fn = ARGS[1]
+    println("  ✓ fn = $fn")
+    
+    global tree_fn = ARGS[2]
+    println("  ✓ tree_fn = $tree_fn")
+    
+    global rfn = ARGS[3]
+    println("  ✓ rfn = $rfn")
+    
+    global sfn = ARGS[4]
+    println("  ✓ sfn = $sfn")
+    
+    global pos_threshold = parse(Float64, ARGS[5])
+    println("  ✓ pos_threshold = $pos_threshold")
+    
+    global mcmc_iterations = parse(Int, ARGS[6])
+    println("  ✓ mcmc_iterations = $mcmc_iterations")
+    
+    global burnin_samples = parse(Int, ARGS[7])
+    println("  ✓ burnin_samples = $burnin_samples")
+    
+    global concentration_of_dirichlet_prior = parse(Float64, ARGS[8])
+    println("  ✓ concentration_of_dirichlet_prior = $concentration_of_dirichlet_prior")
+    
+    println("✓ All arguments parsed successfully")
+catch e
+    println("❌ ARGUMENT PARSING FAILED: $e")
+    println("Failed argument details:")
+    for i in 1:length(ARGS)
+        println("  ARGS[$i] = '$(ARGS[i])'")
+    end
+    exit(1)
+end
 
 println("=== JULIA DIFUBAR PARAMETERS ===")
 println("Alignment file: $fn")
@@ -28,6 +103,43 @@ println("Dirichlet concentration: $concentration_of_dirichlet_prior")
 println("===================================")
 
 try
+    # Read input files
+    println("=== FILE EXISTENCE CHECKS ===")
+    println("Checking alignment file: $fn")
+    if isfile(fn)
+        file_size = filesize(fn)
+        println("  ✓ File exists, size: $file_size bytes")
+    else
+        println("  ❌ File does not exist")
+        # Check alternative locations
+        alt_files = ["$(fn).fasta", "$(fn).nex", "$(fn).nexus"]
+        for alt in alt_files
+            if isfile(alt)
+                println("  ℹ️  Found alternative: $alt")
+            end
+        end
+        error("Alignment file not found: $fn")
+    end
+    
+    println("Checking tree file: $tree_fn")
+    if isfile(tree_fn)
+        file_size = filesize(tree_fn)
+        println("  ✓ File exists, size: $file_size bytes")
+    else
+        println("  ❌ File does not exist")
+        error("Tree file not found: $tree_fn")
+    end
+    
+    println("Checking write permissions for output directory...")
+    output_dir = dirname(rfn)
+    if isdir(output_dir) && iswritable(output_dir)
+        println("  ✓ Output directory writable: $output_dir")
+    else
+        println("  ❌ Output directory not writable or doesn't exist: $output_dir")
+        error("Cannot write to output directory: $output_dir")
+    end
+    println("==============================")
+    
     # Read input files
     println("Reading input files...")
     println("Attempting to read: $fn")
@@ -235,20 +347,53 @@ try
         println("✓ All sequence names found in tree")
     end
     
-    println("Starting difFUBAR analysis...")
-
-    for (name, seq) in zip(seqnames, seqs)
-        println("$(name): length = $(length(seq))")
-        # Check for lowercase characters in sequence
-        lowercase_chars = filter(c -> islowercase(c), collect(seq))
-        if !isempty(lowercase_chars)
-            println("  ⚠️  Contains lowercase: $(unique(lowercase_chars))")
+    println("=== PRE-ANALYSIS DEBUG ===")
+    println("Number of sequences: $(length(seqnames))")
+    println("Number of tags: $(length(tags))")
+    println("Tags: $tags")
+    println("Tree length: $(length(treestring)) chars")
+    println("Tree preview: $(treestring[1:min(100, length(treestring))])...")
+    
+    println("Sequence summary:")
+    for (i, (name, seq)) in enumerate(zip(seqnames, seqs))
+        if i <= 5  # Only show first 5 sequences in detail
+            println("  [$i] $(name): length = $(length(seq))")
+            # Check for lowercase characters in sequence
+            lowercase_chars = filter(c -> islowercase(c), collect(seq))
+            if !isempty(lowercase_chars)
+                println("    ⚠️  Contains lowercase: $(unique(lowercase_chars))")
+            end
+            # Show first 20 characters of sequence
+            println("    Sequence: $(seq[1:min(20, length(seq))])...")
+        elseif i == 6
+            println("  ... (showing first 5 of $(length(seqnames)) sequences)")
         end
-        # Show first 20 characters of sequence
-        println("  Sequence: $(seq[1:min(20, length(seq))])...")
+    end
+    println("==========================")
+    
+    println("=== STARTING DIFUBAR ANALYSIS ===")
+    println("Parameters:")
+    println("  - pos_thresh: $pos_threshold")  
+    println("  - iters: $mcmc_iterations")
+    println("  - burnin: $burnin_samples")
+    println("  - concentration: $concentration_of_dirichlet_prior")
+    println("  - verbosity: 1")
+    println("  - exports: true")
+    println("  - exports2json: true")
+    println("  - output base: $rfn")
+    println("=================================")
+    
+    # Check if difFUBAR function exists
+    if !isdefined(CodonMolecularEvolution, :difFUBAR)
+        error("difFUBAR function not found in CodonMolecularEvolution package")
+    else
+        println("✓ difFUBAR function found")
     end
     
-    # Run difFUBAR analysis
+    # Run difFUBAR analysis with error handling
+    println("Calling difFUBAR function...")
+    
+    # Using the correct Julia environment that supports all parameters
     df, results, plots = difFUBAR(
         seqnames, seqs, treestring, tags, rfn,
         pos_thresh=pos_threshold, 
@@ -256,31 +401,37 @@ try
         burnin=burnin_samples,
         concentration=concentration_of_dirichlet_prior,
         verbosity=1, 
-        exports=true
+        exports=true,
+        exports2json=true
     )
+    println("✓ difFUBAR analysis completed successfully")
     
     # Save plot objects for visualization
     println("Saving visualization data...")
     
     # Try to save plots if they exist and have savefig method
     try
-        if hasproperty(plots, :overview)
-            savefig(plots.overview, "$(rfn)_overview.png")
-            savefig(plots.overview, "$(rfn)_overview.svg")
-            println("  - $(rfn)_overview.png")
-            println("  - $(rfn)_overview.svg")
-        end
-        if hasproperty(plots, :posterior_alpha_and_omegas)
-            savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.png")
-            savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.svg")
-            println("  - $(rfn)_posteriors.png")
-            println("  - $(rfn)_posteriors.svg")
-        end
-        if hasproperty(plots, :detections)
-            savefig(plots.detections, "$(rfn)_detections.png")
-            savefig(plots.detections, "$(rfn)_detections.svg")
-            println("  - $(rfn)_detections.png")
-            println("  - $(rfn)_detections.svg")
+        if plots !== nothing
+            if hasproperty(plots, :overview)
+                savefig(plots.overview, "$(rfn)_overview.png")
+                savefig(plots.overview, "$(rfn)_overview.svg")
+                println("  - $(rfn)_overview.png")
+                println("  - $(rfn)_overview.svg")
+            end
+            if hasproperty(plots, :posterior_alpha_and_omegas)
+                savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.png")
+                savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.svg")
+                println("  - $(rfn)_posteriors.png")
+                println("  - $(rfn)_posteriors.svg")
+            end
+            if hasproperty(plots, :detections)
+                savefig(plots.detections, "$(rfn)_detections.png")
+                savefig(plots.detections, "$(rfn)_detections.svg")
+                println("  - $(rfn)_detections.png")
+                println("  - $(rfn)_detections.svg")
+            end
+        else
+            println("Note: No plots object returned from difFUBAR")
         end
     catch e
         println("Note: Could not save plot images: $e")
@@ -298,21 +449,78 @@ try
     println("  - $(rfn)_posteriors.csv")
     
 catch e
+    println("\n❌ ANALYSIS FAILED!")
+    println("=== ERROR DETAILS ===")
+    println("Error: $e")
+    println("Error type: $(typeof(e))")
+    
+    # Get more detailed error information
+    if isa(e, MethodError)
+        println("Method Error Details:")
+        println("  Function: $(e.f)")
+        println("  Arguments: $(length(e.args)) args of types: $(typeof.(e.args))")
+    elseif isa(e, LoadError)
+        println("Load Error Details:")
+        println("  File: $(e.file)")
+        println("  Line: $(e.line)")
+        println("  Error: $(e.error)")
+    elseif isa(e, SystemError)
+        println("System Error Details:")
+        println("  Prefix: $(e.prefix)")
+        println("  Error code: $(e.errnum)")
+    end
+    
+    println("Stack trace:")
+    for (exc, bt) in Base.catch_stack()
+        showerror(stdout, exc, bt)
+        println()
+    end
+    println("==================")
+    
     # Write error status with informative message (append, don't overwrite)
     error_msg = "\n[JULIA] error: $e"
-    open(sfn, "a") do f
-        write(f, error_msg)
+    try
+        open(sfn, "a") do f
+            write(f, error_msg)
+        end
+        println("✓ Error status written to: $sfn")
+    catch write_error
+        println("⚠️  Could not write error to status file: $write_error")
     end
-    println("\ndifFUBAR analysis failed: $e")
     
-    # Provide helpful error messages
+    # Provide helpful error messages and diagnostics
+    println("\n=== DIAGNOSTIC INFORMATION ===")
     if occursin("LoadError", string(e))
-        println("\nPackage loading error - try running 'make julia' from server root")
-    elseif occursin("file", lowercase(string(e)))
-        println("\nFile error - check that input files exist and are readable")
-    elseif occursin("memory", lowercase(string(e)))
-        println("\nMemory error - dataset may be too large for available RAM")
+        println("Package loading error - try running 'make julia' from server root")
+        println("Check that all required packages are installed in the project environment")
+    elseif occursin("file", lowercase(string(e))) || occursin("File", string(e))
+        println("File error - check that input files exist and are readable")
+        println("Verify file paths and permissions")
+    elseif occursin("memory", lowercase(string(e))) || occursin("Memory", string(e))
+        println("Memory error - dataset may be too large for available RAM")
+        println("Consider reducing MCMC iterations or using a smaller dataset")
+    elseif occursin("method", lowercase(string(e))) || isa(e, MethodError)
+        println("Method error - function signature mismatch")
+        println("Check that the difFUBAR function accepts the provided arguments")
+        println("Verify package versions are compatible")
+    elseif occursin("bound", lowercase(string(e))) || occursin("index", lowercase(string(e)))
+        println("Array bounds error - likely data format issue")
+        println("Check sequence alignment format and tree structure")
+    else
+        println("Unexpected error type")
+        println("Check Julia environment and package installations")
     end
+    
+    println("Current working directory: $(pwd())")
+    println("Julia version: $(VERSION)")
+    println("Available packages in current environment:")
+    try
+        using Pkg
+        Pkg.status()
+    catch pkg_error
+        println("Could not list packages: $pkg_error")
+    end
+    println("==============================")
     
     exit(1)
 end
