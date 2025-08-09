@@ -39,8 +39,8 @@ println("Checking command line arguments...")
 if length(ARGS) < 8
     println("❌ Insufficient arguments provided")
     println("Expected: 8, Got: $(length(ARGS))")
-    println("Usage: julia difFubar_analysis.jl <fn> <tree_fn> <rfn> <sfn> <pos_threshold> <mcmc_iterations> <burnin_samples> <concentration_of_dirichlet_prior>")
-    println("Example: julia difFubar_analysis.jl /path/to/alignment /path/to/tree /path/to/results /path/to/status 0.95 2500 500 0.5")
+    println("Usage: julia difFubar_analysis.jl <fn> <tree_fn> <rfn> <pfn> <pos_threshold> <mcmc_iterations> <burnin_samples> <concentration_of_dirichlet_prior>")
+    println("Example: julia difFubar_analysis.jl /path/to/alignment /path/to/tree /path/to/results /path/to/progress 0.95 2500 500 0.5")
     exit(1)
 end
 println("✓ Sufficient arguments provided")
@@ -49,7 +49,7 @@ println("✓ Sufficient arguments provided")
 fn = ""
 tree_fn = ""
 rfn = ""
-sfn = ""
+pfn = ""
 pos_threshold = 0.0
 mcmc_iterations = 0
 burnin_samples = 0
@@ -66,8 +66,8 @@ try
     global rfn = ARGS[3]
     println("  ✓ rfn = $rfn")
     
-    global sfn = ARGS[4]
-    println("  ✓ sfn = $sfn")
+    global pfn = ARGS[4]
+    println("  ✓ pfn = $pfn")
     
     global pos_threshold = parse(Float64, ARGS[5])
     println("  ✓ pos_threshold = $pos_threshold")
@@ -95,7 +95,7 @@ println("=== JULIA DIFUBAR PARAMETERS ===")
 println("Alignment file: $fn")
 println("Tree file: $tree_fn")
 println("Results file: $rfn")
-println("Status file: $sfn")
+println("Progress file: $pfn")
 println("Positive threshold: $pos_threshold")
 println("MCMC iterations: $mcmc_iterations")
 println("Burnin samples: $burnin_samples")
@@ -388,10 +388,19 @@ try
         error("difFUBAR function not found in CodonMolecularEvolution package")
     else
         println("✓ difFUBAR function found")
+        # Write progress update to unified progress file
+        open(pfn, "a") do f
+            write(f, "\n[JULIA] difFUBAR function found")
+        end
     end
     
     # Run difFUBAR analysis with error handling
     println("Calling difFUBAR function...")
+    
+    # Write progress update before starting analysis
+    open(pfn, "a") do f
+        write(f, "\n[JULIA] Starting difFUBAR analysis...")
+    end
     
     # Using the correct Julia environment that supports all parameters
     df, results, plots = difFUBAR(
@@ -405,6 +414,11 @@ try
         exports2json=true
     )
     println("✓ difFUBAR analysis completed successfully")
+    
+    # Write progress update for completion
+    open(pfn, "a") do f
+        write(f, "\n[JULIA] difFUBAR analysis completed - processing results...")
+    end
     
     # Save plot objects for visualization
     println("Saving visualization data...")
@@ -437,9 +451,9 @@ try
         println("Note: Could not save plot images: $e")
     end
     
-    # Write completion status (append, don't overwrite)
-    open(sfn, "a") do f
-        write(f, "\n[JULIA] completed")
+    # Write completion status to unified progress file
+    open(pfn, "a") do f
+        write(f, "\n[JULIA] Analysis completed successfully")
     end
     println("\ndifFUBAR analysis completed successfully")
     println("Sites analyzed: $(size(df, 1))")
@@ -477,15 +491,15 @@ catch e
     end
     println("==================")
     
-    # Write error status with informative message (append, don't overwrite)
+    # Write error status with informative message to unified progress file
     error_msg = "\n[JULIA] error: $e"
     try
-        open(sfn, "a") do f
+        open(pfn, "a") do f
             write(f, error_msg)
         end
-        println("✓ Error status written to: $sfn")
+        println("✓ Error status written to: $pfn")
     catch write_error
-        println("⚠️  Could not write error to status file: $write_error")
+        println("⚠️  Could not write error to progress file: $write_error")
     end
     
     # Provide helpful error messages and diagnostics

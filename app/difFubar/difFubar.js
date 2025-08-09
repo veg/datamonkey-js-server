@@ -6,16 +6,7 @@ var config = require("../../config.json"),
   fs = require("fs"),
   path = require("path");
 
-// Create Redis client
-var redis_client = redis.createClient({
-  host: config.redis_host,
-  port: config.redis_port
-});
-
-// Add error handler for Redis client
-redis_client.on("error", function(err) {
-  logger.error("Redis difFubar client error: " + err.message);
-});
+// Redis client is handled by the base hyphyJob class
 
 var difFubar = function(socket, stream, params) {
   var self = this;
@@ -45,9 +36,8 @@ var difFubar = function(socket, stream, params) {
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
   self.output_dir = path.dirname(self.fn);
-  self.status_fn = self.fn + ".status";
   self.results_short_fn = self.fn + ".difFubar";
-  self.results_fn = self.fn + ".DIFFUBAR.json";
+  self.results_fn = self.fn + ".difFubar.json";
   self.progress_fn = self.fn + ".difFubar.progress";
   self.tree_fn = self.fn + ".tre";
 
@@ -66,9 +56,8 @@ var difFubar = function(socket, stream, params) {
       self.qsub_script,
       self.fn,
       self.tree_fn,
-      self.status_fn,
-      self.progress_fn,
       self.results_short_fn,
+      self.progress_fn,
       self.pos_threshold,
       self.mcmc_iterations,
       self.burnin_samples,
@@ -76,8 +65,68 @@ var difFubar = function(socket, stream, params) {
       config.julia_path,
       config.julia_project
     ];
+  } else if (config.submit_type === "slurm") {
+    // Convert walltime from PBS format to SLURM format
+    let slurmTime = "24:00:00"; // Default 24 hours
+    if (config.difFubar_walltime) {
+      const parts = config.difFubar_walltime.split(':');
+      if (parts.length === 4) {
+        // Convert D:HH:MM:SS to SLURM format
+        const days = parseInt(parts[0]);
+        const hours = parseInt(parts[1]) + (days * 24);
+        slurmTime = `${hours}:${parts[2]}:${parts[3]}`;
+      } else if (parts.length === 3) {
+        // HH:MM:SS format, already compatible with SLURM
+        slurmTime = config.difFubar_walltime;
+      }
+    }
+
+    self.qsub_params = [
+      `--ntasks=${config.difFubar_procs || "8"}`,
+      "--cpus-per-task=1",
+      `--time=${slurmTime}`,
+      `--partition=${config.slurm_partition || "datamonkey"}`,
+      `--nodes=${config.difFubar_nodes || "1"}`,
+      `--mem=${config.difFubar_memory || "32GB"}`,
+      "--export=ALL,slurm_mpi_type=" + 
+      (config.slurm_mpi_type || "pmix") + 
+      "," +
+      "fn=" +
+      self.fn +
+      ",tree_fn=" +
+      self.tree_fn +
+      ",pfn=" +
+      self.progress_fn +
+      ",rfn=" +
+      self.results_short_fn +
+      ",treemode=" +
+      self.treemode +
+      ",analysis_type=" +
+      self.type +
+      ",cwd=" +
+      __dirname +
+      ",msaid=" +
+      self.msaid +
+      ",number_of_grid_points=" +
+      self.number_of_grid_points +
+      ",concentration_of_dirichlet_prior=" +
+      self.concentration_of_dirichlet_prior +
+      ",mcmc_iterations=" +
+      self.mcmc_iterations +
+      ",burnin_samples=" +
+      self.burnin_samples +
+      ",pos_threshold=" +
+      self.pos_threshold +
+      ",julia_path=" +
+      (config.julia_path || "/usr/local/bin/julia") +
+      ",julia_project=" +
+      (config.julia_project || "../../.julia_env"),
+      `--output=${self.output_dir}/difFubar_${self.id}_%j.out`,
+      `--error=${self.output_dir}/difFubar_${self.id}_%j.err`,
+      self.qsub_script
+    ];
   } else {
-    // For cluster execution (qsub/sbatch)
+    // For cluster execution (PBS/Torque qsub)
     self.qsub_params = [
       "-l walltime=" + 
       config.difFubar_walltime + 
@@ -91,8 +140,6 @@ var difFubar = function(socket, stream, params) {
         self.fn +
         ",tree_fn=" +
         self.tree_fn +
-        ",sfn=" +
-        self.status_fn +
         ",pfn=" +
         self.progress_fn +
         ",rfn=" +
@@ -181,28 +228,8 @@ difFubar.prototype.onComplete = function() {
       self.warn("error sending plot files", err);
     }
     
-    // Then proceed with standard completion (send main JSON results)
-    fs.readFile(self.results_fn, "utf8", function(err, data) {
-      if (err) {
-        self.onError("unable to read results file. " + err);
-      } else {
-        if (data && data.length > 0) {
-          var redis_packet = { results: data };
-          redis_packet.type = "completed";
-          var str_redis_packet = JSON.stringify(redis_packet);
-          
-          self.log("complete", "success");
-          
-          redis_client.hset(self.id, "results", str_redis_packet, "status", "completed");
-          redis_client.publish(self.id, str_redis_packet);
-          redis_client.lrem("active_jobs", 1, self.id);
-          delete this;
-        } else {
-          self.onError("job seems to have completed, but no results found");
-          delete this;
-        }
-      }
-    });
+    // Then call the parent class onComplete method which handles Redis publishing correctly
+    hyphyJob.prototype.onComplete.call(self);
   });
 };
 

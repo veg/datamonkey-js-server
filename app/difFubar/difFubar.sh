@@ -4,36 +4,52 @@ source /etc/profile
 echo "Initiating difFUBAR analysis"
 echo "Current directory: $PWD"
 
-# Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-echo "Script directory: $SCRIPT_DIR"
-
-# Parse command line arguments
-if [ $# -lt 11 ]; then
-    echo "Usage: $0 <fn> <tree_fn> <sfn> <pfn> <rfn> <pos_threshold> <mcmc_iterations> <burnin_samples> <concentration_of_dirichlet_prior> <julia_path> <julia_project>"
-    echo "Example: $0 /path/to/alignment /path/to/tree /path/to/status /path/to/progress /path/to/results 0.95 2500 500 0.5 /usr/local/bin/julia /path/to/project"
-    exit 1
+# Get variables from environment (SLURM) or command line arguments (local)
+if [ $# -ge 10 ]; then
+    # Command line arguments (local execution)
+    FN="$1"
+    TREE_FN="$2"
+    RFN="$3"
+    PFN="$4"
+    POS_THRESHOLD="$5"
+    MCMC_ITERATIONS="$6"
+    BURNIN_SAMPLES="$7"
+    CONCENTRATION_OF_DIRICHLET_PRIOR="$8"
+    JULIA_PATH="$9"
+    JULIA_PROJECT="${10}"
+    # For local execution, use the script directory
+    CWD="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+else
+    # Environment variables (SLURM execution)
+    FN=$fn
+    TREE_FN=$tree_fn
+    RFN=$rfn
+    PFN=$pfn
+    POS_THRESHOLD=$pos_threshold
+    MCMC_ITERATIONS=$mcmc_iterations
+    BURNIN_SAMPLES=$burnin_samples
+    CONCENTRATION_OF_DIRICHLET_PRIOR=$concentration_of_dirichlet_prior
+    JULIA_PATH=$julia_path
+    JULIA_PROJECT=$julia_project
+    # Get the working directory from environment
+    CWD=$cwd
 fi
 
-# Assign arguments to variables
-FN="$1"
-TREE_FN="$2"
-SFN="$3"
-PFN="$4"
-RFN="$5"
-POS_THRESHOLD="$6"
-MCMC_ITERATIONS="$7"
-BURNIN_SAMPLES="$8"
-CONCENTRATION_OF_DIRICHLET_PRIOR="$9"
-JULIA_PATH="${10}"
-JULIA_PROJECT="${11}"
+# Get the directory where this script is located
+# For SLURM execution, use CWD which is passed as environment variable
+if [ -n "$CWD" ]; then
+    SCRIPT_DIR="$CWD"
+else
+    # For local execution, get directory from script location
+    SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+fi
+echo "Script directory: $SCRIPT_DIR"
 
 echo "=== DIFUBAR PARAMETERS ==="
 echo "Alignment file: $FN"
 echo "Tree file: $TREE_FN"
-echo "Status file: $SFN"
-echo "Progress file: $PFN"
 echo "Results file: $RFN"
+echo "Progress file: $PFN"
 echo "Positive threshold: $POS_THRESHOLD"
 echo "MCMC iterations: $MCMC_ITERATIONS"
 echo "Burnin samples: $BURNIN_SAMPLES"
@@ -42,68 +58,50 @@ echo "Julia path: $JULIA_PATH"
 echo "Julia project: $JULIA_PROJECT"
 echo "=========================="
 
+# Julia project path is now absolute in config, no conversion needed
+echo "Julia project path: $JULIA_PROJECT"
+
 # Change to the script directory for relative paths
 cd "$SCRIPT_DIR"
 echo "Changed to directory: $PWD"
 
-# Start the analysis - append to status file instead of overwriting
-echo "[BASH] starting difFUBAR" >> "$SFN"
-echo "info" > "$PFN"
+# Initialize the progress file (single source of status updates)
+echo "[BASH] Initializing difFUBAR analysis..." > "$PFN"
+echo "[BASH] Starting Julia analysis..." >> "$PFN"
 
 echo "Running difFUBAR analysis with Julia..."
 
-# Create log files for stdout and stderr
-STDOUT_LOG="${RFN}.stdout.log"
-STDERR_LOG="${RFN}.stderr.log"
+# Set Julia environment variables to avoid conflicts
+export JULIA_DEPOT_PATH="$HOME/.julia"
+export JULIA_NUM_THREADS=1
 
-echo "Stdout log: $STDOUT_LOG"
-echo "Stderr log: $STDERR_LOG"
+# No longer need to clear compilation cache with Julia 1.11.6
 
-# Run Julia analysis with command line arguments and capture output
-echo "=== EXECUTING JULIA COMMAND ===" >> "$STDOUT_LOG"
-echo "Command: $JULIA_PATH --project=\"$JULIA_PROJECT\" difFubar_analysis.jl \\" >> "$STDOUT_LOG"
-echo "  \"$FN\" \\" >> "$STDOUT_LOG"
-echo "  \"$TREE_FN\" \\" >> "$STDOUT_LOG"
-echo "  \"$RFN\" \\" >> "$STDOUT_LOG"
-echo "  \"$SFN\" \\" >> "$STDOUT_LOG"
-echo "  \"$POS_THRESHOLD\" \\" >> "$STDOUT_LOG"
-echo "  \"$MCMC_ITERATIONS\" \\" >> "$STDOUT_LOG"
-echo "  \"$BURNIN_SAMPLES\" \\" >> "$STDOUT_LOG"
-echo "  \"$CONCENTRATION_OF_DIRICHLET_PRIOR\"" >> "$STDOUT_LOG"
-echo "==================================" >> "$STDOUT_LOG"
+echo "Julia depot path: $JULIA_DEPOT_PATH"
+echo "Julia project path: $JULIA_PROJECT"
 
-# Run Julia with output redirection instead of piping through tee
+# Skip instantiation if already done (packages are preinstalled)
+echo "[BASH] Using Julia environment: $JULIA_PROJECT" >> "$PFN"
+
+# Run Julia analysis - redirect output to progress file for unified status monitoring
 "$JULIA_PATH" --project="$JULIA_PROJECT" "$SCRIPT_DIR/difFubar_analysis.jl" \
   "$FN" \
   "$TREE_FN" \
   "$RFN" \
-  "$SFN" \
+  "$PFN" \
   "$POS_THRESHOLD" \
   "$MCMC_ITERATIONS" \
   "$BURNIN_SAMPLES" \
   "$CONCENTRATION_OF_DIRICHLET_PRIOR" \
-  >> "$STDOUT_LOG" 2>&1
+  >> "$PFN" 2>&1
 
 # Capture exit code
 JULIA_EXIT_CODE=$?
 
 echo "Julia exit code: $JULIA_EXIT_CODE"
 
-# Print the Julia command for debugging
-echo "=== DEBUGGING COMMAND ==="
-echo "cd $SCRIPT_DIR && $JULIA_PATH --project=\"$JULIA_PROJECT\" difFubar_analysis.jl \\"
-echo "  \"$FN\" \\"
-echo "  \"$TREE_FN\" \\"
-echo "  \"$RFN\" \\"
-echo "  \"$SFN\" \\"
-echo "  \"$POS_THRESHOLD\" \\"
-echo "  \"$MCMC_ITERATIONS\" \\"
-echo "  \"$BURNIN_SAMPLES\" \\"
-echo "  \"$CONCENTRATION_OF_DIRICHLET_PRIOR\""
-echo "========================="
-
-# Append final status to status file
-echo "[BASH] difFUBAR analysis completed with exit code: $JULIA_EXIT_CODE" >> "$SFN"
+# Append final status to progress file (unified status monitoring)
+echo "[BASH] Analysis completed with exit code: $JULIA_EXIT_CODE" >> "$PFN"
 
 echo "difFUBAR analysis completed with exit code: $JULIA_EXIT_CODE"
 exit $JULIA_EXIT_CODE
