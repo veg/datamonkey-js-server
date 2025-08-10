@@ -23,6 +23,14 @@ try
     using JSON
     println("  ✓ JSON loaded")
     
+    println("  - Loading Plots for visualization...")
+    using Plots
+    println("  ✓ Plots loaded")
+    
+    println("  - Setting up plotting backend...")
+    gr() # Use GR backend for plot generation
+    println("  ✓ GR backend configured")
+    
     println("✓ All packages loaded successfully")
 catch e
     println("❌ PACKAGE LOADING FAILED: $e")
@@ -422,33 +430,54 @@ try
     
     # Save plot objects for visualization
     println("Saving visualization data...")
+    println("DEBUG: plots object type: $(typeof(plots))")
+    println("DEBUG: plots === nothing: $(plots === nothing)")
     
     # Try to save plots if they exist and have savefig method
     try
         if plots !== nothing
+            println("DEBUG: plots object properties: $(propertynames(plots))")
+            
             if hasproperty(plots, :overview)
+                println("DEBUG: Attempting to save overview plot")
                 savefig(plots.overview, "$(rfn)_overview.png")
                 savefig(plots.overview, "$(rfn)_overview.svg")
-                println("  - $(rfn)_overview.png")
-                println("  - $(rfn)_overview.svg")
+                println("  ✓ $(rfn)_overview.png")
+                println("  ✓ $(rfn)_overview.svg")
+            else
+                println("DEBUG: No 'overview' property in plots")
             end
+            
             if hasproperty(plots, :posterior_alpha_and_omegas)
+                println("DEBUG: Attempting to save posterior plots")
                 savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.png")
                 savefig(plots.posterior_alpha_and_omegas, "$(rfn)_posteriors.svg")
-                println("  - $(rfn)_posteriors.png")
-                println("  - $(rfn)_posteriors.svg")
+                println("  ✓ $(rfn)_posteriors.png")
+                println("  ✓ $(rfn)_posteriors.svg")
+            else
+                println("DEBUG: No 'posterior_alpha_and_omegas' property in plots")
             end
+            
             if hasproperty(plots, :detections)
+                println("DEBUG: Attempting to save detection plots")
                 savefig(plots.detections, "$(rfn)_detections.png")
                 savefig(plots.detections, "$(rfn)_detections.svg")
-                println("  - $(rfn)_detections.png")
-                println("  - $(rfn)_detections.svg")
+                println("  ✓ $(rfn)_detections.png")
+                println("  ✓ $(rfn)_detections.svg")
+            else
+                println("DEBUG: No 'detections' property in plots")
             end
         else
-            println("Note: No plots object returned from difFUBAR")
+            println("DEBUG: plots object is nothing - no visualization data returned")
         end
     catch e
-        println("Note: Could not save plot images: $e")
+        println("ERROR: Could not save plot images: $e")
+        println("ERROR: Exception type: $(typeof(e))")
+        # Print stack trace for debugging
+        for (exc, bt) in Base.catch_stack()
+            showerror(stdout, exc, bt)
+            println()
+        end
     end
     
     # Write completion status to unified progress file
