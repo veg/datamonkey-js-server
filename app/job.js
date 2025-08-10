@@ -297,7 +297,7 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     proc.on("close", function(code) {
       logger.info(`[LOCAL JOB] Process completed with exit code: ${code}`);
       if (code === 0) {
-        logger.info(`[LOCAL JOB] Job completed successfully`);
+        logger.info(`[DEBUG JOB] Local job completed successfully, emitting completed event`);
         self.emit(self.states.completed, "");
       } else {
         logger.error(`[LOCAL JOB] Job failed with exit code: ${code}`);
@@ -362,15 +362,16 @@ jobRunner.prototype.status_watcher = function() {
       if (self.results_fn) {
         fs.stat(self.results_fn, (err, res) => {
           if (err) {
-            logger.warn(`Error checking results file: ${err.message}`);
+            logger.warn(`[DEBUG JOB] Error checking results file ${self.results_fn}: ${err.message}`);
           } else {
-            logger.info(`Results file exists with size ${res.size}`);
+            logger.info(`[DEBUG JOB] Results file ${self.results_fn} exists with size ${res.size}`);
           }
           
           self.error_count += 1;
 
           if (!err && res.size > 0) {
-            logger.info(`Job ${self.torque_id} completed based on results file`);
+            logger.info(`[DEBUG JOB] Job ${self.torque_id} completed based on results file (size: ${res.size})`);
+            logger.info(`[DEBUG JOB] Emitting completed event for ${self.torque_id}`);
             clearInterval(self.metronome_id);
             self.emit(self.states.completed, "");
             return;
@@ -400,7 +401,8 @@ jobRunner.prototype.status_watcher = function() {
         status_packet.status == self.states.completed ||
         status_packet.status == self.states.exiting
       ) {
-        logger.info(`Job ${self.torque_id} completed with status: ${status_packet.status}`);
+        logger.info(`[DEBUG JOB] Job ${self.torque_id} completed with status: ${status_packet.status}`);
+        logger.info(`[DEBUG JOB] Emitting completed event for SLURM job ${self.torque_id}`);
         clearInterval(self.metronome_id);
         self.emit(self.states.completed, "");
       } else if (status_packet.status == self.states.queued) {

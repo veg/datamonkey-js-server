@@ -49,6 +49,7 @@ hyphyJob.prototype.warn = function(notification, complementary_info) {
 // Attach socket to redis channel
 hyphyJob.prototype.attachSocket = function() {
   var self = this;
+  logger.info(`[DEBUG REDIS] Attaching socket to job ${self.id}`);
   new cs.ClientSocket(self.socket, self.id);
 };
 
@@ -84,7 +85,9 @@ hyphyJob.prototype.spawn = function() {
   logger.info(`[JOB START] Submit type: ${job.jobRunner.prototype.submit_type || config.submit_type}`);
   logger.info(`[JOB START] Parameters: ${JSON.stringify(self.qsub_params)}`);
   logger.info(`[JOB START] Results file: ${self.results_fn}`);
+  logger.info(`[DEBUG HYPHY] Job ${self.id}: About to create jobRunner instance`);
   var hyphy_job_runner = new job.jobRunner(self.qsub_params, self.results_fn);
+  logger.info(`[DEBUG HYPHY] Job ${self.id}: jobRunner instance created successfully`);
 
   // On status updates, report to datamonkey-js
   hyphy_job_runner.on("status", function(status) {
@@ -124,6 +127,7 @@ hyphyJob.prototype.spawn = function() {
 
   // When the analysis completes, return the results to datamonkey.
   hyphy_job_runner.on("completed", function() {
+    logger.info(`[DEBUG HYPHY] Job ${self.id}: Received completed event from job runner`);
     self.onComplete();
   });
 
@@ -246,6 +250,19 @@ hyphyJob.prototype.onComplete = function() {
         // Log that the job has been completed
         self.log("complete", "success");
 
+        // Debug Redis publishing
+        logger.info(`[DEBUG REDIS] Publishing completion to channel: ${self.id}`);
+        logger.info(`[DEBUG REDIS] Completion data length: ${str_redis_packet.length} bytes`);
+        logger.info(`[DEBUG REDIS] Completion packet type: ${redis_packet.type}`);
+        logger.info(`[DEBUG REDIS] Results data length: ${data.length} bytes`);
+        
+        // Check if message is too large (Redis default max is 512MB but practical limit is lower)
+        const MAX_REDIS_MESSAGE_SIZE = 50 * 1024 * 1024; // 50MB
+        if (str_redis_packet.length > MAX_REDIS_MESSAGE_SIZE) {
+          logger.warn(`[DEBUG REDIS] WARNING: Completion message is very large (${(str_redis_packet.length / 1024 / 1024).toFixed(2)}MB)`);
+          logger.warn(`[DEBUG REDIS] This may cause issues with Redis pub/sub`);
+        }
+
         // Store packet in redis and publish to channel
         client.hset(
           self.id, 
@@ -253,6 +270,7 @@ hyphyJob.prototype.onComplete = function() {
           "status", "completed"
         );
         client.publish(self.id, str_redis_packet);
+        logger.info(`[DEBUG REDIS] Published completion event to Redis channel: ${self.id}`);
 
         // Remove id from active_job queue
         client.lrem("active_jobs", 1, self.id);
@@ -315,6 +333,9 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   var str_redis_packet = JSON.stringify(redis_packet);
 
   // Store packet in redis and publish to channel
+  logger.info(`[DEBUG REDIS] Publishing status update to channel: ${self.id}`);
+  logger.info(`[DEBUG REDIS] Status update data: ${str_redis_packet}`);
+  
   client.hset(
     self.id, 
     "status update", str_redis_packet,

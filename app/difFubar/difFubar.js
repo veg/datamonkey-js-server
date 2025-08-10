@@ -181,6 +181,12 @@ var difFubar = function(socket, stream, params) {
 
   // Ensure the progress file exists
   fs.openSync(self.progress_fn, "w");
+  
+  // Add debug logging for job lifecycle
+  logger.info(`[DEBUG] difFUBAR ${self.id}: Constructor completed, calling init()`);
+  logger.info(`[DEBUG] difFUBAR ${self.id}: Results file will be: ${self.results_fn}`);
+  logger.info(`[DEBUG] difFUBAR ${self.id}: Progress file: ${self.progress_fn}`);
+  
   self.init();
 };
 
@@ -222,13 +228,68 @@ difFubar.prototype.sendPlotFiles = function(cb) {
 difFubar.prototype.onComplete = function() {
   var self = this;
   
-  // First send plot files
+  logger.info(`[DEBUG] difFUBAR ${self.id}: onComplete() called!`);
+  logger.info(`[DEBUG] difFUBAR ${self.id}: Socket connected: ${self.socket && self.socket.connected}`);
+  logger.info(`[DEBUG] difFUBAR ${self.id}: Socket ID: ${self.socket && self.socket.id}`);
+  logger.info(`[DEBUG] difFUBAR ${self.id}: Results file exists: ${fs.existsSync(self.results_fn)}`);
+  if (fs.existsSync(self.results_fn)) {
+    const stats = fs.statSync(self.results_fn);
+    logger.info(`[DEBUG] difFUBAR ${self.id}: Results file size: ${stats.size} bytes`);
+    
+    // Check if results file is too large for inline transmission (>5MB)
+    if (stats.size > 5 * 1024 * 1024) {
+      logger.info(`[DEBUG] difFUBAR ${self.id}: Results file too large (${(stats.size / 1024 / 1024).toFixed(2)}MB), sending completion without inline results`);
+      
+      // Send plot files first
+      self.sendPlotFiles((err, success) => {
+        if (err) {
+          self.warn("error sending plot files", err);
+        }
+        
+        // Send minimal completion event for large results
+        var redis_packet = { 
+          results: JSON.stringify({
+            message: "Large results file available",
+            file_size: stats.size,
+            analysis_complete: true
+          })
+        };
+        redis_packet.type = "completed";
+        var str_redis_packet = JSON.stringify(redis_packet);
+        
+        logger.info(`[DEBUG] difFUBAR ${self.id}: Sending lightweight completion (${str_redis_packet.length} bytes)`);
+        
+        self.log("complete", "success (large results)");
+        
+        // Access the same Redis client that hyphyJob uses
+        const hyphyJobModule = require("../hyphyjob.js");
+        const redis = require("redis");
+        const config = require("../../config.json");
+        const client = redis.createClient({
+          host: config.redis_host,
+          port: config.redis_port
+        });
+        
+        client.hset(self.id, "results", str_redis_packet, "status", "completed");
+        client.publish(self.id, str_redis_packet);
+        client.lrem("active_jobs", 1, self.id);
+        
+        logger.info(`[DEBUG] difFUBAR ${self.id}: Published lightweight completion to Redis`);
+        
+        // Don't delete this - let the base class handle cleanup
+        // delete this;
+      });
+      return;
+    }
+  }
+  
+  // For smaller results, use normal completion flow
   self.sendPlotFiles((err, success) => {
     if (err) {
       self.warn("error sending plot files", err);
     }
     
-    // Then call the parent class onComplete method which handles Redis publishing correctly
+    logger.info(`[DEBUG] difFUBAR ${self.id}: Calling parent onComplete()`);
     hyphyJob.prototype.onComplete.call(self);
   });
 };
