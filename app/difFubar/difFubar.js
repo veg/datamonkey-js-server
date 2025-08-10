@@ -236,9 +236,9 @@ difFubar.prototype.onComplete = function() {
     const stats = fs.statSync(self.results_fn);
     logger.info(`[DEBUG] difFUBAR ${self.id}: Results file size: ${stats.size} bytes`);
     
-    // Check if results file is too large for inline transmission (>5MB)
+    // Check if results file is too large for Redis pub/sub inline transmission (>5MB)
     if (stats.size > 5 * 1024 * 1024) {
-      logger.info(`[DEBUG] difFUBAR ${self.id}: Results file too large (${(stats.size / 1024 / 1024).toFixed(2)}MB), sending completion without inline results`);
+      logger.info(`[DEBUG] difFUBAR ${self.id}: Results file large (${(stats.size / 1024 / 1024).toFixed(2)}MB), sending via direct socket transmission`);
       
       // Send plot files first
       self.sendPlotFiles((err, success) => {
@@ -246,38 +246,45 @@ difFubar.prototype.onComplete = function() {
           self.warn("error sending plot files", err);
         }
         
-        // Send minimal completion event for large results
-        var redis_packet = { 
-          results: JSON.stringify({
-            message: "Large results file available",
-            file_size: stats.size,
-            analysis_complete: true
-          })
-        };
-        redis_packet.type = "completed";
-        var str_redis_packet = JSON.stringify(redis_packet);
-        
-        logger.info(`[DEBUG] difFUBAR ${self.id}: Sending lightweight completion (${str_redis_packet.length} bytes)`);
-        
-        self.log("complete", "success (large results)");
-        
-        // Access the same Redis client that hyphyJob uses
-        const hyphyJobModule = require("../hyphyjob.js");
-        const redis = require("redis");
-        const config = require("../../config.json");
-        const client = redis.createClient({
-          host: config.redis_host,
-          port: config.redis_port
+        // Send results file directly via socket (like other tools do)
+        fs.readFile(self.results_fn, (err, data) => {
+          if (err) {
+            self.onError("unable to read results file for direct transmission. " + err);
+            return;
+          }
+          
+          logger.info(`[DEBUG] difFUBAR ${self.id}: Sending results file directly via socket (${data.length} bytes)`);
+          
+          // Send results file directly to client
+          self.socket.emit("difFubar results file", { buffer: data });
+          
+          // Send lightweight completion event via Redis
+          var redis_packet = { 
+            results: JSON.stringify({
+              message: "Results sent via direct file transmission",
+              file_size: stats.size,
+              analysis_complete: true
+            })
+          };
+          redis_packet.type = "completed";
+          var str_redis_packet = JSON.stringify(redis_packet);
+          
+          self.log("complete", "success (direct file transmission)");
+          
+          // Use shared Redis client pattern like base class
+          const redis = require("redis");
+          const config = require("../../config.json");
+          const client = redis.createClient({
+            host: config.redis_host,
+            port: config.redis_port
+          });
+          
+          client.hset(self.id, "results", str_redis_packet, "status", "completed");
+          client.publish(self.id, str_redis_packet);
+          client.lrem("active_jobs", 1, self.id);
+          
+          logger.info(`[DEBUG] difFUBAR ${self.id}: Sent results via direct socket + Redis completion`);
         });
-        
-        client.hset(self.id, "results", str_redis_packet, "status", "completed");
-        client.publish(self.id, str_redis_packet);
-        client.lrem("active_jobs", 1, self.id);
-        
-        logger.info(`[DEBUG] difFUBAR ${self.id}: Published lightweight completion to Redis`);
-        
-        // Don't delete this - let the base class handle cleanup
-        // delete this;
       });
       return;
     }
