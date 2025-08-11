@@ -42,9 +42,15 @@ julia:
 	fi
 	@echo "Creating Julia project environment at $(JULIA_PROJECT_DIR)"
 	@mkdir -p $(JULIA_PROJECT_DIR)
-	@cd $(JULIA_PROJECT_DIR) && julia -e "using Pkg; Pkg.activate(\".\"); Pkg.add(url=\"https://github.com/MurrellGroup/CodonMolecularEvolution.jl\"); Pkg.add(\"FASTX\"); Pkg.add(\"JSON\"); Pkg.add(\"MolecularEvolution\")"
+	@if [ -f "$(JULIA_PROJECT_DIR)/Project.toml" ]; then \
+		echo "Found existing Project.toml, using committed dependencies..."; \
+		cd $(JULIA_PROJECT_DIR) && julia --project -e "using Pkg; Pkg.instantiate(); println(\"Dependencies installed from Project.toml\")"; \
+	else \
+		echo "Creating new Julia environment with required packages..."; \
+		cd $(JULIA_PROJECT_DIR) && julia -e "using Pkg; Pkg.activate(\".\"); Pkg.add(url=\"https://github.com/MurrellGroup/CodonMolecularEvolution.jl\", rev=\"main\"); Pkg.add(\"FASTX\"); Pkg.add(\"JSON\"); Pkg.add(\"MolecularEvolution\"); Pkg.add(\"Plots\"); Pkg.add(\"Phylo\"); Pkg.add(\"Measures\")"; \
+	fi
 	@echo "Julia environment setup complete"
-	@cd $(JULIA_PROJECT_DIR) && julia --project -e "using CodonMolecularEvolution; println(\"✓ difFUBAR package ready\")"
+	@cd $(JULIA_PROJECT_DIR) && julia --project -e "using CodonMolecularEvolution, Plots, Phylo, Measures; println(\"✓ difFUBAR with plot generation ready\")"
 
 npm:
 	echo "running npm"

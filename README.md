@@ -11,8 +11,18 @@ Other versions might work, but not well tested.
 * redis - 3.x.x
 * PBS server - 4.x.x
 * tn93 - 1.x.x
+* julia - 1.11.x (required for difFUBAR analysis)
 
 Dependencies are mostly handled by the package.json file and `yarn` or `npm`. Outside of the JavaScript dependencies, the daemon expects that a redis instance is running, and that there is a scheduler available that works with the command `qsub`. Redis stores transient data information such as qsub job status and standard output information. 
+
+### Julia Environment (for difFUBAR)
+
+The difFUBAR analysis requires Julia 1.11+ with specific packages. The Julia environment and dependencies are managed automatically through the build system:
+
+* Julia packages are defined in `.julia_env/Project.toml`
+* Run `make julia` to set up the Julia environment
+* Uses the latest development version of CodonMolecularEvolution.jl from GitHub
+* Includes visualization packages (Plots.jl, Phylo.jl, Measures.jl) for plot generation
 
 
 ## Installation
@@ -37,9 +47,11 @@ Installation should be fairly straightforward as long as the dependencies are me
 ```
  
 
-* `make install`
+* `make install` (includes Julia environment setup)
 * `npm install`
 * `pm2 start pm2.config.js`
+
+Note: The `make install` command will automatically set up the Julia environment for difFUBAR analysis. If you need to set up only the Julia environment, you can run `make julia` separately.
 
 ## Tests
 Tests can be run using `mocha`. These tests are especially useful in ensuring that your system is configured correctly and that you are able to dispatch jobs for all analyses. Please see the `test/` directory
