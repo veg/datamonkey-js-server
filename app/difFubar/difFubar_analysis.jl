@@ -23,13 +23,17 @@ try
     using JSON
     println("  ✓ JSON loaded")
     
-    println("  - Loading Plots for visualization...")
+    println("  - Loading Plots...")
     using Plots
     println("  ✓ Plots loaded")
     
-    println("  - Setting up plotting backend...")
-    gr() # Use GR backend for plot generation
-    println("  ✓ GR backend configured")
+    println("  - Loading Measures...")
+    using Measures
+    println("  ✓ Measures loaded")
+    
+    println("  - Loading Phylo...")
+    using Phylo
+    println("  ✓ Phylo loaded")
     
     println("✓ All packages loaded successfully")
 catch e
