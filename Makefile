@@ -3,6 +3,10 @@
 ## Do not specify patch version
 HYPHY_VERSION=2.5
 
+# Julia configuration for difFUBAR
+JULIA_VERSION=1.11
+JULIA_PROJECT_DIR=./.julia_env
+
 TAG:=$(shell git describe --tags `git rev-list --tags --max-count=1` --match="$(HYPHY_VERSION)".*)
 
 all: install
@@ -10,7 +14,7 @@ all: install
 hyphy:
 	echo "installing hyphy"
 	@if ! test -d ./.hyphy; then git clone http://github.com/veg/hyphy.git ./.hyphy/; fi
-	@cd ./.hyphy && git checkout $(TAG) && cmake -DNOAVX=ON . && make -j 4 hyphy && make -j 4 HYPHYMPI && cd ../
+	@cd ./.hyphy && git checkout master && cmake -DNOAVX=ON . && make -j 4 hyphy && make -j 4 HYPHYMPI && cd ../
 
 update-hyphy:
 	echo "updating hyphy to latest release"
@@ -28,6 +32,26 @@ hivtrace:
 	@./.python/env/bin/pip install cython
 	@./.python/env/bin/pip install hivtrace==0.3.2
 
+julia:
+	echo "Setting up Julia environment for difFUBAR"
+	@if ! command -v julia &> /dev/null; then \
+		echo "ERROR: Julia not found. Please install Julia $(JULIA_VERSION)+ first"; \
+		echo "Visit: https://julialang.org/downloads/"; \
+		echo "Or run: curl -fsSL https://install.julialang.org | sh"; \
+		exit 1; \
+	fi
+	@echo "Creating Julia project environment at $(JULIA_PROJECT_DIR)"
+	@mkdir -p $(JULIA_PROJECT_DIR)
+	@if [ -f "$(JULIA_PROJECT_DIR)/Project.toml" ]; then \
+		echo "Found existing Project.toml, using committed dependencies..."; \
+		cd $(JULIA_PROJECT_DIR) && julia --project -e "using Pkg; Pkg.instantiate(); println(\"Dependencies installed from Project.toml\")"; \
+	else \
+		echo "Creating new Julia environment with required packages..."; \
+		cd $(JULIA_PROJECT_DIR) && julia -e "using Pkg; Pkg.activate(\".\"); Pkg.add(url=\"https://github.com/MurrellGroup/CodonMolecularEvolution.jl\", rev=\"main\"); Pkg.add(\"FASTX\"); Pkg.add(\"JSON\"); Pkg.add(\"MolecularEvolution\"); Pkg.add(\"Plots\"); Pkg.add(\"Phylo\"); Pkg.add(\"Measures\")"; \
+	fi
+	@echo "Julia environment setup complete"
+	@cd $(JULIA_PROJECT_DIR) && julia --project -e "using CodonMolecularEvolution, Plots, Phylo, Measures; println(\"✓ difFUBAR with plot generation ready\")"
+
 npm:
 	echo "running npm"
 	@npm install
@@ -36,6 +60,7 @@ directories:
 	mkdir -p app/absrel/output
 	mkdir -p app/bgm/output
 	mkdir -p app/busted/output
+	mkdir -p app/difFubar/output
 	mkdir -p app/fade/output
 	mkdir -p app/fel/output
 	mkdir -p app/flea/output
@@ -50,4 +75,4 @@ directories:
 	mkdir -p app/slac/output
 	mkdir -p app/hivtrace/output
 
-install: hyphy hyphy-analyses hivtrace npm directories
+install: hyphy hyphy-analyses hivtrace npm julia directories

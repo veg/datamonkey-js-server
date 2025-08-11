@@ -1,7 +1,7 @@
 {
   "name": "datamonkey-js-server",
   "description": "",
-  "version": "2.6.1",
+  "version": "2.7.0",
   "engines": {
     "node": ">=13"
   },
@@ -30,7 +30,9 @@
     "winston": "^3.8.2"
   },
   "devDependencies": {
+    "chai": "^5.2.1",
     "eslint": "^7.32.0",
+    "mocha": "^11.7.1",
     "socket.io-client": "^4.5.4",
     "socket.io-stream": "^0.9.1"
   }
