@@ -23,6 +23,18 @@ try
     using JSON
     println("  ✓ JSON loaded")
     
+    println("  - Loading Plots...")
+    using Plots
+    println("  ✓ Plots loaded")
+    
+    println("  - Loading Measures...")
+    using Measures
+    println("  ✓ Measures loaded")
+    
+    println("  - Loading Phylo...")
+    using Phylo
+    println("  ✓ Phylo loaded")
+    
     println("✓ All packages loaded successfully")
 catch e
     println("❌ PACKAGE LOADING FAILED: $e")
