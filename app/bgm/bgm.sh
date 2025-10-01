@@ -105,7 +105,13 @@ BURNIN="${number_of_burn_in_samples:-100000}"
 SAMPLES="${number_of_samples:-100}"
 MAXIMUM_PARENTS="${maximum_parents_per_node:-1}"
 MINIMUM_SUBSTITUTIONS="${minimum_subs_per_site:-1}"
-PROCS=${procs:-1} 
+PROCS=${procs:-1}
+
+# Ensure burn-in is less than steps to avoid invalid range
+if [ "$BURNIN" -ge "$LENGTH" ]; then
+  echo "Warning: burn-in ($BURNIN) >= steps ($LENGTH), adjusting burn-in to be 10% of steps"
+  BURNIN=$((LENGTH / 10))
+fi 
 
 # Set HYPHY executable - prefer regular hyphy for local execution
 HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
@@ -180,11 +186,11 @@ if [ -n "$SLURM_JOB_ID" ]; then
     if [ "$DATATYPE" == "amino-acid" ] && [ -n "$SUBSTITUTION_MODEL" ]; then
       # Amino acid with substitution model
       echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BGM --branches \"$BRANCHES\" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-      $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
+      printf '\n\n\n\n\n\n' | $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
     else
       # Nucleotide or codon data
       echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BGM --branches \"$BRANCHES\" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-      $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
+      printf '\n\n\n\n\n\n' | $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
     fi
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
@@ -193,11 +199,11 @@ if [ -n "$SLURM_JOB_ID" ]; then
     if [ "$DATATYPE" == "amino-acid" ] && [ -n "$SUBSTITUTION_MODEL" ]; then
       # Amino acid with substitution model
       echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches \"$BRANCHES\" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-      srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
+      printf '\n\n\n\n\n\n' | srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
     else
       # Nucleotide or codon data
       echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches \"$BRANCHES\" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-      srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
+      printf '\n\n\n\n\n\n' | srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
     fi
   fi
 else
@@ -208,11 +214,11 @@ else
   if [ "$DATATYPE" == "amino-acid" ] && [ -n "$SUBSTITUTION_MODEL" ]; then
     # Amino acid with substitution model
     echo "$HYPHY LIBPATH=$HYPHY_PATH $BGM --branches \"$BRANCHES\" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-    $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
+    printf '\n\n\n\n\n\n' | $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
   else
     # Nucleotide or codon data
-    echo "$HYPHY LIBPATH=$HYPHY_PATH $BGM --branches \"$BRANCHES\" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
-    $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
+    echo "$HYPHY LIBPATH=$HYPHY_PATH $BGM --branches \"$BRANCHES\" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> \"$PROGRESS_FILE\""
+    printf '\n\n\n\n\n\n' | $HYPHY LIBPATH=$HYPHY_PATH $BGM --branches "$BRANCHES" --code $GENETIC_CODE --baseline_model $SUBSTITUTION_MODEL --type $DATATYPE --alignment $FN --tree $TREE_FN --steps $LENGTH --burn-in $BURNIN --samples $SAMPLES --max-parents $MAXIMUM_PARENTS --min-subs $MINIMUM_SUBSTITUTIONS --output $RESULTS_FILE >> "$PROGRESS_FILE"
   fi
 fi
 
