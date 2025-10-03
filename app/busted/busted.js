@@ -40,6 +40,13 @@ var busted = function(socket, stream, params) {
     checkOnly: isCheckOnly
   });
 
+  // Helper function to convert boolean to Yes/No
+  function boolToYesNo(value) {
+    if (value === true || value === "true") return "Yes";
+    if (value === false || value === "false") return "No";
+    return value; // Return as-is if already a string
+  }
+
   // object specific attributes
   self.type = "busted";
   self.qsub_script_name = "busted_submit.sh";
@@ -49,7 +56,7 @@ var busted = function(socket, stream, params) {
   if (isCheckOnly) {
     // Set defaults for required fields with complete parameter coverage
     self.ds_variation = synSubstitutionVar[params.ds_variation] || params.srv || "Yes";
-    self.error_protection = params.error_protection || params.error_sink || false;
+    self.error_protection = boolToYesNo(params.error_protection || params.error_sink || false);
     self.multihit = multihitVar[params.multihit] || params.multiple_hits || "None";
     self.branches = params.branches || "All";
     self.rates = params.rates || 3;
@@ -82,7 +89,7 @@ var busted = function(socket, stream, params) {
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
       self.ds_variation = synSubstitutionVar[self.params.analysis.ds_variation] || analysisParams.srv || "Yes";
-      self.error_protection = self.params.analysis.error_protection || analysisParams.error_sink || false;
+      self.error_protection = boolToYesNo(self.params.analysis.error_protection || analysisParams.error_sink || false);
       self.multihit = multihitVar[self.params.analysis.multihit] || analysisParams.multiple_hits || "None";
       self.branches = self.params.analysis.branches || "All";
       self.rates = self.params.analysis.rates || 3;
@@ -94,7 +101,7 @@ var busted = function(socket, stream, params) {
     } else {
       self.id = self.params.id || "unknown-" + Date.now();
       self.ds_variation = synSubstitutionVar[self.params.ds_variation] || self.params.srv || "Yes";
-      self.error_protection = self.params.error_protection || self.params.error_sink || false;
+      self.error_protection = boolToYesNo(self.params.error_protection || self.params.error_sink || false);
       self.multihit = multihitVar[self.params.multihit] || self.params.multiple_hits || "None";
       self.branches = self.params.branches || "All";
       self.rates = self.params.rates || 3;
