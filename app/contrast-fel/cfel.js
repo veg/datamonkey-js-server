@@ -25,6 +25,28 @@ var cfel = function(socket, stream, params) {
     checkOnly: isCheckOnly
   });
 
+  // Helper function to map branch set names to HyPhy expected values
+  function mapBranchSet(branchSet) {
+    const branchSetMapping = {
+      "Foreground": "Terminal branches",
+      "Background": "Internal branches", 
+      "All": "Terminal branches",
+      "Internal": "Internal branches",
+      "Terminal": "Terminal branches",
+      "Random": "Random set of branches",
+      "Unlabeled": "Unlabeled branches"
+    };
+    
+    // If it's already a valid HyPhy value, return as-is
+    const validValues = ["Internal branches", "Terminal branches", "Random set of branches", "Unlabeled branches"];
+    if (validValues.includes(branchSet)) {
+      return branchSet;
+    }
+    
+    // Otherwise map it
+    return branchSetMapping[branchSet] || "Terminal branches";
+  }
+
   // object specific attributes
   self.type = "cfel";
   self.qsub_script_name = "cfel.sh";
@@ -34,7 +56,8 @@ var cfel = function(socket, stream, params) {
   if (isCheckOnly) {
     // Set defaults for required fields with complete parameter coverage
     self.genetic_code = params.genetic_code || "Universal";
-    self.branch_sets = Array.isArray(params.branch_sets) ? params.branch_sets.join(":") : (params.branch_sets || "Foreground");
+    const rawBranchSets = params.branch_sets || "Foreground";
+    self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.map(mapBranchSet).join(":") : mapBranchSet(rawBranchSets);
     self.rate_variation = params.srv || (params.ds_variation == 1 ? "Yes" : "No") || "Yes";
     self.permutations = params.permutations || "Yes";
     self.p_value = params.p_value || params.pvalue || 0.05;
@@ -65,7 +88,8 @@ var cfel = function(socket, stream, params) {
     if (self.params.analysis) {
       self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
-      self.branch_sets = Array.isArray(self.params.analysis.branch_sets) ? self.params.analysis.branch_sets.join(":") : (analysisParams.branch_sets || "Foreground");
+      const rawBranchSets = self.params.analysis.branch_sets || analysisParams.branch_sets || "Foreground";
+      self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.map(mapBranchSet).join(":") : mapBranchSet(rawBranchSets);
       self.rate_variation = analysisParams.srv || (self.params.analysis.ds_variation == 1 ? "Yes" : "No") || "Yes";
       self.permutations = analysisParams.permutations || "Yes";
       self.p_value = analysisParams.p_value || analysisParams.pvalue || 0.05;
@@ -73,7 +97,8 @@ var cfel = function(socket, stream, params) {
     } else {
       self.id = self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
-      self.branch_sets = Array.isArray(self.params.branch_sets) ? self.params.branch_sets.join(":") : (self.params.branch_sets || "Foreground");
+      const rawBranchSets = self.params.branch_sets || "Foreground";
+      self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.map(mapBranchSet).join(":") : mapBranchSet(rawBranchSets);
       self.rate_variation = self.params.srv || (self.params.ds_variation == 1 ? "Yes" : "No") || "Yes";
       self.permutations = self.params.permutations || "Yes";
       self.p_value = self.params.p_value || self.params.pvalue || 0.05;
