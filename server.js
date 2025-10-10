@@ -467,7 +467,12 @@ io.sockets.on("connection", function(socket) {
     spawn: function(stream, params) {
       // Handle both unified format (direct params) and legacy format (params.job)
       const jobParams = params.job || params;
-      new fubar.fubar(socket, stream, jobParams);
+      // Merge tree data into job params (like FEL does)
+      var jobWithTree = Object.assign({}, jobParams);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new fubar.fubar(socket, stream, jobWithTree);
     },
     check: function(params) {
       const jobParams = params.job || params;

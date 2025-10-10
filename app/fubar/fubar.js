@@ -198,14 +198,15 @@ var fubar = function(socket, stream, params) {
     const utilities = require("../../lib/utilities");
     utilities.ensureDirectoryExists(self.output_dir);
 
-    // Use FEL-style tree handling - simple and direct
-    logger.info(`FUBAR job ${self.id}: Writing tree file to ${self.tree_fn}`, {
-      tree_content: self.nwk_tree ? (self.nwk_tree.length > 100 ? self.nwk_tree.substring(0, 100) + "..." : self.nwk_tree) : "null"
+    // Clean tree data and write to file (like Contrast-FEL)
+    const cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
+    logger.info(`FUBAR job ${self.id}: Writing cleaned tree file to ${self.tree_fn}`, {
+      original_length: self.nwk_tree ? self.nwk_tree.length : 0,
+      cleaned_length: cleanTree ? cleanTree.length : 0,
+      tree_preview: cleanTree ? (cleanTree.length > 100 ? cleanTree.substring(0, 100) + "..." : cleanTree) : "null"
     });
-
-    // Write tree to a file synchronously (like FEL)
     try {
-      fs.writeFileSync(self.tree_fn, self.nwk_tree);
+      fs.writeFileSync(self.tree_fn, cleanTree);
       logger.info(`FUBAR job ${self.id}: Tree file written successfully`);
     } catch (err) {
       logger.error(`FUBAR job ${self.id}: Error writing tree file: ${err.message}`);
