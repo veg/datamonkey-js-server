@@ -5,11 +5,25 @@
 
 export PATH=/usr/local/bin:$PATH
 
+# Try to load modules if they exist, but don't fail if they don't
+if [ -f /etc/profile.d/modules.sh ]; then
+  source /etc/profile.d/modules.sh
+  
+  # Load the specific OpenMPI module for ARM architecture
+  module load openmpi-arm/5.0.5 2>/dev/null || echo "Failed to load openmpi-arm/5.0.5"
+  
+  # Check if module was loaded successfully
+  module list 2>&1
+  
+  # Print library paths for debugging
+  echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+else
+  echo "Module system not available, using system environment"
+fi
+
 # Load modules if they exist (for cluster environments)
 if type module > /dev/null 2>&1; then
   # Try to load common modules that might be available on the system
-  module load openmpi/gnu/1.6.3 2>/dev/null || true
-  module load aocc/1.3.0 2>/dev/null || true
 fi
 
 # Get environment variables passed from the job submission
