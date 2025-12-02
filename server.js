@@ -4,6 +4,7 @@ const config = require("./config.json"),
   absrel = require("./app/absrel/absrel.js"),
   bgm = require("./app/bgm/bgm.js"),
   busted = require("./app/busted/busted.js"),
+  difFubar = require("./app/difFubar/difFubar.js"),
   fel = require("./app/fel/fel.js"),
   cfel = require("./app/contrast-fel/cfel.js"),
   flea = require("./app/flea/flea.js"),
@@ -25,7 +26,7 @@ const config = require("./config.json"),
 
 //Script parameter for defining port number.
 program
-  .version("2.1.3")
+  .version("2.8.0")
   .usage("[options] <file ...>")
   .option("-p, --port <n>", "Port number", parseInt)
   .parse(process.argv);
@@ -75,6 +76,36 @@ io.sockets.on("connection", function(socket) {
     JobQueue(function(jobs) {
       socket.emit("job queue", jobs);
       socket.disconnect();
+    });
+  });
+
+  // Query job status by ID (for reconnection after page refresh)
+  socket.on("job:status", function(params, callback) {
+    if (!params || !params.jobId) {
+      if (callback) callback({ status: 'error', error: 'Missing jobId' });
+      return;
+    }
+
+    client.hgetall(params.jobId, function(err, jobData) {
+      if (err || !jobData) {
+        if (callback) callback({ status: 'not_found' });
+        return;
+      }
+
+      var response = {
+        status: jobData.status || 'unknown',
+        torque_id: jobData.torque_id
+      };
+
+      if (jobData.status === 'completed' && jobData.results) {
+        response.results = JSON.parse(jobData.results);
+      }
+
+      if (jobData.error) {
+        response.error = jobData.error;
+      }
+
+      if (callback) callback(response);
     });
   });
 
@@ -529,6 +560,23 @@ io.sockets.on("connection", function(socket) {
     check: function(params) {
       params.job["checkOnly"] = true;
       new bgm.bgm(socket, null, params.job);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // difFUBAR
+  r.route("difFubar", {
+    spawn: function(stream, params) {
+      new difFubar.difFubar(socket, stream, params.job);
+    },
+    check: function(params) {
+      params.job["checkOnly"] = true;
+      new difFubar.difFubar(socket, null, params.job);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);

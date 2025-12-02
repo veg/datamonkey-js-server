@@ -49,6 +49,7 @@ hyphyJob.prototype.warn = function(notification, complementary_info) {
 // Attach socket to redis channel
 hyphyJob.prototype.attachSocket = function() {
   var self = this;
+  logger.info(`[DEBUG REDIS] Attaching socket to job ${self.id}`);
   new cs.ClientSocket(self.socket, self.id);
 };
 
@@ -80,8 +81,13 @@ hyphyJob.prototype.spawn = function() {
   self.log("spawning");
 
   // A class that spawns the process and emits status events
-  logger.info(`Job ${self.id}: Creating job runner with qsub_params=${JSON.stringify(self.qsub_params)}`);
+  logger.info(`[JOB START] Job ${self.id}: Creating job runner`);
+  logger.info(`[JOB START] Submit type: ${job.jobRunner.prototype.submit_type || config.submit_type}`);
+  logger.info(`[JOB START] Parameters: ${JSON.stringify(self.qsub_params)}`);
+  logger.info(`[JOB START] Results file: ${self.results_fn}`);
+  logger.info(`[DEBUG HYPHY] Job ${self.id}: About to create jobRunner instance`);
   var hyphy_job_runner = new job.jobRunner(self.qsub_params, self.results_fn);
+  logger.info(`[DEBUG HYPHY] Job ${self.id}: jobRunner instance created successfully`);
 
   // On status updates, report to datamonkey-js
   hyphy_job_runner.on("status", function(status) {
@@ -121,6 +127,7 @@ hyphyJob.prototype.spawn = function() {
 
   // When the analysis completes, return the results to datamonkey.
   hyphy_job_runner.on("completed", function() {
+    logger.info(`[DEBUG HYPHY] Job ${self.id}: Received completed event from job runner`);
     self.onComplete();
   });
 
@@ -272,6 +279,19 @@ hyphyJob.prototype.onComplete = function() {
         // Log that the job has been completed
         self.log("complete", "success");
 
+        // Debug Redis publishing
+        logger.info(`[DEBUG REDIS] Publishing completion to channel: ${self.id}`);
+        logger.info(`[DEBUG REDIS] Completion data length: ${str_redis_packet.length} bytes`);
+        logger.info(`[DEBUG REDIS] Completion packet type: ${redis_packet.type}`);
+        logger.info(`[DEBUG REDIS] Results data length: ${data.length} bytes`);
+        
+        // Check if message is too large (Redis default max is 512MB but practical limit is lower)
+        const MAX_REDIS_MESSAGE_SIZE = 50 * 1024 * 1024; // 50MB
+        if (str_redis_packet.length > MAX_REDIS_MESSAGE_SIZE) {
+          logger.warn(`[DEBUG REDIS] WARNING: Completion message is very large (${(str_redis_packet.length / 1024 / 1024).toFixed(2)}MB)`);
+          logger.warn(`[DEBUG REDIS] This may cause issues with Redis pub/sub`);
+        }
+
         // Store packet in redis and publish to channel
         client.hset(
           self.id, 
@@ -279,6 +299,7 @@ hyphyJob.prototype.onComplete = function() {
           "status", "completed"
         );
         client.publish(self.id, str_redis_packet);
+        logger.info(`[DEBUG REDIS] Published completion event to Redis channel: ${self.id}`);
 
         // Remove id from active_job queue
         client.lrem("active_jobs", 1, self.id);
@@ -341,6 +362,9 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   var str_redis_packet = JSON.stringify(redis_packet);
 
   // Store packet in redis and publish to channel
+  logger.info(`[DEBUG REDIS] Publishing status update to channel: ${self.id}`);
+  logger.info(`[DEBUG REDIS] Status update data: ${str_redis_packet}`);
+  
   client.hset(
     self.id, 
     "status update", str_redis_packet,
@@ -407,11 +431,20 @@ hyphyJob.prototype.onError = function(error) {
 
   Q.allSettled(promises).then(function(results) {
     // Prepare redis packet for delivery
-    redis_packet.stderr = results[0].value;
-    redis_packet.progress = results[1].value;
-    redis_packet.stdout = results[2].value;
+    redis_packet.stderr = results[0].value || "No stderr content";
+    redis_packet.progress = results[1].value || "No progress content";
+    redis_packet.stdout = results[2].value || "No stdout content";
 
     var str_redis_packet = JSON.stringify(redis_packet);
+
+    // Enhanced logging for script errors
+    logger.error(`[SCRIPT ERROR] Job ${self.id} failed`);
+    logger.error(`[SCRIPT ERROR] Progress file: ${self.progress_fn}`);
+    logger.error(`[SCRIPT ERROR] Stderr file: ${self.std_err}`);
+    logger.error(`[SCRIPT ERROR] Stdout file: ${self.std_out}`);
+    logger.error(`[SCRIPT ERROR] Stderr content: ${redis_packet.stderr}`);
+    logger.error(`[SCRIPT ERROR] Progress content: ${redis_packet.progress}`);
+    logger.error(`[SCRIPT ERROR] Stdout content: ${redis_packet.stdout}`);
 
     // log error with a warning
     self.warn("script error", str_redis_packet);

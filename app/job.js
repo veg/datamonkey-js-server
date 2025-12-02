@@ -184,9 +184,9 @@ jobRunner.prototype.submit = function(params, cwd) {
   
   // Create formatted command for logging
   const fullCommand = `${scheduler} ${params.join(' ')}`;
-  logger.info(`COMMAND TO EXECUTE: ${fullCommand}`);
-  logger.info(`Job submission using ${scheduler} with params: ${JSON.stringify(params)}`);
-  logger.info(`Working directory: ${cwd}`);
+  logger.info(`[${scheduler.toUpperCase()} JOB] FULL COMMAND: ${fullCommand}`);
+  logger.info(`[${scheduler.toUpperCase()} JOB] Job submission using ${scheduler} with params: ${JSON.stringify(params)}`);
+  logger.info(`[${scheduler.toUpperCase()} JOB] Working directory: ${cwd}`);
   
   try {
     console.log(`EXECUTING: ${fullCommand}`);
@@ -250,7 +250,22 @@ jobRunner.prototype.submit = function(params, cwd) {
 jobRunner.prototype.submit_local = function(script, params, cwd) {
   var self = this;
   
-  logger.info("Local job submission", script, params, cwd);
+  logger.info(`[LOCAL JOB] Starting local job submission`);
+  logger.info(`[LOCAL JOB] Script: ${script}`);
+  logger.info(`[LOCAL JOB] Params: ${JSON.stringify(params)}`);
+  logger.info(`[LOCAL JOB] Working directory: ${cwd}`);
+  
+  // Log the full command that will be executed
+  const fullCommand = `${script} ${params.join(' ')}`;
+  logger.info(`[LOCAL JOB] FULL COMMAND: ${fullCommand}`);
+  
+  // Log environment variables that will be passed
+  if (params.length > 0) {
+    logger.info(`[LOCAL JOB] Environment variables/arguments:`);
+    params.forEach((param, index) => {
+      logger.info(`[LOCAL JOB]   [${index}]: ${param}`);
+    });
+  }
   
   try {
     // For local execution, pass params as command line arguments
@@ -268,7 +283,7 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     
     proc.stderr.on("data", function(data) {
       const output = data.toString("utf8");
-      logger.info("Local job stderr: " + output);
+      logger.error(`[LOCAL JOB STDERR] ${output.trim()}`);
       // Emit status updates for stderr (can indicate progress)
       if (output.trim()) {
         self.emit("status update", { msg: output.trim() });
@@ -277,7 +292,7 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     
     proc.stdout.on("data", function(data) {
       const output = data.toString("utf8");
-      logger.info("Local job stdout: " + output);
+      logger.info(`[LOCAL JOB STDOUT] ${output.trim()}`);
       // Emit status updates for stdout
       if (output.trim()) {
         self.emit("status update", { msg: output.trim() });
@@ -285,21 +300,25 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     });
     
     proc.on("error", function(error) {
-      logger.error("Local job error: " + error.message);
+      logger.error(`[LOCAL JOB ERROR] Failed to spawn process: ${error.message}`);
+      logger.error(`[LOCAL JOB ERROR] Error details: ${JSON.stringify(error)}`);
       self.emit("script error", "Local execution failed: " + error.message);
     });
     
     proc.on("close", function(code) {
-      logger.info("Local job completed with code: " + code);
+      logger.info(`[LOCAL JOB] Process completed with exit code: ${code}`);
       if (code === 0) {
+        logger.info(`[DEBUG JOB] Local job completed successfully, emitting completed event`);
         self.emit(self.states.completed, "");
       } else {
+        logger.error(`[LOCAL JOB] Job failed with exit code: ${code}`);
         self.emit("script error", "Local job failed with exit code: " + code);
       }
     });
     
   } catch (error) {
-    logger.error("Error starting local job: " + error.message);
+    logger.error(`[LOCAL JOB] Exception starting local job: ${error.message}`);
+    logger.error(`[LOCAL JOB] Exception details: ${JSON.stringify(error)}`);
     self.emit("script error", "Failed to start local job: " + error.message);
   }
 };
@@ -354,15 +373,16 @@ jobRunner.prototype.status_watcher = function() {
       if (self.results_fn) {
         fs.stat(self.results_fn, (err, res) => {
           if (err) {
-            logger.warn(`Error checking results file: ${err.message}`);
+            logger.warn(`[DEBUG JOB] Error checking results file ${self.results_fn}: ${err.message}`);
           } else {
-            logger.info(`Results file exists with size ${res.size}`);
+            logger.info(`[DEBUG JOB] Results file ${self.results_fn} exists with size ${res.size}`);
           }
           
           self.error_count += 1;
 
           if (!err && res.size > 0) {
-            logger.info(`Job ${self.torque_id} completed based on results file`);
+            logger.info(`[DEBUG JOB] Job ${self.torque_id} completed based on results file (size: ${res.size})`);
+            logger.info(`[DEBUG JOB] Emitting completed event for ${self.torque_id}`);
             clearInterval(self.metronome_id);
             self.emit(self.states.completed, "");
             return;
@@ -392,7 +412,8 @@ jobRunner.prototype.status_watcher = function() {
         status_packet.status == self.states.completed ||
         status_packet.status == self.states.exiting
       ) {
-        logger.info(`Job ${self.torque_id} completed with status: ${status_packet.status}`);
+        logger.info(`[DEBUG JOB] Job ${self.torque_id} completed with status: ${status_packet.status}`);
+        logger.info(`[DEBUG JOB] Emitting completed event for SLURM job ${self.torque_id}`);
         clearInterval(self.metronome_id);
         self.emit(self.states.completed, "");
       } else if (status_packet.status == self.states.queued) {

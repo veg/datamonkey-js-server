@@ -41,7 +41,12 @@
   "multihit_walltime"      : "3:00:00:00",
   "nrm_procs"              : "1",
   "nrm_walltime"           : "3:00:00:00",
-  "cfel_procs"             : "32", 
-  "cfel_walltime"          : "3:00:00:00"
-
+  "cfel_procs"             : "32",
+  "cfel_walltime"          : "3:00:00:00",
+  "difFubar_procs"         : "8",
+  "difFubar_walltime"      : "24:00:00",
+  "difFubar_nodes"         : "1",
+  "difFubar_memory"        : "32GB",
+  "julia_path"             : "/usr/local/bin/julia",
+  "julia_project"          : "./.julia_env"
 }
