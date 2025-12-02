@@ -25,7 +25,7 @@ const config = require("./config.json"),
 
 //Script parameter for defining port number.
 program
-  .version("2.1.3")
+  .version("2.8.0")
   .usage("[options] <file ...>")
   .option("-p, --port <n>", "Port number", parseInt)
   .parse(process.argv);
@@ -61,6 +61,36 @@ io.sockets.on("connection", function(socket) {
     JobQueue(function(jobs) {
       socket.emit("job queue", jobs);
       socket.disconnect();
+    });
+  });
+
+  // Query job status by ID (for reconnection after page refresh)
+  socket.on("job:status", function(params, callback) {
+    if (!params || !params.jobId) {
+      if (callback) callback({ status: 'error', error: 'Missing jobId' });
+      return;
+    }
+
+    client.hgetall(params.jobId, function(err, jobData) {
+      if (err || !jobData) {
+        if (callback) callback({ status: 'not_found' });
+        return;
+      }
+
+      var response = {
+        status: jobData.status || 'unknown',
+        torque_id: jobData.torque_id
+      };
+
+      if (jobData.status === 'completed' && jobData.results) {
+        response.results = JSON.parse(jobData.results);
+      }
+
+      if (jobData.error) {
+        response.error = jobData.error;
+      }
+
+      if (callback) callback(response);
     });
   });
 
