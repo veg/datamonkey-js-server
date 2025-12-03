@@ -11,9 +11,17 @@ var spawn = require("child_process").spawn,
 
 
 // Use redis as our key-value store
-var client = redis.createClient({
-  host: config.redis_host, port: config.redis_port
-});
+var redisConfig = {
+  host: config.redis_host, 
+  port: config.redis_port
+};
+
+// Add password if configured
+if (config.redis_password) {
+  redisConfig.password = config.redis_password;
+}
+
+var client = redis.createClient(redisConfig);
 
 // Add error handler for Redis client
 client.on("error", function(err) {
@@ -263,12 +271,15 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     // For local execution, pass params as command line arguments
     var proc = spawn(script, params, { cwd: cwd });
     
-    // Use a unique job identifier for local runs
-    self.torque_id = "local_" + Date.now() + "_" + proc.pid;
-    self.emit("job created", { torque_id: self.torque_id });
-    
     // Store process reference for cancellation
     self.local_process = proc;
+    
+    // Use a unique job identifier for local runs
+    // Wait for the process to be fully spawned before using pid
+    process.nextTick(() => {
+      self.torque_id = "local_" + Date.now() + "_" + (proc.pid || "nopid");
+      self.emit("job created", { torque_id: self.torque_id });
+    });
     
     proc.stderr.on("data", function(data) {
       const output = data.toString("utf8");
