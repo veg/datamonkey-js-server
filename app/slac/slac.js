@@ -60,7 +60,6 @@ var slac = function(socket, stream, params) {
       "--cpus-per-task=1",                                  // One CPU per task for MPI
       `--time=${slurmTime}`,                                // Converted time limit
       `--partition=${config.slurm_partition || "datamonkey"}`,    // Use configured partition
-      "--nodes=1",                                          // Run on a single node
       "--export=ALL,slurm_mpi_type=" + 
       (config.slurm_mpi_type || "pmix") + 
       "," +

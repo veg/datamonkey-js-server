@@ -1,7 +1,7 @@
 {
   "name": "datamonkey-js-server",
   "description": "",
-  "version": "2.6.1",
+  "version": "2.6.3",
   "engines": {
     "node": ">=13"
   },
