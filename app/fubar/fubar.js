@@ -49,11 +49,11 @@ var fubar = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // Use FEL-style tree assignment
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // Use FEL-style tree assignment
       self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
     }

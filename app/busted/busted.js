@@ -87,7 +87,7 @@ var busted = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.ds_variation = synSubstitutionVar[self.params.analysis.ds_variation] || analysisParams.srv || "Yes";
       self.error_protection = boolToYesNo(self.params.analysis.error_protection || analysisParams.error_sink || false);
       self.multihit = multihitVar[self.params.analysis.multihit] || analysisParams.multiple_hits || "None";
@@ -99,7 +99,7 @@ var busted = function(socket, stream, params) {
       self.save_fit = self.params.analysis.save_fit || "/dev/null";
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.ds_variation = synSubstitutionVar[self.params.ds_variation] || self.params.srv || "Yes";
       self.error_protection = boolToYesNo(self.params.error_protection || self.params.error_sink || false);
       self.multihit = multihitVar[self.params.multihit] || self.params.multiple_hits || "None";

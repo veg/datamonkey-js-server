@@ -70,7 +70,7 @@ var cfel = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       const rawBranchSets = self.params.analysis['branch-set'] || self.params.analysis.branch_sets || analysisParams['branch-set'] || analysisParams.branch_sets || "Foreground";
       self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;
@@ -79,7 +79,7 @@ var cfel = function(socket, stream, params) {
       self.p_value = analysisParams.p_value || analysisParams.pvalue || 0.05;
       self.q_value = analysisParams.q_value || analysisParams.qvalue || 0.20;
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
       const rawBranchSets = self.params['branch-set'] || self.params.branch_sets || "Foreground";
       self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;

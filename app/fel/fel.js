@@ -69,12 +69,12 @@ var fel = function (socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree;
       self.rate_variation = self.params.analysis.ds_variation == 1 ? "Yes" : "No";
       self.ci = self.params.analysis.ci == true ? "Yes" : "No";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
       self.rate_variation = self.params.rate_variation || "No";
       self.ci = self.params.ci || "No";

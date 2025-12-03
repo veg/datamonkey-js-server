@@ -80,7 +80,7 @@ var bgm = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.substitution_model = self.params.analysis.substitution_model ? model[self.params.analysis.substitution_model] : (analysisParams.baseline_model || null);
       // Advanced options with complete parameter coverage
       self.length_of_each_chain = analysisParams.length_of_each_chain || analysisParams.steps || 1000000;
@@ -90,7 +90,7 @@ var bgm = function(socket, stream, params) {
       self.minimum_subs_per_site = parseInt(analysisParams.minimum_subs_per_site || analysisParams.min_subs || 1);
       self.branches = analysisParams.branches || "All";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.substitution_model = self.params.substitution_model ? model[self.params.substitution_model] : (self.params.baseline_model || null);
       // Advanced options with complete parameter coverage
       self.length_of_each_chain = self.params.length_of_each_chain || self.params.steps || 1000000;

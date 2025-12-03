@@ -62,14 +62,14 @@ var absrel = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       self.multiple_hits = analysisParams.multiple_hits || "None";
       self.srv = analysisParams.srv || "Yes";
       self.blb = analysisParams.blb || 1.0;
       self.branches = analysisParams.branches || "All";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk = self.params.nwk_tree || self.params.tree || "";
       self.multiple_hits = self.params.multiple_hits || "None";
       self.srv = self.params.srv || "Yes";

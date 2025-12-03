@@ -77,7 +77,7 @@ var gard = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // Use FEL-style tree assignment for unified format compatibility
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       // GARD specific attributes with complete parameter coverage
@@ -90,7 +90,7 @@ var gard = function(socket, stream, params) {
       self.max_breakpoints = parseInt(analysisParams.max_breakpoints || 10000);
       self.model = analysisParams.model || "JTT";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // GARD specific attributes with complete parameter coverage
       self.site_to_site_variation = self.params.site_to_site_variation || "none";
       self.rate_variation = variation_map[self.site_to_site_variation] || "None";

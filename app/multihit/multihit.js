@@ -67,7 +67,7 @@ var multihit = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // Use FEL-style tree assignment for unified format compatibility
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       // MultiHit specific attributes with complete parameter coverage
@@ -75,7 +75,7 @@ var multihit = function(socket, stream, params) {
       self.triple_islands = analysisParams.triple_islands || "No";
       self.branches = analysisParams.branches || "All";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // MultiHit specific attributes with complete parameter coverage
       self.rate_classes = self.params.rate_classes || self.params.rates || 1;
       self.triple_islands = self.params.triple_islands || "No";

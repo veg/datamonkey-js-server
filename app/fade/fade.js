@@ -80,7 +80,7 @@ var fade = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // Use FEL-style tree assignment for unified format compatibility
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       // FADE specific attributes with complete parameter coverage
@@ -94,7 +94,7 @@ var fade = function(socket, stream, params) {
       self.number_of_samples = analysisParams.number_of_samples || analysisParams.samples || 100;
       self.concentration_of_dirichlet_prior = analysisParams.concentration_of_dirichlet_prior || analysisParams.concentration_parameter || 0.5;
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // FADE specific attributes with complete parameter coverage
       self.substitution_model = (self.params.substitution_model && model[self.params.substitution_model]) || self.params.model || "LG";
       self.posterior_estimation_method = (self.params.posterior_estimation_method && estimationMethod[self.params.posterior_estimation_method]) || self.params.method || "Metropolis-Hastings";

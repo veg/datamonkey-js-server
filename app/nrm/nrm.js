@@ -65,13 +65,13 @@ var nrm = function(socket, stream, params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // Use FEL-style tree assignment for unified format compatibility
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
       // NRM specific attributes with complete parameter coverage
       self.branches = analysisParams.branches || "All";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       // NRM specific attributes with complete parameter coverage
       self.branches = self.params.branches || "All";
     }

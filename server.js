@@ -98,7 +98,19 @@ io.sockets.on("connection", function(socket) {
       };
 
       if (jobData.status === 'completed' && jobData.results) {
-        response.results = JSON.parse(jobData.results);
+        // Results are stored as: {"results":"{ stringified JSON }","type":"completed"}
+        // We need to unwrap and parse the inner results string
+        try {
+          var parsedResults = JSON.parse(jobData.results);
+          if (parsedResults.results && typeof parsedResults.results === 'string') {
+            response.results = JSON.parse(parsedResults.results);
+          } else {
+            response.results = parsedResults.results || parsedResults;
+          }
+        } catch (e) {
+          logger.error("Error parsing job results: " + e.message);
+          response.results = jobData.results;
+        }
       }
 
       if (jobData.error) {

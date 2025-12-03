@@ -61,7 +61,7 @@ var relax = function (socket, stream, relax_params) {
     }
     
     if (self.params.analysis) {
-      self.id = self.params.analysis._id || self.params.id || "unknown-" + Date.now();
+      self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.mode = analysisParams.mode || "Classic mode";
       self.test_branches = analysisParams.test || analysisParams.test_branches || "TEST";
       self.reference_branches = analysisParams.reference || analysisParams.reference_branches || "REFERENCE";
@@ -70,7 +70,7 @@ var relax = function (socket, stream, relax_params) {
       self.kill_zero_lengths = analysisParams.kill_zero_lengths || "No";
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
     } else {
-      self.id = self.params.id || "unknown-" + Date.now();
+      self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.mode = self.params.mode || "Classic mode";
       self.test_branches = self.params.test || self.params.test_branches || "TEST";
       self.reference_branches = self.params.reference || self.params.reference_branches || "REFERENCE";
