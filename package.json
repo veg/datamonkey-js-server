@@ -22,7 +22,7 @@
     "q": "^1.2.1",
     "redis": "^3.1.2",
     "should": "^13.2.3",
-    "socket.io": "4.1.2",
+    "socket.io": "4.6.2",
     "tail": "0.4.x",
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
