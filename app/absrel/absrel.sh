@@ -3,6 +3,58 @@
 # Set the PATH but skip module loading - system specific
 export PATH=/usr/local/bin:$PATH
 
+# Parse command line arguments and set environment variables
+# For local execution, parameters are passed as command line arguments like "fn=/path/to/file"
+for arg in "$@"; do
+  case $arg in
+    fn=*)
+      fn="${arg#*=}"
+      ;;
+    tree_fn=*)
+      tree_fn="${arg#*=}"
+      ;;
+    sfn=*)
+      sfn="${arg#*=}"
+      ;;
+    pfn=*)
+      pfn="${arg#*=}"
+      ;;
+    rfn=*)
+      rfn="${arg#*=}"
+      ;;
+    treemode=*)
+      treemode="${arg#*=}"
+      ;;
+    genetic_code=*)
+      genetic_code="${arg#*=}"
+      ;;
+    multiple_hits=*)
+      multiple_hits="${arg#*=}"
+      ;;
+    srv=*)
+      srv="${arg#*=}"
+      ;;
+    blb=*)
+      blb="${arg#*=}"
+      ;;
+    branches=*)
+      branches="${arg#*=}"
+      ;;
+    analysis_type=*)
+      analysis_type="${arg#*=}"
+      ;;
+    cwd=*)
+      cwd="${arg#*=}"
+      ;;
+    msaid=*)
+      msaid="${arg#*=}"
+      ;;
+    procs=*)
+      procs="${arg#*=}"
+      ;;
+  esac
+done
+
 # Try to load modules if they exist, but don't fail if they don't
 if [ -f /etc/profile.d/modules.sh ]; then
   source /etc/profile.d/modules.sh
@@ -33,13 +85,42 @@ STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
 RESULTS_FN=$fn.ABSREL.json
 GENETIC_CODE=$genetic_code
-PROCS=$procs
+MULTIPLE_HITS="${multiple_hits:-None}"
+SRV="${srv:-Yes}"
+BLB="${blb:-1.0}"
+BRANCHES="${branches:-All}"
+PROCS=${procs:-1}
 
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
+# Set HYPHY executable - prefer regular hyphy for local execution
+HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
+HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
+HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
+
+# Check which HYPHY version to use
+if [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_REGULAR" ]; then
+  # Local execution and regular hyphy exists - use it
+  HYPHY=$HYPHY_REGULAR
+  echo "Using regular HYPHY for local execution: $HYPHY"
+elif [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_NON_MPI" ]; then
+  # Local execution and non-MPI version exists - use it
+  HYPHY=$HYPHY_NON_MPI
+  echo "Using non-MPI HYPHY for local execution: $HYPHY"
+elif [ -f "$HYPHY_MPI" ]; then
+  # Use MPI version (for cluster execution or if others not available)
+  HYPHY=$HYPHY_MPI
+  echo "Using MPI HYPHY: $HYPHY"
+else
+  # Fallback - try to find any HYPHY executable
+  HYPHY=$(which hyphy 2>/dev/null || echo "$CWD/../../.hyphy/hyphy")
+  echo "Using fallback HYPHY: $HYPHY"
+fi
+
 HYPHY_PATH=$CWD/../../.hyphy/res/
+ABSREL=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf
+
 export HYPHY_PATH=$HYPHY_PATH
 
-trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
+trap 'echo "Error" > "$STATUS_FILE"; exit 1' ERR
 
 # We don't need the MPI_COMMAND variable anymore as we're using direct commands
 if [ -n "$SLURM_JOB_ID" ]; then
@@ -47,13 +128,22 @@ if [ -n "$SLURM_JOB_ID" ]; then
   MPI_TYPE="${slurm_mpi_type:-pmix}"
   echo "Using MPI type: $MPI_TYPE"
 else
-  echo "Running without SLURM, using mpirun"
+  echo "Running without SLURM, using local execution"
 fi
 
 # Log environment info
 echo "PROCS: $PROCS"
 echo "SLURM_JOB_ID: $SLURM_JOB_ID"
 echo "slurm_mpi_type: $slurm_mpi_type"
+echo "PROGRESS_FILE: '$PROGRESS_FILE'"
+echo "STATUS_FILE: '$STATUS_FILE'"
+echo "FN: '$FN'"
+echo "TREE_FN: '$TREE_FN'"
+echo "RESULTS_FN: '$RESULTS_FN'"
+echo "MULTIPLE_HITS: '$MULTIPLE_HITS'"
+echo "SRV: '$SRV'"
+echo "BLB: '$BLB'"
+echo "BRANCHES: '$BRANCHES'"
 
 if [ -n "$SLURM_JOB_ID" ]; then
   # Using SLURM srun with dedicated arguments
@@ -64,20 +154,21 @@ if [ -n "$SLURM_JOB_ID" ]; then
   
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $ABSREL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --multiple-hits $MULTIPLE_HITS --srv $SRV --blb $BLB --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $ABSREL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --multiple-hits $MULTIPLE_HITS --srv $SRV --blb $BLB --output $RESULTS_FN >> "$PROGRESS_FILE"
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $ABSREL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --multiple-hits $MULTIPLE_HITS --srv $SRV --blb $BLB --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $ABSREL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --multiple-hits $MULTIPLE_HITS --srv $SRV --blb $BLB --output $RESULTS_FN >> "$PROGRESS_FILE"
   fi
 else
-  # Using mpirun for non-SLURM environments
-  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE"
+  # For local execution, use the HYPHY executable determined above
+  echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $ABSREL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --multiple-hits $MULTIPLE_HITS --srv $SRV --blb $BLB --output $RESULTS_FN >> \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH $ABSREL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --multiple-hits $MULTIPLE_HITS --srv $SRV --blb $BLB --output $RESULTS_FN >> "$PROGRESS_FILE"
 fi
 
-echo "Completed" > $STATUS_FILE
+echo "Completed" > "$STATUS_FILE"

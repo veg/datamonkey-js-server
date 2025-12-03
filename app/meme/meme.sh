@@ -3,6 +3,67 @@
 # Set the PATH but skip module loading - system specific
 export PATH=/usr/local/bin:$PATH
 
+# Parse command line arguments and set environment variables
+# For local execution, parameters are passed as command line arguments like "fn=/path/to/file"
+for arg in "$@"; do
+  case $arg in
+    fn=*)
+      fn="${arg#*=}"
+      ;;
+    tree_fn=*)
+      tree_fn="${arg#*=}"
+      ;;
+    sfn=*)
+      sfn="${arg#*=}"
+      ;;
+    pfn=*)
+      pfn="${arg#*=}"
+      ;;
+    rfn=*)
+      rfn="${arg#*=}"
+      ;;
+    treemode=*)
+      treemode="${arg#*=}"
+      ;;
+    bootstrap=*)
+      bootstrap="${arg#*=}"
+      ;;
+    resample=*)
+      resample="${arg#*=}"
+      ;;
+    multiple_hits=*)
+      multiple_hits="${arg#*=}"
+      ;;
+    site_multihit=*)
+      site_multihit="${arg#*=}"
+      ;;
+    rates=*)
+      rates="${arg#*=}"
+      ;;
+    impute_states=*)
+      impute_states="${arg#*=}"
+      ;;
+    genetic_code=*)
+      genetic_code="${arg#*=}"
+      ;;
+    analysis_type=*)
+      analysis_type="${arg#*=}"
+      ;;
+    cwd=*)
+      cwd="${arg#*=}"
+      ;;
+    msaid=*)
+      msaid="${arg#*=}"
+      ;;
+    procs=*)
+      procs="${arg#*=}"
+      ;;
+    pvalue=*)
+      pvalue="${arg#*=}"
+      ;;
+  esac
+done
+
 # Try to load modules if they exist, but don't fail if they don't
 if [ -f /etc/profile.d/modules.sh ]; then
   source /etc/profile.d/modules.sh
@@ -31,21 +92,47 @@ CWD=$cwd
 TREE_FN=$tree_fn
 STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
-MULTIPLE_HITS="$multiple_hits"
-SITE_MULTIHIT="$site_multihit"
-RATES="$rates"
-RESAMPLE="$resample"
-IMPUTE_STATES="$impute_states"
+BOOTSTRAP=$bootstrap
+RESAMPLE=$resample
+MULTIPLE_HITS="${multiple_hits:-None}"
+SITE_MULTIHIT="${site_multihit:-Estimate}"
+RATES="${rates:-2}"
+IMPUTE_STATES="${impute_states:-No}"
+PVALUE="${pvalue:-0.1}"
 RESULTS_FN=$fn.MEME.json
 GENETIC_CODE=$genetic_code
-PROCS=$procs
+PROCS=${procs:-1}
 
-HYPHY=$CWD/../../.hyphy/HYPHYMPI
+# Set HYPHY executable - prefer regular hyphy for local execution
+HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
+HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
+HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
+
+# Check which HYPHY version to use
+if [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_REGULAR" ]; then
+  # Local execution and regular hyphy exists - use it
+  HYPHY=$HYPHY_REGULAR
+  echo "Using regular HYPHY for local execution: $HYPHY"
+elif [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_NON_MPI" ]; then
+  # Local execution and non-MPI version exists - use it
+  HYPHY=$HYPHY_NON_MPI
+  echo "Using non-MPI HYPHY for local execution: $HYPHY"
+elif [ -f "$HYPHY_MPI" ]; then
+  # Use MPI version (for cluster execution or if others not available)
+  HYPHY=$HYPHY_MPI
+  echo "Using MPI HYPHY: $HYPHY"
+else
+  # Fallback - try to find any HYPHY executable
+  HYPHY=$(which hyphy 2>/dev/null || echo "$CWD/../../.hyphy/hyphy")
+  echo "Using fallback HYPHY: $HYPHY"
+fi
+
 HYPHY_PATH=$CWD/../../.hyphy/res/
+MEME=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/MEME.bf
 
 export HYPHY_PATH=$HYPHY_PATH
 
-trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
+trap 'echo "Error" > "$STATUS_FILE"; exit 1' ERR
 
 # We don't need the MPI_COMMAND variable anymore as we're using direct commands
 if [ -n "$SLURM_JOB_ID" ]; then
@@ -60,30 +147,72 @@ fi
 echo "PROCS: $PROCS"
 echo "SLURM_JOB_ID: $SLURM_JOB_ID"
 echo "slurm_mpi_type: $slurm_mpi_type"
+echo "PROGRESS_FILE: '$PROGRESS_FILE'"
+echo "STATUS_FILE: '$STATUS_FILE'"
+echo "FN: '$FN'"
+echo "TREE_FN: '$TREE_FN'"
+echo "RESULTS_FN: '$RESULTS_FN'"
+echo "PVALUE: '$PVALUE'"
+echo "MULTIPLE_HITS: '$MULTIPLE_HITS'"
+echo "SITE_MULTIHIT: '$SITE_MULTIHIT'"
+echo "RATES: '$RATES'"
+echo "IMPUTE_STATES: '$IMPUTE_STATES'"
 
-if [ -n "$SLURM_JOB_ID" ]; then
-  # Using SLURM srun with dedicated arguments
-  # Try the non-MPI version as a fallback since we're having library issues with MPI
-  echo "Running HYPHY in non-MPI mode as a fallback due to library issues..."
-  
-  HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
-  
-  if [ -f "$HYPHY_NON_MPI" ]; then
-    echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/MEME.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> $PROGRESS_FILE"
-    export TOLERATE_NUMERICAL_ERRORS=1
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/MEME.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> $PROGRESS_FILE
+if [ "$BOOTSTRAP" != "false" ] && [ "$BOOTSTRAP" != "0" ] && [ -n "$BOOTSTRAP" ]
+then
+  echo "Running with bootstrap"
+  if [ -n "$SLURM_JOB_ID" ]; then
+    # Using SLURM srun with dedicated arguments
+    # Try the non-MPI version as a fallback since we're having library issues with MPI
+    echo "Running HYPHY in non-MPI mode as a fallback due to library issues..."
+    
+    HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
+    
+    if [ -f "$HYPHY_NON_MPI" ]; then
+      echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
+      export TOLERATE_NUMERICAL_ERRORS=1
+      echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+      $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
+    else
+      echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
+      export TOLERATE_NUMERICAL_ERRORS=1
+      echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+      srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
+    fi
   else
-    echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/MEME.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> $PROGRESS_FILE"
+    # For local execution, use the HYPHY executable determined above
+    echo "Using local HYPHY execution: $HYPHY"
     export TOLERATE_NUMERICAL_ERRORS=1
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/MEME.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> $PROGRESS_FILE
+    echo "$HYPHY LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+    $HYPHY LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
   fi
 else
-  # Using mpirun for non-SLURM environments
-  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/MEME.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> $PROGRESS_FILE"
-  export TOLERATE_NUMERICAL_ERRORS=1
-  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/MEME.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --resample $RESAMPLE --impute-states $IMPUTE_STATES >> $PROGRESS_FILE
+  echo "Running without bootstrap"
+  if [ -n "$SLURM_JOB_ID" ]; then
+    # Using SLURM srun with dedicated arguments
+    # Try the non-MPI version as a fallback since we're having library issues with MPI
+    echo "Running HYPHY in non-MPI mode as a fallback due to library issues..."
+    
+    HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
+    
+    if [ -f "$HYPHY_NON_MPI" ]; then
+      echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
+      export TOLERATE_NUMERICAL_ERRORS=1
+      echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+      $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
+    else
+      echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
+      export TOLERATE_NUMERICAL_ERRORS=1
+      echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+      srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
+    fi
+  else
+    # For local execution, use the HYPHY executable determined above
+    echo "Using local HYPHY execution: $HYPHY"
+    export TOLERATE_NUMERICAL_ERRORS=1
+    echo "$HYPHY LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+    $HYPHY LIBPATH=$HYPHY_PATH $MEME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT --rates $RATES --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
+  fi
 fi
 
-echo "Completed" > $STATUS_FILE
+echo "Completed" > "$STATUS_FILE"
