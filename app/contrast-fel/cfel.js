@@ -42,15 +42,32 @@ var cfel = function(socket, stream, params) {
   self.progress_fn = self.fn + ".cfel.progress";
   self.tree_fn = self.fn + ".tre";
 
-  self.qsub_params = [
-    "-l walltime=" + 
-    config.cfel_walltime + 
-    ",nodes=1:ppn=" + 
-    config.cfel_procs,
-    "-q",
-    config.qsub_queue,
-    "-v",
-    "fn=" +
+  // Define parameters for job submission (different formats for qsub vs slurm)
+  if (config.submit_type === "slurm") {
+    // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
+    let slurmTime = "72:00:00"; // Default 3 days
+    if (config.cfel_walltime) {
+      const parts = config.cfel_walltime.split(':');
+      if (parts.length === 4) {
+        // Convert D:HH:MM:SS to SLURM format
+        const days = parseInt(parts[0]);
+        const hours = parseInt(parts[1]) + (days * 24);
+        slurmTime = `${hours}:${parts[2]}:${parts[3]}`;
+      } else if (parts.length === 3) {
+        // HH:MM:SS format, already compatible with SLURM
+        slurmTime = config.cfel_walltime;
+      }
+    }
+
+    self.qsub_params = [
+      `--ntasks=${config.cfel_procs}`,                       // Use multiple tasks for MPI
+      "--cpus-per-task=1",                                  // One CPU per task for MPI
+      `--time=${slurmTime}`,                                // Converted time limit
+      `--partition=${config.slurm_partition || "datamonkey"}`,    // Use configured partition
+      "--export=ALL,slurm_mpi_type=" +
+      (config.slurm_mpi_type || "pmix") +
+      "," +
+      "fn=" +
       self.fn +
       ",tree_fn=" +
       self.tree_fn +
@@ -76,12 +93,52 @@ var cfel = function(socket, stream, params) {
       self.msaid +
       ",procs=" +
       config.cfel_procs,
-    "-o",
-    self.output_dir,
-    "-e",
-    self.output_dir,
-    self.qsub_script
-  ];
+      `--output=${self.output_dir}/cfel_${self.id}_%j.out`,
+      `--error=${self.output_dir}/cfel_${self.id}_%j.err`,
+      self.qsub_script
+    ];
+  } else {
+    self.qsub_params = [
+      "-l walltime=" +
+      config.cfel_walltime +
+      ",nodes=1:ppn=" +
+      config.cfel_procs,
+      "-q",
+      config.qsub_queue,
+      "-v",
+      "fn=" +
+        self.fn +
+        ",tree_fn=" +
+        self.tree_fn +
+        ",sfn=" +
+        self.status_fn +
+        ",pfn=" +
+        self.progress_fn +
+        ",rfn=" +
+        self.results_short_fn +
+        ",treemode=" +
+        self.treemode +
+        ",genetic_code=" +
+        self.genetic_code +
+        ",analysis_type=" +
+        self.type +
+        ",branch_sets=" +
+        self.branch_sets +
+        ",rate_variation=" +
+        self.rate_variation +
+        ",cwd=" +
+        __dirname +
+        ",msaid=" +
+        self.msaid +
+        ",procs=" +
+        config.cfel_procs,
+      "-o",
+      self.output_dir,
+      "-e",
+      self.output_dir,
+      self.qsub_script
+    ];
+  }
 
   // Write tree to a file
   fs.writeFile(self.tree_fn, self.nwk_tree, function(err) {

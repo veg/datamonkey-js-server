@@ -71,20 +71,20 @@ if [ -n "$SLURM_JOB_ID" ]; then
   
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/contrast-fel.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FEL-contrast.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/contrast-fel.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FEL-contrast.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/contrast-fel.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FEL-contrast.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/contrast-fel.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FEL-contrast.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE
   fi
 else
   # Using mpirun for non-SLURM environments
-  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/contrast-fel.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE"
+  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FEL-contrast.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE"
   export TOLERATE_NUMERICAL_ERRORS=1
-  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/contrast-fel.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE
+  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/FEL-contrast.bf --alignment $FN --tree $TREE_FN $BRANCH_SETS --output $RESULTS_FILE >> $PROGRESS_FILE
 fi
 
 echo "Completed" > $STATUS_FILE
