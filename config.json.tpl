@@ -24,6 +24,8 @@
   "fade_walltime"          : "3:00:00:00",
   "fel_procs"              : "32",
   "fel_walltime"           : "3:00:00:00",
+  "cfel_procs"             : "32",
+  "cfel_walltime"          : "3:00:00:00",
   "fubar_procs"            : "48",
   "fubar_walltime"         : "3:00:00:00",
   "gard_procs"             : "48",
