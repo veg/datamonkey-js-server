@@ -119,20 +119,14 @@ HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
 HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
 
 # Check which HYPHY version to use
-if [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_REGULAR" ]; then
-  # Local execution and regular hyphy exists - use it
-  HYPHY=$HYPHY_REGULAR
-  echo "Using regular HYPHY for local execution: $HYPHY"
-elif [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_NON_MPI" ]; then
-  # Local execution and non-MPI version exists - use it
+# Always use non-MPI version for datamonkey jobs
+if [ -f "$HYPHY_NON_MPI" ]; then
   HYPHY=$HYPHY_NON_MPI
-  echo "Using non-MPI HYPHY for local execution: $HYPHY"
-elif [ -f "$HYPHY_MPI" ]; then
-  # Use MPI version (for cluster execution or if others not available)
-  HYPHY=$HYPHY_MPI
-  echo "Using MPI HYPHY: $HYPHY"
+  echo "Using non-MPI HYPHY: $HYPHY"
+elif [ -f "$HYPHY_REGULAR" ]; then
+  HYPHY=$HYPHY_REGULAR
+  echo "Using regular HYPHY: $HYPHY"
 else
-  # Fallback - try to find any HYPHY executable
   HYPHY=$(which hyphy 2>/dev/null || echo "$CWD/../../.hyphy/hyphy")
   echo "Using fallback HYPHY: $HYPHY"
 fi
