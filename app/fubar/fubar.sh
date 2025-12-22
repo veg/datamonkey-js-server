@@ -50,8 +50,8 @@ for arg in "$@"; do
 done
 
 # Try to load modules if they exist, but don't fail if they don't
-if [ -f /etc/profile.d/modules.sh ]; then
-  source /etc/profile.d/modules.sh
+if [ -f /etc/profile.d/lmod.sh ]; then
+  source /etc/profile.d/lmod.sh
   
   # Load modules only if available
   module load aocc/1.3.0 2>/dev/null || echo "Failed to load aocc/1.3.0"
