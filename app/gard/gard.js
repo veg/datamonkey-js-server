@@ -96,7 +96,7 @@ var gard = function(socket, stream, params) {
       self.rate_variation = variation_map[self.site_to_site_variation] || "None";
       self.rate_classes = parseInt(self.params.rate_classes || self.params.classes || 2);
       self.run_mode = self.params.run_mode === "1" || self.params.run_mode === "Faster" ? "Faster" : "Normal";
-      self.datatype = self.params.datatype || "codon";
+      self.datatype = datatypes[self.params.datatype] || self.params.datatype || "codon";
       self.max_breakpoints = parseInt(self.params.max_breakpoints || 10000);
       self.model = self.params.model || "JTT";
     }
