@@ -80,20 +80,20 @@ if [ -n "$SLURM_JOB_ID" ]; then
   
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
+    $HYPHY_NON_MPI ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
   fi
 else
   # Using mpirun for non-SLURM environments
-  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
+  echo "mpirun -np $PROCS $HYPHY ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE"
   export TOLERATE_NUMERICAL_ERRORS=1
-  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
+  mpirun -np $PROCS $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --output $RESULTS_FN > $PROGRESS_FILE
 fi
 
 echo "Completed" > $STATUS_FILE
