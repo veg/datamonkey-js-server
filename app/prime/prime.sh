@@ -3,58 +3,162 @@
 # Set the PATH but skip module loading - system specific
 export PATH=/usr/local/bin:$PATH
 
+# Parse command line arguments and set environment variables
+# For local execution, parameters are passed as command line arguments like "fn=/path/to/file"
+for arg in "$@"; do
+  case $arg in
+    fn=*)
+      fn="${arg#*=}"
+      ;;
+    tree_fn=*)
+      tree_fn="${arg#*=}"
+      ;;
+    sfn=*)
+      sfn="${arg#*=}"
+      ;;
+    pfn=*)
+      pfn="${arg#*=}"
+      ;;
+    rfn=*)
+      rfn="${arg#*=}"
+      ;;
+    genetic_code=*)
+      genetic_code="${arg#*=}"
+      ;;
+    analysis_type=*)
+      analysis_type="${arg#*=}"
+      ;;
+    cwd=*)
+      cwd="${arg#*=}"
+      ;;
+    msaid=*)
+      msaid="${arg#*=}"
+      ;;
+    procs=*)
+      procs="${arg#*=}"
+      ;;
+    branches=*)
+      branches="${arg#*=}"
+      ;;
+    property_set=*)
+      property_set="${arg#*=}"
+      ;;
+    pvalue=*)
+      pvalue="${arg#*=}"
+      ;;
+    impute_states=*)
+      impute_states="${arg#*=}"
+      ;;
+  esac
+done
+
 # Try to load modules if they exist, but don't fail if they don't
 if [ -f /etc/profile.d/lmod.sh ]; then
   source /etc/profile.d/lmod.sh
-  
+
   # Load the specific OpenMPI module for ARM architecture
   module load gnu14/14.2.0 && module load openmpi5/5.0.7 2>/dev/null || echo "Failed to load openmpi-arm/5.0.5"
-  
+
   # Check if module was loaded successfully
   module list 2>&1
-  
+
   # Print library paths for debugging
   echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
 else
   echo "Module system not available, using system environment"
 fi
 
+# Make sure UCX libraries are available - these paths are critical for the MPI support
+export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib:$LD_LIBRARY_PATH:/usr/lib64
+
+# Print library paths and attempt to verify UCX is available
+echo "LD_LIBRARY_PATH after adjustment: $LD_LIBRARY_PATH"
+ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
+
 FN=$fn
 CWD=$cwd
 TREE_FN=$tree_fn
 STATUS_FILE=$sfn
 PROGRESS_FILE=$pfn
-RESULTS_FN=$rfn
+RESULTS_FN=$fn.PRIME.json
 GENETIC_CODE=$genetic_code
+BRANCHES=${branches:-"All"}
+PROPERTY_SET=${property_set:-"5PROP"}
+PVALUE=${pvalue:-"0.1"}
+IMPUTE_STATES=${impute_states:-"No"}
+PROCS=${procs:-1}
 
-HYPHY=$CWD/../../.hyphy/HYPHYMP
-HYPHYMPI=$CWD/../../.hyphy/HYPHYMPI
+# Set HYPHY executable - prefer regular hyphy for local execution
+HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
+HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
+HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
+
+# Check which HYPHY version to use
+# Always use non-MPI version for datamonkey jobs
+if [ -f "$HYPHY_NON_MPI" ]; then
+  HYPHY=$HYPHY_NON_MPI
+  echo "Using non-MPI HYPHY: $HYPHY"
+elif [ -f "$HYPHY_REGULAR" ]; then
+  HYPHY=$HYPHY_REGULAR
+  echo "Using regular HYPHY: $HYPHY"
+else
+  HYPHY=$(which hyphy 2>/dev/null || echo "$CWD/../../.hyphy/hyphy")
+  echo "Using fallback HYPHY: $HYPHY"
+fi
+
 HYPHY_PATH=$CWD/../../.hyphy/res/
-
-PRIME_FITGLOBAL=$CWD/PRIME/PRIME_FITGLOBAL.bf
-PRIME=$CWD/PRIME/PRIME.bf
+PRIME=$HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/PRIME.bf
 
 export HYPHY_PATH=$HYPHY_PATH
 
-trap 'echo "Error" > $STATUS_FILE; exit 1' ERR
+trap 'echo "Error" > "$STATUS_FILE"; exit 1' ERR
 
-#filename
-#tree mode
-#genetic code
-#posterior p
+# We don't need the MPI_COMMAND variable anymore as we're using direct commands
+if [ -n "$SLURM_JOB_ID" ]; then
+  echo "Running under SLURM with job ID: $SLURM_JOB_ID"
+  MPI_TYPE="${slurm_mpi_type:-pmix}"
+  echo "Using MPI type: $MPI_TYPE"
+else
+  echo "Running without SLURM, using mpirun"
+fi
 
-cp $FN $FN.seq
-cp $TREE_FN $FN.trees
-touch $FN.progress
+# Log environment info
+echo "PROCS: $PROCS"
+echo "SLURM_JOB_ID: $SLURM_JOB_ID"
+echo "slurm_mpi_type: $slurm_mpi_type"
+echo "PROGRESS_FILE: '$PROGRESS_FILE'"
+echo "STATUS_FILE: '$STATUS_FILE'"
+echo "FN: '$FN'"
+echo "TREE_FN: '$TREE_FN'"
+echo "RESULTS_FN: '$RESULTS_FN'"
+echo "BRANCHES: '$BRANCHES'"
+echo "PROPERTY_SET: '$PROPERTY_SET'"
+echo "PVALUE: '$PVALUE'"
+echo "IMPUTE_STATES: '$IMPUTE_STATES'"
 
-POSTERIOR_P="0.1"
-TREE_MODE=0
+if [ -n "$SLURM_JOB_ID" ]; then
+  # Try the non-MPI version as a fallback since we're having library issues with MPI
+  echo "Running HYPHY in non-MPI mode as a fallback due to library issues..."
 
-echo '(echo '$FN'; echo '$FN';echo 1;echo '$FN'; echo '$TREE_FN') | '$HYPHY' LIBPATH='$HYPHY_PATH' ' $PRIME_FITGLOBAL''
-(echo $FN; echo $FN; echo 1;echo $FN; echo $TREE_FN) | $HYPHY LIBPATH=$HYPHY_PATH $PRIME_FITGLOBAL > $PROGRESS_FILE
+  HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
 
-echo '(echo '$FN'; echo 0; echo 0;echo '$POSTERIOR_P';echo 1;echo '$TREE_MODE';) | '$HYPHY' LIBPATH='$HYPHY_PATH' ' $PRIME''
-(echo $FN; echo 0;echo 0;echo $POSTERIOR_P;echo 1;echo $TREE_MODE;) | $HYPHY $PRIME > $PROGRESS_FILE
+  if [ -f "$HYPHY_NON_MPI" ]; then
+    echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
+    export TOLERATE_NUMERICAL_ERRORS=1
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $PRIME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --property-set $PROPERTY_SET --pvalue $PVALUE --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $PRIME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --property-set $PROPERTY_SET --pvalue $PVALUE --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
+  else
+    echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
+    export TOLERATE_NUMERICAL_ERRORS=1
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $PRIME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --property-set $PROPERTY_SET --pvalue $PVALUE --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $PRIME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --property-set $PROPERTY_SET --pvalue $PVALUE --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
+  fi
+else
+  # For local execution, use the HYPHY executable determined above
+  echo "Using local HYPHY execution: $HYPHY"
+  export TOLERATE_NUMERICAL_ERRORS=1
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $PRIME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --property-set $PROPERTY_SET --pvalue $PVALUE --impute-states $IMPUTE_STATES >> \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH $PRIME --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --property-set $PROPERTY_SET --pvalue $PVALUE --impute-states $IMPUTE_STATES >> "$PROGRESS_FILE"
+fi
 
-echo "Completed" > $STATUS_FILE
-
+echo "Completed" > "$STATUS_FILE"
