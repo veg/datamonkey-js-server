@@ -1786,11 +1786,11 @@ __metadata:
   linkType: hard
 
 "minimatch@npm:^3.0.4, minimatch@npm:^3.1.1":
-  version: 3.1.2
-  resolution: "minimatch@npm:3.1.2"
+  version: 3.1.4
+  resolution: "minimatch@npm:3.1.4"
   dependencies:
-    brace-expansion: "npm:^1.1.7"
-  checksum: 0262810a8fc2e72cca45d6fd86bd349eee435eb95ac6aa45c9ea2180e7ee875ef44c32b55b5973ceabe95ea12682f6e3725cbb63d7a2d1da3ae1163c8b210311
+    brace-expansion: ^1.1.7
+  checksum: 8/8bc9993c9bff57c5be8a9cb380af295a50a483ec378f481f2953dd389a8d6250f23bd09f2b06456add14935db9703222a95bad2224a60e97a2a61d47e9a2bbf9
   languageName: node
   linkType: hard
 
