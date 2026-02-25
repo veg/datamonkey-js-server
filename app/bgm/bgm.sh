@@ -68,11 +68,11 @@ for arg in "$@"; do
 done
 
 # Try to load modules if they exist, but don't fail if they don't
-if [ -f /etc/profile.d/modules.sh ]; then
-  source /etc/profile.d/modules.sh
+if [ -f /etc/profile.d/lmod.sh ]; then
+  source /etc/profile.d/lmod.sh
   
   # Load the specific OpenMPI module for ARM architecture
-  module load openmpi-arm/5.0.5 2>/dev/null || echo "Failed to load openmpi-arm/5.0.5"
+  module load gnu14/14.2.0 && module load openmpi5/5.0.7 2>/dev/null || echo "Failed to load openmpi-arm/5.0.5"
   
   # Check if module was loaded successfully
   module list 2>&1
@@ -119,20 +119,14 @@ HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
 HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
 
 # Check which HYPHY version to use
-if [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_REGULAR" ]; then
-  # Local execution and regular hyphy exists - use it
-  HYPHY=$HYPHY_REGULAR
-  echo "Using regular HYPHY for local execution: $HYPHY"
-elif [ -z "$SLURM_JOB_ID" ] && [ -f "$HYPHY_NON_MPI" ]; then
-  # Local execution and non-MPI version exists - use it
+# Always use non-MPI version for datamonkey jobs
+if [ -f "$HYPHY_NON_MPI" ]; then
   HYPHY=$HYPHY_NON_MPI
-  echo "Using non-MPI HYPHY for local execution: $HYPHY"
-elif [ -f "$HYPHY_MPI" ]; then
-  # Use MPI version (for cluster execution or if others not available)
-  HYPHY=$HYPHY_MPI
-  echo "Using MPI HYPHY: $HYPHY"
+  echo "Using non-MPI HYPHY: $HYPHY"
+elif [ -f "$HYPHY_REGULAR" ]; then
+  HYPHY=$HYPHY_REGULAR
+  echo "Using regular HYPHY: $HYPHY"
 else
-  # Fallback - try to find any HYPHY executable
   HYPHY=$(which hyphy 2>/dev/null || echo "$CWD/../../.hyphy/hyphy")
   echo "Using fallback HYPHY: $HYPHY"
 fi
