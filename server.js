@@ -9,6 +9,7 @@ const config = require("./config.json"),
   cfel = require("./app/contrast-fel/cfel.js"),
   flea = require("./app/flea/flea.js"),
   fubar = require("./app/fubar/fubar.js"),
+  bstill = require("./app/bstill/bstill.js"),
   fade = require("./app/fade/fade.js"),
   gard = require("./app/gard/gard.js"),
   hivtrace = require("./app/hivtrace/hivtrace.js"),
@@ -538,6 +539,29 @@ io.sockets.on("connection", function(socket) {
       const jobParams = params.job || params;
       jobParams["checkOnly"] = true;
       new fubar.fubar(socket, null, jobParams);
+    },
+    resubscribe: function(params) {
+      new job.resubscribe(socket, params.id);
+    },
+    cancel: function(params) {
+      new job.cancel(socket, params.id);
+    }
+  });
+
+  // B-STILL
+  r.route("bstill", {
+    spawn: function(stream, params) {
+      const jobParams = params.job || params;
+      var jobWithTree = Object.assign({}, jobParams);
+      if (params.tree) {
+        jobWithTree.tree = params.tree;
+      }
+      new bstill.bstill(socket, stream, jobWithTree);
+    },
+    check: function(params) {
+      const jobParams = params.job || params;
+      jobParams["checkOnly"] = true;
+      new bstill.bstill(socket, null, jobParams);
     },
     resubscribe: function(params) {
       new job.resubscribe(socket, params.id);
