@@ -26,7 +26,7 @@
     "tail": "0.4.x",
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
-    "underscore": "1.11.x",
+    "underscore": "1.13.x",
     "winston": "^3.8.2"
   },
   "devDependencies": {
