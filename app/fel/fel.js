@@ -79,6 +79,12 @@ var fel = function (socket, stream, params) {
       self.rate_variation = self.params.rate_variation || "No";
       self.ci = self.params.ci || "No";
     }
+
+    // If we have a tagged tree with {FG} annotations, use Foreground branches
+    if (self.nwk_tree && self.nwk_tree.indexOf("{FG}") !== -1 && self.branches === "All") {
+      logger.info(`FEL job: Tagged tree contains {FG} annotations, setting branches to Foreground`);
+      self.branches = "FG";
+    }
     
     // parameter-derived attributes
     self.fn = __dirname + "/output/" + self.id;

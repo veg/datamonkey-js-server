@@ -68,6 +68,11 @@ var absrel = function(socket, stream, params) {
       self.srv = analysisParams.srv || "Yes";
       self.blb = analysisParams.blb || 1.0;
       self.branches = analysisParams.branches || "All";
+      // If we have a tagged tree with {FG} annotations, use Foreground branches
+      if (self.nwk && self.nwk.indexOf("{FG}") !== -1 && self.branches === "All") {
+        logger.info(`ABSREL job: Tagged tree contains {FG} annotations, setting branches to Foreground`);
+        self.branches = "FG";
+      }
     } else {
       self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk = self.params.nwk_tree || self.params.tree || "";
@@ -75,6 +80,11 @@ var absrel = function(socket, stream, params) {
       self.srv = self.params.srv || "Yes";
       self.blb = self.params.blb || 1.0;
       self.branches = self.params.branches || "All";
+      // If we have a tagged tree with {FG} annotations, use Foreground branches
+      if (self.nwk && self.nwk.indexOf("{FG}") !== -1 && self.branches === "All") {
+        logger.info(`ABSREL job: Tagged tree contains {FG} annotations, setting branches to Foreground`);
+        self.branches = "FG";
+      }
     }
     
     // parameter-derived attributes
