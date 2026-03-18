@@ -35,6 +35,15 @@ RESULTS_FN=$fn.ABSREL.json
 GENETIC_CODE=$genetic_code
 PROCS=$procs
 
+# Detect {FG} annotations in tree file to determine branch selection
+if grep -q '{FG}' "$TREE_FN" 2>/dev/null; then
+  BRANCHES="FG"
+  echo "Detected {FG} annotations in tree, using --branches FG"
+else
+  BRANCHES="All"
+  echo "No {FG} annotations in tree, using --branches $BRANCHES"
+fi
+
 HYPHY=$CWD/../../.hyphy/HYPHYMPI
 HYPHY_PATH=$CWD/../../.hyphy/res/
 export HYPHY_PATH=$HYPHY_PATH
@@ -64,20 +73,20 @@ if [ -n "$SLURM_JOB_ID" ]; then
   
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> $PROGRESS_FILE
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> $PROGRESS_FILE"
     export TOLERATE_NUMERICAL_ERRORS=1
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> $PROGRESS_FILE
   fi
 else
   # Using mpirun for non-SLURM environments
-  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE"
+  echo "mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH -z ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> $PROGRESS_FILE"
   export TOLERATE_NUMERICAL_ERRORS=1
-  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches All --output $RESULTS_FN >> $PROGRESS_FILE
+  mpirun -np $PROCS $HYPHY LIBPATH=$HYPHY_PATH $HYPHY_PATH/TemplateBatchFiles/SelectionAnalyses/aBSREL.bf --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --output $RESULTS_FN >> $PROGRESS_FILE
 fi
 
 echo "Completed" > $STATUS_FILE
