@@ -13,7 +13,8 @@
     "test-flea": "mocha -R spec ./tests/flea/flea.js",
     "test-jobs": "mocha -R spec ./tests/*.js",
     "test-hivtrace": "mocha -R spec ./tests/hivtrace/hivtrace.js",
-    "test-busted": "mocha -R spec ./tests/busted/busted.js"
+    "test-busted": "mocha -R spec ./tests/busted/busted.js",
+    "test-mcp": "mocha -R spec ./test/mcp/mcp.test.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
