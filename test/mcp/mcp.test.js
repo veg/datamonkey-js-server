@@ -5,6 +5,9 @@ const expect = chai.expect;
 const spawnHelpers = require("../../lib/mcp/spawn-helpers");
 const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
 const { registerTools } = require("../../lib/mcp/tools");
+const { registerPrompts } = require("../../lib/mcp/prompts");
+const { registerResources, METHOD_KEYS } = require("../../lib/mcp/resources");
+const validation = require("../../lib/mcp/validation");
 
 // ── Mock Redis ────────────────────────────────────────────────────────
 function createMockRedis(store) {
@@ -345,14 +348,350 @@ describe("MCP tools – spawn_analysis", function () {
     expect(parsed.analysis_type).to.equal("fel");
   });
 
-  it("returns isError for invalid analysis type", async function () {
+  it("returns isError for alignment with single sequence", async function () {
     var result = await callTool(mcpServer, "spawn_analysis", {
-      analysis_type: "absrel",  // valid enum value but we'll test the error path
+      analysis_type: "absrel",
       alignment: ">seq1\nATG"
     });
-    // This should succeed since absrel is valid — test a truly invalid one
-    // The zod enum validation will reject it before it reaches our handler,
-    // so we test the spawnAnalysis error path separately
+    // Validation now rejects single-sequence alignments
+    expect(result.isError).to.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.error).to.include("Alignment validation failed");
+  });
+});
+
+// =====================================================================
+// Suite 7: Prompts
+// =====================================================================
+describe("MCP prompts", function () {
+  var mcpServer;
+
+  before(function () {
+    mcpServer = new McpServer(
+      { name: "test", version: "1.0.0" },
+      { capabilities: { prompts: {} } }
+    );
+    registerPrompts(mcpServer);
+  });
+
+  it("registers all 4 prompts", function () {
+    var names = Object.keys(mcpServer._registeredPrompts);
+    expect(names).to.include("choose-method");
+    expect(names).to.include("run-busted");
+    expect(names).to.include("run-relax");
+    expect(names).to.include("interpret-results");
+    expect(names).to.have.lengthOf(4);
+  });
+
+  it("choose-method returns messages array with method guidance", async function () {
+    var prompt = mcpServer._registeredPrompts["choose-method"];
+    var result = await prompt.callback({});
+    expect(result).to.have.property("messages").that.is.an("array");
+    expect(result.messages.length).to.be.greaterThan(0);
+    var text = result.messages[0].content.text;
+    expect(text).to.include("BUSTED");
+    expect(text).to.include("RELAX");
+    expect(text).to.include("FEL");
+  });
+
+  it("run-busted mentions p-value and foreground branches", async function () {
+    var prompt = mcpServer._registeredPrompts["run-busted"];
+    var result = await prompt.callback({ has_foreground_branches: "yes" });
+    var text = result.messages[0].content.text;
+    expect(text).to.include("p-value");
+    expect(text).to.include("foreground");
+  });
+
+  it("run-relax mentions TEST and REFERENCE labels", async function () {
+    var prompt = mcpServer._registeredPrompts["run-relax"];
+    var result = await prompt.callback({
+      test_branch_label: "TEST",
+      reference_branch_label: "REFERENCE"
+    });
+    var text = result.messages[0].content.text;
+    expect(text).to.include("TEST");
+    expect(text).to.include("REFERENCE");
+    expect(text).to.include("relax");
+  });
+
+  it("interpret-results returns method-specific guidance", async function () {
+    var prompt = mcpServer._registeredPrompts["interpret-results"];
+    var result = await prompt.callback({ method: "busted" });
+    var text = result.messages[0].content.text;
+    expect(text).to.include("BUSTED");
+    expect(text).to.include("p-value");
+  });
+});
+
+// =====================================================================
+// Suite 8: Resources
+// =====================================================================
+describe("MCP resources", function () {
+  var mcpServer;
+
+  before(function () {
+    mcpServer = new McpServer(
+      { name: "test", version: "1.0.0" },
+      { capabilities: { resources: {} } }
+    );
+    registerResources(mcpServer);
+  });
+
+  it("registers static resources", function () {
+    var uris = Object.keys(mcpServer._registeredResources);
+    expect(uris).to.include("datamonkey://methods/comparison");
+    expect(uris).to.include("datamonkey://methods/requirements");
+  });
+
+  it("comparison resource returns markdown table", async function () {
+    var resource = mcpServer._registeredResources["datamonkey://methods/comparison"];
+    var result = await resource.readCallback(new URL("datamonkey://methods/comparison"), {});
+    expect(result.contents).to.be.an("array").with.lengthOf(1);
+    var text = result.contents[0].text;
+    expect(text).to.include("aBSREL");
+    expect(text).to.include("BUSTED");
+    expect(text).to.include("HIV-TRACE");
+  });
+
+  it("requirements resource returns JSON with 18 methods", async function () {
+    var resource = mcpServer._registeredResources["datamonkey://methods/requirements"];
+    var result = await resource.readCallback(new URL("datamonkey://methods/requirements"), {});
+    var parsed = JSON.parse(result.contents[0].text);
+    expect(Object.keys(parsed)).to.have.lengthOf(18);
+    expect(parsed.relax.requires_branch_labels).to.be.true;
+    expect(parsed.hivtrace.requires_codon_alignment).to.be.false;
+  });
+
+  it("registers method-guide resource template", function () {
+    var templates = Object.keys(mcpServer._registeredResourceTemplates);
+    expect(templates).to.have.lengthOf(1);
+    expect(templates[0]).to.equal("method-guide");
+  });
+
+  it("method-guide template returns guide for known method", async function () {
+    var template = mcpServer._registeredResourceTemplates["method-guide"];
+    var result = await template.readCallback(
+      new URL("datamonkey://methods/busted/guide"),
+      { method_name: "busted" }
+    );
+    expect(result.contents).to.be.an("array").with.lengthOf(1);
+    var text = result.contents[0].text;
+    expect(text).to.include("BUSTED");
+    expect(text).to.include("spawn_analysis");
+  });
+
+  it("method-guide template handles unknown method gracefully", async function () {
+    var template = mcpServer._registeredResourceTemplates["method-guide"];
+    var result = await template.readCallback(
+      new URL("datamonkey://methods/nonexistent/guide"),
+      { method_name: "nonexistent" }
+    );
+    var text = result.contents[0].text;
+    expect(text).to.include("Unknown method");
+  });
+});
+
+// =====================================================================
+// Suite 9: Validation
+// =====================================================================
+describe("MCP validation", function () {
+
+  it("parseFasta parses valid FASTA", function () {
+    var fasta = ">seq1\nATGATGATG\n>seq2\nATGCTGATG\n";
+    var seqs = validation.parseFasta(fasta);
+    expect(seqs).to.have.lengthOf(2);
+    expect(seqs[0].name).to.equal("seq1");
+    expect(seqs[0].seq).to.equal("ATGATGATG");
+  });
+
+  it("validateAlignment passes for valid codon-aligned FASTA", function () {
+    var fasta = ">seq1\nATGATGATG\n>seq2\nATGCTGATG\n";
+    var result = validation.validateAlignment(fasta);
+    expect(result.valid).to.be.true;
+    expect(result.sequence_count).to.equal(2);
+    expect(result.errors).to.have.lengthOf(0);
+  });
+
+  it("validateAlignment warns for non-codon-frame sequences", function () {
+    var fasta = ">seq1\nATGATGA\n>seq2\nATGCTGA\n";
+    var result = validation.validateAlignment(fasta);
+    // Still valid at alignment level (warning, not error)
+    expect(result.valid).to.be.true;
+    expect(result.warnings.length).to.be.greaterThan(0);
+    expect(result.warnings[0]).to.include("not divisible by 3");
+  });
+
+  it("checkStopCodons detects internal stop codons", function () {
+    var seqs = [{ name: "seq1", seq: "ATGTAAATG" }]; // TAA at position 4
+    var result = validation.checkStopCodons(seqs);
+    expect(result.warnings.length).to.be.greaterThan(0);
+    expect(result.warnings[0]).to.include("internal stop codon");
+  });
+
+  it("validateAnalysisParams fails for RELAX without branch labels", function () {
+    var result = validation.validateAnalysisParams("relax", "((A:0.1,B:0.2):0.3,C:0.4);", {});
+    expect(result.valid).to.be.false;
+    expect(result.errors[0]).to.include("TEST");
+    expect(result.errors[0]).to.include("REFERENCE");
+  });
+
+  it("validateAnalysisParams passes for RELAX with proper labels", function () {
+    var tree = "((A:0.1,B:0.2){TEST}:0.3,(C:0.1,D:0.2){REFERENCE}:0.3);";
+    var result = validation.validateAnalysisParams("relax", tree, {});
+    expect(result.valid).to.be.true;
+    expect(result.errors).to.have.lengthOf(0);
+  });
+
+  it("validateAnalysisParams fails for Contrast-FEL with <2 groups", function () {
+    var tree = "((A:0.1,B:0.2){Group1}:0.3,C:0.4);";
+    var result = validation.validateAnalysisParams("cfel", tree, {});
+    expect(result.valid).to.be.false;
+    expect(result.errors[0]).to.include("2 distinct branch group labels");
+  });
+
+  it("validateAnalysisParams passes for Contrast-FEL with ≥2 groups", function () {
+    var tree = "((A:0.1,B:0.2){Group1}:0.3,(C:0.1,D:0.2){Group2}:0.3);";
+    var result = validation.validateAnalysisParams("cfel", tree, {});
+    expect(result.valid).to.be.true;
+  });
+
+  it("validateAnalysisParams passes for BUSTED with no branches (warning only)", function () {
+    var result = validation.validateAnalysisParams("busted", "((A:0.1,B:0.2):0.3,C:0.4);", {});
+    expect(result.valid).to.be.true;
+    expect(result.warnings.length).to.be.greaterThan(0);
+    expect(result.warnings[0]).to.include("foreground");
+  });
+
+  it("validateAlignment fails for empty input", function () {
+    var result = validation.validateAlignment("");
+    expect(result.valid).to.be.false;
+    expect(result.errors[0]).to.include("empty");
+  });
+
+  it("validateAlignment fails for single sequence", function () {
+    var result = validation.validateAlignment(">seq1\nATGATGATG\n");
+    expect(result.valid).to.be.false;
+    expect(result.errors[0]).to.include("at least 2");
+  });
+
+  it("extractBranchLabels extracts labels from Newick tree", function () {
+    var labels = validation.extractBranchLabels("((A,B){TEST},(C,D){REFERENCE});");
+    expect(labels).to.include("TEST");
+    expect(labels).to.include("REFERENCE");
+    expect(labels).to.have.lengthOf(2);
+  });
+});
+
+// =====================================================================
+// Suite 10: tools – validate_alignment
+// =====================================================================
+describe("MCP tools – validate_alignment", function () {
+  var mcpServer;
+  var mockRedis;
+
+  before(function () {
+    mockRedis = createMockRedis({});
+    mcpServer = new McpServer(
+      { name: "test", version: "1.0.0" },
+      { capabilities: { tools: {} } }
+    );
+    registerTools(mcpServer, mockRedis);
+  });
+
+  it("returns valid for good codon-aligned FASTA", async function () {
+    var result = await callTool(mcpServer, "validate_alignment", {
+      alignment: ">seq1\nATGATGATG\n>seq2\nATGCTGATG\n"
+    });
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.valid).to.be.true;
+    expect(parsed.sequence_count).to.equal(2);
+  });
+
+  it("returns isError for non-codon-frame with codon method", async function () {
+    var result = await callTool(mcpServer, "validate_alignment", {
+      alignment: ">seq1\nATGATGA\n>seq2\nATGCTGA\n",
+      analysis_type: "fel"
+    });
+    expect(result.isError).to.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.valid).to.be.false;
+    expect(parsed.errors.length).to.be.greaterThan(0);
+  });
+
+  it("returns isError for RELAX with untagged tree", async function () {
+    var result = await callTool(mcpServer, "validate_alignment", {
+      alignment: ">seq1\nATGATGATG\n>seq2\nATGCTGATG\n",
+      analysis_type: "relax",
+      tree: "((A:0.1,B:0.2):0.3,C:0.4);"
+    });
+    expect(result.isError).to.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.errors.length).to.be.greaterThan(0);
+    expect(parsed.errors[0]).to.include("TEST");
+  });
+});
+
+// =====================================================================
+// Suite 11: tools – spawn_analysis with validation
+// =====================================================================
+describe("MCP tools – spawn_analysis with validation", function () {
+  var mcpServer;
+  var mockRedis;
+  var originalSpawnAnalysis;
+
+  before(function () {
+    mockRedis = createMockRedis({});
+    mcpServer = new McpServer(
+      { name: "test", version: "1.0.0" },
+      { capabilities: { tools: {} } }
+    );
+
+    originalSpawnAnalysis = spawnHelpers.spawnAnalysis;
+    spawnHelpers.spawnAnalysis = function (type) {
+      if (!spawnHelpers.analysisMap[type]) {
+        throw new Error("Unknown analysis type: " + type);
+      }
+      return "deadbeef5678";
+    };
+
+    registerTools(mcpServer, mockRedis);
+  });
+
+  after(function () {
+    spawnHelpers.spawnAnalysis = originalSpawnAnalysis;
+  });
+
+  it("rejects RELAX with untagged tree", async function () {
+    var result = await callTool(mcpServer, "spawn_analysis", {
+      analysis_type: "relax",
+      alignment: ">seq1\nATGATGATG\n>seq2\nATGCTGATG\n",
+      tree: "((A:0.1,B:0.2):0.3,C:0.4);"
+    });
+    expect(result.isError).to.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.error).to.include("Parameter validation failed");
+  });
+
+  it("includes warnings for BUSTED without foreground branches", async function () {
+    var result = await callTool(mcpServer, "spawn_analysis", {
+      analysis_type: "busted",
+      alignment: ">seq1\nATGATGATG\n>seq2\nATGCTGATG\n",
+      tree: "((A:0.1,B:0.2):0.3,C:0.4);"
+    });
     expect(result.isError).to.not.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.job_id).to.equal("deadbeef5678");
+    expect(parsed.warnings).to.be.an("array");
+    expect(parsed.warnings.length).to.be.greaterThan(0);
+  });
+
+  it("rejects empty alignment", async function () {
+    var result = await callTool(mcpServer, "spawn_analysis", {
+      analysis_type: "fel",
+      alignment: ""
+    });
+    expect(result.isError).to.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.error).to.include("Alignment validation failed");
   });
 });
