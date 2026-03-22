@@ -267,6 +267,13 @@ var meme = function (socket, stream, params) {
       logger.warn(`MEME job ${self.id}: self.params.analysis.msa structure is missing.`);
     }
 
+    // Sanitize tree node names for Newick compatibility
+    self.selectedTree = utilities.sanitizeTreeNodeNames(self.selectedTree);
+    // Sanitize FASTA names to match tree node names
+    if (self.stream && typeof self.stream === 'string') {
+      self.stream = utilities.sanitizeFastaNames(self.stream);
+    }
+
     // Ensure output directory exists BEFORE writing files
     logger.info(`MEME job ${self.id}: Ensuring output directory exists at ${self.output_dir}`);
     utilities.ensureDirectoryExists(self.output_dir);

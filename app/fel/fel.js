@@ -246,6 +246,13 @@ var fel = function (socket, stream, params) {
 
   // Skip file operations for check-only mode
   if (!isCheckOnly) {
+    // Sanitize tree node names for Newick compatibility
+    self.nwk_tree = utilities.sanitizeTreeNodeNames(self.nwk_tree);
+    // Sanitize FASTA names to match tree node names
+    if (self.stream && typeof self.stream === 'string') {
+      self.stream = utilities.sanitizeFastaNames(self.stream);
+    }
+
     // Write tree to a file
     logger.info(`FEL job ${self.id}: Writing tree file to ${self.tree_fn}`, {
       tree_content: self.nwk_tree ? (self.nwk_tree.length > 100 ? self.nwk_tree.substring(0, 100) + "..." : self.nwk_tree) : "null"
