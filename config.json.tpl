@@ -48,5 +48,6 @@
   "difFubar_nodes"         : "1",
   "difFubar_memory"        : "32GB",
   "julia_path"             : "/usr/local/bin/julia",
-  "julia_project"          : "./.julia_env"
+  "julia_project"          : "./.julia_env",
+  "mcp_port"               : 7016
 }

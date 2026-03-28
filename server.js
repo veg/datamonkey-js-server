@@ -646,4 +646,8 @@ io.sockets.on("connection", function(socket) {
 
 
 
+// Start MCP server on separate port
+var mcp = require("./lib/mcp");
+mcp.startMcpServer(config, client);
+
 process.setMaxListeners(0);
