@@ -29,11 +29,11 @@ else
 fi
 
 # Make sure UCX libraries are available - these paths are critical for the MPI support
-export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib:$LD_LIBRARY_PATH:/usr/lib64
+export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib:$LD_LIBRARY_PATH:/usr/lib64
 
 # Print library paths and attempt to verify UCX is available
 echo "LD_LIBRARY_PATH after adjustment: $LD_LIBRARY_PATH"
-ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
+ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
 
 # The first step doesn't use MPI, so use HYPHYMP for it
 (echo $1; echo $2) | HYPHYMP USEPATH=$ABS_DIR/Analyses/PRIME/ ${BASEPATH}PRIME_DOWNLOAD.bf >  ${BASEPATH}hpout 2>&1
@@ -45,19 +45,21 @@ ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib/libucp.so* 2>&1 || echo "UCX librari
 HYPHY_MPI=HYPHYMPI
 HYPHY_NON_MPI=HYPHYMP
 
-# We don't need the MPI_COMMAND variable anymore as we're using direct commands
+# Using SLURM srun with MPI or mpirun for local
 if [ -n "$SLURM_JOB_ID" ]; then
   echo "Running under SLURM with job ID: $SLURM_JOB_ID"
   MPI_TYPE="${slurm_mpi_type:-pmix}"
   echo "Using MPI type: $MPI_TYPE"
-  
-  # Try the non-MPI version as a fallback since we're having library issues with MPI
-  if [ -x "$(command -v $HYPHY_NON_MPI)" ]; then
-    echo "Using non-MPI HYPHY as fallback: $HYPHY_NON_MPI"
+
+  if [ -x "$(command -v $HYPHY_MPI)" ]; then
+    echo "Using MPI HYPHY: $HYPHY_MPI"
+    (echo $1; echo $3; echo 0; echo $4; echo 1; echo $2;) | srun --mpi=$MPI_TYPE -n 4 $HYPHY_MPI ${BASEPATH}PRIME.bf > ${BASEPATH}hpout 2>&1
+  elif [ -x "$(command -v $HYPHY_NON_MPI)" ]; then
+    echo "HYPHYMPI not found, falling back to non-MPI HYPHY: $HYPHY_NON_MPI"
     (echo $1; echo $3; echo 0; echo $4; echo 1; echo $2;) | $HYPHY_NON_MPI ${BASEPATH}PRIME.bf > ${BASEPATH}hpout 2>&1
   else
-    echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    (echo $1; echo $3; echo 0; echo $4; echo 1; echo $2;) | srun --mpi=$MPI_TYPE -n 4 $HYPHY_MPI ${BASEPATH}PRIME.bf > ${BASEPATH}hpout 2>&1
+    echo "Error: No HYPHY executable found" >&2
+    exit 1
   fi
 else
   # Using mpirun for non-SLURM environments, with a smaller process count (was 193)

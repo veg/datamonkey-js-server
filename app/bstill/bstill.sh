@@ -63,6 +63,13 @@ else
   echo "Module system not available, using system environment"
 fi
 
+# Make sure UCX libraries are available - these paths are critical for the MPI support
+export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib:$LD_LIBRARY_PATH:/usr/lib64
+
+# Print library paths and attempt to verify UCX is available
+echo "LD_LIBRARY_PATH after adjustment: $LD_LIBRARY_PATH"
+ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
+
 FN=$fn
 CWD=$cwd
 TREE_FN=$tree_fn
@@ -77,11 +84,17 @@ EBF="${ebf:-10}"
 RADIUS_THRESHOLD="${radius_threshold:-0.5}"
 PROCS=${procs:-1}
 
+# Set HYPHY executable - prefer regular hyphy for local execution
 HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
 HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
 HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
 
-if [ -f "$HYPHY_NON_MPI" ]; then
+# Check which HYPHY version to use
+# Prefer MPI for SLURM jobs, non-MPI for local execution
+if [ -n "$SLURM_JOB_ID" ] && [ -f "$HYPHY_MPI" ]; then
+  HYPHY=$HYPHY_MPI
+  echo "Using MPI HYPHY: $HYPHY"
+elif [ -f "$HYPHY_NON_MPI" ]; then
   HYPHY=$HYPHY_NON_MPI
   echo "Using non-MPI HYPHY: $HYPHY"
 elif [ -f "$HYPHY_REGULAR" ]; then
@@ -122,15 +135,29 @@ else
 fi
 
 if [ -n "$SLURM_JOB_ID" ]; then
-  echo "Using SLURM execution: $HYPHY"
+  # Using SLURM srun with MPI
+  HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
+  HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN >> \"$PROGRESS_FILE\""
-  srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method "$METHOD" --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN >> "$PROGRESS_FILE"
+
+  if [ -f "$HYPHY_MPI" ]; then
+    echo "Using MPI HYPHY: $HYPHY_MPI"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY_MPI LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY_MPI LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method "$METHOD" --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > "$PROGRESS_FILE"
+  elif [ -f "$HYPHY_NON_MPI" ]; then
+    echo "HYPHYMPI not found, falling back to non-MPI HYPHY: $HYPHY_NON_MPI"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method "$METHOD" --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > "$PROGRESS_FILE"
+  else
+    echo "Error: No HYPHY executable found" >&2
+    echo "Error" > "$STATUS_FILE"
+    exit 1
+  fi
 else
   echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "$HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN >> \"$PROGRESS_FILE\""
-  $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method "$METHOD" --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN >> "$PROGRESS_FILE"
+  echo "$HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method "$METHOD" --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > "$PROGRESS_FILE"
 fi
 
 echo "Completed" > "$STATUS_FILE"

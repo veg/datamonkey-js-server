@@ -75,11 +75,11 @@ else
 fi
 
 # Make sure UCX libraries are available - these paths are critical for the MPI support
-export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib:$LD_LIBRARY_PATH:/usr/lib64
+export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib:$LD_LIBRARY_PATH:/usr/lib64
 
 # Print library paths and attempt to verify UCX is available
 echo "LD_LIBRARY_PATH after adjustment: $LD_LIBRARY_PATH"
-ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
+ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
 
 FN=$fn
 CWD=$cwd
@@ -102,8 +102,11 @@ HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
 HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
 
 # Check which HYPHY version to use
-# Always use non-MPI version for datamonkey jobs
-if [ -f "$HYPHY_NON_MPI" ]; then
+# Prefer MPI for SLURM jobs, non-MPI for local execution
+if [ -n "$SLURM_JOB_ID" ] && [ -f "$HYPHY_MPI" ]; then
+  HYPHY=$HYPHY_MPI
+  echo "Using MPI HYPHY: $HYPHY"
+elif [ -f "$HYPHY_NON_MPI" ]; then
   HYPHY=$HYPHY_NON_MPI
   echo "Using non-MPI HYPHY: $HYPHY"
 elif [ -f "$HYPHY_REGULAR" ]; then
@@ -147,29 +150,30 @@ echo "OMEGA_RATE_CLASSES: '$OMEGA_RATE_CLASSES'"
 echo "KZERO: '$KZERO'"
 
 if [ -n "$SLURM_JOB_ID" ]; then
-  # Using SLURM srun with dedicated arguments
-  # Try the non-MPI version as a fallback since we're having library issues with MPI
-  echo "Running HYPHY in non-MPI mode as a fallback due to library issues..."
-  
+  # Using SLURM srun with MPI
+  HYPHY_MPI=$CWD/../../.hyphy/HYPHYMPI
   HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
-  
-  if [ -f "$HYPHY_NON_MPI" ]; then
-    echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
-    export TOLERATE_NUMERICAL_ERRORS=1
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
+  export TOLERATE_NUMERICAL_ERRORS=1
+
+  if [ -f "$HYPHY_MPI" ]; then
+    echo "Using MPI HYPHY: $HYPHY_MPI"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > "$PROGRESS_FILE"
+  elif [ -f "$HYPHY_NON_MPI" ]; then
+    echo "HYPHYMPI not found, falling back to non-MPI HYPHY: $HYPHY_NON_MPI"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > "$PROGRESS_FILE"
   else
-    echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    export TOLERATE_NUMERICAL_ERRORS=1
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
+    echo "Error: No HYPHY executable found" >&2
+    echo "Error" > "$STATUS_FILE"
+    exit 1
   fi
 else
   # For local execution, use the HYPHY executable determined above
   echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "$HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> \"$PROGRESS_FILE\""
-  $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE >> "$PROGRESS_FILE"
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode \"$MODE\" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models \"$MODELS\" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH $RELAX --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --mode "$MODE" --test $TEST_BRANCHES --reference $REFERENCE_BRANCHES --models "$MODELS" --rates $OMEGA_RATE_CLASSES --kill-zero-lengths $KZERO --output $RESULT_FILE > "$PROGRESS_FILE"
 fi
 
 echo "Completed" > "$STATUS_FILE"
