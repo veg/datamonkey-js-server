@@ -81,11 +81,11 @@ else
 fi
 
 # Make sure UCX libraries are available - these paths are critical for the MPI support
-export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib:$LD_LIBRARY_PATH:/usr/lib64
+export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib:$LD_LIBRARY_PATH:/usr/lib64
 
 # Print library paths and attempt to verify UCX is available
 echo "LD_LIBRARY_PATH after adjustment: $LD_LIBRARY_PATH"
-ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
+ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
 
 FN=$fn
 CWD=$cwd
@@ -161,20 +161,20 @@ then
     if [ -f "$HYPHY_NON_MPI" ]; then
       echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
       export TOLERATE_NUMERICAL_ERRORS=1
-      echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE""
-      $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE"
+      echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE""
+      $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE"
     else
       echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
       export TOLERATE_NUMERICAL_ERRORS=1
-      echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE""
-      srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE"
+      echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE""
+      srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE"
     fi
   else
     # For local execution, use the HYPHY executable determined above
     echo "Using local HYPHY execution: $HYPHY"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "$HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> \"$PROGRESS_FILE\""
-    $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE"
+    echo "$HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > \"$PROGRESS_FILE\""
+    $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --resample $RESAMPLE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE"
   fi
 else
   echo "Running without bootstrap"
@@ -188,20 +188,20 @@ else
     if [ -f "$HYPHY_NON_MPI" ]; then
       echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
       export TOLERATE_NUMERICAL_ERRORS=1
-      echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE""
-      $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE"
+      echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE""
+      $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE"
     else
       echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
       export TOLERATE_NUMERICAL_ERRORS=1
-      echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE""
-      srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE"
+      echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE""
+      srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE"
     fi
   else
     # For local execution, use the HYPHY executable determined above
     echo "Using local HYPHY execution: $HYPHY"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "$HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> \"$PROGRESS_FILE\""
-    $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT >> "$PROGRESS_FILE"
+    echo "$HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > \"$PROGRESS_FILE\""
+    $HYPHY LIBPATH=$HYPHY_PATH $FEL --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --branches $BRANCHES --srv $RATE_VARIATION --output $RESULTS_FILE --ci $CI --multiple-hits $MULTIPLE_HITS --site-multihit $SITE_MULTIHIT > "$PROGRESS_FILE"
   fi
 fi
 
