@@ -1,7 +1,7 @@
 {
   "name": "datamonkey-js-server",
   "description": "",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "engines": {
     "node": ">=13"
   },
@@ -13,10 +13,13 @@
     "test-flea": "mocha -R spec ./tests/flea/flea.js",
     "test-jobs": "mocha -R spec ./tests/*.js",
     "test-hivtrace": "mocha -R spec ./tests/hivtrace/hivtrace.js",
-    "test-busted": "mocha -R spec ./tests/busted/busted.js"
+    "test-busted": "mocha -R spec ./tests/busted/busted.js",
+    "test-mcp": "mocha -R spec ./test/mcp/mcp.test.js"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "commander": "^6.0.0",
+    "express": "^5.2.1",
     "moment": "2.x.x",
     "moment-timezone": "0.5.37",
     "q": "^1.2.1",
@@ -27,10 +30,11 @@
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
     "underscore": "1.11.x",
-    "winston": "^3.8.2"
+    "winston": "^3.8.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "chai": "^5.2.1",
+    "chai": "^4.3.7",
     "eslint": "^7.32.0",
     "mocha": "^11.7.1",
     "socket.io-client": "^4.5.4",
