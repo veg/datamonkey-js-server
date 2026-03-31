@@ -215,6 +215,13 @@ var slac = function (socket, stream, params) {
 
   // Skip file operations for check-only mode
   if (!isCheckOnly) {
+    // Sanitize tree node names for Newick compatibility
+    self.nj = utilities.sanitizeTreeNodeNames(self.nj);
+    // Sanitize FASTA names to match tree node names
+    if (self.stream && typeof self.stream === 'string') {
+      self.stream = utilities.sanitizeFastaNames(self.stream);
+    }
+
     // Write tree to a file
     logger.info(`SLAC job ${self.id}: Writing tree file to ${self.tree_fn}`, {
       tree_content: self.nj ? (self.nj.length > 100 ? self.nj.substring(0, 100) + "..." : self.nj) : "null"
