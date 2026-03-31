@@ -33,6 +33,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+      - name: Create config.json
+        run: |
+          echo '{"port":7015,"redis_host":"localhost","redis_port":6379,"loglevel":"info","submit_type":"local","mcp_port":7016}' > config.json
+
       - name: Install dependencies
         run: npm install
 
