@@ -34,7 +34,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "chai": "^5.2.1",
+    "chai": "^4.3.7",
     "eslint": "^7.32.0",
     "mocha": "^11.7.1",
     "socket.io-client": "^4.5.4",
