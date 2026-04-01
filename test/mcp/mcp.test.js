@@ -66,7 +66,7 @@ describe("MCP spawn-helpers", function () {
       var info = spawnHelpers.analysisInfo[key];
       expect(info).to.have.property("name").that.is.a("string");
       expect(info).to.have.property("description").that.is.a("string");
-      expect(info).to.have.property("params").that.is.an("array");
+      expect(info).to.have.property("params").that.is.an("object");
     });
   });
 
