@@ -81,6 +81,66 @@ describe("MCP spawn-helpers", function () {
       spawnHelpers.spawnAnalysis("nonexistent", "ACGT", null, {});
     }).to.throw("Unknown analysis type: nonexistent");
   });
+
+  it("spawnAnalysis passes tree as usertree for MEME (issue #367)", function () {
+    // Mock fs to prevent actual file writes
+    var fs = require("fs");
+    var originalWriteFile = fs.writeFile;
+    var originalOpenSync = fs.openSync;
+    var writtenData = {};
+    fs.writeFile = function (path, data, callback) {
+      writtenData[path] = data;
+      if (callback) callback();
+    };
+    fs.openSync = function () { return 1; };
+
+    var tree = "((Human:0.01,Chimp:0.01):0.02,Gorilla:0.03);";
+    var alignment = ">Human\nATGATGATGATG\n>Chimp\nATGATGATGATG\n>Gorilla\nATGATGATGCTG\n";
+
+    try {
+      var jobId = spawnHelpers.spawnAnalysis("meme", alignment, tree, {});
+      expect(jobId).to.be.a("string").with.length.above(0);
+
+      // Verify the tree was written (not undefined)
+      var treeFiles = Object.keys(writtenData).filter(function (k) { return k.endsWith(".tre"); });
+      expect(treeFiles.length).to.equal(1, "Should write exactly one .tre file");
+      var writtenTree = writtenData[treeFiles[0]];
+      expect(writtenTree).to.be.a("string", "Tree data should be a string, not undefined");
+      expect(writtenTree).to.include("Human");
+    } finally {
+      fs.writeFile = originalWriteFile;
+      fs.openSync = originalOpenSync;
+    }
+  });
+
+  it("spawnAnalysis passes tree to msa[0].nj for SLAC/PRIME (issue #367)", function () {
+    var fs = require("fs");
+    var originalWriteFile = fs.writeFile;
+    var originalOpenSync = fs.openSync;
+    var writtenData = {};
+    fs.writeFile = function (path, data, callback) {
+      writtenData[path] = data;
+      if (callback) callback();
+    };
+    fs.openSync = function () { return 1; };
+
+    var tree = "((Human:0.01,Chimp:0.01):0.02,Gorilla:0.03);";
+    var alignment = ">Human\nATGATGATGATG\n>Chimp\nATGATGATGATG\n>Gorilla\nATGATGATGCTG\n";
+
+    try {
+      var jobId = spawnHelpers.spawnAnalysis("slac", alignment, tree, {});
+      expect(jobId).to.be.a("string").with.length.above(0);
+
+      var treeFiles = Object.keys(writtenData).filter(function (k) { return k.endsWith(".tre"); });
+      expect(treeFiles.length).to.equal(1, "Should write exactly one .tre file");
+      var writtenTree = writtenData[treeFiles[0]];
+      expect(writtenTree).to.be.a("string", "Tree data should be a string, not undefined");
+      expect(writtenTree).to.include("Human");
+    } finally {
+      fs.writeFile = originalWriteFile;
+      fs.openSync = originalOpenSync;
+    }
+  });
 });
 
 // =====================================================================

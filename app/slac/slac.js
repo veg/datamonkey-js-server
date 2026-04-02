@@ -215,8 +215,24 @@ var slac = function (socket, stream, params) {
 
   // Skip file operations for check-only mode
   if (!isCheckOnly) {
+    // Determine the tree to use — prefer usertree over NJ tree
+    self.selectedTree = self.nj;
+
+    if (
+      self.params &&
+      self.params.analysis &&
+      self.params.analysis.msa &&
+      typeof self.params.analysis.msa === "object"
+    ) {
+      const msa = self.params.analysis.msa[0];
+
+      if (msa && msa.usertree && msa.usertree.trim()) {
+        self.selectedTree = msa.usertree;
+      }
+    }
+
     // Sanitize tree node names for Newick compatibility
-    self.nj = utilities.sanitizeTreeNodeNames(self.nj);
+    self.selectedTree = utilities.sanitizeTreeNodeNames(self.selectedTree);
     // Sanitize FASTA names to match tree node names
     if (self.stream && typeof self.stream === 'string') {
       self.stream = utilities.sanitizeFastaNames(self.stream);
@@ -224,9 +240,9 @@ var slac = function (socket, stream, params) {
 
     // Write tree to a file
     logger.info(`SLAC job ${self.id}: Writing tree file to ${self.tree_fn}`, {
-      tree_content: self.nj ? (self.nj.length > 100 ? self.nj.substring(0, 100) + "..." : self.nj) : "null"
+      tree_content: self.selectedTree ? (self.selectedTree.length > 100 ? self.selectedTree.substring(0, 100) + "..." : self.selectedTree) : "null"
     });
-    fs.writeFile(self.tree_fn, self.nj, function (err) {
+    fs.writeFile(self.tree_fn, self.selectedTree, function (err) {
       if (err) {
         logger.error(`SLAC job ${self.id}: Error writing tree file: ${err.message}`);
         throw err;
