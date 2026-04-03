@@ -1,13 +1,15 @@
 const chai = require("chai");
 const expect = chai.expect;
+const path = require("path");
 
 // We need to grab the internal exports for unit testing
 const spawnHelpers = require("../../lib/mcp/spawn-helpers");
 const { McpServer } = require("@modelcontextprotocol/sdk/server/mcp.js");
-const { registerTools } = require("../../lib/mcp/tools");
+const { registerTools, TOOL_NAMES } = require("../../lib/mcp/tools");
 const { registerPrompts } = require("../../lib/mcp/prompts");
 const { registerResources, METHOD_KEYS } = require("../../lib/mcp/resources");
 const validation = require("../../lib/mcp/validation");
+const pkg = require("../../package.json");
 
 // ── Mock Redis ────────────────────────────────────────────────────────
 function createMockRedis(store) {
@@ -37,6 +39,25 @@ async function callTool(mcpServer, name, args) {
   if (!tool) throw new Error("Tool not registered: " + name);
   return tool.handler(args || {});
 }
+
+// =====================================================================
+// Suite 0: MCP manifest and TOOL_NAMES
+// =====================================================================
+describe("MCP manifest (.well-known/mcp.json)", function () {
+  it("TOOL_NAMES matches the tools registered in registerTools", function () {
+    expect(TOOL_NAMES).to.be.an("array").with.length.above(0);
+    expect(TOOL_NAMES).to.include("list_analyses");
+    expect(TOOL_NAMES).to.include("spawn_analysis");
+    expect(TOOL_NAMES).to.include("get_job_status");
+    expect(TOOL_NAMES).to.include("get_job_results");
+    expect(TOOL_NAMES).to.include("validate_alignment");
+    expect(TOOL_NAMES).to.include("cancel_job");
+  });
+
+  it("version from package.json is a valid semver string", function () {
+    expect(pkg.version).to.match(/^\d+\.\d+\.\d+/);
+  });
+});
 
 // =====================================================================
 // Suite 1: spawn-helpers
