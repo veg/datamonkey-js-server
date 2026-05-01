@@ -116,7 +116,7 @@ var meme = function (socket, stream, params) {
       "analysis_type=" + self.type,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
-      "procs=" + (config.meme_procs || 1)
+      "procs=" + (config.meme_procs || 4)
     ];
   } else if (config.submit_type === "slurm") {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
@@ -138,7 +138,7 @@ var meme = function (socket, stream, params) {
     console.log(`Converted walltime from ${config.meme_walltime} to SLURM format: ${slurmTime}`);
     
     self.qsub_params = [
-      `--ntasks=${config.meme_procs}`,                      // Use multiple tasks for MPI
+      `--ntasks=${config.meme_procs || 4}`,                      // Use multiple tasks for MPI
       "--cpus-per-task=1",                                  // One CPU per task for MPI
       `--time=${slurmTime}`,                                // Converted time limit
       `--partition=${config.slurm_partition || "datamonkey"}`,    // Use configured partition

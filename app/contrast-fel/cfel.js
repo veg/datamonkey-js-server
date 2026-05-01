@@ -123,7 +123,7 @@ var cfel = function(socket, stream, params) {
       "analysis_type=" + self.type,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
-      "procs=" + (config.cfel_procs || 1)
+      "procs=" + (config.cfel_procs || 4)
     ];
   } else if (config.submit_type === "slurm") {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
@@ -145,7 +145,7 @@ var cfel = function(socket, stream, params) {
     console.log(`Converted walltime from ${config.cfel_walltime} to SLURM format: ${slurmTime}`);
     
     self.qsub_params = [
-      `--ntasks=${config.cfel_procs}`,                       // Use multiple tasks for MPI
+      `--ntasks=${config.cfel_procs || 4}`,                       // Use multiple tasks for MPI
       "--cpus-per-task=1",                                  // One CPU per task for MPI
       `--time=${slurmTime}`,                                // Converted time limit
       `--partition=${config.slurm_partition || "datamonkey"}`,    // Use configured partition

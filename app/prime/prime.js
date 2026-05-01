@@ -99,7 +99,7 @@ var prime = function (socket, stream, params) {
       "analysis_type=" + self.type,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
-      "procs=" + (config.prime_procs || 1),
+      "procs=" + (config.prime_procs || 4),
       "branches=" + self.branches,
       "property_set=" + self.property_set,
       "pvalue=" + self.pvalue,
@@ -123,7 +123,7 @@ var prime = function (socket, stream, params) {
     console.log(`Converted walltime from ${config.prime_walltime} to SLURM format: ${slurmTime}`);
 
     self.qsub_params = [
-      `--ntasks=${config.prime_procs || 1}`,
+      `--ntasks=${config.prime_procs || 4}`,
       "--cpus-per-task=1",
       `--time=${slurmTime}`,
       `--partition=${config.slurm_partition || "datamonkey"}`,
@@ -150,7 +150,7 @@ var prime = function (socket, stream, params) {
       ",msaid=" +
       self.msaid +
       ",procs=" +
-      (config.prime_procs || 1) +
+      (config.prime_procs || 4) +
       ",branches=" +
       self.branches +
       ",property_set=" +
@@ -165,7 +165,7 @@ var prime = function (socket, stream, params) {
     ];
   } else {
     self.qsub_params = [
-      "-l walltime=" + (config.prime_walltime || "72:00:00:00") + ",nodes=1:ppn=" + (config.prime_procs || 1),
+      "-l walltime=" + (config.prime_walltime || "72:00:00:00") + ",nodes=1:ppn=" + (config.prime_procs || 4),
       "-q",
       config.qsub_queue,
       "-v",
@@ -188,7 +188,7 @@ var prime = function (socket, stream, params) {
         ",msaid=" +
         self.msaid +
         ",procs=" +
-        (config.prime_procs || 1) +
+        (config.prime_procs || 4) +
         ",branches=" +
         self.branches +
         ",property_set=" +

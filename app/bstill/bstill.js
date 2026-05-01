@@ -89,7 +89,7 @@ var bstill = function(socket, stream, params) {
       "method=" + self.method,
       "ebf=" + self.ebf,
       "radius_threshold=" + self.radius_threshold,
-      "procs=" + (config.bstill_procs || config.fubar_procs || 1)
+      "procs=" + (config.bstill_procs || config.fubar_procs || 4)
     ];
   } else if (config.submit_type === "slurm") {
     let slurmTime = "72:00:00";
@@ -106,7 +106,7 @@ var bstill = function(socket, stream, params) {
     }
 
     self.qsub_params = [
-      `--ntasks=${config.bstill_procs || config.fubar_procs}`,
+      `--ntasks=${config.bstill_procs || config.fubar_procs || 4}`,
       "--cpus-per-task=1",
       `--time=${slurmTime}`,
       `--partition=${config.slurm_partition || "datamonkey"}`,

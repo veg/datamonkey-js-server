@@ -170,7 +170,7 @@ var gard = function(socket, stream, params) {
     console.log(`Converted walltime from ${config.gard_walltime} to SLURM format: ${slurmTime}`);
     
     self.qsub_params = [
-      `--ntasks=${config.gard_procs}`,                       // Use multiple tasks for MPI
+      `--ntasks=${config.gard_procs || 4}`,                       // Use multiple tasks for MPI
       "--cpus-per-task=1",                                  // One CPU per task for MPI
       `--time=${slurmTime}`,                                // Converted time limit
       `--partition=${config.slurm_partition || "datamonkey"}`,    // Use configured partition
