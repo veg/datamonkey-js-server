@@ -114,7 +114,7 @@ var multihit = function(socket, stream, params) {
       "analysis_type=" + self.type,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
-      "procs=" + (config.multihit_procs || 1)
+      "procs=" + (config.multihit_procs || 4)
     ];
   } else if (config.submit_type === "slurm") {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
@@ -136,7 +136,7 @@ var multihit = function(socket, stream, params) {
     console.log(`Converted walltime from ${config.multihit_walltime} to SLURM format: ${slurmTime}`);
     
     self.qsub_params = [
-      `--ntasks=${config.multihit_procs || 1}`,                 // Use multiple tasks for MPI
+      `--ntasks=${config.multihit_procs || 4}`,                 // Use multiple tasks for MPI
       "--cpus-per-task=1",                                    // One CPU per task for MPI
       `--time=${slurmTime}`,                                  // Converted time limit
       `--partition=${config.slurm_partition || "datamonkey"}`,      // Use configured partition
@@ -144,14 +144,14 @@ var multihit = function(socket, stream, params) {
       "--export=ALL,slurm_mpi_type=" + 
       (config.slurm_mpi_type || "pmix") + 
       "," +
-      "fn=" + self.fn + ",tree_fn=" + self.tree_fn + ",sfn=" + self.status_fn + ",pfn=" + self.progress_fn + ",rfn=" + self.results_fn + ",treemode=" + self.treemode + ",genetic_code=" + self.genetic_code + ",rate_classes=" + self.rate_classes + ",triple_islands=" + self.triple_islands + ",branches=" + self.branches + ",analysis_type=" + self.type + ",cwd=" + __dirname + ",msaid=" + self.msaid + ",procs=" + (config.multihit_procs || 1),
+      "fn=" + self.fn + ",tree_fn=" + self.tree_fn + ",sfn=" + self.status_fn + ",pfn=" + self.progress_fn + ",rfn=" + self.results_fn + ",treemode=" + self.treemode + ",genetic_code=" + self.genetic_code + ",rate_classes=" + self.rate_classes + ",triple_islands=" + self.triple_islands + ",branches=" + self.branches + ",analysis_type=" + self.type + ",cwd=" + __dirname + ",msaid=" + self.msaid + ",procs=" + (config.multihit_procs || 4),
       `--output=${self.output_dir}/multihit_${self.id}_%j.out`,
       `--error=${self.output_dir}/multihit_${self.id}_%j.err`,
       self.qsub_script
     ];
   } else {
     self.qsub_params = [
-      "-l walltime=" + (config.multihit_walltime || "72:00:00") + ",nodes=1:ppn=" + (config.multihit_procs || 1),
+      "-l walltime=" + (config.multihit_walltime || "72:00:00") + ",nodes=1:ppn=" + (config.multihit_procs || 4),
       "-q",
       config.qsub_queue,
       "-v",
@@ -182,7 +182,7 @@ var multihit = function(socket, stream, params) {
         ",msaid=" +
         self.msaid +
         ",procs=" +
-        (config.multihit_procs || 1),
+        (config.multihit_procs || 4),
       "-o",
       self.output_dir,
       "-e",

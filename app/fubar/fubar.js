@@ -92,7 +92,7 @@ var fubar = function(socket, stream, params) {
       "msaid=" + self.msaid,
       "number_of_grid_points=" + self.number_of_grid_points,
       "concentration_of_dirichlet_prior=" + self.concentration_of_dirichlet_prior,
-      "procs=" + (config.fubar_procs || 1)
+      "procs=" + (config.fubar_procs || 4)
     ];
   } else if (config.submit_type === "slurm") {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
@@ -111,7 +111,7 @@ var fubar = function(socket, stream, params) {
     }
     
     self.qsub_params = [
-      `--ntasks=${config.fubar_procs}`,
+      `--ntasks=${config.fubar_procs || 4}`,
       "--cpus-per-task=1",
       `--time=${slurmTime}`,
       `--partition=${config.slurm_partition || "datamonkey"}`,

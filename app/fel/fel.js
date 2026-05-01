@@ -121,7 +121,7 @@ var fel = function (socket, stream, params) {
       "ci=" + self.ci,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
-      "procs=" + (config.fel_procs || 1),
+      "procs=" + (config.fel_procs || 4),
       "multiple_hits=" + self.multiple_hits,
       "site_multihit=" + self.site_multihit,
       "branches=" + self.branches
@@ -146,7 +146,7 @@ var fel = function (socket, stream, params) {
     console.log(`Converted walltime from ${config.fel_walltime} to SLURM format: ${slurmTime}`);
     
     self.qsub_params = [
-      `--ntasks=${config.fel_procs}`,                       // Use multiple tasks for MPI
+      `--ntasks=${config.fel_procs || 4}`,                       // Use multiple tasks for MPI
       "--cpus-per-task=1",                                  // One CPU per task for MPI
       `--time=${slurmTime}`,                                // Converted time limit
       `--partition=${config.slurm_partition || "datamonkey"}`,    // Use configured partition

@@ -145,7 +145,7 @@ var fade = function(socket, stream, params) {
       "analysis_type=" + self.type,
       "cwd=" + __dirname,
       "msaid=" + self.msaid,
-      "procs=" + (config.fade_procs || 1)
+      "procs=" + (config.fade_procs || 4)
     ];
   } else if (config.submit_type === "slurm") {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
@@ -167,7 +167,7 @@ var fade = function(socket, stream, params) {
     console.log(`Converted walltime from ${config.fade_walltime} to SLURM format: ${slurmTime}`);
     
     self.qsub_params = [
-      `--ntasks=${config.fade_procs || 1}`,                     // Use multiple tasks for MPI
+      `--ntasks=${config.fade_procs || 4}`,                     // Use multiple tasks for MPI
       "--cpus-per-task=1",                                    // One CPU per task for MPI
       `--time=${slurmTime}`,                                  // Converted time limit
       `--partition=${config.slurm_partition || "datamonkey"}`,      // Use configured partition
@@ -175,14 +175,14 @@ var fade = function(socket, stream, params) {
       "--export=ALL,slurm_mpi_type=" + 
       (config.slurm_mpi_type || "pmix") + 
       "," +
-      "fn=" + self.fn + ",tree_fn=" + self.tree_fn + ",sfn=" + self.status_fn + ",pfn=" + self.progress_fn + ",rfn=" + self.results_short_fn + ",treemode=" + self.treemode + ",genetic_code=" + self.genetic_code + ",substitution_model=" + self.substitution_model + ",posterior_estimation_method=" + self.posterior_estimation_method + ",branches=" + self.branches + ",number_of_grid_points=" + self.number_of_grid_points + ",number_of_mcmc_chains=" + self.number_of_mcmc_chains + ",length_of_each_chain=" + self.length_of_each_chain + ",number_of_burn_in_samples=" + self.number_of_burn_in_samples + ",number_of_samples=" + self.number_of_samples + ",concentration_of_dirichlet_prior=" + self.concentration_of_dirichlet_prior + ",analysis_type=" + self.type + ",cwd=" + __dirname + ",msaid=" + self.msaid + ",procs=" + (config.fade_procs || 1),
+      "fn=" + self.fn + ",tree_fn=" + self.tree_fn + ",sfn=" + self.status_fn + ",pfn=" + self.progress_fn + ",rfn=" + self.results_short_fn + ",treemode=" + self.treemode + ",genetic_code=" + self.genetic_code + ",substitution_model=" + self.substitution_model + ",posterior_estimation_method=" + self.posterior_estimation_method + ",branches=" + self.branches + ",number_of_grid_points=" + self.number_of_grid_points + ",number_of_mcmc_chains=" + self.number_of_mcmc_chains + ",length_of_each_chain=" + self.length_of_each_chain + ",number_of_burn_in_samples=" + self.number_of_burn_in_samples + ",number_of_samples=" + self.number_of_samples + ",concentration_of_dirichlet_prior=" + self.concentration_of_dirichlet_prior + ",analysis_type=" + self.type + ",cwd=" + __dirname + ",msaid=" + self.msaid + ",procs=" + (config.fade_procs || 4),
       `--output=${self.output_dir}/fade_${self.id}_%j.out`,
       `--error=${self.output_dir}/fade_${self.id}_%j.err`,
       self.qsub_script
     ];
   } else {
     self.qsub_params = [
-      "-l walltime=" + (config.fade_walltime || "72:00:00") + ",nodes=1:ppn=" + (config.fade_procs || 1),
+      "-l walltime=" + (config.fade_walltime || "72:00:00") + ",nodes=1:ppn=" + (config.fade_procs || 4),
       "-q",
       config.qsub_queue,
       "-v",
@@ -225,7 +225,7 @@ var fade = function(socket, stream, params) {
         ",msaid=" +
         self.msaid +
         ",procs=" +
-        (config.fade_procs || 1),
+        (config.fade_procs || 4),
       "-o",
       self.output_dir,
       "-e",
