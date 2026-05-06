@@ -21,6 +21,17 @@ client.on("error", function(err) {
   logger.error("Redis hyphyjob client error: " + err.message);
 });
 
+// Prepend a scheduler --comment flag carrying the submission source so SLURM
+// accounting (sacct/scontrol) records which path submitted the job. Grafana
+// reads this to break out per-source metrics.
+function injectSubmissionSource(qsub_params, source, submit_type) {
+  if (!source || submit_type === "local") return qsub_params;
+  if (submit_type === "qsub") {
+    return ["-W", "comment=source=" + source].concat(qsub_params);
+  }
+  return ["--comment=source=" + source].concat(qsub_params);
+}
+
 var hyphyJob = function() {};
 
 hyphyJob.prototype.log = function(notification, complementary_info) {
@@ -79,6 +90,11 @@ hyphyJob.prototype.spawn = function() {
   var self = this;
 
   self.log("spawning");
+
+  var source = (self.params && self.params.submission_source)
+            || (self.params && self.params.analysis && self.params.analysis.submission_source)
+            || "unknown";
+  self.qsub_params = injectSubmissionSource(self.qsub_params, source, config.submit_type);
 
   // A class that spawns the process and emits status events
   logger.info(`[JOB START] Job ${self.id}: Creating job runner`);
