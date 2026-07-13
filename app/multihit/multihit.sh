@@ -8,7 +8,7 @@ if [ -f /etc/profile.d/modules.sh ]; then
   source /etc/profile.d/modules.sh
   
   # Load the specific OpenMPI module for ARM architecture
-  module load openmpi-arm/5.0.5 2>/dev/null || echo "Failed to load openmpi-arm/5.0.5"
+  module load gnu14/14.2.0 && module load openmpi5/5.0.7 2>/dev/null || echo "Failed to load openmpi5/5.0.7"
   
   # Check if module was loaded successfully
   module list 2>&1
@@ -20,11 +20,11 @@ else
 fi
 
 # Make sure UCX libraries are available - these paths are critical for the MPI support
-export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib:$LD_LIBRARY_PATH:/usr/lib64
+export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib:$LD_LIBRARY_PATH:/usr/lib64
 
 # Print library paths and attempt to verify UCX is available
 echo "LD_LIBRARY_PATH after adjustment: $LD_LIBRARY_PATH"
-ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.17.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
+ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
 
 FN=$fn
 CWD=$cwd

@@ -7,7 +7,7 @@ if [ -f /etc/profile.d/modules.sh ]; then
   source /etc/profile.d/modules.sh
   
   # Load the specific OpenMPI module for ARM architecture
-  module load openmpi-arm/5.0.5 2>/dev/null || echo "Failed to load openmpi-arm/5.0.5"
+  module load gnu14/14.2.0 && module load openmpi5/5.0.7 2>/dev/null || echo "Failed to load openmpi5/5.0.7"
   
   # Check if module was loaded successfully
   module list 2>&1
