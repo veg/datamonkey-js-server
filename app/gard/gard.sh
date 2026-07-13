@@ -120,6 +120,14 @@ fi
 HYPHY_PATH=$CWD/../../.hyphy/res/
 GARD=$HYPHY_PATH/TemplateBatchFiles/GARD.bf
 
+# OpenMPI/UCX library directories required by HYPHYMPI at load time.
+# These are NOT on the system loader path (no ld.so.conf.d entry), and srun does
+# not reliably propagate the launching shell's LD_LIBRARY_PATH into the task
+# environment on every node. When it doesn't, HYPHYMPI dies at dlopen with
+# "libmpi.so.40: cannot open shared object file" (exit 127) before parsing any
+# arguments. We therefore pin these paths into the srun task via an env wrapper.
+MPI_LIB_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib
+
 #RATE_VARIATIONS
 # 1: None
 # 2: General Discrete
@@ -156,22 +164,19 @@ echo "MAX_BREAKPOINTS: '$MAX_BREAKPOINTS'"
 echo "MODEL: '$MODEL'"
 
 if [ -n "$SLURM_JOB_ID" ]; then
-  # Using SLURM srun with dedicated arguments
-  # Try the non-MPI version as a fallback since we're having library issues with MPI
-  echo "Running HYPHY in non-MPI mode as a fallback due to library issues..."
-  
-  HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP
-  
-  if [ -f "$HYPHY_NON_MPI" ]; then
-    echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
-    export TOLERATE_NUMERICAL_ERRORS=1
+  # Run GARD under MPI via srun. The env wrapper below pins LD_LIBRARY_PATH into
+  # the task environment on the compute node so HYPHYMPI can resolve libmpi.so.40
+  # regardless of whether srun propagated the launching shell's environment.
+  export TOLERATE_NUMERICAL_ERRORS=1
+
+  if [ -f "$HYPHY_MPI" ]; then
+    echo "Using MPI HYPHY under srun: $HYPHY_MPI"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY_MPI ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY_MPI ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
+  else
+    echo "MPI HYPHY not found at $HYPHY_MPI, falling back to non-MPI HYPHY: $HYPHY_NON_MPI"
     echo "$HYPHY_NON_MPI ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
     $HYPHY_NON_MPI ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
-  else
-    echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
-    export TOLERATE_NUMERICAL_ERRORS=1
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
   fi
 else
   # For local execution, use the HYPHY executable determined above
