@@ -5,6 +5,7 @@ const config = require("../../config.json"),
   logger = require("../../lib/logger").logger,
   fs = require("fs"),
   datatypes = require("../type").type,
+  code = require("../code").code,
   path = require("path"),
   utilities = require("../../lib/utilities");
 
@@ -64,7 +65,7 @@ var gard = function(socket, stream, params) {
     // parameter attributes with fallbacks
     if (self.params.msa) {
       self.msaid = self.params.msa._id;
-      self.genetic_code = self.params.msa[0] ? (self.params.msa[0].gencodeid + 1) : "Universal";
+      self.genetic_code = self.params.msa[0] ? (code[self.params.msa[0].gencodeid + 1] || "Universal") : "Universal";
       self.nwk_tree = self.params.msa[0] ? (self.params.msa[0].usertree || self.params.msa[0].nj) : "";
       // Use analysis.tagged_nwk_tree if available (for unified format)
       if (self.params.analysis && self.params.analysis.tagged_nwk_tree) {
