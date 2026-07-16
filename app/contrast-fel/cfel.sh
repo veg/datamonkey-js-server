@@ -98,6 +98,15 @@ PROCS=${procs:-1}
 sets=(`echo $branch_sets | sed 's/:/\n/g'`)
 BRANCH_SETS=$(for x in ${sets[@]}; do echo -n " --branch-set $x "; done;)
 
+# Contrast-FEL compares >= 2 branch groups. A single set makes HyPhy fit the
+# model and then core-dump on a 0x0 vs NxN matrix (issue #392). Fail fast,
+# reusing the same Error/exit convention as the ERR trap below.
+if [ "${#sets[@]}" -lt 2 ]; then
+  echo "Contrast-FEL requires at least two branch groups to compare, but only ${#sets[@]} was supplied ('$branch_sets'). Please tag a second branch group on the tree and resubmit." > "$PROGRESS_FILE"
+  echo "Error" > "$STATUS_FILE"
+  exit 1
+fi
+
 # Set HYPHY executable - prefer regular hyphy for local execution
 HYPHY_REGULAR=$CWD/../../.hyphy/hyphy
 HYPHY_NON_MPI=$CWD/../../.hyphy/HYPHYMP

@@ -40,7 +40,7 @@ var cfel = function(socket, stream, params) {
   if (isCheckOnly) {
     // Set defaults for required fields with complete parameter coverage
     self.genetic_code = params.genetic_code || "Universal";
-    const rawBranchSets = params['branch-set'] || params.branch_sets || "Foreground";
+    const rawBranchSets = params['branch-set'] || params.branch_sets || "";
     self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;
     self.rate_variation = params.srv || (params.ds_variation == 1 ? "Yes" : "No") || "Yes";
     self.permutations = params.permutations || "Yes";
@@ -72,7 +72,7 @@ var cfel = function(socket, stream, params) {
     if (self.params.analysis) {
       self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
-      const rawBranchSets = self.params.analysis['branch-set'] || self.params.analysis.branch_sets || analysisParams['branch-set'] || analysisParams.branch_sets || "Foreground";
+      const rawBranchSets = self.params.analysis['branch-set'] || self.params.analysis.branch_sets || analysisParams['branch-set'] || analysisParams.branch_sets || "";
       self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;
       self.rate_variation = analysisParams.srv || (self.params.analysis.ds_variation == 1 ? "Yes" : "No") || "Yes";
       self.permutations = analysisParams.permutations || "Yes";
@@ -81,7 +81,7 @@ var cfel = function(socket, stream, params) {
     } else {
       self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
-      const rawBranchSets = self.params['branch-set'] || self.params.branch_sets || "Foreground";
+      const rawBranchSets = self.params['branch-set'] || self.params.branch_sets || "";
       self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;
       self.rate_variation = self.params.srv || (self.params.ds_variation == 1 ? "Yes" : "No") || "Yes";
       self.permutations = self.params.permutations || "Yes";
@@ -235,6 +235,19 @@ var cfel = function(socket, stream, params) {
   }
   
   logger.info(`Contrast-FEL job ${self.id}: Initializing job`);
+  if (!isCheckOnly) {
+    var _cfelSetCount = String(self.branch_sets == null ? "" : self.branch_sets)
+      .split(":")
+      .filter(function (s) { return s.trim().length; })
+      .length;
+    if (_cfelSetCount < 2) {
+      var _cfelMsg = "Contrast-FEL requires at least two branch groups to compare, but " + _cfelSetCount + " were provided. Please tag a second group of branches in the tree and resubmit.";
+      logger.error("Contrast-FEL job " + self.id + ": " + _cfelMsg);
+      try { fs.writeFileSync(self.status_fn, "Error"); } catch (e) {}
+      if (self.socket) { self.socket.emit("script error", { error: _cfelMsg }); }
+      return; // do NOT call self.init(); nothing is submitted
+    }
+  }
   self.init();
   logger.info(`Contrast-FEL job ${self.id}: Job initialized`);
 
