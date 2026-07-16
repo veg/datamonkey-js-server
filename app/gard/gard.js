@@ -1,5 +1,6 @@
 const config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
+  code = require("../code").code,
   redis = require("redis"),
   util = require("util"),
   logger = require("../../lib/logger").logger,
@@ -32,7 +33,7 @@ var gard = function(socket, stream, params) {
   self.rate_variation =
     variation_map[self.params.analysis.site_to_site_variation];
   self.rate_classes = self.params.analysis.rate_classes || 2;
-  self.genetic_code = self.params.msa[0].gencodeid + 1;
+  self.genetic_code = code[self.params.msa[0].gencodeid + 1] || "Universal";
   self.run_mode = self.params.analysis.run_mode == "1" ? "Faster": "Normal";
   self.datatype = self.params.analysis.datatype || "0";
   self.datatype = datatypes[self.datatype];
