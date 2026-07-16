@@ -28,7 +28,11 @@ var cfel = function(socket, stream, params) {
   self.id = self.params.analysis._id;
   self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nwk_tree = self.params.analysis.tagged_nwk_tree;
-  self.branch_sets = self.params.analysis.branch_sets.join(":");
+  var _cfelRaw = (self.params.analysis && self.params.analysis.branch_sets) || [];
+  self.branch_set_list = (Array.isArray(_cfelRaw) ? _cfelRaw : String(_cfelRaw).split(":"))
+    .map(function (s) { return (s == null ? "" : String(s)).trim(); })
+    .filter(function (s, i, a) { return s.length && a.indexOf(s) === i; });
+  self.branch_sets = self.branch_set_list.join(":");
   self.rate_variation = self.params.analysis.ds_variation == 1 ? "Yes" : "No";
 
   // parameter-derived attributes
@@ -147,6 +151,13 @@ var cfel = function(socket, stream, params) {
 
   // Ensure the progress file exists
   fs.openSync(self.progress_fn, "w");
+
+  if (self.branch_set_list.length < 2) {
+    var _cfelMsg = "Contrast-FEL requires at least two branch groups to compare, but " + self.branch_set_list.length + " were provided. Please tag a second group of branches in the tree and resubmit.";
+    try { fs.writeFileSync(self.status_fn, "Error"); } catch (e) {}
+    if (self.socket) { self.socket.emit("script error", { error: _cfelMsg }); }
+    return; // do not submit
+  }
   self.init();
 };
 
