@@ -171,12 +171,12 @@ if [ -n "$SLURM_JOB_ID" ]; then
 
   if [ -f "$HYPHY_MPI" ]; then
     echo "Using MPI HYPHY under srun: $HYPHY_MPI"
-    echo "srun --mpi=$MPI_TYPE -n $PROCS env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY_MPI ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY_MPI ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY_MPI ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY_MPI ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
   else
     echo "MPI HYPHY not found at $HYPHY_MPI, falling back to non-MPI HYPHY: $HYPHY_NON_MPI"
-    echo "$HYPHY_NON_MPI ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
-    $HYPHY_NON_MPI ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
   fi
 else
   # For local execution, use the HYPHY executable determined above
@@ -185,11 +185,11 @@ else
   
   # Check if we can use MPI for local execution (if using MPI version)
   if [[ "$HYPHY" == *"HYPHYMPI"* ]] && command -v mpirun &> /dev/null; then
-    echo "mpirun -np $PROCS $HYPHY ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
-    mpirun -np $PROCS $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
+    echo "mpirun -np $PROCS $HYPHY ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
+    mpirun -np $PROCS $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
   else
-    echo "$HYPHY ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
-    $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
+    echo "$HYPHY ENV=\"TOLERATE_NUMERICAL_ERRORS=1;\" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
+    $HYPHY ENV="TOLERATE_NUMERICAL_ERRORS=1;" LIBPATH=$HYPHY_PATH $GARD --type $DATATYPE --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --model $MODEL --mode $RUN_MODE --rv $RATE_VARIATION --rate-classes $RATE_CLASSES --max-breakpoints $MAX_BREAKPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
   fi
 fi
 
