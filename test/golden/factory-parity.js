@@ -21,7 +21,8 @@ var GOLDEN = require(__dirname + "/qsub-params.snapshot.json");
 
 // Descriptor-built constructors to check against golden. Grows as analyses migrate.
 var DESCRIPTORS = [
-  ["fel", require(__dirname + "/../../app/fel/descriptor.js").fel]
+  ["fel", require(__dirname + "/../../app/fel/descriptor.js").fel],
+  ["fubar", require(__dirname + "/../../app/fubar/descriptor.js").fubar]
 ];
 
 function fakeSocket() {
