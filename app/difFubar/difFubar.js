@@ -6,7 +6,13 @@ var config = require("../../config.json"),
   fs = require("fs"),
   path = require("path");
 
-// Redis client is handled by the base hyphyJob class
+// Module-level redis client, mirroring app/hyphyjob.js. Reused across
+// onComplete calls instead of creating (and leaking) a client per job
+// (GH #400).
+var client = redis.createClient({
+  host: config.redis_host,
+  port: config.redis_port
+});
 
 var difFubar = function(socket, stream, params) {
   var self = this;
@@ -271,14 +277,7 @@ difFubar.prototype.onComplete = function() {
           
           self.log("complete", "success (direct file transmission)");
           
-          // Use shared Redis client pattern like base class
-          const redis = require("redis");
-          const config = require("../../config.json");
-          const client = redis.createClient({
-            host: config.redis_host,
-            port: config.redis_port
-          });
-          
+          // Reuse the module-level redis client (GH #400).
           client.hset(self.id, "results", str_redis_packet, "status", "completed");
           client.publish(self.id, str_redis_packet);
           client.lrem("active_jobs", 1, self.id);

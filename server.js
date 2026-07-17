@@ -650,4 +650,4 @@ io.sockets.on("connection", function(socket) {
 var mcp = require("./lib/mcp");
 mcp.startMcpServer(config, client);
 
-process.setMaxListeners(0);
+process.setMaxListeners(20); // bounded; GH #400 removed per-job cancelJob listeners

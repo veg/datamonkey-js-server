@@ -12,7 +12,8 @@ var spawn = require("child_process").spawn,
   JobStatus = require("../../lib/jobstatus.js").JobStatus,
   logger = require("../../lib/logger").logger,
   redis = require("redis"),
-  utilities = require("../../lib/utilities");
+  utilities = require("../../lib/utilities"),
+  jobRegistry = require("../../lib/jobregistry.js");
 
 // Use redis as our key-value store
 var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
@@ -172,7 +173,8 @@ hivtrace.prototype.spawn = function() {
 
   // Setup Analysis
   var trace_runner = new HivTraceRunner(self.id, self.hivtrace_log);
-  new cs.ClientSocket(self.socket, self.id);
+  self.trace_runner = trace_runner;
+  self.client_socket = new cs.ClientSocket(self.socket, self.id);
 
   // On status updates, report to datamonkey-js
   trace_runner.on("status update", function(status_update) {
@@ -198,11 +200,13 @@ hivtrace.prototype.spawn = function() {
   // On errors, report to datamonkey-js
   trace_runner.on("script error", function(error) {
     self.onError(error);
+    trace_runner.close();
   });
 
   // When the analysis completes, return the results to datamonkey.
   trace_runner.on("completed", function() {
     self.onComplete();
+    trace_runner.close();
   });
 
   // Report the torque job id back to datamonkey
@@ -215,11 +219,16 @@ hivtrace.prototype.spawn = function() {
     self.socket.emit("tn93 summary", tn93);
   });
 
-  // Global event that triggers all jobs to cancel
-  process.on("cancelJob", function(msg) {
-    self.warn("cancel called!");
-    self.cancel_once = _.once(self.cancel);
-    self.cancel_once();
+  // See GH #400: register in the central registry instead of adding a
+  // per-job process listener. cancel/onError are inherited from hyphyJob.
+  jobRegistry.register(self);
+
+  // Release the python_<id> subscriber, the Tail watcher and the status
+  // timer (via trace_runner.close), and the registry slot, if the client
+  // disconnects before the job reaches a terminal state. See #397, #400.
+  self.socket.on("disconnect", function() {
+    if (self.trace_runner) self.trace_runner.close();
+    jobRegistry.unregister(self.id);
   });
 
   // Ensure output directory exists
@@ -341,6 +350,7 @@ hivtrace.prototype.onComplete = function() {
 
       // Remove id from active_job queue
       client.lrem("active_jobs", 1, self.id);
+      jobRegistry.unregister(self.id);
     } else {
       self.onError(
         "job seems to have completed, but no results found: " +
@@ -419,13 +429,52 @@ var HivTraceRunner = function(id, hivtrace_log) {
 
 util.inherits(HivTraceRunner, EventEmitter);
 
+/**
+ * Tears down the dedicated python_<id> Redis subscriber and the status-watcher
+ * timer. Idempotent — safe to call from terminal events and socket disconnect.
+ * See issue #397.
+ */
+HivTraceRunner.prototype.close = function() {
+  var self = this;
+  if (self._closed) return;
+  self._closed = true;
+
+  if (self.metronome_id) clearInterval(self.metronome_id);
+
+  // Stop watching the hivtrace log file (node-tail exposes unwatch()). See #400.
+  if (self.tail) {
+    try {
+      self.tail.unwatch();
+    } catch (e) {
+      logger.warn("error unwatching hivtrace log tail: " + e);
+    }
+    self.tail = null;
+  }
+
+  logger.info(
+    "[REDIS] Closing subscriber for channel " + self.python_redis_channel
+  );
+  try {
+    self.subscriber.removeAllListeners("message");
+    self.subscriber.unsubscribe(self.python_redis_channel);
+    self.subscriber.quit();
+  } catch (err) {
+    logger.error("Error closing HivTrace Redis subscriber: " + err.message);
+    try {
+      self.subscriber.end(true);
+    } catch (e) {
+      logger.error("Error force-ending HivTrace Redis subscriber: " + e.message);
+    }
+  }
+};
+
 HivTraceRunner.prototype.log_publisher = function() {
   var self = this;
 
-  // read log file
-  var tail = new Tail(self.hivtrace_log);
+  // read log file (stored on self so close() can stop watching it; GH #400)
+  self.tail = new Tail(self.hivtrace_log);
 
-  tail.on("line", function(data) {
+  self.tail.on("line", function(data) {
     logger.debug(data);
 
     if (data.indexOf("INFO:") != -1) {

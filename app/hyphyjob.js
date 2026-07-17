@@ -10,6 +10,8 @@ const cs = require("../lib/clientsocket.js"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   config = require("../config.json");
 
+var jobRegistry = require("../lib/jobregistry.js");
+
 // Use redis as our key-value store
 var client = redis.createClient({
   host: config.redis_host,
@@ -61,7 +63,7 @@ hyphyJob.prototype.warn = function(notification, complementary_info) {
 hyphyJob.prototype.attachSocket = function() {
   var self = this;
   logger.info(`[DEBUG REDIS] Attaching socket to job ${self.id}`);
-  new cs.ClientSocket(self.socket, self.id);
+  self.client_socket = new cs.ClientSocket(self.socket, self.id);
 };
 
 // Can either initialize a new job or check on previous one
@@ -201,16 +203,17 @@ hyphyJob.prototype.spawn = function() {
     logger.info(`Job ${self.id}: Job submitted to runner`);
   });
 
-  // Global event that triggers all jobs to cancel
-  process.on("cancelJob", function() {
-    self.warn("cancel called!");
-    self.cancel_once = _.once(self.cancel);
-    self.cancel_once();
-  });
+  // Register in the central job registry; a single process-level
+  // "cancelJob" listener (lib/jobregistry.js) broadcast-cancels all
+  // live jobs without leaking one listener per job (GH #400).
+  jobRegistry.register(self);
 
-  // Should be called when the job completes
+  // Release the registry slot (and the redis subscriber) if the user
+  // disconnects before the job reaches a terminal state.
   self.socket.on("disconnect", function() {
     self.log("user disconnected");
+    if (self.client_socket) self.client_socket.close();
+    jobRegistry.unregister(self.id);
   });
 };
 
@@ -319,6 +322,7 @@ hyphyJob.prototype.onComplete = function() {
 
         // Remove id from active_job queue
         client.lrem("active_jobs", 1, self.id);
+        jobRegistry.unregister(self.id);
         delete this;
       } else {
         // Empty results file
@@ -469,6 +473,7 @@ hyphyJob.prototype.onError = function(error) {
     client.hset(self.id, "error", str_redis_packet, "status", "error");
     client.publish(self.id, str_redis_packet);
     client.lrem("active_jobs", 1, self.id);
+    jobRegistry.unregister(self.id);
     client.llen("active_jobs", function(err, n) {
       process.emit("jobCancelled", n);
     });
