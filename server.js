@@ -651,3 +651,37 @@ var mcp = require("./lib/mcp");
 mcp.startMcpServer(config, client);
 
 process.setMaxListeners(20); // bounded; GH #400 removed per-job cancelJob listeners
+
+// -----------------------------------------------------------------------------
+// Global process-level error handlers (Phase 0 guardrails, #410)
+//
+// These are a safety net for errors that escape the normal request/socket
+// handling and would otherwise be handled by Node's default behavior.
+// They log loudly through the existing winston logger so failures are visible
+// in production, rather than being lost to stderr in a PM2 cluster worker.
+// -----------------------------------------------------------------------------
+
+// Unhandled promise rejections: log with full error + stack, but do NOT exit.
+// A rejected promise leaves the process in a known-enough state to keep serving
+// other requests; killing the worker here would be more disruptive than useful.
+process.on("unhandledRejection", (reason, promise) => {
+  logger.error("Unhandled promise rejection (#410 guardrail)", {
+    reason: reason instanceof Error ? reason.message : reason,
+    stack: reason instanceof Error ? reason.stack : null,
+    promise: String(promise),
+  });
+});
+
+// Uncaught exceptions: an exception reached the top of the stack, so this worker
+// is in an unknown/undefined state. Log it, then exit non-zero after a short
+// flush delay so the winston transport can write the record. PM2 will restart
+// the worker. We deliberately do NOT swallow this — a corrupted process should
+// be replaced, not kept alive serving requests from an unknown state.
+process.on("uncaughtException", (err) => {
+  logger.error("Uncaught exception — restarting worker (#410 guardrail)", {
+    message: err && err.message,
+    stack: err && err.stack,
+  });
+  // Give the logger a moment to flush before exiting; PM2 handles the restart.
+  setTimeout(() => process.exit(1), 500);
+});
