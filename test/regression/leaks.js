@@ -12,8 +12,9 @@
  */
 
 var should  = require('should'),
+    redis   = require('redis'),
     EventEmitter = require('events').EventEmitter,
-    redisClientFactory = require(__dirname + '/../../lib/redis-client.js'),
+    config  = require(__dirname + '/../../config.json'),
     cs      = require(__dirname + '/../../lib/clientsocket.js'),
     jobRegistry = require(__dirname + '/../../lib/jobregistry.js');
 
@@ -25,16 +26,12 @@ function fakeSocket(id) {
 }
 
 // Count Redis clients currently in pub/sub subscribe mode for a channel.
-// redis@5 is promise-native: use the shared client's sendCommand and translate
-// back to the callback shape these tests were written against.
 function subscriberCount(channel, cb) {
-  redisClientFactory.ready.then(function () {
-    return redisClientFactory.client.sendCommand(['PUBSUB', 'NUMSUB', channel]);
-  }).then(function (res) {
-    // res = [channel, <count>]  (count may be a string or a number)
-    cb(res && res.length > 1 ? parseInt(res[1], 10) : 0);
-  }).catch(function () {
-    cb(0);
+  var c = redis.createClient({ host: config.redis_host, port: config.redis_port });
+  c.send_command('pubsub', ['numsub', channel], function (err, res) {
+    c.quit();
+    // res = [channel, "<count>"]
+    cb(err ? 0 : parseInt(res[1], 10));
   });
 }
 
@@ -138,18 +135,19 @@ describe('regression: resource leaks', function () {
   describe('#403 hivtrace hset tolerates object params', function () {
     this.timeout(5000);
 
-    it('does not throw when params is an object (node-redis rejects raw objects)', function () {
-      var client = redisClientFactory.client;
+    it('does not throw when params is an object (node-redis 3 rejects raw objects)', function () {
+      var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
       var params = { type: 'hivtrace', msa: [{ _id: 'x' }], analysis: { _id: 'y' } };
       // Mirror the fixed hivtrace.spawn() call. Pre-fix this threw synchronously.
       (function () {
-        client.hSet(
+        client.hset(
           'regr403-' + process.pid,
           'params',
           typeof params === 'string' ? params : JSON.stringify(params)
         );
       }).should.not.throw();
       client.del('regr403-' + process.pid);
+      client.quit();
     });
   });
 });
