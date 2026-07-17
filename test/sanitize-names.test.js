@@ -119,20 +119,24 @@ describe('Newick name sanitization (issue #358)', function() {
   });
 
   describe('FEL/SLAC/MEME integration', function() {
+    // Phase 2 (#410): FEL/SLAC/MEME were migrated to lib/analysis-factory.js.
+    // The name-sanitization side effects now live in each analysis' descriptor.js
+    // (invoked via the factory's beforeInit hook), so assert against the
+    // descriptor source where the #358 fix now resides.
     it('FEL should import and use sanitization', function() {
-      const felCode = fs.readFileSync(path.join(__dirname, '../app/fel/fel.js'), 'utf8');
+      const felCode = fs.readFileSync(path.join(__dirname, '../app/fel/descriptor.js'), 'utf8');
       expect(felCode).to.include('sanitizeTreeNodeNames');
       expect(felCode).to.include('sanitizeFastaNames');
     });
 
     it('SLAC should import and use sanitization', function() {
-      const slacCode = fs.readFileSync(path.join(__dirname, '../app/slac/slac.js'), 'utf8');
+      const slacCode = fs.readFileSync(path.join(__dirname, '../app/slac/descriptor.js'), 'utf8');
       expect(slacCode).to.include('sanitizeTreeNodeNames');
       expect(slacCode).to.include('sanitizeFastaNames');
     });
 
     it('MEME should import and use sanitization', function() {
-      const memeCode = fs.readFileSync(path.join(__dirname, '../app/meme/meme.js'), 'utf8');
+      const memeCode = fs.readFileSync(path.join(__dirname, '../app/meme/descriptor.js'), 'utf8');
       expect(memeCode).to.include('sanitizeTreeNodeNames');
       expect(memeCode).to.include('sanitizeFastaNames');
     });

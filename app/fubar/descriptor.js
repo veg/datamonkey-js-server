@@ -12,6 +12,9 @@
  */
 
 var factory = require("../../lib/analysis-factory.js");
+var fs = require("fs");
+var utilities = require("../../lib/utilities");
+var logger = require("../../lib/logger").logger;
 
 var descriptor = {
   type: "fubar",
@@ -56,6 +59,37 @@ var descriptor = {
       params.concentration_of_dirichlet_prior ||
       params.concentration_parameter ||
       0.5;
+  },
+
+  // Non-checkOnly side effects, reproducing the original fubar.js constructor
+  // block (output-dir creation BEFORE tree-file write, tree cleaned via
+  // cleanTreeToNewick and written synchronously, progress-file creation) that ran
+  // before self.init(). FUBAR cleans the tree rather than sanitizing FASTA.
+  beforeInit: function (self) {
+    // Ensure output directory exists BEFORE writing files.
+    utilities.ensureDirectoryExists(self.output_dir);
+
+    // Clean tree data and write to file (like Contrast-FEL).
+    var cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
+    logger.info("FUBAR job " + self.id + ": Writing cleaned tree file to " + self.tree_fn, {
+      original_length: self.nwk_tree ? self.nwk_tree.length : 0,
+      cleaned_length: cleanTree ? cleanTree.length : 0,
+      tree_preview: cleanTree
+        ? cleanTree.length > 100
+          ? cleanTree.substring(0, 100) + "..."
+          : cleanTree
+        : "null"
+    });
+    try {
+      fs.writeFileSync(self.tree_fn, cleanTree);
+      logger.info("FUBAR job " + self.id + ": Tree file written successfully");
+    } catch (err) {
+      logger.error("FUBAR job " + self.id + ": Error writing tree file: " + err.message);
+      throw err;
+    }
+
+    // Ensure the progress file exists.
+    fs.openSync(self.progress_fn, "w");
   },
 
   // The ordered export keys AFTER the common fn/tree_fn/sfn/pfn/rfn/treemode

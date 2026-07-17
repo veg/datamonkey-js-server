@@ -7,6 +7,9 @@
  */
 
 var factory = require("../../lib/analysis-factory.js");
+var fs = require("fs");
+var utilities = require("../../lib/utilities");
+var logger = require("../../lib/logger").logger;
 
 var descriptor = {
   type: "meme",
@@ -42,6 +45,72 @@ var descriptor = {
         self.nj = self.params.nj || self.params.tree || "";
       }
     }
+  },
+
+  // Non-checkOnly side effects, reproducing the original meme.js constructor
+  // block (tree selection preferring usertree, sanitization, output-dir creation
+  // BEFORE tree-file write, progress-file creation) that ran before self.init().
+  beforeInit: function (self) {
+    // Determine the tree to use — prefer usertree over NJ tree.
+    self.selectedTree = self.nj;
+
+    if (
+      self.params &&
+      self.params.analysis &&
+      self.params.analysis.msa &&
+      typeof self.params.analysis.msa === "object"
+    ) {
+      var msa = self.params.analysis.msa[0];
+
+      if (msa.usertree && msa.usertree.trim()) {
+        // Use the usertree if it is populated.
+        self.selectedTree = msa.usertree;
+      } else {
+        logger.warn(
+          "MEME job " + self.id + ": Neither usertree nor neighbor-joining tree is available."
+        );
+      }
+      logger.info("MEME job " + self.id + ": Selected tree", {
+        tree_content: self.selectedTree
+          ? self.selectedTree.length > 100
+            ? self.selectedTree.substring(0, 100) + "..."
+            : self.selectedTree
+          : "null"
+      });
+    } else {
+      logger.warn("MEME job " + self.id + ": self.params.analysis.msa structure is missing.");
+    }
+
+    // Sanitize tree node names for Newick compatibility.
+    self.selectedTree = utilities.sanitizeTreeNodeNames(self.selectedTree);
+    // Sanitize FASTA names to match tree node names.
+    if (self.stream && typeof self.stream === "string") {
+      self.stream = utilities.sanitizeFastaNames(self.stream);
+    }
+
+    // Ensure output directory exists BEFORE writing files.
+    logger.info("MEME job " + self.id + ": Ensuring output directory exists at " + self.output_dir);
+    utilities.ensureDirectoryExists(self.output_dir);
+
+    // Write tree to a file.
+    logger.info("MEME job " + self.id + ": Writing tree file to " + self.tree_fn, {
+      tree_content: self.selectedTree
+        ? self.selectedTree.length > 100
+          ? self.selectedTree.substring(0, 100) + "..."
+          : self.selectedTree
+        : "null"
+    });
+    fs.writeFile(self.tree_fn, self.selectedTree, function (err) {
+      if (err) {
+        logger.error("MEME job " + self.id + ": Error writing tree file: " + err.message);
+        throw err;
+      }
+      logger.info("MEME job " + self.id + ": Tree file written successfully");
+    });
+
+    // Ensure the progress file exists.
+    logger.info("MEME job " + self.id + ": Creating progress file at " + self.progress_fn);
+    fs.openSync(self.progress_fn, "w");
   },
 
   // The ordered export keys AFTER the common fn/tree_fn/sfn/pfn/rfn/treemode
