@@ -26,7 +26,7 @@ var difFubar = function(socket, stream, params) {
   self.qsub_script = __dirname + "/" + self.qsub_script_name;
 
   // parameter attributes
-  self.msaid = self.params.msa._id;
+  self.msaid = self.params.msa && self.params.msa[0] && self.params.msa[0]._id;
   self.id = self.params.analysis._id;
   self.nj = self.params.msa[0].nj;
   

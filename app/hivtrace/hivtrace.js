@@ -165,7 +165,11 @@ hivtrace.prototype.spawn = function() {
   self.send_aligned_fasta_once = _.once(self.sendAlignedFasta);
   self.send_tn93_once = _.once(self.sendtn93);
 
-  client.hset(self.id, "params", self.params);
+  client.hset(
+    self.id,
+    "params",
+    typeof self.params === "string" ? self.params : JSON.stringify(self.params)
+  );
 
   // Setup Analysis
   var trace_runner = new HivTraceRunner(self.id, self.hivtrace_log);
