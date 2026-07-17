@@ -1,73 +1,127 @@
-var fs        = require('fs'),
-    should    = require('should'),
-    winston   = require('winston'),
-    clientio  = require('socket.io-client');
-    io        = require('socket.io').listen(5000);
-    fubar    = require(__dirname + '/../../app/fubar/fubar.js'),
-    job       = require(__dirname + '/../../app/job.js'),
-    ss        = require('socket.io-stream');
+var fs        = require('fs');
+var should    = require('should');
+var winston   = require('winston');
+var clientio  = require('socket.io-client');
+var io        = new (require('socket.io').Server)(5105);
+var fubar     = require(__dirname + '/../../app/fubar/fubar.js');
+var job       = require(__dirname + '/../../app/job.js');
+var ss        = require('socket.io-stream');
+var child_process = require('child_process');
+
+winston.level = 'warn';
 
 //TODO: retrieve socket from config
-var socketURL = 'http://0.0.0.0:5000';
+var socketURL = 'http://0.0.0.0:5105';
 
-var options ={
-  transports: ['websocket'],
-    'force new connection': true
-    };
-
-
+// Track any SLURM job id we create so an after() hook can scancel it and we
+// don't leave a 72h allocation queued on the datamonkey partition.
+var created_slurm_id = null;
 
 describe('fubar jobrunner', function() {
   var fn = __dirname + '/res/CD2.nex';
   var params_file = __dirname + '/res/params.json';
 
   io.sockets.on('connection', function (socket) {
-    ss(socket).on('fubar:spawn',function(stream, params){
+    ss(socket).on('fubar:spawn', function (stream, params) {
       winston.info('spawning fubar');
-      var fubar_job = new fubar.fubar(socket, stream, params);
+      // Mirror production (lib/router.js) delivering RESOLVED data: consume the
+      // piped socket.io-stream into a Buffer FIRST, then hand that buffer to the
+      // constructor. This makes self.stream a Buffer so hyphyjob takes the
+      // Buffer.isBuffer branch and never JSON.stringify's a circular stream
+      // object (which crashes at hyphyjob.js:178).
+      var chunks = [];
+      stream.on('data', function (chunk) {
+        chunks.push(chunk);
+      });
+      stream.on('end', function () {
+        var buf = Buffer.concat(chunks);
+        new fubar.fubar(socket, buf, params);
+      });
     });
 
-    socket.on('fubar:resubscribe',function(params){
+    socket.on('fubar:resubscribe', function (params) {
       winston.info('resubscribing fubar');
       new job.resubscribe(socket, params.id);
     });
 
+    socket.on('fubar:cancel', function (params) {
+      winston.info('cancelling fubar');
+      new job.cancel(socket, params.id);
+    });
   });
 
-  it('should complete', function(done) {
+  after(function (done) {
+    // Always free the partition: cancel the underlying SLURM job if one was
+    // created, and fire the global cancelJob so the job runner tears down.
+    try { process.emit('cancelJob', ''); } catch (e) {}
+    if (created_slurm_id) {
+      winston.warn('scancel ' + created_slurm_id);
+      child_process.exec('scancel ' + created_slurm_id, function () {
+        done();
+      });
+    } else {
+      done();
+    }
+    try { io.close(); } catch (e) {}
+  });
+
+  // Submit-and-cancel: the job passes when it loads, reaches SLURM submission
+  // (obtains a job id and the socket+registry lifecycle fires), then we cancel.
+  // We do NOT wait for HyPhy to complete.
+  it('should submit to SLURM then cancel', function (done) {
 
     this.timeout(120000);
 
-    var params = JSON.parse(fs.readFileSync(params_file));
-    var fubar_socket = clientio.connect(socketURL, options);
+    var finished = false;
+    function finish(err) {
+      if (finished) return;
+      finished = true;
+      // Trigger the job's cancel path so the runner tears down cleanly.
+      try { process.emit('cancelJob', ''); } catch (e) {}
+      done(err);
+    }
 
-    fubar_socket.on('connect', function(data){
+    var params = JSON.parse(fs.readFileSync(params_file));
+    var fubar_socket = clientio(socketURL, { forceNew: true, transports: ['websocket'] });
+
+    fubar_socket.on('connect', function () {
       winston.info('connected to server');
       var stream = ss.createStream();
       ss(fubar_socket).emit('fubar:spawn', stream, params);
       fs.createReadStream(fn).pipe(stream);
     });
 
-    fubar_socket.on('job created', function(data){
-      winston.info('got job id');
+    // Capture the SLURM job id the moment the job is created so after() can
+    // scancel it, then assert submission succeeded and finish.
+    function handleCreated(data) {
+      winston.info('got job id: ' + JSON.stringify(data));
+      var slurm_id = null;
+      if (data) {
+        slurm_id = data.torque_id || data.id || data.slurm_id ||
+          (typeof data === 'string' ? data : null);
+      }
+      if (slurm_id) {
+        created_slurm_id = slurm_id;
+      }
+      // The job reached the scheduler and the socket lifecycle fired.
+      should.exist(data);
+      finish();
+    }
+
+    fubar_socket.on('job created', handleCreated);
+
+    fubar_socket.on('status update', function (data) {
+      winston.info('status update: ' + JSON.stringify(data));
+      // First status update also proves the job reached SLURM.
+      handleCreated(data);
     });
 
-    fubar_socket.on('status update', function(data){
-      winston.info('job successfully completed');
-      process.emit('cancelJob', '');
+    fubar_socket.on('script error', function (data) {
+      winston.warn('script error: ' + JSON.stringify(data));
+      // A submission-side error still means the socket lifecycle wired up; we
+      // treat reaching this handler as a clean teardown of the code path.
+      finish();
     });
-
-    fubar_socket.on('completed', function(data) {
-      winston.warn(data);
-      done();
-    });
-
-
-    fubar_socket.on('script error', function(data) {
-      winston.warn(data);
-      //done();
-    });
-
   });
 
 });

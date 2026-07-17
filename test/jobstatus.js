@@ -1,5 +1,4 @@
-var fs      = require('fs'),
-    spawn   = require('child_process').spawn,
+var spawn   = require('child_process').spawn,
     winston = require('winston'),
     should  = require('should');
 
@@ -7,41 +6,67 @@ var JobStatus = require(__dirname + '/../lib/jobstatus.js').JobStatus;
 
 describe('job status', function() {
 
-  it('should run until completed', function(done) {
+  var jobId = null;
 
-    this.timeout(10000);
+  // Ensure any submitted SLURM job is cancelled so it does not occupy the
+  // datamonkey partition (jobs have a multi-day walltime).
+  afterEach(function() {
+    if (jobId) {
+      spawn('scancel', [jobId]);
+      jobId = null;
+    }
+  });
 
-    var qsub = spawn('qsub');
-    qsub.stdin.write('sleep 1');
-    qsub.stdin.end();
-    qsub.stdout.on('data', function (data) {
+  it('should submit a job and report SLURM status', function(done) {
 
-      var id = data.toString().split('.')[0];
+    this.timeout(20000);
+
+    // Submit a trivial job to SLURM. sbatch prints "Submitted batch job <id>".
+    var sbatch = spawn('sbatch', [
+      '--partition=datamonkey',
+      '--wrap', 'sleep 1'
+    ]);
+
+    var out = '';
+    var err = '';
+
+    sbatch.stdout.on('data', function(data) { out += data.toString(); });
+    sbatch.stderr.on('data', function(data) { err += data.toString(); });
+
+    sbatch.on('close', function(code) {
+      out.should.match(/Submitted batch job/, 'sbatch failed: ' + err);
+
+      var match = out.match(/Submitted batch job (\d+)/);
+      should.exist(match, 'could not parse job id from: ' + out);
+      var id = match[1];
+      jobId = id;
+      winston.info('submitted SLURM job ' + id);
+
       var job_status = new JobStatus(id);
 
-      job_status.watch(function(error, data) {
+      // Query status once (the active class is SlurmJobStatus). Do NOT wait for
+      // real HyPhy/job completion; a freshly submitted job is queued or running.
+      job_status.returnJobStatus(id, function(error, data) {
+        should.not.exist(error);
+        should.exist(data);
+        data.scheduler.should.equal('slurm');
+        ['queued', 'running', 'completed', 'exiting'].should.containEql(data.status);
+        winston.info('status: ' + data.status);
 
-        var status = data.status;
-        winston.info(status);
-
-        if(status == "completed" || status == "exiting") {
-
-          // ensure full status returns appropriate metadata
-          job_status.fullJobInfo(function(err, val) {
-
-            val['total_runtime'].should.be.above(0); 
-            val['exit_status'].should.be.equal('0'); 
-            done();
-
-          });
-
-        } else {
-          (status == "running" || status == "queued").should.be.equal(true, error);
-        }
-
+        // fullJobInfo should return a slurm-tagged info object with a status.
+        job_status.fullJobInfo(function(err, val) {
+          should.not.exist(err);
+          should.exist(val);
+          val.scheduler.should.equal('slurm');
+          val.should.have.property('status');
+          done();
+        });
       });
+    });
+
+    sbatch.on('error', function(e) {
+      done(e);
     });
   });
 
 });
-

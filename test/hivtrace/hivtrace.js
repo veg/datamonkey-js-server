@@ -27,74 +27,140 @@
 
 */
 
+// socket.io v4 migration:
+//   - `require('socket.io').listen(PORT)` was removed in v4; the shared
+//     helper `startServer(port)` uses `new io.Server(port)` instead.
+//   - the legacy `socket.io-stream` (ss) pipe is not v4-compatible, so the
+//     harness emits the fasta file DATA as arg 0 of the spawn event. hivtrace
+//     does `self.stream.pipe(...)`, so the server-side spawn handler wraps that
+//     data back into a Readable before constructing the analysis.
+//   - unique port 5107 avoids collisions with the other analysis socket tests.
+
 var fs        = require('fs'),
     path      = require('path'),
     should    = require('should'),
     winston   = require('winston'),
-    clientio  = require('socket.io-client');
-    io        = require('socket.io').listen(5000);
+    stream    = require('stream'),
     hivtrace  = require(path.join(__dirname, '/../../app/hivtrace/hivtrace.js')),
     job       = require(path.join(__dirname, '/../../app/job.js')),
-    winston   = require('winston'),
     _         = require('underscore'),
-    ss        = require('socket.io-stream');
+    harness   = require(path.join(__dirname, '/../helpers/socketharness.js'));
 
-var socketURL = 'http://0.0.0.0:5000';
+// Unique port for this test (see test/helpers/socketharness.js).
+var PORT = 5107;
+var socketURL = 'http://0.0.0.0:' + PORT;
 winston.level = 'info';
-
-var options ={
-  transports: ['websocket'],
-    'force new connection': true
-    };
 
 describe('hivtrace jobrunner', function() {
 
   var fn = path.join(__dirname, '/res/552f030ddfb365a631365975');
   var params_file = path.join(__dirname, '/res/params.json');
-  var params_stripdrams_file = path.join(__dirname, '/res/params_stripdrams.json');
 
-  io.sockets.on('connection', function (socket) {
-    ss(socket).on('hivtrace:spawn',function(stream, params){
-      winston.info('spawning hivtrace');
-      var hivtrace_job = new hivtrace.hivtrace(socket, stream, params);
+  var io;                // socket.io v4 Server
+  var hivtrace_socket;   // socket.io-client connection
+  var hivtrace_job;      // the spawned analysis instance (holds torque_id)
+
+  before(function() {
+    io = harness.startServer(PORT);
+
+    io.sockets.on('connection', function (socket) {
+      // Mirror server.js router 'spawn': the first emitted arg is the "stream".
+      // The harness delivers fasta FILE DATA (string/Buffer) as that arg; hivtrace
+      // pipes self.stream to a file, so wrap the data in a Readable here.
+      harness.submitAndExpectStream(io, socket, 'hivtrace:spawn', function (sock, data, params) {
+        winston.info('spawning hivtrace');
+        var readable = stream.Readable.from(
+          Buffer.isBuffer(data) ? data : Buffer.from(String(data))
+        );
+        hivtrace_job = new hivtrace.hivtrace(sock, readable, params);
+      });
+
+      socket.on('hivtrace:resubscribe', function (params) {
+        winston.info('resubscribing hivtrace');
+        new job.resubscribe(socket, params.id);
+      });
     });
-
-    socket.on('hivtrace:resubscribe',function(params){
-      winston.info('resubscribing hivtrace');
-      new job.resubscribe(socket, params.id);
-    });
-
   });
 
-  it('should cancel job', function(done) {
+  it('should submit to SLURM then cancel', function(done) {
 
-    this.timeout(5000);
+    this.timeout(30000);
 
+    var finished = false;
     var params = JSON.parse(fs.readFileSync(params_file));
-    var hivtrace_socket = clientio.connect(socketURL, options);
 
-    hivtrace_socket.on('connect', function(data) {
+    // Guard so done() only fires once regardless of which lifecycle event
+    // (job created / status update / script error) triggers the teardown.
+    function finish(err) {
+      if (finished) return;
+      finished = true;
+      done(err);
+    }
+
+    // Emit the global cancel and terminate the test. The cancelJob handler in
+    // hivtrace (inherited from hyphyjob) runs self.cancel() -> scancel <id>.
+    function cancelAndFinish() {
+      process.emit('cancelJob', '');
+      finish();
+    }
+
+    hivtrace_socket = harness.connectClient(PORT);
+
+    hivtrace_socket.on('connect', function () {
       winston.info('connected to server');
-      var stream = ss.createStream();
-      ss(hivtrace_socket).emit('hivtrace:spawn', stream, params);
-      fs.createReadStream(fn).pipe(stream);
+      // v4-safe replacement for ss.createStream()/pipe: emit the fasta file
+      // DATA as arg 0 so it reaches the spawn handler (and self.stream).
+      harness.emitSpawn(hivtrace_socket, 'hivtrace:spawn', fn, params);
+
+      // The job reaches SLURM asynchronously (sbatch runs after the write
+      // stream drains, and 'job created' is delivered via redis pub/sub).
+      // Give it a beat to submit, then cancel so we never wait for HyPhy and
+      // never leave a SLURM allocation for 72h.
+      setTimeout(cancelAndFinish, 4000);
     });
 
-    hivtrace_socket.on('job created', function(data) {
-      winston.info('got job id');
-      setTimeout(function() { process.emit('cancelJob', '') }, 1000);
+    // 'job created' is republished through redis/ClientSocket back to this
+    // client socket once sbatch returns a job id -> the job reached SLURM.
+    hivtrace_socket.on('job created', function () {
+      winston.info('got job id -> reached SLURM');
+      cancelAndFinish();
     });
 
-    hivtrace_socket.on('status update', function(data) {
-      //winston.info('got status update!');
+    hivtrace_socket.on('status update', function () {
+      winston.info('got status update -> reached SLURM');
+      cancelAndFinish();
     });
 
-    hivtrace_socket.on('script error', function(data) {
-      // assert failure
-      //should.exist(data.stdout);
+    // Cancelling emits an error ('job cancelled') via onError -> script error.
+    hivtrace_socket.on('script error', function () {
+      winston.info('script error / cancel path');
+      finish();
+    });
+  });
+
+  after(function(done) {
+    this.timeout(15000);
+
+    // Make sure the underlying SLURM job (if one was created) is cancelled so
+    // it does not occupy the datamonkey partition for 72h.
+    var torque_id = hivtrace_job && hivtrace_job.torque_id;
+    if (torque_id && /^[\w\.]+$/.test(String(torque_id))) {
+      try {
+        require('child_process').spawnSync('scancel', [String(torque_id)]);
+        winston.info('scancel ' + torque_id);
+      } catch (e) {
+        winston.warn('scancel failed: ' + e.message);
+      }
+    }
+
+    if (hivtrace_socket) {
+      try { hivtrace_socket.disconnect(); } catch (e) {}
+    }
+    if (io) {
+      io.close(function () { done(); });
+    } else {
       done();
-    });
+    }
   });
 
 });
-

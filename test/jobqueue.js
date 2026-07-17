@@ -4,7 +4,7 @@ var fs = require('fs'),
     path = require('path'),
     redis = require('redis'),
     _ = require('underscore'),
-    config = require('../../config.json');
+    config = require('../config.json');
 
 var client = redis.createClient({
   host: config.redis_host, port: config.redis_port
@@ -15,23 +15,34 @@ describe('job queue', function() {
 
   this.timeout(6000);
 
+  var submitted_ids = [];
+
   before(function(done) {
 
     var after_five = _.after(5, function() {
       _.delay(done, 1000);
     });
 
-    for (var i=0; i< 5; i++) { 
-      var qsub = spawn('qsub', ['-o', '/dev/null', '-e', '/dev/null']);
-      qsub.stdin.write('sleep 1');
-      qsub.stdin.end();
-      qsub.stdout.on('data', function (data) {
-        var torque_id = String(data).replace(/\n$/, '');
-        client.hset(torque_id, 'type', 'test');
+    for (var i=0; i< 5; i++) {
+      var sbatch = spawn('sbatch', ['--partition=' + config.slurm_partition,
+        '--wrap', 'sleep 60', '-o', '/dev/null', '-e', '/dev/null']);
+      sbatch.stdout.on('data', function (data) {
+        var match = String(data).match(/Submitted batch job (\d+)/);
+        if (match) {
+          var slurm_id = match[1];
+          submitted_ids.push(slurm_id);
+          client.hset(slurm_id, 'type', 'test');
+        }
         after_five();
       });
     }
 
+  });
+
+  after(function() {
+    if (submitted_ids.length) {
+      spawn('scancel', submitted_ids);
+    }
   });
 
   it('return the job queue', function(done) {
