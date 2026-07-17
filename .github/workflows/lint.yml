@@ -1,0 +1,37 @@
+name: Lint
+
+on:
+  push:
+    branches: [feature/v4-modernization]
+  pull_request:
+    branches: [feature/v4-modernization, master]
+
+jobs:
+  lint:
+    name: ESLint + Prettier (report-only)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      # Report-only for now: the codebase has ~160 pre-existing
+      # eslint:recommended violations. A follow-up (Phase 0) will fix
+      # them and flip this to blocking. See #410.
+      - name: Run ESLint (report-only)
+        run: npm run lint
+        continue-on-error: true
+
+      # Prettier is not yet enforced; the codebase is not formatted.
+      # Report-only until an opt-in reformat lands.
+      - name: Check formatting with Prettier (report-only)
+        run: npm run format:check
+        continue-on-error: true
