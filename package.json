@@ -7,14 +7,14 @@
   },
   "private": true,
   "scripts": {
-    "test": "npm run test-absrel && npm run test-busted && npm run test-jobs && npm run test-hivtrace",
-    "test-absrel": "mocha -R spec ./tests/absrel/absrel.js",
-    "test-relax": "mocha -R spec ./tests/relax/relax.js",
-    "test-flea": "mocha -R spec ./tests/flea/flea.js",
-    "test-jobs": "mocha -R spec ./tests/*.js",
-    "test-hivtrace": "mocha -R spec ./tests/hivtrace/hivtrace.js",
-    "test-busted": "mocha -R spec ./tests/busted/busted.js",
-    "test-mcp": "mocha -R spec --exit ./test/mcp/mcp.test.js"
+    "test": "npm run test:ci && npm run test:slurm",
+    "test:ci": "mocha -R spec --exit test/regression/leaks.js test/error-paths/validation.js test/validation/results.js test/mock/lifecycle.js test/sanitize-names.test.js test/difFubar.test.js test/difFubar.integration.test.js test/fubar-redirection.test.js",
+    "test:slurm": "npm run test:analyses && npm run test:slurm-unit && npm run test:integration",
+    "test:analyses": "mocha -R spec --exit test/absrel/absrel.js test/busted/busted.js test/contrast-fel/contrast-fel.js test/fade/fade.js test/fubar/fubar.js test/gard/gard.js test/hivtrace/hivtrace.js test/meme/meme.js test/multihit/multihit.js test/prime/prime.js test/relax/relax.js test/slac/slac.js",
+    "test:slurm-unit": "mocha -R spec --exit test/jobstatus.js test/jobqueue.js test/coverage-gaps/job-lifecycle.js test/coverage-gaps/hivtrace-checkjob.js",
+    "test:integration": "mocha -R spec --exit test/integration/slac-completes.js",
+    "test:mcp": "mocha -R spec --exit test/mcp/mcp.test.js",
+    "coverage": "nyc --reporter=text --reporter=html --include 'app/**/*.js' --include 'lib/**/*.js' npm run test"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
