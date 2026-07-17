@@ -61,6 +61,13 @@ var hivtrace = function(socket, stream, params) {
   self.prealigned = params.prealigned;
   self.strip_drams = params.strip_drams == "no" ? false : params.strip_drams;
 
+  // parameter-derived attributes.
+  // NOTE: self.filepath MUST be set before the Custom-reference block below,
+  // which derives custom_reference_fn from it. Previously filepath was assigned
+  // after that block, so a Custom reference was written to
+  // "undefined_custom_reference.fas" and never found. See #408.
+  self.filepath = path.join(self.output_dir, self.id);
+
   if (params.reference == "Custom") {
     self.custom_reference_fn = self.filepath + custom_reference_suffix;
     self.custom_reference = params.custom_reference;
@@ -71,8 +78,6 @@ var hivtrace = function(socket, stream, params) {
     ) {});
   }
 
-  // parameter-derived attributes
-  self.filepath = path.join(self.output_dir, self.id);
   self.status_fn = self.filepath + "_status";
   self.output_cluster_output = self.filepath + cluster_output_suffix;
   self.tn93_stdout = self.filepath + tn93_json_suffix;
