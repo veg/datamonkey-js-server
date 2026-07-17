@@ -7,16 +7,32 @@ var spawn = require("child_process").spawn,
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   Tail = require("tail").Tail,
   EventEmitter = require("events").EventEmitter,
-  Q = require("q"),
-  _ = require("underscore"),
   JobStatus = require("../../lib/jobstatus.js").JobStatus,
   logger = require("../../lib/logger").logger,
-  redis = require("redis"),
   utilities = require("../../lib/utilities"),
   jobRegistry = require("../../lib/jobregistry.js");
 
-// Use redis as our key-value store
-var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
+// Use the shared redis v5 client (promise-native, camelCased commands) for
+// key-value + publish, and createSubscriber() for the dedicated pub/sub
+// connection (redis v5 requires a separate connection for subscriber mode).
+var { client, createSubscriber } = require("../../lib/redis-client");
+
+// Small replacement for underscore's _.once — returns a function that invokes
+// fn at most once and caches its result.
+function once(fn) {
+  var called = false,
+    result;
+  return function () {
+    if (!called) {
+      called = true;
+      result = fn.apply(this, arguments);
+    }
+    return result;
+  };
+}
+
+// Promisified fs.readFile (replaces Q.nfcall(fs.readFile, ...)).
+var readFileAsync = util.promisify(fs.readFile);
 
 var hivtrace = function(socket, stream, params) {
   var self = this;
@@ -88,11 +104,11 @@ var hivtrace = function(socket, stream, params) {
   self.hivtrace_log = self.filepath + hivtrace_log_suffix;
 
   var initial_statuses = [];
-  _.each(self.status_stack, function(d, i) {
+  (self.status_stack || []).forEach(function(d) {
     initial_statuses.push({ title: d, status: self.status_states.PENDING });
   });
 
-  client.hset(
+  client.hSet(
     self.id,
     "complete phase status",
     JSON.stringify(initial_statuses)
@@ -167,10 +183,10 @@ util.inherits(hivtrace, hyphyJob);
 
 hivtrace.prototype.spawn = function() {
   var self = this;
-  self.send_aligned_fasta_once = _.once(self.sendAlignedFasta);
-  self.send_tn93_once = _.once(self.sendtn93);
+  self.send_aligned_fasta_once = once(self.sendAlignedFasta.bind(self));
+  self.send_tn93_once = once(self.sendtn93.bind(self));
 
-  client.hset(
+  client.hSet(
     self.id,
     "params",
     typeof self.params === "string" ? self.params : JSON.stringify(self.params)
@@ -273,75 +289,78 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
 
   self.current_status = data;
 
-  // get current status stored in redis
-  client.hget(self.id, "complete phase status", function(err, entire_status) {
-    //msg = {
-    //  'type'   : 'status update',
-    //  'index'  : phase[0]
-    //  'phase'  : phase[1],
-    //  'status' : status,
-    //  'msg'    : msg
-    //}
+  // get current status stored in redis (redis v5 hGet returns a promise)
+  client
+    .hGet(self.id, "complete phase status")
+    .then(function(entire_status) {
+      //msg = {
+      //  'type'   : 'status update',
+      //  'index'  : phase[0]
+      //  'phase'  : phase[1],
+      //  'status' : status,
+      //  'msg'    : msg
+      //}
 
-    var new_status = JSON.parse(entire_status);
+      var new_status = JSON.parse(entire_status);
 
-    // validate new_status and index
-    if (_.isUndefined(new_status)) {
-      logger.warn("hivtrace malformed status update: " + entire_status);
-      return;
-    }
+      // validate new_status and index
+      if (new_status === undefined) {
+        logger.warn("hivtrace malformed status update: " + entire_status);
+        return;
+      }
 
-    if (_.isUndefined(new_status[data.index])) {
-      logger.warn("hivtrace malformed status update: " + entire_status);
-      return;
-    }
+      if (new_status[data.index] === undefined) {
+        logger.warn("hivtrace malformed status update: " + entire_status);
+        return;
+      }
 
-    new_status[data.index].status = data.status;
-    new_status[data.index].index = data.index;
+      new_status[data.index].status = data.status;
+      new_status[data.index].index = data.index;
 
-    // update all older statuses as completed
-    _.each(new_status.slice(0, data.index), function(d, i) {
-      new_status[i].status = self.status_states.COMPLETED;
+      // update all older statuses as completed
+      new_status.slice(0, data.index).forEach(function(d, i) {
+        new_status[i].status = self.status_states.COMPLETED;
+      });
+
+      new_status[data.index].msg = data.msg ? data.msg : "";
+
+      var status_update = {
+        msg: new_status,
+        torque_id: self.torque_id
+      };
+
+      // Prepare redis packet for delivery
+      client.hSet(self.id, "status update", JSON.stringify(data));
+
+      var redis_packet = status_update;
+      redis_packet.type = "status update";
+      var str_redis_packet = JSON.stringify(status_update);
+
+      // Store packet in redis and publish to channel
+      client.hSet(self.id, "complete phase status", JSON.stringify(new_status));
+
+      // Publish updates for all statuses
+      client.publish(self.id, str_redis_packet);
+
+      // Log status update on server
+      self.log("status update", str_redis_packet);
+    })
+    .catch(function(err) {
+      logger.warn("hivtrace failed to read status from redis: " + err.message);
     });
-
-    new_status[data.index].msg = data.msg ? data.msg : "";
-
-    var status_update = {
-      msg: new_status,
-      torque_id: self.torque_id
-    };
-
-    // Prepare redis packet for delivery
-    client.hset(self.id, "status update", JSON.stringify(data));
-
-    var redis_packet = status_update;
-    redis_packet.type = "status update";
-    var str_redis_packet = JSON.stringify(status_update);
-
-    // Store packet in redis and publish to channel
-    client.hset(self.id, "complete phase status", JSON.stringify(new_status));
-
-    // Publish updates for all statuses
-    client.publish(self.id, str_redis_packet);
-
-    // Log status update on server
-    self.log("status update", str_redis_packet);
-  });
 };
 
 hivtrace.prototype.onComplete = function() {
   var self = this;
-  client.hset(self.id, "status", "completed");
+  client.hSet(self.id, "status", "completed");
 
-  var results_promise = Q.nfcall(
-    fs.readFile,
-    self.output_cluster_output,
-    "utf-8"
-  );
+  var results_promise = readFileAsync(self.output_cluster_output, "utf-8");
   var promises = [results_promise];
 
-  Q.allSettled(promises).then(function(results) {
-    if (results[0].state == "fulfilled" && results[0].value) {
+  // Native Promise.allSettled result shape is {status, value/reason}
+  // (q's allSettled used {state, value/reason}).
+  Promise.allSettled(promises).then(function(results) {
+    if (results[0].status == "fulfilled" && results[0].value) {
       var results_data = JSON.parse(results[0].value);
       var redis_packet = { type: "completed" };
       var str_redis_packet = JSON.stringify(redis_packet);
@@ -350,11 +369,11 @@ hivtrace.prototype.onComplete = function() {
       self.log("complete", "success");
 
       // Store packet in redis and publish to channel
-      client.hset(self.id, "results", str_redis_packet);
+      client.hSet(self.id, "results", str_redis_packet);
       self.socket.emit("completed", { results: results_data });
 
       // Remove id from active_job queue
-      client.lrem("active_jobs", 1, self.id);
+      client.lRem("active_jobs", 1, self.id);
       jobRegistry.unregister(self.id);
     } else {
       self.onError(
@@ -369,30 +388,30 @@ hivtrace.prototype.onJobCreated = function(torque_id) {
   var self = this;
 
   self.push_active_job = function(id) {
-    client.rpush("active_jobs", self.id);
+    client.rPush("active_jobs", self.id);
   };
 
-  self.push_job_once = _.once(self.push_active_job);
+  self.push_job_once = once(self.push_active_job);
   self.setTorqueParameters(torque_id);
   var redis_packet = torque_id;
   redis_packet.type = "job created";
   var str_redis_packet = JSON.stringify(torque_id);
   self.log("job created", str_redis_packet);
-  client.hset(self.id, "torque_id", str_redis_packet);
+  client.hSet(self.id, "torque_id", str_redis_packet);
   client.publish(self.id, str_redis_packet);
-  client.hset(self.torque_id, "datamonkey_id", self.id);
-  client.hset(self.torque_id, "type", self.type);
+  client.hSet(self.torque_id, "datamonkey_id", self.id);
+  client.hSet(self.torque_id, "type", self.type);
   self.push_job_once(self.id);
 };
 
 hivtrace.prototype.sendAlignedFasta = function() {
   var self = this;
 
-  var aligned_promise = Q.nfcall(fs.readFile, self.aligned_fasta);
+  var aligned_promise = readFileAsync(self.aligned_fasta);
   var promises = [aligned_promise];
 
-  Q.allSettled(promises).then(function(results) {
-    if (results[0].state == "fulfilled" && results[0].value) {
+  Promise.allSettled(promises).then(function(results) {
+    if (results[0].status == "fulfilled" && results[0].value) {
       self.socket.emit("aligned fasta", { buffer: results[0].value });
 
       // Log that the job has been completed
@@ -405,11 +424,11 @@ hivtrace.prototype.sendAlignedFasta = function() {
 
 hivtrace.prototype.sendtn93 = function() {
   var self = this;
-  var tn93_promise = Q.nfcall(fs.readFile, self.tn93_results);
+  var tn93_promise = readFileAsync(self.tn93_results);
   var promises = [tn93_promise];
 
-  Q.allSettled(promises).then(function(results) {
-    if (results[0].state == "fulfilled" && results[0].value) {
+  Promise.allSettled(promises).then(function(results) {
+    if (results[0].status == "fulfilled" && results[0].value) {
       self.socket.emit("tn93", { buffer: results[0].value });
       // Log that the job has been completed
       self.warn("sending tn93", self.tn93_results, "success");
@@ -424,12 +443,48 @@ var HivTraceRunner = function(id, hivtrace_log) {
   var self = this;
   self.python_redis_channel = "python_" + id;
   self.hivtrace_log = hivtrace_log;
-  self.subscriber = redis.createClient({
-    host: config.redis_host, port: config.redis_port
-  });
-  self.subscriber.subscribe(self.python_redis_channel);
   self.last_status_update = "";
   self.submit_type = config.submit_type || "qsub";
+  self.subscriber = null;
+
+  // redis v5 pub/sub requires a dedicated (duplicated) connection, and both
+  // connect() and subscribe() are async. We kick off the connection here and
+  // wire the message listener once connected. The listener is passed directly
+  // to subscribe() (there is no more .on("message", ...)). We stash the promise
+  // so close() can await teardown after connect, avoiding a leaked subscriber
+  // if the job ends before the socket is up (see #397/#400).
+  self.subscriber_ready = createSubscriber()
+    .then(function(subscriber) {
+      self.subscriber = subscriber;
+
+      // If close() ran before the subscriber finished connecting, tear it down
+      // immediately instead of leaking it.
+      if (self._closed) {
+        try {
+          subscriber.quit();
+        } catch (e) {
+          try {
+            subscriber.destroy();
+          } catch (e2) {}
+        }
+        return;
+      }
+
+      return subscriber.subscribe(self.python_redis_channel, function(message) {
+        var redis_packet = JSON.parse(message);
+        logger.info(redis_packet);
+
+        if (message != self.last_status_update) {
+          self.emit(redis_packet.type, redis_packet);
+          self.last_status_update = message;
+        }
+      });
+    })
+    .catch(function(err) {
+      logger.error(
+        "Error setting up HivTrace Redis subscriber: " + err.message
+      );
+    });
 };
 
 util.inherits(HivTraceRunner, EventEmitter);
@@ -459,18 +514,36 @@ HivTraceRunner.prototype.close = function() {
   logger.info(
     "[REDIS] Closing subscriber for channel " + self.python_redis_channel
   );
-  try {
-    self.subscriber.removeAllListeners("message");
-    self.subscriber.unsubscribe(self.python_redis_channel);
-    self.subscriber.quit();
-  } catch (err) {
-    logger.error("Error closing HivTrace Redis subscriber: " + err.message);
-    try {
-      self.subscriber.end(true);
-    } catch (e) {
-      logger.error("Error force-ending HivTrace Redis subscriber: " + e.message);
-    }
-  }
+
+  // The subscriber connects asynchronously (redis v5 duplicate + connect).
+  // Wait for that to settle so we never leak a subscriber that finished
+  // connecting after close() ran, then unsubscribe + quit. The _closed flag
+  // set above also makes the connect() handler self-quit if it wins the race.
+  var teardown = self.subscriber_ready
+    ? Promise.resolve(self.subscriber_ready)
+    : Promise.resolve();
+
+  teardown.then(function() {
+    if (!self.subscriber) return;
+    // In redis v5 the listener was passed to subscribe(); unsubscribe drops it.
+    return self.subscriber
+      .unsubscribe(self.python_redis_channel)
+      .then(function() {
+        return self.subscriber.quit();
+      })
+      .catch(function(err) {
+        logger.error(
+          "Error closing HivTrace Redis subscriber: " + err.message
+        );
+        try {
+          self.subscriber.destroy();
+        } catch (e) {
+          logger.error(
+            "Error force-ending HivTrace Redis subscriber: " + e.message
+          );
+        }
+      });
+  });
 };
 
 HivTraceRunner.prototype.log_publisher = function() {
@@ -523,15 +596,9 @@ HivTraceRunner.prototype.status_watcher = function() {
     }
   });
 
-  self.subscriber.on("message", function(channel, message) {
-    var redis_packet = JSON.parse(message);
-    logger.info(redis_packet);
-
-    if (message != self.last_status_update) {
-      self.emit(redis_packet.type, redis_packet);
-      self.last_status_update = message;
-    }
-  });
+  // The python_<id> subscriber message listener is wired at subscribe() time
+  // in the constructor (redis v5 passes the listener to subscribe()); there is
+  // no more .on("message", ...) here.
 };
 
 /**

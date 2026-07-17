@@ -1,18 +1,14 @@
 var config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   logger = require("../../lib/logger.js").logger,
-  redis = require("redis"),
   util = require("util"),
   fs = require("fs"),
   path = require("path");
 
-// Module-level redis client, mirroring app/hyphyjob.js. Reused across
+// Shared redis v5 client (promise-native, camelCased commands). Reused across
 // onComplete calls instead of creating (and leaking) a client per job
 // (GH #400).
-var client = redis.createClient({
-  host: config.redis_host,
-  port: config.redis_port
-});
+var { client } = require("../../lib/redis-client");
 
 var difFubar = function(socket, stream, params) {
   var self = this;
@@ -277,10 +273,12 @@ difFubar.prototype.onComplete = function() {
           
           self.log("complete", "success (direct file transmission)");
           
-          // Reuse the module-level redis client (GH #400).
-          client.hset(self.id, "results", str_redis_packet, "status", "completed");
+          // Reuse the shared redis client (GH #400). redis v5 hSet takes a
+          // field/value object for multiple fields (the old variadic
+          // field,value,field,value form silently drops extra pairs).
+          client.hSet(self.id, { results: str_redis_packet, status: "completed" });
           client.publish(self.id, str_redis_packet);
-          client.lrem("active_jobs", 1, self.id);
+          client.lRem("active_jobs", 1, self.id);
           
           logger.info(`[DEBUG] difFUBAR ${self.id}: Sent results via direct socket + Redis completion`);
         });
