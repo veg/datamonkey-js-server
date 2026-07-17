@@ -2,14 +2,25 @@ var fs = require('fs'),
     spawn = require('child_process').spawn,
     should = require('should'),
     path = require('path'),
-    redis = require('redis'),
-    _ = require('underscore'),
+    redisClient = require('../lib/redis-client.js'),
     config = require('../config.json');
 
-var client = redis.createClient({
-  host: config.redis_host, port: config.redis_port
-});
+// redis@5 migration: reuse the shared connected client from lib/redis-client.js
+// (was `redis.createClient({host,port})`); commands are camelCased and
+// promise-returning (hset->hSet). underscore migration: `_.after(n, fn)` and
+// `_.delay(fn, ms)` replaced with native equivalents below.
+var client = redisClient.client;
 var JobQueue = require(path.join(__dirname, '/../lib/jobqueue.js')).JobQueue;
+
+// Native replacement for underscore's `_.after(count, fn)`: returns a function
+// that invokes `fn` only on the `count`-th (and subsequent) call.
+function after(count, fn) {
+  return function () {
+    if (--count < 1) {
+      return fn.apply(this, arguments);
+    }
+  };
+}
 
 describe('job queue', function() {
 
@@ -19,8 +30,9 @@ describe('job queue', function() {
 
   before(function(done) {
 
-    var after_five = _.after(5, function() {
-      _.delay(done, 1000);
+    var after_five = after(5, function() {
+      // _.delay(done, 1000) -> native setTimeout
+      setTimeout(done, 1000);
     });
 
     for (var i=0; i< 5; i++) {
@@ -31,7 +43,9 @@ describe('job queue', function() {
         if (match) {
           var slurm_id = match[1];
           submitted_ids.push(slurm_id);
-          client.hset(slurm_id, 'type', 'test');
+          // redis@5: hset->hSet, promise-returning; swallow errors for this
+          // best-effort seed (v5 buffers until the shared socket connects).
+          client.hSet(slurm_id, 'type', 'test').catch(function () {});
         }
         after_five();
       });

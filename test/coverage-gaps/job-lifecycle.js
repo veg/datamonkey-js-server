@@ -21,17 +21,32 @@
  */
 
 var should  = require('should'),
-    redis   = require('redis'),
     child   = require('child_process'),
     fs      = require('fs'),
     path    = require('path'),
     EventEmitter = require('events').EventEmitter,
-    config  = require(__dirname + '/../../config.json'),
+    redisClient = require(__dirname + '/../../lib/redis-client.js'),
     job     = require(__dirname + '/../../app/job.js'),
     jobdel  = require(__dirname + '/../../lib/jobdel.js'),
     utilities = require(__dirname + '/../../lib/utilities.js');
 
-var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
+// redis@5 migration: the shared connected client from lib/redis-client.js
+// replaces the module-scope `redis.createClient({host,port})`. Commands are
+// camelCased and promise-returning (hset->hSet, del->del). The seed helpers
+// below preserve their callback signatures so the specs are unchanged.
+var client = redisClient.client;
+
+// Seed a single hash field, invoking cb once the write resolves. Wraps the
+// promise-based v5 hSet so the existing nested-callback test bodies keep working
+// without weakening any assertion. `client.hSet(key, field, value)`.
+function seedHash(key, field, value, cb) {
+  redisClient.ready
+    .then(function () {
+      return client.hSet(key, field, value);
+    })
+    .then(function () { cb(); })
+    .catch(function (err) { cb(err); });
+}
 
 // A stand-in socket that records emits and disconnects.
 function recSocket(id) {
@@ -55,14 +70,14 @@ describe('coverage-gaps: job lifecycle & utilities', function () {
   describe('job.resubscribe() (app/job.js)', function () {
     this.timeout(6000);
     var ids = [];
-    afterEach(function () { ids.forEach(function (id) { client.del(id); }); ids = []; });
+    afterEach(function () { ids.forEach(function (id) { client.del(id).catch(function () {}); }); ids = []; });
 
     it('emits completed with parsed results when the job is completed', function (done) {
       var id = 'cov-resub-done-' + process.pid;
       ids.push(id);
       var results = { foo: 'bar', n: 3 };
-      client.hset(id, 'status', 'completed', function () {
-        client.hset(id, 'results', JSON.stringify(results), function () {
+      seedHash(id, 'status', 'completed', function () {
+        seedHash(id, 'results', JSON.stringify(results), function () {
           var sock = recSocket();
           new job.resubscribe(sock, id);
           setTimeout(function () {
@@ -79,17 +94,17 @@ describe('coverage-gaps: job lifecycle & utilities', function () {
     it('re-attaches a ClientSocket (subscribes) when the job is still pending', function (done) {
       var id = 'cov-resub-pending-' + process.pid;
       ids.push(id);
-      client.hset(id, 'status', 'queued', function () {
+      seedHash(id, 'status', 'queued', function () {
         var sock = recSocket();
         new job.resubscribe(sock, id);
         setTimeout(function () {
-          // pending path opens a subscriber on the job channel
-          var c = redis.createClient({ host: config.redis_host, port: config.redis_port });
-          c.send_command('pubsub', ['numsub', id], function (err, res) {
-            c.quit();
+          // pending path opens a subscriber on the job channel. redis@5: PUBSUB
+          // NUMSUB via sendCommand on the shared connected client (no
+          // send_command / callback form).
+          client.sendCommand(['PUBSUB', 'NUMSUB', id]).then(function (res) {
             parseInt(res[1], 10).should.be.aboveOrEqual(1);
             done();
-          });
+          }).catch(done);
         }, 300);
       });
     });
@@ -100,8 +115,8 @@ describe('coverage-gaps: job lifecycle & utilities', function () {
       // status === "exiting" (not completed, and the pending guard is false).
       var id = 'cov-resub-exit-' + process.pid;
       ids.push(id);
-      client.hset(id, 'status', 'exiting', function () {
-        client.hset(id, 'error', 'boom', function () {
+      seedHash(id, 'status', 'exiting', function () {
+        seedHash(id, 'error', 'boom', function () {
           var sock = recSocket();
           new job.resubscribe(sock, id);
           setTimeout(function () {
@@ -131,7 +146,7 @@ describe('coverage-gaps: job lifecycle & utilities', function () {
     beforeEach(function () { origJobDelete = jobdel.jobDelete; });
     afterEach(function () {
       jobdel.jobDelete = origJobDelete;
-      ids.forEach(function (id) { client.del(id); }); ids = [];
+      ids.forEach(function (id) { client.del(id).catch(function () {}); }); ids = [];
     });
 
     it('calls jobDelete and emits cancelled ok for a pending job', function (done) {
@@ -139,8 +154,8 @@ describe('coverage-gaps: job lifecycle & utilities', function () {
       ids.push(id);
       var deleted = null;
       jobdel.jobDelete = function (tid, cb) { deleted = tid; cb(); };
-      client.hset(id, 'status', 'queued', function () {
-        client.hset(id, 'torque_id', JSON.stringify({ torque_id: '999999' }), function () {
+      seedHash(id, 'status', 'queued', function () {
+        seedHash(id, 'torque_id', JSON.stringify({ torque_id: '999999' }), function () {
           var sock = recSocket();
           new job.cancel(sock, id);
           setTimeout(function () {
@@ -157,8 +172,8 @@ describe('coverage-gaps: job lifecycle & utilities', function () {
       ids.push(id);
       var called = false;
       jobdel.jobDelete = function () { called = true; };
-      client.hset(id, 'status', 'completed', function () {
-        client.hset(id, 'torque_id', JSON.stringify({ torque_id: '1' }), function () {
+      seedHash(id, 'status', 'completed', function () {
+        seedHash(id, 'torque_id', JSON.stringify({ torque_id: '1' }), function () {
           var sock = recSocket();
           new job.cancel(sock, id);
           setTimeout(function () {
@@ -173,8 +188,8 @@ describe('coverage-gaps: job lifecycle & utilities', function () {
     it('emits cancelled failure when torque_id is malformed (JSON.parse catch)', function (done) {
       var id = 'cov-cancel-badtid-' + process.pid;
       ids.push(id);
-      client.hset(id, 'status', 'queued', function () {
-        client.hset(id, 'torque_id', 'not-json', function () {
+      seedHash(id, 'status', 'queued', function () {
+        seedHash(id, 'torque_id', 'not-json', function () {
           var sock = recSocket();
           new job.cancel(sock, id);
           setTimeout(function () {

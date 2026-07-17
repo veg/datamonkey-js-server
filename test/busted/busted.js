@@ -4,7 +4,7 @@ var fs        = require('fs'),
     path      = require('path'),
     clientio  = require('socket.io-client'),
     io        = require('socket.io')(5101),
-    redis     = require('redis'),
+    redisClient = require(__dirname + '/../../lib/redis-client.js'),
     busted    = require(__dirname + '/../../app/busted/busted.js'),
     job       = require(__dirname + '/../../app/job.js'),
     ss        = require('socket.io-stream'),
@@ -22,9 +22,10 @@ var options = {
   transports: ['websocket']
 };
 
-var client = redis.createClient({
-  host: config.redis_host, port: config.redis_port
-});
+// redis@5 migration: reuse the shared connected client from lib/redis-client.js
+// instead of `redis.createClient({host,port})`. Commands are camelCased and
+// promise-returning (del stays `del`).
+var client = redisClient.client;
 
 // Track SLURM job ids that get created so we can scancel them in teardown and
 // never leave a busted job occupying the datamonkey partition for 72h.
@@ -36,7 +37,10 @@ describe('busted jobrunner', function() {
   var fn = path.join(__dirname, '/res/', id);
   var params_file = path.join(__dirname, '/res/params.json');
 
-  client.del(id);
+  // redis@5: del() is promise-returning; swallow errors for this best-effort
+  // pre-test cleanup (issued before the shared client's socket is guaranteed up,
+  // but v5 buffers commands until connected).
+  redisClient.ready.then(function () { return client.del(id); }).catch(function () {});
 
   io.sockets.on('connection', function (socket) {
     // The production request path routes spawn(stream, params) to the analysis
