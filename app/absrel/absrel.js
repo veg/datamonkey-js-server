@@ -70,7 +70,7 @@ var absrel = function(socket, stream, params) {
       self.branches = analysisParams.branches || "All";
       // If we have a tagged tree with {FG} annotations, use Foreground branches
       if (self.nwk && self.nwk.indexOf("{FG}") !== -1 && self.branches === "All") {
-        logger.info(`ABSREL job: Tagged tree contains {FG} annotations, setting branches to Foreground`);
+        logger.info("ABSREL job: Tagged tree contains {FG} annotations, setting branches to Foreground");
         self.branches = "FG";
       }
     } else {
@@ -82,7 +82,7 @@ var absrel = function(socket, stream, params) {
       self.branches = self.params.branches || "All";
       // If we have a tagged tree with {FG} annotations, use Foreground branches
       if (self.nwk && self.nwk.indexOf("{FG}") !== -1 && self.branches === "All") {
-        logger.info(`ABSREL job: Tagged tree contains {FG} annotations, setting branches to Foreground`);
+        logger.info("ABSREL job: Tagged tree contains {FG} annotations, setting branches to Foreground");
         self.branches = "FG";
       }
     }
@@ -126,7 +126,7 @@ var absrel = function(socket, stream, params) {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
     let slurmTime = "72:00:00"; // Default 3 days
     if (config.absrel_walltime) {
-      const parts = config.absrel_walltime.split(':');
+      const parts = config.absrel_walltime.split(":");
       if (parts.length === 4) {
         // Convert D:HH:MM:SS to SLURM format
         const days = parseInt(parts[0]);

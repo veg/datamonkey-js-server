@@ -95,7 +95,7 @@ var bstill = function(socket, stream, params) {
     let slurmTime = "72:00:00";
     if (config.bstill_walltime || config.fubar_walltime) {
       const walltime = config.bstill_walltime || config.fubar_walltime;
-      const parts = walltime.split(':');
+      const parts = walltime.split(":");
       if (parts.length === 4) {
         const days = parseInt(parts[0]);
         const hours = parseInt(parts[1]) + (days * 24);

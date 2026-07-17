@@ -83,27 +83,27 @@ io.sockets.on("connection", function(socket) {
   // Query job status by ID (for reconnection after page refresh)
   socket.on("job:status", function(params, callback) {
     if (!params || !params.jobId) {
-      if (callback) callback({ status: 'error', error: 'Missing jobId' });
+      if (callback) callback({ status: "error", error: "Missing jobId" });
       return;
     }
 
     client.hgetall(params.jobId, function(err, jobData) {
       if (err || !jobData) {
-        if (callback) callback({ status: 'not_found' });
+        if (callback) callback({ status: "not_found" });
         return;
       }
 
       var response = {
-        status: jobData.status || 'unknown',
+        status: jobData.status || "unknown",
         torque_id: jobData.torque_id
       };
 
-      if (jobData.status === 'completed' && jobData.results) {
+      if (jobData.status === "completed" && jobData.results) {
         // Results are stored as: {"results":"{ stringified JSON }","type":"completed"}
         // We need to unwrap and parse the inner results string
         try {
           var parsedResults = JSON.parse(jobData.results);
-          if (parsedResults.results && typeof parsedResults.results === 'string') {
+          if (parsedResults.results && typeof parsedResults.results === "string") {
             response.results = JSON.parse(parsedResults.results);
           } else {
             response.results = parsedResults.results || parsedResults;
@@ -387,7 +387,7 @@ io.sockets.on("connection", function(socket) {
     }
   });
 
-// NRM
+  // NRM
   r.route("nrm", {
     spawn: function(stream, params) {
       if (!params || !params.job) {

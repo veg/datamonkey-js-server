@@ -75,7 +75,7 @@ var difFubar = function(socket, stream, params) {
     // Convert walltime from PBS format to SLURM format
     let slurmTime = "24:00:00"; // Default 24 hours
     if (config.difFubar_walltime) {
-      const parts = config.difFubar_walltime.split(':');
+      const parts = config.difFubar_walltime.split(":");
       if (parts.length === 4) {
         // Convert D:HH:MM:SS to SLURM format
         const days = parseInt(parts[0]);
@@ -201,12 +201,12 @@ difFubar.prototype.sendPlotFiles = function(cb) {
   
   // Define the plot files to send
   var plotFiles = [
-    { name: 'overview.png', path: self.results_short_fn + '_overview.png', event: 'difFubar overview png' },
-    { name: 'overview.svg', path: self.results_short_fn + '_overview.svg', event: 'difFubar overview svg' },
-    { name: 'posteriors.png', path: self.results_short_fn + '_posteriors.png', event: 'difFubar posteriors png' },
-    { name: 'posteriors.svg', path: self.results_short_fn + '_posteriors.svg', event: 'difFubar posteriors svg' },
-    { name: 'detections.png', path: self.results_short_fn + '_detections.png', event: 'difFubar detections png' },
-    { name: 'detections.svg', path: self.results_short_fn + '_detections.svg', event: 'difFubar detections svg' }
+    { name: "overview.png", path: self.results_short_fn + "_overview.png", event: "difFubar overview png" },
+    { name: "overview.svg", path: self.results_short_fn + "_overview.svg", event: "difFubar overview svg" },
+    { name: "posteriors.png", path: self.results_short_fn + "_posteriors.png", event: "difFubar posteriors png" },
+    { name: "posteriors.svg", path: self.results_short_fn + "_posteriors.svg", event: "difFubar posteriors svg" },
+    { name: "detections.png", path: self.results_short_fn + "_detections.png", event: "difFubar detections png" },
+    { name: "detections.svg", path: self.results_short_fn + "_detections.svg", event: "difFubar detections svg" }
   ];
   
   var promises = plotFiles.map(file => {
@@ -224,7 +224,7 @@ difFubar.prototype.sendPlotFiles = function(cb) {
   
   Promise.all(promises).then(results => {
     var sentFiles = results.filter(f => f !== null);
-    self.log("sent plot files", sentFiles.join(', '));
+    self.log("sent plot files", sentFiles.join(", "));
     cb(null, "success");
   }).catch(err => {
     cb(err, null);

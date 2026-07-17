@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: ESLint + Prettier (report-only)
+    name: ESLint (blocking) + Prettier (report-only)
     runs-on: ubuntu-latest
 
     steps:
@@ -23,15 +23,13 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      # Report-only for now: the codebase has ~160 pre-existing
-      # eslint:recommended violations. A follow-up (Phase 0) will fix
-      # them and flip this to blocking. See #410.
-      - name: Run ESLint (report-only)
+      # BLOCKING: the codebase now passes eslint:recommended with 0 errors
+      # (unused-vars are warn-level). Lint failures fail CI. See #410.
+      - name: Run ESLint
         run: npm run lint
-        continue-on-error: true
 
-      # Prettier is not yet enforced; the codebase is not formatted.
-      # Report-only until an opt-in reformat lands.
+      # Prettier stays report-only: a full reformat is deferred to its own
+      # dedicated PR (~40 files of reflow). See #410.
       - name: Check formatting with Prettier (report-only)
         run: npm run format:check
         continue-on-error: true

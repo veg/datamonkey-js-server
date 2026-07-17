@@ -8,11 +8,11 @@ var config = require("../../config.json"),
   utilities = require("../../lib/utilities"),
   logger = require("../../lib/logger").logger;
 
-estimationMethod = {
-  "1" : "Metropolis-Hastings",
-  "2" : "Collapsed-Gibbs", 
-  "3" : "Variational-Bayes"
-}
+var estimationMethod = {
+  "1": "Metropolis-Hastings",
+  "2": "Collapsed-Gibbs",
+  "3": "Variational-Bayes"
+};
 
 var fade = function(socket, stream, params) {
   var self = this;
@@ -151,7 +151,7 @@ var fade = function(socket, stream, params) {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
     let slurmTime = "72:00:00"; // Default 3 days
     if (config.fade_walltime) {
-      const parts = config.fade_walltime.split(':');
+      const parts = config.fade_walltime.split(":");
       if (parts.length === 4) {
         // Convert D:HH:MM:SS to SLURM format
         const days = parseInt(parts[0]);

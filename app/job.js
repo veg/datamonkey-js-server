@@ -183,7 +183,7 @@ jobRunner.prototype.submit = function(params, cwd) {
   const scheduler = self.submit_type === "qsub" ? "qsub" : "sbatch";
   
   // Create formatted command for logging
-  const fullCommand = `${scheduler} ${params.join(' ')}`;
+  const fullCommand = `${scheduler} ${params.join(" ")}`;
   logger.info(`[${scheduler.toUpperCase()} JOB] FULL COMMAND: ${fullCommand}`);
   logger.info(`[${scheduler.toUpperCase()} JOB] Job submission using ${scheduler} with params: ${JSON.stringify(params)}`);
   logger.info(`[${scheduler.toUpperCase()} JOB] Working directory: ${cwd}`);
@@ -250,18 +250,18 @@ jobRunner.prototype.submit = function(params, cwd) {
 jobRunner.prototype.submit_local = function(script, params, cwd) {
   var self = this;
   
-  logger.info(`[LOCAL JOB] Starting local job submission`);
+  logger.info("[LOCAL JOB] Starting local job submission");
   logger.info(`[LOCAL JOB] Script: ${script}`);
   logger.info(`[LOCAL JOB] Params: ${JSON.stringify(params)}`);
   logger.info(`[LOCAL JOB] Working directory: ${cwd}`);
   
   // Log the full command that will be executed
-  const fullCommand = `${script} ${params.join(' ')}`;
+  const fullCommand = `${script} ${params.join(" ")}`;
   logger.info(`[LOCAL JOB] FULL COMMAND: ${fullCommand}`);
   
   // Log environment variables that will be passed
   if (params.length > 0) {
-    logger.info(`[LOCAL JOB] Environment variables/arguments:`);
+    logger.info("[LOCAL JOB] Environment variables/arguments:");
     params.forEach((param, index) => {
       logger.info(`[LOCAL JOB]   [${index}]: ${param}`);
     });
@@ -308,7 +308,7 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
     proc.on("close", function(code) {
       logger.info(`[LOCAL JOB] Process completed with exit code: ${code}`);
       if (code === 0) {
-        logger.info(`[DEBUG JOB] Local job completed successfully, emitting completed event`);
+        logger.info("[DEBUG JOB] Local job completed successfully, emitting completed event");
         self.emit(self.states.completed, "");
       } else {
         logger.error(`[LOCAL JOB] Job failed with exit code: ${code}`);

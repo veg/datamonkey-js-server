@@ -144,7 +144,7 @@ var bgm = function(socket, stream, params) {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
     let slurmTime = "72:00:00"; // Default 3 days
     if (config.bgm_walltime) {
-      const parts = config.bgm_walltime.split(':');
+      const parts = config.bgm_walltime.split(":");
       if (parts.length === 4) {
         // Convert D:HH:MM:SS to SLURM format
         const days = parseInt(parts[0]);
