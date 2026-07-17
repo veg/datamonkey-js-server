@@ -14,6 +14,7 @@
     "test:slurm-unit": "mocha -R spec --exit test/jobstatus.js test/jobqueue.js test/coverage-gaps/job-lifecycle.js test/coverage-gaps/hivtrace-checkjob.js",
     "test:integration": "mocha -R spec --exit test/integration/slac-completes.js",
     "test:mcp": "mocha -R spec --exit test/mcp/mcp.test.js",
+    "test-mcp": "npm run test:mcp",
     "coverage": "nyc --reporter=text --reporter=html --include 'app/**/*.js' --include 'lib/**/*.js' npm run test"
   },
   "dependencies": {
