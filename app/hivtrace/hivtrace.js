@@ -12,7 +12,8 @@ var spawn = require("child_process").spawn,
   JobStatus = require("../../lib/jobstatus.js").JobStatus,
   logger = require("../../lib/logger").logger,
   redis = require("redis"),
-  utilities = require("../../lib/utilities");
+  utilities = require("../../lib/utilities"),
+  jobRegistry = require("../../lib/jobregistry.js");
 
 // Use redis as our key-value store
 var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
@@ -214,17 +215,16 @@ hivtrace.prototype.spawn = function() {
     self.socket.emit("tn93 summary", tn93);
   });
 
-  // Global event that triggers all jobs to cancel
-  process.on("cancelJob", function(msg) {
-    self.warn("cancel called!");
-    self.cancel_once = _.once(self.cancel);
-    self.cancel_once();
-  });
+  // See GH #400: register in the central registry instead of adding a
+  // per-job process listener. cancel/onError are inherited from hyphyJob.
+  jobRegistry.register(self);
 
-  // Release the python_<id> subscriber (and its status-watcher timer) if the
-  // client disconnects before the job reaches a terminal state. See issue #397.
+  // Release the python_<id> subscriber, the Tail watcher and the status
+  // timer (via trace_runner.close), and the registry slot, if the client
+  // disconnects before the job reaches a terminal state. See #397, #400.
   self.socket.on("disconnect", function() {
     if (self.trace_runner) self.trace_runner.close();
+    jobRegistry.unregister(self.id);
   });
 
   // Ensure output directory exists
@@ -346,6 +346,7 @@ hivtrace.prototype.onComplete = function() {
 
       // Remove id from active_job queue
       client.lrem("active_jobs", 1, self.id);
+      jobRegistry.unregister(self.id);
     } else {
       self.onError(
         "job seems to have completed, but no results found: " +
@@ -436,6 +437,16 @@ HivTraceRunner.prototype.close = function() {
 
   if (self.metronome_id) clearInterval(self.metronome_id);
 
+  // Stop watching the hivtrace log file (node-tail exposes unwatch()). See #400.
+  if (self.tail) {
+    try {
+      self.tail.unwatch();
+    } catch (e) {
+      logger.warn("error unwatching hivtrace log tail: " + e);
+    }
+    self.tail = null;
+  }
+
   logger.info(
     "[REDIS] Closing subscriber for channel " + self.python_redis_channel
   );
@@ -456,10 +467,10 @@ HivTraceRunner.prototype.close = function() {
 HivTraceRunner.prototype.log_publisher = function() {
   var self = this;
 
-  // read log file
-  var tail = new Tail(self.hivtrace_log);
+  // read log file (stored on self so close() can stop watching it; GH #400)
+  self.tail = new Tail(self.hivtrace_log);
 
-  tail.on("line", function(data) {
+  self.tail.on("line", function(data) {
     logger.debug(data);
 
     if (data.indexOf("INFO:") != -1) {
