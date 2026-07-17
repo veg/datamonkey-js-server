@@ -4,9 +4,29 @@ var spawn = require("child_process").spawn,
   path = require("path"),
   config = require("../../config.json"),
   util = require("util"),
-  moment = require("moment"),
+  dateFns = require("date-fns"),
   logger = require("../../lib/logger").logger,
   EventEmitter = require("events").EventEmitter;
+
+/**
+ * Format a FLEA msa.visit_date as "YYYYMMDD", matching the old
+ * `moment(msa.visit_date).format("YYYYMMDD")`.
+ *
+ * moment parses a bare "YYYY-MM-DD" string as LOCAL midnight, whereas
+ * `new Date("YYYY-MM-DD")` parses it as UTC midnight (which can roll to the
+ * previous day in negative-offset zones). To preserve moment's local semantics
+ * we treat a date-only string as local midnight by appending "T00:00:00";
+ * Date objects and full datetime strings pass straight through to new Date().
+ */
+function formatVisitDate(visit_date) {
+  var d;
+  if (typeof visit_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(visit_date)) {
+    d = new Date(visit_date + "T00:00:00");
+  } else {
+    d = new Date(visit_date);
+  }
+  return dateFns.format(d, "yyyyMMdd");
+}
 
 var FleaRunner = function() {};
 
@@ -137,9 +157,7 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
           // Append to file
           // Format : PC64_V00_small.fastq V00 20080301
           if (files.indexOf(msa._id + ".fastq") != -1) {
-            var formatted_visit_date = moment(msa.visit_date).format(
-              "YYYYMMDD"
-            );
+            var formatted_visit_date = formatVisitDate(msa.visit_date);
             var string_to_write = util.format(
               "%s %s %s\n",
               self.filedir + "/" + msa._id + ".fastq",
