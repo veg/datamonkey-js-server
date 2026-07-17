@@ -1,6 +1,5 @@
 const config = require("../../config.json"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
-  redis = require("redis"),
   util = require("util"),
   logger = require("../../lib/logger").logger,
   fs = require("fs"),
@@ -9,8 +8,8 @@ const config = require("../../config.json"),
   path = require("path"),
   utilities = require("../../lib/utilities");
 
-// Use redis as our key-value store
-const client = redis.createClient({ host: config.redis_host, port: config.redis_port });
+// Use the shared redis v5 client (promise-native, camelCased commands).
+const { client } = require("../../lib/redis-client");
 
 var gard = function(socket, stream, params) {
   var self = this;
@@ -347,12 +346,12 @@ gard.prototype.onComplete = function() {
           self.log("complete", "success");
 
           // Store packet in redis and publish to channel
-          client.hset(self.id, "results", str_redis_packet);
-          client.hset(self.id, "status", "completed");
+          client.hSet(self.id, "results", str_redis_packet);
+          client.hSet(self.id, "status", "completed");
           client.publish(self.id, str_redis_packet);
 
           // Remove id from active_job queue
-          client.lrem("active_jobs", 1, self.id);
+          client.lRem("active_jobs", 1, self.id);
         }    
       });
     }
