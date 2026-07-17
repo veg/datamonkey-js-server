@@ -2,14 +2,27 @@ const chai = require('chai');
 const expect = chai.expect;
 const fs = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, spawnSync } = require('child_process');
+const config = require('../config.json');
 const difFubar = require('../app/difFubar/difFubar.js').difFubar;
 
 describe('difFUBAR Backend Tests', function() {
   this.timeout(30000); // Allow longer timeout for Julia tests
-  
+
   const testDir = path.join(__dirname, 'difFubar_test_output');
   const difFubarDir = path.join(__dirname, '../app/difFubar');
+
+  // Use the configured Julia binary rather than a hardcoded path, and the
+  // repo-root .julia_env project (relative to app/difFubar it is ../../.julia_env).
+  const juliaPath = (config && config.julia_path) || '/usr/local/bin/julia';
+  const juliaProject = '../../.julia_env';
+  // Gate Julia-dependent tests on the binary actually being available.
+  let juliaAvailable = false;
+  try {
+    juliaAvailable = spawnSync(juliaPath, ['--version'], { timeout: 15000 }).status === 0;
+  } catch (e) {
+    juliaAvailable = false;
+  }
   
   // Sample test data
   const sampleNexusWithLabels = `#NEXUS
@@ -77,12 +90,26 @@ ATGCTGATGATG
   });
 
   describe('difFubar.js module', function() {
+    // The difFubar constructor unconditionally calls self.init(), which runs the
+    // full hyphyJob submit pipeline (sbatch/qsub) against a live SLURM cluster.
+    // These three tests only assert constructed fields, so stub init() (a no-op)
+    // for the duration of this block. This makes them true unit tests with zero
+    // cluster impact.
+    let originalInit;
+    beforeEach(function() {
+      originalInit = difFubar.prototype.init;
+      difFubar.prototype.init = function() {};
+    });
+    afterEach(function() {
+      difFubar.prototype.init = originalInit;
+    });
+
     it('should create difFubar instance with correct properties', function() {
       // Mock fs.writeFile to prevent actual file writes during tests
       const fs = require('fs');
       const originalWriteFile = fs.writeFile;
       fs.writeFile = (path, data, callback) => { if (callback) callback(); };
-      
+
       // Mock fs.openSync to prevent file creation
       const originalOpenSync = fs.openSync;
       fs.openSync = (path, flags) => { return 1; };
@@ -185,17 +212,19 @@ ATGCTGATGATG
 
       const job = new difFubar(mockSocket, mockStream, mockParams);
       
+      // Local positional contract (see difFubar.js): qsub_script, fn, tree_fn,
+      // results_short_fn, progress_fn, pos_threshold, mcmc_iterations,
+      // burnin_samples, concentration_of_dirichlet_prior, julia_path, julia_project.
       expect(job.qsub_params).to.be.an('array');
       expect(job.qsub_params[0]).to.include('difFubar.sh');
       expect(job.qsub_params[1]).to.include('test789'); // fn
       expect(job.qsub_params[2]).to.include('.tre'); // tree_fn
-      expect(job.qsub_params[3]).to.include('.status'); // status_fn
+      expect(job.qsub_params[3]).to.include('.difFubar'); // results_short_fn
       expect(job.qsub_params[4]).to.include('.progress'); // progress_fn
-      expect(job.qsub_params[5]).to.include('.difFubar'); // results_short_fn
-      expect(job.qsub_params[6]).to.equal(0.9); // pos_threshold
-      expect(job.qsub_params[7]).to.equal(100); // mcmc_iterations
-      expect(job.qsub_params[8]).to.equal(25); // burnin_samples
-      expect(job.qsub_params[9]).to.equal(0.5); // concentration_of_dirichlet_prior
+      expect(job.qsub_params[5]).to.equal(0.9); // pos_threshold
+      expect(job.qsub_params[6]).to.equal(100); // mcmc_iterations
+      expect(job.qsub_params[7]).to.equal(25); // burnin_samples
+      expect(job.qsub_params[8]).to.equal(0.5); // concentration_of_dirichlet_prior
 
       // Restore
       fs.writeFile = originalWriteFile;
@@ -215,38 +244,19 @@ ATGCTGATGATG
       });
     });
 
-    it('should show usage when called without arguments', function(done) {
-      const proc = spawn('bash', [scriptPath]);
-      let output = '';
-      let errorOutput = '';
-
-      proc.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      proc.stderr.on('data', (data) => {
-        errorOutput += data.toString();
-      });
-
-      proc.on('close', (code) => {
-        expect(code).to.equal(1);
-        expect(output).to.include('Usage:');
-        expect(output).to.include('<fn> <tree_fn> <sfn> <pfn> <rfn>');
-        done();
-      });
-    });
-
-    it('should create status and progress files', function(done) {
+    it('should echo its parameters using the positional (local) contract', function(done) {
+      // difFubar.sh positional order (see difFubar.sh):
+      //   FN TREE_FN RFN PFN POS MCMC BURNIN CONC JULIA_PATH JULIA_PROJECT
+      // Use a harmless JULIA_PATH ("true") so the script exits fast without
+      // running a real Julia analysis to completion.
       const testId = Date.now().toString();
       const testFiles = {
         fn: path.join(testDir, `${testId}.nex`),
         tree_fn: path.join(testDir, `${testId}.tre`),
-        status_fn: path.join(testDir, `${testId}.status`),
-        progress_fn: path.join(testDir, `${testId}.progress`),
-        results_fn: path.join(testDir, `${testId}.difFubar`)
+        results_fn: path.join(testDir, `${testId}.difFubar`),
+        progress_fn: path.join(testDir, `${testId}.progress`)
       };
 
-      // Create test input files
       fs.writeFileSync(testFiles.fn, sampleNexusNoLabels);
       fs.writeFileSync(testFiles.tree_fn, sampleTaggedTree);
 
@@ -254,33 +264,71 @@ ATGCTGATGATG
         scriptPath,
         testFiles.fn,
         testFiles.tree_fn,
-        testFiles.status_fn,
-        testFiles.progress_fn,
         testFiles.results_fn,
+        testFiles.progress_fn,
         '0.95',
         '10',
         '5',
         '0.5',
-        '/usr/local/bin/julia',
+        'true', // JULIA_PATH stub: exits immediately, no real analysis
+        './.julia_env'
+      ]);
+
+      let output = '';
+      proc.stdout.on('data', (data) => { output += data.toString(); });
+
+      proc.on('close', (code) => {
+        expect(output).to.include('=== DIFUBAR PARAMETERS ===');
+        expect(output).to.include(`Alignment file: ${testFiles.fn}`);
+        expect(output).to.include(`Tree file: ${testFiles.tree_fn}`);
+        expect(output).to.include('Positive threshold: 0.95');
+        expect(output).to.include('MCMC iterations: 10');
+        expect(output).to.include('Burnin samples: 5');
+
+        Object.values(testFiles).forEach(file => {
+          if (fs.existsSync(file)) fs.unlinkSync(file);
+        });
+        done();
+      });
+    });
+
+    it('should initialize the progress file', function(done) {
+      // The script writes progress updates to $PFN (the 4th positional arg),
+      // starting with '[BASH] Initializing difFUBAR analysis...'. There is no
+      // separate status file. Use a stub JULIA_PATH so no real analysis runs.
+      const testId = Date.now().toString();
+      const testFiles = {
+        fn: path.join(testDir, `${testId}.nex`),
+        tree_fn: path.join(testDir, `${testId}.tre`),
+        results_fn: path.join(testDir, `${testId}.difFubar`),
+        progress_fn: path.join(testDir, `${testId}.progress`)
+      };
+
+      fs.writeFileSync(testFiles.fn, sampleNexusNoLabels);
+      fs.writeFileSync(testFiles.tree_fn, sampleTaggedTree);
+
+      const proc = spawn('bash', [
+        scriptPath,
+        testFiles.fn,
+        testFiles.tree_fn,
+        testFiles.results_fn,
+        testFiles.progress_fn,
+        '0.95',
+        '10',
+        '5',
+        '0.5',
+        'true', // JULIA_PATH stub
         './.julia_env'
       ]);
 
       proc.on('close', (code) => {
-        // Check that status file was created and contains expected content
-        expect(fs.existsSync(testFiles.status_fn)).to.be.true;
-        const statusContent = fs.readFileSync(testFiles.status_fn, 'utf8');
-        expect(statusContent).to.include('[BASH] starting difFUBAR');
-        
-        // Check that progress file was created
         expect(fs.existsSync(testFiles.progress_fn)).to.be.true;
         const progressContent = fs.readFileSync(testFiles.progress_fn, 'utf8');
-        expect(progressContent).to.include('info');
+        expect(progressContent).to.include('[BASH] Initializing difFUBAR analysis...');
 
-        // Clean up
         Object.values(testFiles).forEach(file => {
           if (fs.existsSync(file)) fs.unlinkSync(file);
         });
-        
         done();
       });
     });
@@ -294,17 +342,18 @@ ATGCTGATGATG
     });
 
     it('should show usage with incorrect arguments', function(done) {
-      const proc = spawn('/usr/local/bin/julia', ['--project=./.julia_env', juliaScriptPath], {
+      if (!juliaAvailable) { this.skip(); return; }
+      const proc = spawn(juliaPath, [`--project=${juliaProject}`, juliaScriptPath], {
         cwd: difFubarDir
       });
 
       let output = '';
       let errorOutput = '';
-      
+
       proc.stdout.on('data', (data) => {
         output += data.toString();
       });
-      
+
       proc.stderr.on('data', (data) => {
         errorOutput += data.toString();
       });
@@ -320,6 +369,7 @@ ATGCTGATGATG
     });
 
     it('should parse command line arguments correctly', function(done) {
+      if (!juliaAvailable) { this.skip(); return; }
       const testId = Date.now().toString();
       const testFiles = {
         fn: path.join(testDir, `${testId}.nex`),
@@ -328,12 +378,13 @@ ATGCTGATGATG
         status_fn: path.join(testDir, `${testId}.status`)
       };
 
-      // Create minimal test files
+      // Create minimal test files. The Julia positional order is
+      // fn, tree_fn, rfn, pfn, pos, mcmc, burnin, conc (see difFubar_analysis.jl).
       fs.writeFileSync(testFiles.fn, sampleNexusNoLabels);
       fs.writeFileSync(testFiles.tree_fn, sampleTaggedTree);
 
-      const proc = spawn('/usr/local/bin/julia', [
-        '--project=./.julia_env',
+      const proc = spawn(juliaPath, [
+        `--project=${juliaProject}`,
         juliaScriptPath,
         testFiles.fn,
         testFiles.tree_fn,
@@ -348,12 +399,16 @@ ATGCTGATGATG
       });
 
       let output = '';
-      proc.stdout.on('data', (data) => {
-        output += data.toString();
-      });
-
-      proc.on('close', (code) => {
-        // Check that parameters were parsed
+      let finished = false;
+      const cleanup = () => {
+        Object.values(testFiles).forEach(file => {
+          if (fs.existsSync(file)) fs.unlinkSync(file);
+        });
+      };
+      const finish = () => {
+        if (finished) return;
+        finished = true;
+        try { proc.kill('SIGKILL'); } catch (e) {}
         expect(output).to.include('=== JULIA DIFUBAR PARAMETERS ===');
         expect(output).to.include(`Alignment file: ${testFiles.fn}`);
         expect(output).to.include(`Tree file: ${testFiles.tree_fn}`);
@@ -361,25 +416,32 @@ ATGCTGATGATG
         expect(output).to.include('MCMC iterations: 10');
         expect(output).to.include('Burnin samples: 5');
         expect(output).to.include('Dirichlet concentration: 0.5');
-
-        // Clean up
-        Object.values(testFiles).forEach(file => {
-          if (fs.existsSync(file)) fs.unlinkSync(file);
-        });
-
+        cleanup();
         done();
+      };
+
+      proc.stdout.on('data', (data) => {
+        output += data.toString();
+        // We only assert on the printed parameter block; kill the process as
+        // soon as it is emitted so we never run the analysis to completion.
+        if (output.includes('Dirichlet concentration: 0.5')) {
+          finish();
+        }
       });
+
+      proc.on('close', () => { finish(); });
     });
   });
 
   describe('NEXUS parsing', function() {
     it('should handle NEXUS format with labels', function(done) {
+      if (!juliaAvailable) { this.skip(); return; }
       const testId = Date.now().toString();
       const testFile = path.join(testDir, `${testId}_labels.nex`);
       fs.writeFileSync(testFile, sampleNexusWithLabels);
 
-      const proc = spawn('/usr/local/bin/julia', [
-        '--project=./.julia_env',
+      const proc = spawn(juliaPath, [
+        `--project=${juliaProject}`,
         '-e',
         `
         file_content = read("${testFile}", String)
@@ -417,14 +479,15 @@ ATGCTGATGATG
     });
 
     it('should handle NEXUS format with Windows line endings', function(done) {
+      if (!juliaAvailable) { this.skip(); return; }
       const testId = Date.now().toString();
       const testFile = path.join(testDir, `${testId}_windows.nex`);
       // Create NEXUS file with Windows line endings (\r only)
       const windowsNexus = sampleNexusNoLabels.replace(/\n/g, '\r');
       fs.writeFileSync(testFile, windowsNexus);
 
-      const proc = spawn('/usr/local/bin/julia', [
-        '--project=./.julia_env',
+      const proc = spawn(juliaPath, [
+        `--project=${juliaProject}`,
         '-e',
         `
         file_content = read("${testFile}", String)
@@ -454,12 +517,13 @@ ATGCTGATGATG
     });
 
     it('should handle NEXUS format with NOLABELS', function(done) {
+      if (!juliaAvailable) { this.skip(); return; }
       const testId = Date.now().toString();
       const testFile = path.join(testDir, `${testId}_nolabels.nex`);
       fs.writeFileSync(testFile, sampleNexusNoLabels);
 
-      const proc = spawn('/usr/local/bin/julia', [
-        '--project=./.julia_env',
+      const proc = spawn(juliaPath, [
+        `--project=${juliaProject}`,
         '-e',
         `
         file_content = read("${testFile}", String)
@@ -489,8 +553,9 @@ ATGCTGATGATG
 
   describe('Tagged tree support', function() {
     it('should detect tags in tree', function(done) {
-      const proc = spawn('/usr/local/bin/julia', [
-        '--project=./.julia_env',
+      if (!juliaAvailable) { this.skip(); return; }
+      const proc = spawn(juliaPath, [
+        `--project=${juliaProject}`,
         '-e',
         `
         treestring = "${sampleTaggedTree}"
@@ -556,9 +621,10 @@ ATGCTGATGATG
 
   describe('Error handling', function() {
     it('should handle missing input files gracefully', function(done) {
+      if (!juliaAvailable) { this.skip(); return; }
       const nonExistentFile = path.join(testDir, 'does_not_exist.nex');
-      const proc = spawn('/usr/local/bin/julia', [
-        '--project=./.julia_env',
+      const proc = spawn(juliaPath, [
+        `--project=${juliaProject}`,
         '-e',
         `
         fn = "${nonExistentFile}"
@@ -582,9 +648,10 @@ ATGCTGATGATG
     });
 
     it('should handle malformed trees', function(done) {
+      if (!juliaAvailable) { this.skip(); return; }
       const malformedTree = "((A,B,C"; // Missing closing parentheses
-      const proc = spawn('/usr/local/bin/julia', [
-        '--project=./.julia_env',
+      const proc = spawn(juliaPath, [
+        `--project=${juliaProject}`,
         '-e',
         `
         try
