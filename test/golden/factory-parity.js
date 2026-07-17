@@ -23,7 +23,8 @@ var GOLDEN = require(__dirname + "/qsub-params.snapshot.json");
 var DESCRIPTORS = [
   ["fel", require(__dirname + "/../../app/fel/descriptor.js").fel],
   ["meme", require(__dirname + "/../../app/meme/descriptor.js").meme],
-  ["slac", require(__dirname + "/../../app/slac/descriptor.js").slac]
+  ["slac", require(__dirname + "/../../app/slac/descriptor.js").slac],
+  ["fubar", require(__dirname + "/../../app/fubar/descriptor.js").fubar]
 ];
 
 function fakeSocket() {
