@@ -61,7 +61,7 @@ hyphyJob.prototype.warn = function(notification, complementary_info) {
 hyphyJob.prototype.attachSocket = function() {
   var self = this;
   logger.info(`[DEBUG REDIS] Attaching socket to job ${self.id}`);
-  new cs.ClientSocket(self.socket, self.id);
+  self.client_socket = new cs.ClientSocket(self.socket, self.id);
 };
 
 // Can either initialize a new job or check on previous one
@@ -211,6 +211,7 @@ hyphyJob.prototype.spawn = function() {
   // Should be called when the job completes
   self.socket.on("disconnect", function() {
     self.log("user disconnected");
+    if (self.client_socket) self.client_socket.close();
   });
 };
 
