@@ -168,7 +168,8 @@ hivtrace.prototype.spawn = function() {
 
   // Setup Analysis
   var trace_runner = new HivTraceRunner(self.id, self.hivtrace_log);
-  new cs.ClientSocket(self.socket, self.id);
+  self.trace_runner = trace_runner;
+  self.client_socket = new cs.ClientSocket(self.socket, self.id);
 
   // On status updates, report to datamonkey-js
   trace_runner.on("status update", function(status_update) {
@@ -194,11 +195,13 @@ hivtrace.prototype.spawn = function() {
   // On errors, report to datamonkey-js
   trace_runner.on("script error", function(error) {
     self.onError(error);
+    trace_runner.close();
   });
 
   // When the analysis completes, return the results to datamonkey.
   trace_runner.on("completed", function() {
     self.onComplete();
+    trace_runner.close();
   });
 
   // Report the torque job id back to datamonkey
@@ -216,6 +219,12 @@ hivtrace.prototype.spawn = function() {
     self.warn("cancel called!");
     self.cancel_once = _.once(self.cancel);
     self.cancel_once();
+  });
+
+  // Release the python_<id> subscriber (and its status-watcher timer) if the
+  // client disconnects before the job reaches a terminal state. See issue #397.
+  self.socket.on("disconnect", function() {
+    if (self.trace_runner) self.trace_runner.close();
   });
 
   // Ensure output directory exists
@@ -414,6 +423,35 @@ var HivTraceRunner = function(id, hivtrace_log) {
 };
 
 util.inherits(HivTraceRunner, EventEmitter);
+
+/**
+ * Tears down the dedicated python_<id> Redis subscriber and the status-watcher
+ * timer. Idempotent — safe to call from terminal events and socket disconnect.
+ * See issue #397.
+ */
+HivTraceRunner.prototype.close = function() {
+  var self = this;
+  if (self._closed) return;
+  self._closed = true;
+
+  if (self.metronome_id) clearInterval(self.metronome_id);
+
+  logger.info(
+    "[REDIS] Closing subscriber for channel " + self.python_redis_channel
+  );
+  try {
+    self.subscriber.removeAllListeners("message");
+    self.subscriber.unsubscribe(self.python_redis_channel);
+    self.subscriber.quit();
+  } catch (err) {
+    logger.error("Error closing HivTrace Redis subscriber: " + err.message);
+    try {
+      self.subscriber.end(true);
+    } catch (e) {
+      logger.error("Error force-ending HivTrace Redis subscriber: " + e.message);
+    }
+  }
+};
 
 HivTraceRunner.prototype.log_publisher = function() {
   var self = this;

@@ -49,7 +49,7 @@ hyphyJob.prototype.warn = function(notification, complementary_info) {
 // Attach socket to redis channel
 hyphyJob.prototype.attachSocket = function() {
   var self = this;
-  new cs.ClientSocket(self.socket, self.id);
+  self.client_socket = new cs.ClientSocket(self.socket, self.id);
 };
 
 // Can either initialize a new job or check on previous one
@@ -159,6 +159,7 @@ hyphyJob.prototype.spawn = function() {
   // Should be called when the job completes
   self.socket.on("disconnect", function() {
     self.log("user disconnected");
+    if (self.client_socket) self.client_socket.close();
   });
 };
 
