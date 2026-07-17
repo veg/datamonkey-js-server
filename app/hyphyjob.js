@@ -2,26 +2,35 @@ const cs = require("../lib/clientsocket.js"),
   logger = require("../lib/logger.js").logger,
   job = require("./job.js"),
   jobdel = require("../lib/jobdel.js"),
-  redis = require("redis"),
-  Q = require("q"),
-  _ = require("underscore"),
   fs = require("fs"),
   path = require("path"),
+  util = require("util"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   config = require("../config.json");
 
 var jobRegistry = require("../lib/jobregistry.js");
 
-// Use redis as our key-value store
-var client = redis.createClient({
-  host: config.redis_host,
-  port: config.redis_port
-});
+// Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
+// promise-native and camelCases commands (hset -> hSet, hget -> hGet,
+// rpush -> rPush, lrem -> lRem, llen -> lLen).
+var client = require("../lib/redis-client").client;
 
-// Add error handler for Redis client
-client.on("error", function(err) {
-  logger.error("Redis hyphyjob client error: " + err.message);
-});
+// Native replacement for underscore's _.once: returns a function that invokes
+// `fn` at most once, caching and returning that first result thereafter.
+function once(fn) {
+  var called = false;
+  var result;
+  return function() {
+    if (!called) {
+      called = true;
+      result = fn.apply(this, arguments);
+    }
+    return result;
+  };
+}
+
+// Promisified fs.readFile for the q -> native Promise migration in onError().
+var readFileAsync = util.promisify(fs.readFile);
 
 // Prepend a scheduler --comment flag carrying the submission source so SLURM
 // accounting (sacct/scontrol) records which path submitted the job. Grafana
@@ -72,7 +81,7 @@ hyphyJob.prototype.init = function() {
 
   // store parameters in redis
   logger.info(`Job ${self.id}: Storing parameters in redis`);
-  client.hset(self.id, "params", JSON.stringify(self.params));
+  client.hSet(self.id, "params", JSON.stringify(self.params));
   
   logger.info(`Job ${self.id}: Attaching socket`);
   self.attachSocket();
@@ -110,7 +119,7 @@ hyphyJob.prototype.spawn = function() {
   // On status updates, report to datamonkey-js
   hyphy_job_runner.on("status", function(status) {
     self.log("status", JSON.stringify(status));
-    client.hset(self.id, "status", status);
+    client.hSet(self.id, "status", status);
   });
 
   // On status updates, report to datamonkey-js
@@ -135,11 +144,14 @@ hyphyJob.prototype.spawn = function() {
 
   // On errors, report to datamonkey-js
   hyphy_job_runner.on("script error", function() {
-    // Check that job was not manually cancelled
-    client.hget(self.id, "status", function(err, status) {
+    // Check that job was not manually cancelled. redis@5 hGet returns a promise.
+    client.hGet(self.id, "status").then(function(status) {
       if (status != "cancelled") {
         self.onError();
       }
+    }).catch(function(err) {
+      logger.error("Redis hGet status failed: " + err.message);
+      self.onError();
     });
   });
 
@@ -221,10 +233,10 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   var self = this;
 
   self.push_active_job = function() {
-    client.rpush("active_jobs", self.id);
+    client.rPush("active_jobs", self.id);
   };
 
-  self.push_job_once = _.once(self.push_active_job);
+  self.push_job_once = once(self.push_active_job);
   self.setTorqueParameters(torque_id);
 
   // Enhanced job info for client
@@ -253,26 +265,27 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   self.log("job created", str_redis_packet);
 
   // Store job info in Redis
-  client.hset(self.id, "torque_id", JSON.stringify({ torque_id: self.torque_id }));
-  client.hset(self.id, "status", status_update.status);
-  client.hset(self.id, "scheduler", scheduler);
+  client.hSet(self.id, "torque_id", JSON.stringify({ torque_id: self.torque_id }));
+  client.hSet(self.id, "status", status_update.status);
+  client.hSet(self.id, "scheduler", scheduler);
   client.publish(self.id, str_redis_packet);
-  
-  // Store cross-references in a single hset call to avoid errors
-  client.hset(
-    self.torque_id, 
-    "datamonkey_id", self.id,
-    "type", self.type,
-    "scheduler", scheduler
-  );
-  
-  // Safely add msa properties if they exist
+
+  // Store cross-references. redis@5 hSet takes an object for multi-field sets
+  // (the old variadic field/value form is no longer supported).
+  client.hSet(self.torque_id, {
+    datamonkey_id: self.id,
+    type: self.type,
+    scheduler: scheduler
+  });
+
+  // Safely add msa properties if they exist. hSet coerces numbers to strings,
+  // but rejects undefined, so keep the existing guards.
   if (self.params && self.params.msa && self.params.msa[0]) {
     if (self.params.msa[0].sites !== undefined) {
-      client.hset(self.torque_id, "sites", self.params.msa[0].sites);
+      client.hSet(self.torque_id, "sites", String(self.params.msa[0].sites));
     }
     if (self.params.msa[0].sequences !== undefined) {
-      client.hset(self.torque_id, "sequences", self.params.msa[0].sequences);
+      client.hSet(self.torque_id, "sequences", String(self.params.msa[0].sequences));
     }
   }
   
@@ -312,16 +325,15 @@ hyphyJob.prototype.onComplete = function() {
         }
 
         // Store packet in redis and publish to channel
-        client.hset(
-          self.id, 
-          "results", str_redis_packet,
-          "status", "completed"
-        );
+        client.hSet(self.id, {
+          results: str_redis_packet,
+          status: "completed"
+        });
         client.publish(self.id, str_redis_packet);
         logger.info(`[DEBUG REDIS] Published completion event to Redis channel: ${self.id}`);
 
         // Remove id from active_job queue
-        client.lrem("active_jobs", 1, self.id);
+        client.lRem("active_jobs", 1, self.id);
         jobRegistry.unregister(self.id);
         delete this;
       } else {
@@ -385,11 +397,10 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   logger.info(`[DEBUG REDIS] Publishing status update to channel: ${self.id}`);
   logger.info(`[DEBUG REDIS] Status update data: ${str_redis_packet}`);
   
-  client.hset(
-    self.id, 
-    "status update", str_redis_packet,
-    "current_status", self.current_status
-  );
+  client.hSet(self.id, {
+    "status update": str_redis_packet,
+    current_status: self.current_status
+  });
   client.publish(self.id, str_redis_packet);
 
   // Log status update on server
@@ -425,11 +436,10 @@ hyphyJob.prototype.onJobMetadata = function(data) {
     self.log("job metadata", str_redis_packet);
     
     // Store and publish metadata in a single call
-    client.hset(
-      self.id, 
-      "status", metadata_update.status,
-      "metadata", str_redis_packet
-    );
+    client.hSet(self.id, {
+      status: metadata_update.status,
+      metadata: str_redis_packet
+    });
     client.publish(self.id, str_redis_packet);
   }
 };
@@ -442,14 +452,19 @@ hyphyJob.prototype.onError = function(error) {
   var redis_packet = { error: error };
   redis_packet.type = "script error";
 
-  // Read error path contents
-  var std_err_promise = Q.nfcall(fs.readFile, self.std_err, "utf-8");
-  var progress_fn_promise = Q.nfcall(fs.readFile, self.progress_fn, "utf-8");
-  var std_out_promise = Q.nfcall(fs.readFile, self.std_out, "utf-8");
+  // Read error path contents. q's Q.nfcall + Q.allSettled are replaced with
+  // native promisified fs.readFile + Promise.allSettled. NOTE: q's settled
+  // result shape is {state, value/reason} whereas native is
+  // {status:'fulfilled'|'rejected', value/reason}. A rejected read therefore
+  // has no `.value`, so the `|| "No ... content"` fallbacks below cover the
+  // missing-file case exactly as before.
+  var std_err_promise = readFileAsync(self.std_err, "utf-8");
+  var progress_fn_promise = readFileAsync(self.progress_fn, "utf-8");
+  var std_out_promise = readFileAsync(self.std_out, "utf-8");
 
   var promises = [std_err_promise, progress_fn_promise, std_out_promise];
 
-  Q.allSettled(promises).then(function(results) {
+  Promise.allSettled(promises).then(function(results) {
     // Prepare redis packet for delivery
     redis_packet.stderr = results[0].value || "No stderr content";
     redis_packet.progress = results[1].value || "No progress content";
@@ -470,12 +485,18 @@ hyphyJob.prototype.onError = function(error) {
     self.warn("script error", str_redis_packet);
 
     // Publish error messages to redis
-    client.hset(self.id, "error", str_redis_packet, "status", "error");
+    client.hSet(self.id, {
+      error: str_redis_packet,
+      status: "error"
+    });
     client.publish(self.id, str_redis_packet);
-    client.lrem("active_jobs", 1, self.id);
+    client.lRem("active_jobs", 1, self.id);
     jobRegistry.unregister(self.id);
-    client.llen("active_jobs", function(err, n) {
+    // redis@5 lLen returns a promise instead of taking an (err, n) callback.
+    client.lLen("active_jobs").then(function(n) {
       process.emit("jobCancelled", n);
+    }).catch(function(err) {
+      logger.error("Redis lLen active_jobs failed: " + err.message);
     });
 
     delete this;
@@ -529,7 +550,7 @@ hyphyJob.prototype.cancel = function() {
 
   self.warn("cancel called!");
 
-  self.cancel_once = _.once(jobdel.jobDelete);
+  self.cancel_once = once(jobdel.jobDelete);
   self.cancel_once(self.torque_id, cb);
 };
 
