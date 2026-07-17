@@ -34,8 +34,7 @@
 var should  = require('should'),
     fs      = require('fs'),
     path    = require('path'),
-    redis   = require('redis'),
-    config  = require(__dirname + '/../../config.json'),
+    redisClientFactory = require(__dirname + '/../../lib/redis-client.js'),
     harness = require(__dirname + '/../helpers/socketharness.js'),
     busted  = require(__dirname + '/../../app/busted/busted.js'),
     job     = require(__dirname + '/../../app/job.js'),
@@ -50,21 +49,26 @@ var MOCK_TORQUE_ID = 'mock123';
 // ---- live-redis helpers (mirror test/regression/leaks.js) -----------------
 
 // Count Redis clients currently subscribed to a pub/sub channel.
+// redis@5 is promise-native; use the shared client and translate to callbacks.
 function subscriberCount(channel, cb) {
-  var c = redis.createClient({ host: config.redis_host, port: config.redis_port });
-  c.send_command('pubsub', ['numsub', channel], function (err, res) {
-    c.quit();
-    // res = [channel, "<count>"]
-    cb(err ? 0 : parseInt(res[1], 10));
+  redisClientFactory.ready.then(function () {
+    return redisClientFactory.client.sendCommand(['PUBSUB', 'NUMSUB', channel]);
+  }).then(function (res) {
+    // res = [channel, <count>]
+    cb(res && res.length > 1 ? parseInt(res[1], 10) : 0);
+  }).catch(function () {
+    cb(0);
   });
 }
 
 // Is `id` currently present in the active_jobs list?
 function activeJobsHas(id, cb) {
-  var c = redis.createClient({ host: config.redis_host, port: config.redis_port });
-  c.lrange('active_jobs', 0, -1, function (err, list) {
-    c.quit();
-    cb(!err && list && list.indexOf(id) !== -1);
+  redisClientFactory.ready.then(function () {
+    return redisClientFactory.client.lRange('active_jobs', 0, -1);
+  }).then(function (list) {
+    cb(list && list.indexOf(id) !== -1);
+  }).catch(function () {
+    cb(false);
   });
 }
 

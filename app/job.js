@@ -1,5 +1,4 @@
 var spawn = require("child_process").spawn,
-  redis = require("redis"),
   fs = require("fs"),
   util = require("util"),
   cs = require("../lib/clientsocket.js"),
@@ -9,24 +8,9 @@ var spawn = require("child_process").spawn,
   EventEmitter = require("events").EventEmitter,
   config = require("../config.json");
 
-
-// Use redis as our key-value store
-var redisConfig = {
-  host: config.redis_host, 
-  port: config.redis_port
-};
-
-// Add password if configured
-if (config.redis_password) {
-  redisConfig.password = config.redis_password;
-}
-
-var client = redis.createClient(redisConfig);
-
-// Add error handler for Redis client
-client.on("error", function(err) {
-  logger.error("Redis job.js client error: " + err.message);
-});
+// Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
+// promise-native and camelCases commands (hgetall -> hGetAll, hset -> hSet).
+var client = require("../lib/redis-client").client;
 
 // resubscribes a socket to an existing pending job,
 // otherwise reports contents from redis
@@ -34,87 +18,94 @@ var resubscribe = function(socket, id) {
   var self = this;
   self.id = id;
 
-  var callback = function(err, obj) {
-    if (err || !obj) {
-      logger.warn(self.id + " : resubscribe : " + err);
-      socket.emit("script error", { error: err });
-    } else {
-      // check job status
-      var current_status = obj.status;
-      logger.info(self.id + " : job : current status : " + obj.status);
-      if (current_status != "completed" && current_status != "exiting") {
-        // if job is still pending, resubscribe
-        logger.warn(
-          "info",
-          self.id + " : job : resubscribe : job pending, resuming"
-        );
-
-        var clientSocket = new cs.ClientSocket(socket, self.id);
-      } else if (current_status == "completed") {
-        // if job completed, emit results
-        logger.info(self.id + " : job : resubscribe : job completed");
-        var json_results = JSON.parse(obj.results);
-        socket.emit("completed", json_results);
-        socket.disconnect();
-      } else {
-        // if job aborted, emit error
-        socket.emit("script error", obj.error);
-      }
+  // redis@5 commands return promises; hGetAll resolves to the hash (an empty
+  // object when the key is missing), so treat an empty object like the old
+  // falsy `obj`.
+  client.hGetAll(self.id).then(function(obj) {
+    if (!obj || Object.keys(obj).length === 0) {
+      logger.warn(self.id + " : resubscribe : no job");
+      socket.emit("script error", { error: "no job" });
+      return;
     }
-  };
 
-  client.hgetall(self.id, callback);
+    // check job status
+    var current_status = obj.status;
+    logger.info(self.id + " : job : current status : " + obj.status);
+    if (current_status != "completed" && current_status != "exiting") {
+      // if job is still pending, resubscribe
+      logger.warn(
+        "info",
+        self.id + " : job : resubscribe : job pending, resuming"
+      );
+
+      new cs.ClientSocket(socket, self.id);
+    } else if (current_status == "completed") {
+      // if job completed, emit results
+      logger.info(self.id + " : job : resubscribe : job completed");
+      var json_results = JSON.parse(obj.results);
+      socket.emit("completed", json_results);
+      socket.disconnect();
+    } else {
+      // if job aborted, emit error
+      socket.emit("script error", obj.error);
+    }
+  }).catch(function(err) {
+    logger.warn(self.id + " : resubscribe : " + err);
+    socket.emit("script error", { error: err.message });
+  });
 };
 
 var cancel = function(socket, id) {
   var self = this;
   self.id = id;
 
-  var callback = function(err, obj) {
-    if (err || !obj) {
-      logger.warn(self.id + " : cancel : " + err);
-      socket.emit("cancelled", { success: "no", error: err });
-    } else {
-      // check job status
-      var current_status = obj.status,
-        torque_id = "";
+  client.hGetAll(self.id).then(function(obj) {
+    if (!obj || Object.keys(obj).length === 0) {
+      logger.warn(self.id + " : cancel : no job");
+      socket.emit("cancelled", { success: "no", error: "no job" });
+      return;
+    }
 
-      try {
-        torque_id = JSON.parse(obj.torque_id).torque_id;
-      } catch (e) {
-        logger.info(
-          self.id + " : job : cancel : could not retrieve torque information"
-        );
-        socket.emit("cancelled", {
-          success: "no",
-          error: "could not retrieve torque id"
-        });
-      }
+    // check job status
+    var current_status = obj.status,
+      torque_id = "";
 
-      if (current_status != "completed" && current_status != "exiting") {
-        // if job is still pending, cancel
-        logger.warn("info", self.id + " : job : cancel : cancelling job");
+    try {
+      torque_id = JSON.parse(obj.torque_id).torque_id;
+    } catch (e) {
+      logger.info(
+        self.id + " : job : cancel : could not retrieve torque information"
+      );
+      socket.emit("cancelled", {
+        success: "no",
+        error: "could not retrieve torque id"
+      });
+    }
 
-        jobdel.jobDelete(torque_id, function() {
-          logger.warn("info", self.id + " : job : cancel : job cancelled");
-          client.hset(self.id, "status", "aborted");
-          socket.emit("cancelled", { success: "ok" });
-          socket.disconnect();
-        });
-      } else if (current_status == "completed") {
-        // if job completed, emit results
-        logger.info(self.id + " : job : cancel : job completed");
+    if (current_status != "completed" && current_status != "exiting") {
+      // if job is still pending, cancel
+      logger.warn("info", self.id + " : job : cancel : cancelling job");
+
+      jobdel.jobDelete(torque_id, function() {
+        logger.warn("info", self.id + " : job : cancel : job cancelled");
+        client.hSet(self.id, "status", "aborted");
         socket.emit("cancelled", { success: "ok" });
         socket.disconnect();
-      } else {
-        // if job aborted, emit error
-        logger.info(self.id + " : job : cancel : job does not exist");
-        socket.emit("cancelled", { success: "no", error: "no job" });
-      }
+      });
+    } else if (current_status == "completed") {
+      // if job completed, emit results
+      logger.info(self.id + " : job : cancel : job completed");
+      socket.emit("cancelled", { success: "ok" });
+      socket.disconnect();
+    } else {
+      // if job aborted, emit error
+      logger.info(self.id + " : job : cancel : job does not exist");
+      socket.emit("cancelled", { success: "no", error: "no job" });
     }
-  };
-
-  client.hgetall(self.id, callback);
+  }).catch(function(err) {
+    logger.warn(self.id + " : cancel : " + err);
+    socket.emit("cancelled", { success: "no", error: err.message });
+  });
 };
 
 var jobRunner = function(params, results_fn) {

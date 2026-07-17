@@ -20,7 +20,6 @@ const config = require("./config.json"),
   relax = require("./app/relax/relax.js"),
   slac = require("./app/slac/slac.js"),
   job = require("./app/job.js"),
-  redis = require("redis"),
   router = require(path.join(__dirname, "/lib/router.js")),
   JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue,
   logger = require("./lib/logger.js").logger;
@@ -49,26 +48,16 @@ if (program.port) {
 
 const io = require("socket.io")(ioPort, ioOptions);
 
-// Configure Redis client with optional password
-var redisConfig = {
-  host: config.redis_host, 
-  port: config.redis_port
-};
-
-if (config.redis_password) {
-  redisConfig.password = config.redis_password;
-}
-
-var client = redis.createClient(redisConfig);
-
-// Add error handler for Redis client
-client.on("error", function(err) {
-  logger.error("Redis client error: " + err.message);
-});
+// Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
+// promise-native, so commands return promises and are camelCased
+// (del stays del, hgetall -> hGetAll).
+var client = require("./lib/redis-client").client;
 
 // clear active_jobs list
 // TODO: we should do more than just clear the active_jobs list
-client.del("active_jobs");
+client.del("active_jobs").catch(function(err) {
+  logger.error("Redis del active_jobs failed: " + err.message);
+});
 
 // For every new connection...
 io.sockets.on("connection", function(socket) {
@@ -87,8 +76,10 @@ io.sockets.on("connection", function(socket) {
       return;
     }
 
-    client.hgetall(params.jobId, function(err, jobData) {
-      if (err || !jobData) {
+    // redis@5 hGetAll returns a promise resolving to the hash (an empty object
+    // when the key is missing), so treat an empty object as "not found".
+    client.hGetAll(params.jobId).then(function(jobData) {
+      if (!jobData || Object.keys(jobData).length === 0) {
         if (callback) callback({ status: "not_found" });
         return;
       }
@@ -119,6 +110,9 @@ io.sockets.on("connection", function(socket) {
       }
 
       if (callback) callback(response);
+    }).catch(function(err) {
+      logger.error("Redis hGetAll job:status failed: " + err.message);
+      if (callback) callback({ status: "not_found" });
     });
   });
 
