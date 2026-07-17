@@ -84,20 +84,25 @@ describe('regression: resource leaks', function () {
   // ---- #400: jobRegistry keeps exactly one process "cancelJob" listener -----
   describe('#400 cancelJob listener does not leak per job', function () {
 
+    // Track every id this suite registers so afterEach can FULLY remove them
+    // from the shared jobRegistry singleton — otherwise leftover test doubles
+    // bleed into other test files' cancelJob broadcasts. (cancelAll() only
+    // cancels; it does not unregister.)
+    var registeredIds = [];
+    function track(job) { registeredIds.push(job.id); jobRegistry.register(job); return job; }
+
     afterEach(function () {
-      // Clear the registry between tests so counts are deterministic.
-      jobRegistry.cancelAll();
+      registeredIds.forEach(function (id) { jobRegistry.unregister(id); });
+      registeredIds = [];
     });
 
     it('holds exactly ONE process listener regardless of registered jobs', function () {
       var base = process.listenerCount('cancelJob');
       base.should.equal(1); // installed once at module load
 
-      var jobs = [];
       for (var i = 0; i < 25; i++) {
-        jobs.push({ id: 'j' + i, cancelled: false, cancel: function () { this.cancelled = true; } });
+        track({ id: 'j' + i, cancelled: false, cancel: function () { this.cancelled = true; } });
       }
-      jobs.forEach(function (j) { jobRegistry.register(j); });
 
       // The whole point of #400: registering 25 jobs adds ZERO process listeners.
       process.listenerCount('cancelJob').should.equal(1);
@@ -106,10 +111,8 @@ describe('regression: resource leaks', function () {
     it('broadcast-cancels all registered jobs, idempotently, and respects unregister', function () {
       var cancelled = [];
       function job(id) { return { id: id, cancel: function () { cancelled.push(id); } }; }
-      var a = job('A'), b = job('B'), c = job('C');
+      var a = track(job('A')), b = track(job('B'));
 
-      jobRegistry.register(a);
-      jobRegistry.register(b);
       process.emit('cancelJob', '');
       cancelled.sort().should.eql(['A', 'B']);
 
@@ -118,7 +121,7 @@ describe('regression: resource leaks', function () {
       cancelled.sort().should.eql(['A', 'B']);
 
       // A newly registered job cancels on the next emit; an unregistered one does not.
-      jobRegistry.register(c);
+      track(job('C'));
       jobRegistry.unregister('B');
       process.emit('cancelJob', '');
       cancelled.sort().should.eql(['A', 'B', 'C']);
