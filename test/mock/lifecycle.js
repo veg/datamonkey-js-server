@@ -34,8 +34,7 @@
 var should  = require('should'),
     fs      = require('fs'),
     path    = require('path'),
-    redis   = require('redis'),
-    config  = require(__dirname + '/../../config.json'),
+    redisClient = require(__dirname + '/../../lib/redis-client.js'),
     harness = require(__dirname + '/../helpers/socketharness.js'),
     busted  = require(__dirname + '/../../app/busted/busted.js'),
     job     = require(__dirname + '/../../app/job.js'),
@@ -48,24 +47,40 @@ var PORT = 5341;
 var MOCK_TORQUE_ID = 'mock123';
 
 // ---- live-redis helpers (mirror test/regression/leaks.js) -----------------
+//
+// redis@5 migration: use the shared connected client from lib/redis-client.js
+// instead of a throwaway `redis.createClient({host,port})` per call. Commands
+// are camelCased and promise-returning: `send_command('pubsub',...)` ->
+// `sendCommand(['PUBSUB','NUMSUB', channel])`; `lrange` -> `lRange`. The
+// callback signatures of these helpers are preserved so the specs are unchanged.
 
 // Count Redis clients currently subscribed to a pub/sub channel.
 function subscriberCount(channel, cb) {
-  var c = redis.createClient({ host: config.redis_host, port: config.redis_port });
-  c.send_command('pubsub', ['numsub', channel], function (err, res) {
-    c.quit();
-    // res = [channel, "<count>"]
-    cb(err ? 0 : parseInt(res[1], 10));
-  });
+  redisClient.ready
+    .then(function () {
+      return redisClient.client.sendCommand(['PUBSUB', 'NUMSUB', channel]);
+    })
+    .then(function (res) {
+      // res = [channel, "<count>"]
+      cb(parseInt(res[1], 10));
+    })
+    .catch(function () {
+      cb(0);
+    });
 }
 
 // Is `id` currently present in the active_jobs list?
 function activeJobsHas(id, cb) {
-  var c = redis.createClient({ host: config.redis_host, port: config.redis_port });
-  c.lrange('active_jobs', 0, -1, function (err, list) {
-    c.quit();
-    cb(!err && list && list.indexOf(id) !== -1);
-  });
+  redisClient.ready
+    .then(function () {
+      return redisClient.client.lRange('active_jobs', 0, -1);
+    })
+    .then(function (list) {
+      cb(!!list && list.indexOf(id) !== -1);
+    })
+    .catch(function () {
+      cb(false);
+    });
 }
 
 // Build a minimal-but-complete busted params object with a UNIQUE analysis id
