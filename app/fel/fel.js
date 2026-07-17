@@ -82,7 +82,7 @@ var fel = function (socket, stream, params) {
 
     // If we have a tagged tree with {FG} annotations, use Foreground branches
     if (self.nwk_tree && self.nwk_tree.indexOf("{FG}") !== -1 && self.branches === "All") {
-      logger.info(`FEL job: Tagged tree contains {FG} annotations, setting branches to Foreground`);
+      logger.info("FEL job: Tagged tree contains {FG} annotations, setting branches to Foreground");
       self.branches = "FG";
     }
     
@@ -130,7 +130,7 @@ var fel = function (socket, stream, params) {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
     let slurmTime = "72:00:00"; // Default 3 days
     if (config.fel_walltime) {
-      const parts = config.fel_walltime.split(':');
+      const parts = config.fel_walltime.split(":");
       if (parts.length === 4) {
         // Convert D:HH:MM:SS to SLURM format
         const days = parseInt(parts[0]);
@@ -255,7 +255,7 @@ var fel = function (socket, stream, params) {
     // Sanitize tree node names for Newick compatibility
     self.nwk_tree = utilities.sanitizeTreeNodeNames(self.nwk_tree);
     // Sanitize FASTA names to match tree node names
-    if (self.stream && typeof self.stream === 'string') {
+    if (self.stream && typeof self.stream === "string") {
       self.stream = utilities.sanitizeFastaNames(self.stream);
     }
 

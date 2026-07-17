@@ -42,9 +42,9 @@ var flea = function(socket, stream, params) {
   flea_analysis.on("progress file", function(params) {
     fs.readFile(params.fn, (err, data) => { 
       socket.emit("progress file", data, { id: params.id });
-        socket.once("file saved", function() {
-          params.cb();
-        });
+      socket.once("file saved", function() {
+        params.cb();
+      });
     });
   });
 

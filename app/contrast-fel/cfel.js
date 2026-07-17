@@ -40,7 +40,7 @@ var cfel = function(socket, stream, params) {
   if (isCheckOnly) {
     // Set defaults for required fields with complete parameter coverage
     self.genetic_code = params.genetic_code || "Universal";
-    const rawBranchSets = params['branch-set'] || params.branch_sets || "";
+    const rawBranchSets = params["branch-set"] || params.branch_sets || "";
     self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;
     self.rate_variation = params.srv || (params.ds_variation == 1 ? "Yes" : "No") || "Yes";
     self.permutations = params.permutations || "Yes";
@@ -72,7 +72,7 @@ var cfel = function(socket, stream, params) {
     if (self.params.analysis) {
       self.id = self.params.analysis._id || (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.analysis.tagged_nwk_tree || self.params.nwk_tree || self.params.tree || "";
-      const rawBranchSets = self.params.analysis['branch-set'] || self.params.analysis.branch_sets || analysisParams['branch-set'] || analysisParams.branch_sets || "";
+      const rawBranchSets = self.params.analysis["branch-set"] || self.params.analysis.branch_sets || analysisParams["branch-set"] || analysisParams.branch_sets || "";
       self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;
       self.rate_variation = analysisParams.srv || (self.params.analysis.ds_variation == 1 ? "Yes" : "No") || "Yes";
       self.permutations = analysisParams.permutations || "Yes";
@@ -81,7 +81,7 @@ var cfel = function(socket, stream, params) {
     } else {
       self.id = (self.params.job && self.params.job.id) || self.params.id || "unknown-" + Date.now();
       self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
-      const rawBranchSets = self.params['branch-set'] || self.params.branch_sets || "";
+      const rawBranchSets = self.params["branch-set"] || self.params.branch_sets || "";
       self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;
       self.rate_variation = self.params.srv || (self.params.ds_variation == 1 ? "Yes" : "No") || "Yes";
       self.permutations = self.params.permutations || "Yes";
@@ -129,7 +129,7 @@ var cfel = function(socket, stream, params) {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
     let slurmTime = "72:00:00"; // Default 3 days
     if (config.cfel_walltime) {
-      const parts = config.cfel_walltime.split(':');
+      const parts = config.cfel_walltime.split(":");
       if (parts.length === 4) {
         // Convert D:HH:MM:SS to SLURM format
         const days = parseInt(parts[0]);

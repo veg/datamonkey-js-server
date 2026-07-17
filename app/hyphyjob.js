@@ -161,21 +161,21 @@ hyphyJob.prototype.spawn = function() {
 
   logger.info(`Job ${self.id}: Writing input file to ${self.fn}`, {
     stream_type: typeof self.stream,
-    stream_length: self.stream ? (typeof self.stream === 'string' ? self.stream.length : 'not string') : 0,
+    stream_length: self.stream ? (typeof self.stream === "string" ? self.stream.length : "not string") : 0,
     stream_is_null: self.stream === null,
     stream_is_undefined: self.stream === undefined
   });
   
   // Handle different types of stream data
-  let dataToWrite = '';
+  let dataToWrite = "";
   if (self.stream) {
-    if (typeof self.stream === 'string') {
+    if (typeof self.stream === "string") {
       dataToWrite = self.stream;
       logger.info(`Job ${self.id}: Using string stream data, length: ${dataToWrite.length}`);
     } else if (Buffer.isBuffer(self.stream)) {
       dataToWrite = self.stream;
       logger.info(`Job ${self.id}: Using buffer stream data, length: ${dataToWrite.length}`);
-    } else if (typeof self.stream === 'object') {
+    } else if (typeof self.stream === "object") {
       // If stream is an object, stringify it
       dataToWrite = JSON.stringify(self.stream);
       logger.info(`Job ${self.id}: Using object stream data, stringified length: ${dataToWrite.length}`);
@@ -308,7 +308,7 @@ hyphyJob.prototype.onComplete = function() {
         const MAX_REDIS_MESSAGE_SIZE = 50 * 1024 * 1024; // 50MB
         if (str_redis_packet.length > MAX_REDIS_MESSAGE_SIZE) {
           logger.warn(`[DEBUG REDIS] WARNING: Completion message is very large (${(str_redis_packet.length / 1024 / 1024).toFixed(2)}MB)`);
-          logger.warn(`[DEBUG REDIS] This may cause issues with Redis pub/sub`);
+          logger.warn("[DEBUG REDIS] This may cause issues with Redis pub/sub");
         }
 
         // Store packet in redis and publish to channel
@@ -338,7 +338,7 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   
   // If data is an object, extract the message
   let statusMessage = data;
-  if (typeof data === 'object') {
+  if (typeof data === "object") {
     if (data.status) {
       statusMessage = `Status: ${data.status}`;
       if (data.raw_status) {
@@ -360,13 +360,13 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
     stime: self.stime,
     ctime: self.ctime,
     phase: "running",
-    scheduler: typeof data === 'object' && data.scheduler ? 
-               data.scheduler : 
-               (self.submit_type === "qsub" ? "torque" : "slurm")
+    scheduler: typeof data === "object" && data.scheduler ? 
+      data.scheduler : 
+      (self.submit_type === "qsub" ? "torque" : "slurm")
   };
   
   // Add detailed status information if available
-  if (typeof data === 'object') {
+  if (typeof data === "object") {
     if (data.status) {
       status_update.status = data.status;
     }
@@ -488,9 +488,9 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
   var self = this;
   
   // Extract the ID, considering both object and string formats
-  if (typeof torque_id === 'object' && torque_id.torque_id) {
+  if (typeof torque_id === "object" && torque_id.torque_id) {
     self.torque_id = torque_id.torque_id;
-  } else if (typeof torque_id === 'string') {
+  } else if (typeof torque_id === "string") {
     self.torque_id = torque_id;
   } else {
     // Default case

@@ -111,7 +111,7 @@ var slac = function (socket, stream, params) {
     // Convert walltime from PBS format (DD:HH:MM:SS) to SLURM format (HH:MM:SS or minutes)
     let slurmTime = "72:00:00"; // Default 3 days
     if (config.slac_walltime) {
-      const parts = config.slac_walltime.split(':');
+      const parts = config.slac_walltime.split(":");
       if (parts.length === 4) {
         // Convert D:HH:MM:SS to SLURM format
         const days = parseInt(parts[0]);
@@ -234,7 +234,7 @@ var slac = function (socket, stream, params) {
     // Sanitize tree node names for Newick compatibility
     self.selectedTree = utilities.sanitizeTreeNodeNames(self.selectedTree);
     // Sanitize FASTA names to match tree node names
-    if (self.stream && typeof self.stream === 'string') {
+    if (self.stream && typeof self.stream === "string") {
       self.stream = utilities.sanitizeFastaNames(self.stream);
     }
 
