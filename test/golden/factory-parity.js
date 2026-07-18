@@ -24,7 +24,8 @@ var DESCRIPTORS = [
   ["fel", require(__dirname + "/../../app/fel/descriptor.js").fel],
   ["meme", require(__dirname + "/../../app/meme/descriptor.js").meme],
   ["slac", require(__dirname + "/../../app/slac/descriptor.js").slac],
-  ["fubar", require(__dirname + "/../../app/fubar/descriptor.js").fubar]
+  ["fubar", require(__dirname + "/../../app/fubar/descriptor.js").fubar],
+  ["bstill", require(__dirname + "/../../app/bstill/descriptor.js").bstill]
 ];
 
 function fakeSocket() {
