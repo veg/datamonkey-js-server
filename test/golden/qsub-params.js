@@ -12,7 +12,7 @@
  *   - Each analysis builds self.qsub_params in its constructor (from
  *     config.submit_type), BEFORE init(). We construct with checkOnly:true so
  *     init() routes to validateParameters() and never submits a SLURM job.
- *   - config.submit_type is a shared cached object (require('../../config.json')),
+ *   - config.submit_type is a shared cached object (require('../../lib/config')),
  *     so we flip it to 'slurm' then 'local' and capture both.
  *   - Volatile bits (the "check-<timestamp>" id and absolute repo paths) are
  *     normalized to stable placeholders so the snapshot is deterministic.
@@ -25,7 +25,7 @@ var fs = require("fs"),
   path = require("path"),
   should = require("should"),
   EventEmitter = require("events").EventEmitter,
-  config = require(__dirname + "/../../config.json");
+  config = require(__dirname + "/../../lib/config");
 
 var ABS_ROOT = path.resolve(__dirname, "../..");
 var SNAPSHOT = path.join(__dirname, "qsub-params.snapshot.json");

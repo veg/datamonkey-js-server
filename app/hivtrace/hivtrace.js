@@ -1,7 +1,7 @@
 var spawn = require("child_process").spawn,
   cs = require("../../lib/clientsocket.js"),
   fs = require("fs"),
-  config = require("../../config.json"),
+  config = require("../../lib/config"),
   util = require("util"),
   path = require("path"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,

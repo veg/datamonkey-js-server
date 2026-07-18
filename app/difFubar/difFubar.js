@@ -1,4 +1,4 @@
-var config = require("../../config.json"),
+var config = require("../../lib/config"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   logger = require("../../lib/logger.js").logger,
   util = require("util"),

@@ -6,7 +6,7 @@ var spawn = require("child_process").spawn,
   jobdel = require("../lib/jobdel.js"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   EventEmitter = require("events").EventEmitter,
-  config = require("../config.json");
+  config = require("../lib/config");
 
 // Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
 // promise-native and camelCases commands (hgetall -> hGetAll, hset -> hSet).

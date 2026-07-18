@@ -8,7 +8,7 @@ var fs        = require('fs'),
     busted    = require(__dirname + '/../../app/busted/busted.js'),
     job       = require(__dirname + '/../../app/job.js'),
     ss        = require('socket.io-stream'),
-    config = require('../../config.json');
+    config = require('../../lib/config');
 
 winston.level = 'warn';
 

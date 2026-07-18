@@ -14,7 +14,7 @@
 var path = require("path"),
     should = require("should"),
     EventEmitter = require("events").EventEmitter,
-    config = require(__dirname + "/../../config.json");
+    config = require(__dirname + "/../../lib/config");
 
 var ABS_ROOT = path.resolve(__dirname, "../..");
 var GOLDEN = require(__dirname + "/qsub-params.snapshot.json");
