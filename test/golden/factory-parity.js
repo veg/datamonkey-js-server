@@ -28,7 +28,13 @@ var DESCRIPTORS = [
   ["busted", require(__dirname + "/../../app/busted/descriptor.js").busted],
   ["absrel", require(__dirname + "/../../app/absrel/descriptor.js").absrel],
   ["relax", require(__dirname + "/../../app/relax/descriptor.js").relax],
-  ["prime", require(__dirname + "/../../app/prime/descriptor.js").prime]
+  ["prime", require(__dirname + "/../../app/prime/descriptor.js").prime],
+  ["fade", require(__dirname + "/../../app/fade/descriptor.js").fade],
+  ["bgm", require(__dirname + "/../../app/bgm/descriptor.js").bgm],
+  ["multihit", require(__dirname + "/../../app/multihit/descriptor.js").multihit],
+  ["nrm", require(__dirname + "/../../app/nrm/descriptor.js").nrm],
+  ["bstill", require(__dirname + "/../../app/bstill/descriptor.js").bstill],
+  ["cfel", require(__dirname + "/../../app/contrast-fel/descriptor.js").cfel]
 ];
 
 function fakeSocket() {
