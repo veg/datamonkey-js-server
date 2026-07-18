@@ -7,6 +7,9 @@
  */
 
 var factory = require("../../lib/analysis-factory.js");
+var fs = require("fs");
+var utilities = require("../../lib/utilities");
+var logger = require("../../lib/logger").logger;
 
 var descriptor = {
   type: "fel",
@@ -58,6 +61,42 @@ var descriptor = {
     if (self.nwk_tree && self.nwk_tree.indexOf("{FG}") !== -1 && self.branches === "All") {
       self.branches = "FG";
     }
+  },
+
+  // Non-checkOnly side effects, reproducing the original fel.js constructor
+  // block (tree/FASTA sanitization, tree-file write, output-dir creation,
+  // progress-file creation) that ran before self.init().
+  beforeInit: function (self) {
+    // Sanitize tree node names for Newick compatibility.
+    self.nwk_tree = utilities.sanitizeTreeNodeNames(self.nwk_tree);
+    // Sanitize FASTA names to match tree node names.
+    if (self.stream && typeof self.stream === "string") {
+      self.stream = utilities.sanitizeFastaNames(self.stream);
+    }
+
+    // Write tree to a file.
+    logger.info("FEL job " + self.id + ": Writing tree file to " + self.tree_fn, {
+      tree_content: self.nwk_tree
+        ? self.nwk_tree.length > 100
+          ? self.nwk_tree.substring(0, 100) + "..."
+          : self.nwk_tree
+        : "null"
+    });
+    fs.writeFile(self.tree_fn, self.nwk_tree, function (err) {
+      if (err) {
+        logger.error("FEL job " + self.id + ": Error writing tree file: " + err.message);
+        throw err;
+      }
+      logger.info("FEL job " + self.id + ": Tree file written successfully");
+    });
+
+    // Ensure output directory exists.
+    logger.info("FEL job " + self.id + ": Ensuring output directory exists at " + self.output_dir);
+    utilities.ensureDirectoryExists(self.output_dir);
+
+    // Ensure the progress file exists.
+    logger.info("FEL job " + self.id + ": Creating progress file at " + self.progress_fn);
+    fs.openSync(self.progress_fn, "w");
   },
 
   // The ordered export keys AFTER the common fn/tree_fn/sfn/pfn/rfn/treemode
