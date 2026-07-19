@@ -1,0 +1,18 @@
+{
+  "//": "Type-checking config for JSDoc + checkJs (Phase 3, #410). Report-only in CI for now — the codebase has ~800 pre-existing implicit-any/shape errors; modules opt in with `// @ts-check` at the top and get checked against lib/types.js typedefs. Run: `npm run typecheck`.",
+  "compilerOptions": {
+    "checkJs": true,
+    "allowJs": true,
+    "noEmit": true,
+    "target": "ES2021",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "noImplicitAny": false,
+    "maxNodeModuleJsDepth": 0
+  },
+  "include": ["lib/**/*.js", "app/**/*.js", "server.js"],
+  "exclude": ["node_modules", "**/output/**", ".hyphy/**", ".python/**", "test/**"]
+}
