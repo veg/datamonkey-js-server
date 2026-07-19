@@ -17,7 +17,8 @@
     "test-mcp": "npm run test:mcp",
     "lint": "eslint app lib server.js",
     "format:check": "prettier --check \"app/**/*.js\" \"lib/**/*.js\" server.js",
-    "coverage": "nyc --reporter=text --reporter=html --include 'app/**/*.js' --include 'lib/**/*.js' npm run test"
+    "coverage": "nyc --reporter=text --reporter=html --include 'app/**/*.js' --include 'lib/**/*.js' npm run test",
+    "typecheck": "tsc -p jsconfig.json"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
@@ -39,6 +40,7 @@
     "mocha": "^11.7.1",
     "prettier": "^3.9.5",
     "socket.io-client": "^4.5.4",
-    "socket.io-stream": "^0.9.1"
+    "socket.io-stream": "^0.9.1",
+    "typescript": "^7.0.2"
   }
 }
