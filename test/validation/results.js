@@ -47,7 +47,7 @@ var should = require("should"),
   os = require("os"),
   path = require("path"),
   EventEmitter = require("events").EventEmitter,
-  config = require(__dirname + "/../../config.json");
+  config = require(__dirname + "/../../lib/config");
 
 var cfelMod = require(__dirname + "/../../app/contrast-fel/cfel.js");
 var gardMod = require(__dirname + "/../../app/gard/gard.js");

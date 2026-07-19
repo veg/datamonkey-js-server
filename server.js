@@ -1,4 +1,4 @@
-const config = require("./config.json"),
+const config = require("./lib/config"),
   program = require("commander"),
   path = require("path"),
   absrel = require("./app/absrel/absrel.js"),

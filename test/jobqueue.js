@@ -3,7 +3,7 @@ var fs = require('fs'),
     should = require('should'),
     path = require('path'),
     redisClient = require('../lib/redis-client.js'),
-    config = require('../config.json');
+    config = require('../lib/config');
 
 // redis@5 migration: reuse the shared connected client from lib/redis-client.js
 // (was `redis.createClient({host,port})`); commands are camelCased and

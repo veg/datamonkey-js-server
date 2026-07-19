@@ -1,7 +1,7 @@
 var fs = require('fs');
 
 var spawn_job = require(__dirname + '/../../app/flea/spawn_flea.js'),
-    config = require('../../config.json'),
+    config = require('../../lib/config'),
     should  = require('should'),
     path  = require('path'),
     winston  = require('winston');

@@ -6,7 +6,7 @@ const cs = require("../lib/clientsocket.js"),
   path = require("path"),
   util = require("util"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
-  config = require("../config.json");
+  config = require("../lib/config");
 
 var jobRegistry = require("../lib/jobregistry.js");
 
