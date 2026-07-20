@@ -614,7 +614,7 @@
         "--partition=datamonkey",
         "--nodes=1",
         "--mem=32GB",
-        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/difFubar/output/GOLDEN-ID,tree_fn=<ROOT>/app/difFubar/output/GOLDEN-ID.tre,pfn=<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar.progress,rfn=<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar,treemode=nj,analysis_type=difFubar,cwd=<ROOT>/app/difFubar,msaid=MSA-ID,number_of_grid_points=20,concentration_of_dirichlet_prior=0.5,mcmc_iterations=2500,burnin_samples=500,pos_threshold=0.95,julia_path=<HOME>/.juliaup/bin/julia,julia_project=<HOME>/programming/datamonkey-js-server/.julia_env/",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/difFubar/output/GOLDEN-ID,tree_fn=<ROOT>/app/difFubar/output/GOLDEN-ID.tre,pfn=<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar.progress,rfn=<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar,treemode=nj,analysis_type=difFubar,cwd=<ROOT>/app/difFubar,msaid=MSA-ID,number_of_grid_points=20,concentration_of_dirichlet_prior=0.5,mcmc_iterations=2500,burnin_samples=500,pos_threshold=0.95,julia_path=/usr/local/bin/julia,julia_project=../../.julia_env",
         "--output=<ROOT>/app/difFubar/output/difFubar_GOLDEN-ID_%j.out",
         "--error=<ROOT>/app/difFubar/output/difFubar_GOLDEN-ID_%j.err",
         "<ROOT>/app/difFubar/difFubar.sh"
@@ -634,8 +634,8 @@
         "2500",
         "500",
         "0.5",
-        "<HOME>/.juliaup/bin/julia",
-        "<HOME>/programming/datamonkey-js-server/.julia_env/"
+        "/usr/local/bin/julia",
+        "../../.julia_env"
       ]
     }
   },

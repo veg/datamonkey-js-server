@@ -89,10 +89,17 @@ const hivtrace = function(socket, stream, params) {
     self.custom_reference_fn = self.filepath + custom_reference_suffix;
     self.custom_reference = params.custom_reference;
     self.reference = self.custom_reference_fn;
-    // Check if reference is custom, and write to a file if so.
-    fs.writeFile(self.custom_reference_fn, self.custom_reference, function(
-      err
-    ) {});
+    // Check if reference is custom, and write to a file if so. Log write
+    // failures instead of swallowing them — the analysis depends on this file,
+    // and a silent failure surfaces later as a confusing "file not found".
+    fs.writeFile(self.custom_reference_fn, self.custom_reference, function(err) {
+      if (err) {
+        logger.error(
+          "hivtrace failed to write custom reference file " +
+            self.custom_reference_fn + ": " + err.message
+        );
+      }
+    });
   }
 
   self.status_fn = self.filepath + "_status";
@@ -352,7 +359,6 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
 
 hivtrace.prototype.onComplete = function() {
   const self = this;
-  client.hSet(self.id, "status", "completed");
 
   const results_promise = readFileAsync(self.output_cluster_output, "utf-8");
   const promises = [results_promise];
@@ -361,19 +367,44 @@ hivtrace.prototype.onComplete = function() {
   // (q's allSettled used {state, value/reason}).
   Promise.allSettled(promises).then(function(results) {
     if (results[0].status == "fulfilled" && results[0].value) {
-      const results_data = JSON.parse(results[0].value);
+      // Guard the results parse: a corrupt/partial cluster output must not
+      // become an unhandled rejection that leaves the job as a zombie
+      // (mirrors clientsocket.js / hyphyjob.js crash guards, #410 / #397).
+      let results_data;
+      try {
+        results_data = JSON.parse(results[0].value);
+      } catch (parse_err) {
+        self.onError(
+          "job completed but results were not valid JSON (" +
+            self.output_cluster_output + "): " + parse_err.message
+        );
+        return;
+      }
+
       const redis_packet = { type: "completed" };
       const str_redis_packet = JSON.stringify(redis_packet);
 
       // Log that the job has been completed
       self.log("complete", "success");
 
-      // Store packet in redis and publish to channel
-      client.hSet(self.id, "results", str_redis_packet);
       self.socket.emit("completed", { results: results_data });
 
-      // Remove id from active_job queue
-      client.lRem("active_jobs", 1, self.id);
+      // Terminal writes: status + results + dequeue. A failure here would
+      // otherwise leave the job as a zombie, so catch and log loudly rather
+      // than fire-and-forget (mirrors hyphyjob.js onComplete).
+      Promise.all([
+        client.hSet(self.id, {
+          status: "completed",
+          results: str_redis_packet
+        }),
+        client.lRem("active_jobs", 1, self.id)
+      ]).catch(function(err) {
+        logger.error(
+          "[REDIS] Terminal completion write failed for hivtrace job " +
+            self.id + " - job may be left as a zombie: " + err.message
+        );
+      });
+
       jobRegistry.unregister(self.id);
     } else {
       self.onError(
@@ -381,6 +412,10 @@ hivtrace.prototype.onComplete = function() {
           self.output_cluster_output
       );
     }
+  }).catch(function(err) {
+    // Safety net: nothing in the .then above should reject, but if it does,
+    // surface it through onError instead of Node's unhandledRejection.
+    self.onError("hivtrace onComplete failed: " + err.message);
   });
 };
 
@@ -473,7 +508,18 @@ class HivTraceRunner extends EventEmitter {
         }
 
         return subscriber.subscribe(self.python_redis_channel, function(message) {
-          const redis_packet = JSON.parse(message);
+          // Guard the parse: a malformed pub/sub message must not crash the
+          // worker (mirrors clientsocket.js subscribe guard, #397 / #410).
+          let redis_packet;
+          try {
+            redis_packet = JSON.parse(message);
+          } catch (parse_err) {
+            logger.warn(
+              "hivtrace ignoring malformed pub/sub message on " +
+                self.python_redis_channel + ": " + parse_err.message
+            );
+            return;
+          }
           logger.info(redis_packet);
 
           if (message != self.last_status_update) {

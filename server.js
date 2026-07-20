@@ -2,8 +2,7 @@ const config = require("./lib/config"),
   program = require("commander"),
   path = require("path"),
   // The 16 standard analyses are required by lib/routes/analysis-routes.js.
-  // hivtrace and flea are special-cased and passed into the route registry.
-  flea = require("./app/flea/flea.js"),
+  // hivtrace is special-cased and passed into the route registry.
   hivtrace = require("./app/hivtrace/hivtrace.js"),
   job = require("./app/job.js"),
   router = require(path.join(__dirname, "/lib/router.js")),
@@ -107,8 +106,8 @@ io.sockets.on("connection", function(socket) {
 
   // Analysis routes are data-driven — see lib/routes/analysis-routes.js.
   // It reproduces the 16 standard spawn/check/resubscribe/cancel blocks plus
-  // the two special analyses (hivtrace, flea). (Phase 3, #410)
-  analysisRoutes.registerAnalysisRoutes(r, socket, { hivtrace: hivtrace, flea: flea });
+  // the special hivtrace analysis. (Phase 3, #410)
+  analysisRoutes.registerAnalysisRoutes(r, socket, { hivtrace: hivtrace });
 
   // Acknowledge new connection
   socket.emit("connected", { hello: "Ready to serve" });

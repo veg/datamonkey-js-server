@@ -43,7 +43,6 @@ var fs        = require('fs'),
     stream    = require('stream'),
     hivtrace  = require(path.join(__dirname, '/../../app/hivtrace/hivtrace.js')),
     job       = require(path.join(__dirname, '/../../app/job.js')),
-    _         = require('underscore'),
     harness   = require(path.join(__dirname, '/../helpers/socketharness.js'));
 
 // Unique port for this test (see test/helpers/socketharness.js).

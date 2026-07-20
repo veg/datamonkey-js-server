@@ -89,6 +89,10 @@ const cancel = function(socket, id) {
           success: "no",
           error: "could not retrieve torque id"
         });
+        // Without a torque id we cannot cancel; return so we don't fall
+        // through to jobDelete("") and emit a second, contradictory
+        // "cancelled" event. (The MCP cancel handler already returns here.)
+        return;
       }
 
       if (current_status != "completed" && current_status != "exiting") {
