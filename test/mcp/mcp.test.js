@@ -14,19 +14,22 @@ const pkg = require("../../package.json");
 // ── Mock Redis ────────────────────────────────────────────────────────
 function createMockRedis(store) {
   return {
-    hgetall: function (id, cb) {
-      cb(null, store[id] || null);
+    // redis@5 promise API: hGetAll returns {} for a missing key (never null)
+    hGetAll: function (id) {
+      return Promise.resolve(store[id] || {});
     },
-    hset: function () {
+    hSet: function () {
       // record calls for assertions
       var args = Array.prototype.slice.call(arguments);
       this._hsetCalls = this._hsetCalls || [];
       this._hsetCalls.push(args);
+      return Promise.resolve();
     },
-    lrem: function () {
+    lRem: function () {
       var args = Array.prototype.slice.call(arguments);
       this._lremCalls = this._lremCalls || [];
       this._lremCalls.push(args);
+      return Promise.resolve();
     },
     _hsetCalls: [],
     _lremCalls: []
@@ -709,6 +712,142 @@ describe("MCP tools – validate_alignment", function () {
     var parsed = JSON.parse(result.content[0].text);
     expect(parsed.errors.length).to.be.greaterThan(0);
     expect(parsed.errors[0]).to.include("TEST");
+  });
+});
+
+// =====================================================================
+// Suite 12: tools driven against a REAL redis@5 client (regression)
+// =====================================================================
+//
+// WHY THIS SUITE EXISTS
+// ---------------------
+// The mock in createMockRedis() implements the redis@5 promise API
+// (hGetAll/hSet/lRem returning promises). But a mock can drift from reality:
+// the ORIGINAL bug (#410) was that lib/mcp/tools.js called the DEAD redis v3
+// callback API (redisClient.hgetall(id, cb), redisClient.hset, redisClient.lrem),
+// which THROWS at runtime on the real redis@5 client — yet the old mock faked a
+// callback-style hgetall, so 53 unit tests stayed green while the real tools
+// were broken.
+//
+// This suite closes that gap: it requires the SAME shared client the production
+// server uses (lib/redis-client), seeds a real hash with hSet, and drives
+// get_job_status / get_job_results / cancel_job through registerTools() against
+// that real client. If the tools ever call a method the real client doesn't
+// expose (e.g. hgetall/hset), these assertions FAIL — proving the tools work on
+// the real API, not just the mock.
+//
+// It does NOT submit SLURM jobs and never reaches jobdel.jobDelete: it exercises
+// only the not_found / running / completed / already-aborted paths that read and
+// write redis directly.
+describe("MCP tools – live redis@5 client (regression #410)", function () {
+  this.timeout(10000);
+
+  var redisMod = require("../../lib/redis-client");
+  var realClient = redisMod.client;
+  var mcpServer;
+  var seededIds = [];
+
+  // Unique key prefix so we never collide with real jobs / other test runs.
+  var prefix = "mcp-live-test-" + process.pid + "-" + Date.now() + "-";
+  var idStatus = prefix + "status";
+  var idResults = prefix + "results";
+  var idAborted = prefix + "aborted";
+
+  async function seed(id, hash) {
+    await realClient.hSet(id, hash);
+    seededIds.push(id);
+  }
+
+  before(async function () {
+    await redisMod.ready;
+
+    // A running job with a torque_id and a live status line.
+    await seed(idStatus, {
+      status: "running",
+      torque_id: JSON.stringify({ torque_id: "77777.scheduler" }),
+      current_status: "Phase 3 of 4"
+    });
+
+    // A completed job with double-nested results, exactly as onComplete writes.
+    var inner = JSON.stringify({ sites: [10, 20, 30] });
+    await seed(idResults, {
+      status: "completed",
+      results: JSON.stringify({ results: inner, type: "completed" })
+    });
+
+    // An already-aborted job — cancel_job should short-circuit without touching
+    // the scheduler, so this stays inside the redis-only code path.
+    await seed(idAborted, {
+      status: "aborted"
+    });
+
+    mcpServer = new McpServer(
+      { name: "test", version: "1.0.0" },
+      { capabilities: { tools: {} } }
+    );
+    // Register the tools against the REAL shared redis@5 client.
+    registerTools(mcpServer, realClient);
+  });
+
+  after(async function () {
+    // Remove every hash this suite created; leave redis as we found it.
+    for (var i = 0; i < seededIds.length; i++) {
+      try {
+        await realClient.del(seededIds[i]);
+      } catch (e) {
+        /* best-effort cleanup */
+      }
+    }
+  });
+
+  it("get_job_status returns not_found for a missing job (real hGetAll -> {})", async function () {
+    var result = await callTool(mcpServer, "get_job_status", {
+      job_id: prefix + "missing"
+    });
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).to.equal("not_found");
+  });
+
+  it("get_job_status reads a real seeded hash and parses torque_id", async function () {
+    var result = await callTool(mcpServer, "get_job_status", {
+      job_id: idStatus
+    });
+    expect(result.isError).to.not.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.status).to.equal("running");
+    expect(parsed.torque_id).to.equal("77777.scheduler");
+    expect(parsed.current_status).to.equal("Phase 3 of 4");
+  });
+
+  it("get_job_results unwraps double-nested results from a real hash", async function () {
+    var result = await callTool(mcpServer, "get_job_results", {
+      job_id: idResults
+    });
+    expect(result.isError).to.not.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed).to.deep.equal({ sites: [10, 20, 30] });
+  });
+
+  it("cancel_job on an already-aborted job succeeds without a real hSet/lRem write", async function () {
+    var result = await callTool(mcpServer, "cancel_job", {
+      job_id: idAborted
+    });
+    expect(result.isError).to.not.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.success).to.be.true;
+    expect(parsed.message).to.equal("Job already cancelled");
+  });
+
+  it("cancel_job hSet/lRem exist and resolve on the real redis@5 client", async function () {
+    // Directly prove the two write commands cancel_job uses on its success path
+    // (hSet status=aborted, lRem active_jobs) are the redis@5 promise API and
+    // do NOT throw the way the removed v3 hset/lrem would have.
+    expect(realClient.hSet).to.be.a("function");
+    expect(realClient.lRem).to.be.a("function");
+    await realClient.hSet(idStatus, "status", "aborted");
+    await realClient.lRem("active_jobs", 1, idStatus);
+    var back = await realClient.hGetAll(idStatus);
+    expect(back.status).to.equal("aborted");
   });
 });
 

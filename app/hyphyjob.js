@@ -204,9 +204,12 @@ hyphyJob.prototype.spawn = function() {
   fs.writeFile(self.fn, dataToWrite, err => {
     if (err) {
       logger.error(`Job ${self.id}: Error writing input file: ${err.message}`);
-      throw err;
+      self.socket.emit("script error", {
+        error: "Failed to write input file: " + err.message
+      });
+      return;
     }
-    
+
     logger.info(`Job ${self.id}: Input file written successfully, submitting job`);
     
     // Pass filename in as opposed to generating it in spawn_hyphyJob
@@ -325,21 +328,25 @@ hyphyJob.prototype.onComplete = function() {
         }
 
         // Store packet in redis and publish to channel
-        client.hSet(self.id, {
-          results: str_redis_packet,
-          status: "completed"
+        Promise.all([
+          client.hSet(self.id, {
+            results: str_redis_packet,
+            status: "completed"
+          }),
+          client.publish(self.id, str_redis_packet),
+          // Remove id from active_job queue
+          client.lRem("active_jobs", 1, self.id)
+        ]).catch(function(err) {
+          logger.error(
+            `[REDIS] Terminal completion write failed for job ${self.id} - job may be left as a zombie: ${err.message}`
+          );
         });
-        client.publish(self.id, str_redis_packet);
         logger.info(`[DEBUG REDIS] Published completion event to Redis channel: ${self.id}`);
 
-        // Remove id from active_job queue
-        client.lRem("active_jobs", 1, self.id);
         jobRegistry.unregister(self.id);
-        delete this;
       } else {
         // Empty results file
         self.onError("job seems to have completed, but no results found");
-        delete this;
       }
     }
   });
@@ -485,12 +492,18 @@ hyphyJob.prototype.onError = function(error) {
     self.warn("script error", str_redis_packet);
 
     // Publish error messages to redis
-    client.hSet(self.id, {
-      error: str_redis_packet,
-      status: "error"
+    Promise.all([
+      client.hSet(self.id, {
+        error: str_redis_packet,
+        status: "error"
+      }),
+      client.publish(self.id, str_redis_packet),
+      client.lRem("active_jobs", 1, self.id)
+    ]).catch(function(err) {
+      logger.error(
+        `[REDIS] Terminal error write failed for job ${self.id} - job may be left as a zombie: ${err.message}`
+      );
     });
-    client.publish(self.id, str_redis_packet);
-    client.lRem("active_jobs", 1, self.id);
     jobRegistry.unregister(self.id);
     // redis@5 lLen returns a promise instead of taking an (err, n) callback.
     client.lLen("active_jobs").then(function(n) {
@@ -498,8 +511,6 @@ hyphyJob.prototype.onError = function(error) {
     }).catch(function(err) {
       logger.error("Redis lLen active_jobs failed: " + err.message);
     });
-
-    delete this;
   });
 };
 
