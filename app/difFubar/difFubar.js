@@ -178,7 +178,13 @@ var difFubar = function(socket, stream, params) {
 
   // Write tree to a file
   fs.writeFile(self.tree_fn, self.nwk_tree, function(err) {
-    if (err) throw err;
+    if (err) {
+      logger.error(`difFUBAR ${self.id}: Error writing tree file: ${err.message}`);
+      self.socket.emit("script error", {
+        error: "Failed to write tree file: " + err.message
+      });
+      return;
+    }
   });
 
   // Ensure the progress file exists

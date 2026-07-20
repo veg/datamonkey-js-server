@@ -100,7 +100,10 @@ var descriptor = {
     fs.writeFile(self.tree_fn, self.nwk_tree, function (err) {
       if (err) {
         logger.error("BUSTED job " + self.id + ": Error writing tree file: " + err.message);
-        throw err;
+        self.socket.emit("script error", {
+          error: "Failed to write tree file: " + err.message
+        });
+        return;
       }
       logger.info("BUSTED job " + self.id + ": Tree file written successfully");
     });
