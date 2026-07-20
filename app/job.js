@@ -14,14 +14,20 @@ var client = require("../lib/redis-client").client;
 
 // resubscribes a socket to an existing pending job,
 // otherwise reports contents from redis
+// NOTE: resubscribe/cancel are invoked with `new` (see lib/routes/analysis-routes.js),
+// so the outer function must NOT be `async` (`new` on an async function throws
+// "not a constructor"). The async/await body runs in an inner IIFE instead.
 var resubscribe = function(socket, id) {
   var self = this;
   self.id = id;
+  (async function() {
 
   // redis@5 commands return promises; hGetAll resolves to the hash (an empty
   // object when the key is missing), so treat an empty object like the old
   // falsy `obj`.
-  client.hGetAll(self.id).then(function(obj) {
+  try {
+    var obj = await client.hGetAll(self.id);
+
     if (!obj || Object.keys(obj).length === 0) {
       logger.warn(self.id + " : resubscribe : no job");
       socket.emit("script error", { error: "no job" });
@@ -49,17 +55,21 @@ var resubscribe = function(socket, id) {
       // if job aborted, emit error
       socket.emit("script error", obj.error);
     }
-  }).catch(function(err) {
+  } catch (err) {
     logger.warn(self.id + " : resubscribe : " + err);
     socket.emit("script error", { error: err.message });
-  });
+  }
+  })();
 };
 
 var cancel = function(socket, id) {
   var self = this;
   self.id = id;
+  (async function() {
 
-  client.hGetAll(self.id).then(function(obj) {
+  try {
+    var obj = await client.hGetAll(self.id);
+
     if (!obj || Object.keys(obj).length === 0) {
       logger.warn(self.id + " : cancel : no job");
       socket.emit("cancelled", { success: "no", error: "no job" });
@@ -102,10 +112,11 @@ var cancel = function(socket, id) {
       logger.info(self.id + " : job : cancel : job does not exist");
       socket.emit("cancelled", { success: "no", error: "no job" });
     }
-  }).catch(function(err) {
+  } catch (err) {
     logger.warn(self.id + " : cancel : " + err);
     socket.emit("cancelled", { success: "no", error: err.message });
-  });
+  }
+  })();
 };
 
 var jobRunner = function(params, results_fn) {
