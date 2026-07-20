@@ -6,12 +6,12 @@
  * exactly (pinned by test/golden/qsub-params.snapshot.json).
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "absrel",
   dir: __dirname,
   script: "absrel.sh",
@@ -23,7 +23,7 @@ var descriptor = {
   // raw params; in normal mode it is params.analysis (or params). This mirrors
   // the original absrel.js branches.
   fields: function (self, params, src, ctx) {
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
       self.multiple_hits = params.multiple_hits || "None";
@@ -112,7 +112,7 @@ var descriptor = {
   ]
 };
 
-var absrel = factory.makeAnalysis(descriptor);
+const absrel = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.absrel is the constructor.
 exports.absrel = absrel;

@@ -9,12 +9,12 @@
  * descriptor sets prefixKeys (no treemode).
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "prime",
   dir: __dirname,
   script: "prime.sh",
@@ -35,7 +35,7 @@ var descriptor = {
     self.impute_states = src.impute_states || src["impute-states"] || "No";
     self.branches = src.branches || "All";
 
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
     } else {
@@ -64,7 +64,7 @@ var descriptor = {
       self.params.analysis.msa &&
       typeof self.params.analysis.msa === "object"
     ) {
-      var msa = self.params.analysis.msa[0];
+      const msa = self.params.analysis.msa[0];
 
       if (msa.usertree && msa.usertree.trim()) {
         self.selectedTree = msa.usertree;
@@ -130,7 +130,7 @@ var descriptor = {
   ]
 };
 
-var prime = factory.makeAnalysis(descriptor);
+const prime = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.prime is the constructor.
 exports.prime = prime;

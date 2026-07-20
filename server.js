@@ -20,14 +20,14 @@ program
 
 
 //Assigns port number to variable, if none then refer to config.json
-var ioOptions = { 
+const ioOptions = { 
   "maxHttpBufferSize" : 1e8,
   cors: {
     origin: ["http://localhost:5173", "http://localhost:3000"],
     methods: ["GET", "POST"]
   }
 };
-var ioPort = config.port;
+let ioPort = config.port;
 
 if (program.port) {
   ioPort = program.port;
@@ -38,7 +38,7 @@ const io = require("socket.io")(ioPort, ioOptions);
 // Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
 // promise-native, so commands return promises and are camelCased
 // (del stays del, hgetall -> hGetAll).
-var client = require("./lib/redis-client").client;
+const client = require("./lib/redis-client").client;
 
 // clear active_jobs list
 // TODO: we should do more than just clear the active_jobs list
@@ -71,7 +71,7 @@ io.sockets.on("connection", function(socket) {
         return;
       }
 
-      var response = {
+      const response = {
         status: jobData.status || "unknown",
         torque_id: jobData.torque_id
       };
@@ -80,7 +80,7 @@ io.sockets.on("connection", function(socket) {
         // Results are stored as: {"results":"{ stringified JSON }","type":"completed"}
         // We need to unwrap and parse the inner results string
         try {
-          var parsedResults = JSON.parse(jobData.results);
+          const parsedResults = JSON.parse(jobData.results);
           if (parsedResults.results && typeof parsedResults.results === "string") {
             response.results = JSON.parse(parsedResults.results);
           } else {
@@ -103,7 +103,7 @@ io.sockets.on("connection", function(socket) {
     });
   });
 
-  var r = new router.io(socket);
+  const r = new router.io(socket);
 
   // Analysis routes are data-driven — see lib/routes/analysis-routes.js.
   // It reproduces the 16 standard spawn/check/resubscribe/cancel blocks plus
@@ -118,7 +118,7 @@ io.sockets.on("connection", function(socket) {
 
 
 // Start MCP server on separate port
-var mcp = require("./lib/mcp");
+const mcp = require("./lib/mcp");
 mcp.startMcpServer(config, client);
 
 process.setMaxListeners(20); // bounded; GH #400 removed per-job cancelJob listeners

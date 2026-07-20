@@ -11,12 +11,12 @@
  * number_of_grid_points, concentration_of_dirichlet_prior, procs.
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "fubar",
   dir: __dirname,
   script: "fubar.sh",
@@ -28,7 +28,7 @@ var descriptor = {
   // raw params; in normal mode it is params.analysis (or params). This mirrors
   // the original fubar.js branches.
   fields: function (self, params, src) {
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
       self.nwk_tree = params.nwk_tree || params.tree || "";
@@ -70,7 +70,7 @@ var descriptor = {
     utilities.ensureDirectoryExists(self.output_dir);
 
     // Clean tree data and write to file (like Contrast-FEL).
-    var cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
+    const cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
     logger.info("FUBAR job " + self.id + ": Writing cleaned tree file to " + self.tree_fn, {
       original_length: self.nwk_tree ? self.nwk_tree.length : 0,
       cleaned_length: cleanTree ? cleanTree.length : 0,
@@ -105,7 +105,7 @@ var descriptor = {
   ]
 };
 
-var fubar = factory.makeAnalysis(descriptor);
+const fubar = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.fubar is the constructor.
 exports.fubar = fubar;

@@ -11,14 +11,14 @@ const config = require("../../lib/config"),
 // Use the shared redis v5 client (promise-native, camelCased commands).
 const { client } = require("../../lib/redis-client");
 
-var gard = function(socket, stream, params) {
-  var self = this;
+const gard = function(socket, stream, params) {
+  const self = this;
   self.socket = socket;
   self.stream = stream;
   self.params = params;
   
   // Check if this is a check-only operation
-  var isCheckOnly = params.checkOnly || false;
+  const isCheckOnly = params.checkOnly || false;
   
   logger.info("GARD constructor called with:", {
     stream_type: typeof stream,
@@ -59,7 +59,7 @@ var gard = function(socket, stream, params) {
     self.finalout_results_fn = self.fn + ".best-gard";
   } else {
     // Normal operation with full parameters
-    var analysisParams = self.params.analysis || self.params;
+    const analysisParams = self.params.analysis || self.params;
     
     // parameter attributes with fallbacks
     if (self.params.msa) {
@@ -301,7 +301,7 @@ var gard = function(socket, stream, params) {
 util.inherits(gard, hyphyJob);
 
 gard.prototype.sendNexusFile = function(cb) {
-  var self = this;
+  const self = this;
 
   fs.readFile(self.finalout_results_fn, function(err, results) {
     if (results) {
@@ -314,9 +314,9 @@ gard.prototype.sendNexusFile = function(cb) {
 };
 
 gard.prototype.onComplete = function() {
-  var self = this;
+  const self = this;
 
-  var files = {
+  const files = {
     finalout: self.finalout_results_fn,
     json: self.results_fn
   };
@@ -335,12 +335,12 @@ gard.prototype.onComplete = function() {
           self.onError("unable to read results file. " + err);
         } else {
 
-          var stringified_results = String(data);
+          const stringified_results = String(data);
 
           // Prepare redis packet for delivery
-          var redis_packet = { results: stringified_results };
+          const redis_packet = { results: stringified_results };
           redis_packet.type = "completed";
-          var str_redis_packet = JSON.stringify(redis_packet);
+          const str_redis_packet = JSON.stringify(redis_packet);
 
           // Log that the job has been completed
           self.log("complete", "success");

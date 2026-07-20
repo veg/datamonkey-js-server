@@ -10,12 +10,12 @@
  * fields are the multiple/triple hit rate params (rate_classes, triple_islands).
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "multihit",
   dir: __dirname,
   script: "multihit.sh",
@@ -30,7 +30,7 @@ var descriptor = {
   // raw params; in normal mode it is params.analysis (or params). This mirrors
   // the original multihit.js branches.
   fields: function (self, params, src) {
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
       self.rate_classes = params.rate_classes || params.rates || 1;
@@ -81,7 +81,7 @@ var descriptor = {
     utilities.ensureDirectoryExists(self.output_dir);
 
     // Clean tree data and write to file.
-    var cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
+    const cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
     logger.info("MultiHit job " + self.id + ": Writing cleaned tree file to " + self.tree_fn, {
       original_length: self.nwk_tree ? self.nwk_tree.length : 0,
       cleaned_length: cleanTree ? cleanTree.length : 0,
@@ -118,7 +118,7 @@ var descriptor = {
   ]
 };
 
-var multihit = factory.makeAnalysis(descriptor);
+const multihit = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.multihit is the constructor.
 exports.multihit = multihit;

@@ -1,4 +1,4 @@
-var config = require("../../lib/config"),
+const config = require("../../lib/config"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   logger = require("../../lib/logger.js").logger,
   util = require("util"),
@@ -8,10 +8,10 @@ var config = require("../../lib/config"),
 // Shared redis v5 client (promise-native, camelCased commands). Reused across
 // onComplete calls instead of creating (and leaking) a client per job
 // (GH #400).
-var { client } = require("../../lib/redis-client");
+const { client } = require("../../lib/redis-client");
 
-var difFubar = function(socket, stream, params) {
-  var self = this;
+const difFubar = function(socket, stream, params) {
+  const self = this;
   self.socket = socket;
   self.stream = stream;
   self.params = params;
@@ -199,10 +199,10 @@ var difFubar = function(socket, stream, params) {
 };
 
 difFubar.prototype.sendPlotFiles = function(cb) {
-  var self = this;
+  const self = this;
   
   // Define the plot files to send
-  var plotFiles = [
+  const plotFiles = [
     { name: "overview.png", path: self.results_short_fn + "_overview.png", event: "difFubar overview png" },
     { name: "overview.svg", path: self.results_short_fn + "_overview.svg", event: "difFubar overview svg" },
     { name: "posteriors.png", path: self.results_short_fn + "_posteriors.png", event: "difFubar posteriors png" },
@@ -211,7 +211,7 @@ difFubar.prototype.sendPlotFiles = function(cb) {
     { name: "detections.svg", path: self.results_short_fn + "_detections.svg", event: "difFubar detections svg" }
   ];
   
-  var promises = plotFiles.map(file => {
+  const promises = plotFiles.map(file => {
     return new Promise((resolve, reject) => {
       fs.readFile(file.path, (err, data) => {
         if (err || !data) {
@@ -225,7 +225,7 @@ difFubar.prototype.sendPlotFiles = function(cb) {
   });
   
   Promise.all(promises).then(results => {
-    var sentFiles = results.filter(f => f !== null);
+    const sentFiles = results.filter(f => f !== null);
     self.log("sent plot files", sentFiles.join(", "));
     cb(null, "success");
   }).catch(err => {
@@ -234,7 +234,7 @@ difFubar.prototype.sendPlotFiles = function(cb) {
 };
 
 difFubar.prototype.onComplete = function() {
-  var self = this;
+  const self = this;
   
   logger.info(`[DEBUG] difFUBAR ${self.id}: onComplete() called!`);
   logger.info(`[DEBUG] difFUBAR ${self.id}: Socket connected: ${self.socket && self.socket.connected}`);
@@ -267,7 +267,7 @@ difFubar.prototype.onComplete = function() {
           self.socket.emit("difFubar results file", { buffer: data });
           
           // Send lightweight completion event via Redis
-          var redis_packet = { 
+          const redis_packet = { 
             results: JSON.stringify({
               message: "Results sent via direct file transmission",
               file_size: stats.size,
@@ -275,7 +275,7 @@ difFubar.prototype.onComplete = function() {
             })
           };
           redis_packet.type = "completed";
-          var str_redis_packet = JSON.stringify(redis_packet);
+          const str_redis_packet = JSON.stringify(redis_packet);
           
           self.log("complete", "success (direct file transmission)");
           
