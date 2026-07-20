@@ -1,17 +1,17 @@
-var spawn_job = require("./spawn_flea.js"),
+const spawn_job = require("./spawn_flea.js"),
   fs = require("fs"),
   path = require("path"),
   logger = require("../../lib/logger").logger;
 
 // Pass socket to flea job
-var flea = function(socket, stream, params) {
+const flea = function(socket, stream, params) {
 
-  var log = function(notification) {
+  const log = function(notification) {
     logger.info(["flea", JSON.stringify(notification)].join(" : "));
   };
 
   // Setup Analysis
-  var flea_analysis = new spawn_job.FleaRunner();
+  const flea_analysis = new spawn_job.FleaRunner();
 
   // On status updates, report to datamonkey-js
   flea_analysis.on("status update", function(status_update) {
@@ -48,7 +48,7 @@ var flea = function(socket, stream, params) {
     });
   });
 
-  var fn = path.join(__dirname, "/output/", params.analysis._id + ".tar");
+  const fn = path.join(__dirname, "/output/", params.analysis._id + ".tar");
   flea_analysis.start(fn, socket, params);
   socket.emit("status update", { phase: params.status_stack[0], msg: "" });
 

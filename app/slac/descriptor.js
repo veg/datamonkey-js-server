@@ -6,12 +6,12 @@
  * (pinned by test/golden/qsub-params.js).
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "slac",
   dir: __dirname,
   script: "slac.sh",
@@ -23,7 +23,7 @@ var descriptor = {
   // raw params; in normal mode it is params.analysis (or params). This mirrors
   // the original slac.js branches.
   fields: function (self, params, src, ctx) {
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || params.code || "Universal";
       self.branches = params.branches || "All";
@@ -59,7 +59,7 @@ var descriptor = {
       self.params.analysis.msa &&
       typeof self.params.analysis.msa === "object"
     ) {
-      var msa = self.params.analysis.msa[0];
+      const msa = self.params.analysis.msa[0];
 
       if (msa && msa.usertree && msa.usertree.trim()) {
         self.selectedTree = msa.usertree;
@@ -115,7 +115,7 @@ var descriptor = {
   ]
 };
 
-var slac = factory.makeAnalysis(descriptor);
+const slac = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.slac is the constructor.
 exports.slac = slac;

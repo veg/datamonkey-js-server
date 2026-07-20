@@ -10,12 +10,12 @@
  * uppercase "RELAX" suffix (self.fn + ".RELAX.progress" / ".RELAX.json").
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "relax",
   dir: __dirname,
   script: "relax.sh",
@@ -31,7 +31,7 @@ var descriptor = {
   // raw params; in normal mode it is params.analysis (or params). This mirrors
   // the original relax.js branches.
   fields: function (self, params, src) {
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
       self.mode = params.mode || "Classic mode";
@@ -128,7 +128,7 @@ var descriptor = {
   ]
 };
 
-var relax = factory.makeAnalysis(descriptor);
+const relax = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.relax is the constructor.
 exports.relax = relax;

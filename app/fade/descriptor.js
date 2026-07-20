@@ -16,21 +16,21 @@
  * mode asymmetry, so it needs no prefixKeys or skipInSlurm.
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
-var model = require("../model").model;
-var code = require("../code").code;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
+const model = require("../model").model;
+const code = require("../code").code;
 
 // Original fade.js lookup table (verbatim).
-var estimationMethod = {
+const estimationMethod = {
   "1": "Metropolis-Hastings",
   "2": "Collapsed-Gibbs",
   "3": "Variational-Bayes"
 };
 
-var descriptor = {
+const descriptor = {
   type: "fade",
   dir: __dirname,
   script: "fade.sh",
@@ -42,7 +42,7 @@ var descriptor = {
   // three-way branch (checkOnly / normal-with-analysis / normal-without-analysis)
   // verbatim.
   fields: function (self, params) {
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
 
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
@@ -71,7 +71,7 @@ var descriptor = {
         0.5;
       self.nwk_tree = params.nwk_tree || params.tree || "";
     } else {
-      var analysisParams = self.params.analysis || self.params;
+      const analysisParams = self.params.analysis || self.params;
 
       // parameter attributes with fallbacks
       if (self.params.msa) {
@@ -171,7 +171,7 @@ var descriptor = {
     utilities.ensureDirectoryExists(self.output_dir);
 
     // Clean tree data and write to file.
-    var cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
+    const cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
     logger.info("FADE job " + self.id + ": Writing cleaned tree file to " + self.tree_fn, {
       original_length: self.nwk_tree ? self.nwk_tree.length : 0,
       cleaned_length: cleanTree ? cleanTree.length : 0,
@@ -214,7 +214,7 @@ var descriptor = {
   ]
 };
 
-var fade = factory.makeAnalysis(descriptor);
+const fade = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.fade is the constructor.
 exports.fade = fade;

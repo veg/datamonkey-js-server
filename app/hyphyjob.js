@@ -8,18 +8,18 @@ const cs = require("../lib/clientsocket.js"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   config = require("../lib/config");
 
-var jobRegistry = require("../lib/jobregistry.js");
+const jobRegistry = require("../lib/jobregistry.js");
 
 // Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
 // promise-native and camelCases commands (hset -> hSet, hget -> hGet,
 // rpush -> rPush, lrem -> lRem, llen -> lLen).
-var client = require("../lib/redis-client").client;
+const client = require("../lib/redis-client").client;
 
 // Native replacement for underscore's _.once: returns a function that invokes
 // `fn` at most once, caching and returning that first result thereafter.
 function once(fn) {
-  var called = false;
-  var result;
+  let called = false;
+  let result;
   return function() {
     if (!called) {
       called = true;
@@ -30,7 +30,7 @@ function once(fn) {
 }
 
 // Promisified fs.readFile for the q -> native Promise migration in onError().
-var readFileAsync = util.promisify(fs.readFile);
+const readFileAsync = util.promisify(fs.readFile);
 
 // Prepend a scheduler --comment flag carrying the submission source so SLURM
 // accounting (sacct/scontrol) records which path submitted the job. Grafana
@@ -43,10 +43,10 @@ function injectSubmissionSource(qsub_params, source, submit_type) {
   return ["--comment=source=" + source].concat(qsub_params);
 }
 
-var hyphyJob = function() {};
+const hyphyJob = function() {};
 
 hyphyJob.prototype.log = function(notification, complementary_info) {
-  var self = this;
+  const self = this;
 
   if (complementary_info) {
     logger.info(
@@ -58,7 +58,7 @@ hyphyJob.prototype.log = function(notification, complementary_info) {
 };
 
 hyphyJob.prototype.warn = function(notification, complementary_info) {
-  var self = this;
+  const self = this;
   if (complementary_info) {
     logger.warn(
       [self.type, self.id, notification, complementary_info].join(" : ")
@@ -70,14 +70,14 @@ hyphyJob.prototype.warn = function(notification, complementary_info) {
 
 // Attach socket to redis channel
 hyphyJob.prototype.attachSocket = function() {
-  var self = this;
+  const self = this;
   logger.info(`[DEBUG REDIS] Attaching socket to job ${self.id}`);
   self.client_socket = new cs.ClientSocket(self.socket, self.id);
 };
 
 // Can either initialize a new job or check on previous one
 hyphyJob.prototype.init = function() {
-  var self = this;
+  const self = this;
 
   // store parameters in redis
   logger.info(`Job ${self.id}: Storing parameters in redis`);
@@ -98,11 +98,11 @@ hyphyJob.prototype.init = function() {
 };
 
 hyphyJob.prototype.spawn = function() {
-  var self = this;
+  const self = this;
 
   self.log("spawning");
 
-  var source = (self.params && self.params.submission_source)
+  const source = (self.params && self.params.submission_source)
             || (self.params && self.params.analysis && self.params.analysis.submission_source)
             || "unknown";
   self.qsub_params = injectSubmissionSource(self.qsub_params, source, config.submit_type);
@@ -113,7 +113,7 @@ hyphyJob.prototype.spawn = function() {
   logger.info(`[JOB START] Parameters: ${JSON.stringify(self.qsub_params)}`);
   logger.info(`[JOB START] Results file: ${self.results_fn}`);
   logger.info(`[DEBUG HYPHY] Job ${self.id}: About to create jobRunner instance`);
-  var hyphy_job_runner = new job.jobRunner(self.qsub_params, self.results_fn);
+  const hyphy_job_runner = new job.jobRunner(self.qsub_params, self.results_fn);
   logger.info(`[DEBUG HYPHY] Job ${self.id}: jobRunner instance created successfully`);
 
   // On status updates, report to datamonkey-js
@@ -233,7 +233,7 @@ hyphyJob.prototype.spawn = function() {
 };
 
 hyphyJob.prototype.onJobCreated = function(torque_id) {
-  var self = this;
+  const self = this;
 
   self.push_active_job = function() {
     client.rPush("active_jobs", self.id);
@@ -263,7 +263,7 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
     status_update.raw_status = torque_id.raw_status;
   }
   
-  var str_redis_packet = JSON.stringify(status_update);
+  const str_redis_packet = JSON.stringify(status_update);
 
   self.log("job created", str_redis_packet);
 
@@ -297,7 +297,7 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
 };
 
 hyphyJob.prototype.onComplete = function() {
-  var self = this;
+  const self = this;
 
   fs.readFile(self.results_fn, "utf8", function(err, data) {
     if (err) {
@@ -306,10 +306,10 @@ hyphyJob.prototype.onComplete = function() {
     } else {
       if (data && data.length > 0) {
         // Prepare redis packet for delivery
-        var redis_packet = { results: data };
+        const redis_packet = { results: data };
         redis_packet.type = "completed";
 
-        var str_redis_packet = JSON.stringify(redis_packet);
+        const str_redis_packet = JSON.stringify(redis_packet);
 
         // Log that the job has been completed
         self.log("complete", "success");
@@ -353,7 +353,7 @@ hyphyJob.prototype.onComplete = function() {
 };
 
 hyphyJob.prototype.onStatusUpdate = function(data) {
-  var self = this;
+  const self = this;
   
   // If data is an object, extract the message
   let statusMessage = data;
@@ -371,7 +371,7 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   self.current_status = statusMessage;
 
   // Create enhanced status update with scheduler info
-  var status_update = {
+  const status_update = {
     msg: self.current_status,
     torque_id: self.torque_id,
     id: self.id,
@@ -395,10 +395,10 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   }
 
   // Prepare redis packet for delivery
-  var redis_packet = status_update;
+  const redis_packet = status_update;
   redis_packet.type = "status update";
 
-  var str_redis_packet = JSON.stringify(redis_packet);
+  const str_redis_packet = JSON.stringify(redis_packet);
 
   // Store packet in redis and publish to channel
   logger.info(`[DEBUG REDIS] Publishing status update to channel: ${self.id}`);
@@ -415,7 +415,7 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
 };
 
 hyphyJob.prototype.onJobMetadata = function(data) {
-  var self = this;
+  const self = this;
   self.stime = data.stime;
   self.ctime = data.ctime;
   
@@ -438,7 +438,7 @@ hyphyJob.prototype.onJobMetadata = function(data) {
       metadata_update.raw_status = data.raw_status;
     }
     
-    var str_redis_packet = JSON.stringify(metadata_update);
+    const str_redis_packet = JSON.stringify(metadata_update);
     
     self.log("job metadata", str_redis_packet);
     
@@ -453,10 +453,10 @@ hyphyJob.prototype.onJobMetadata = function(data) {
 
 // If a job is cancelled early or the result contents cannot be read
 hyphyJob.prototype.onError = function(error) {
-  var self = this;
+  const self = this;
 
   // The packet that will delivered to datamonkey via the publish command
-  var redis_packet = { error: error };
+  const redis_packet = { error: error };
   redis_packet.type = "script error";
 
   // Read error path contents. q's Q.nfcall + Q.allSettled are replaced with
@@ -465,11 +465,11 @@ hyphyJob.prototype.onError = function(error) {
   // {status:'fulfilled'|'rejected', value/reason}. A rejected read therefore
   // has no `.value`, so the `|| "No ... content"` fallbacks below cover the
   // missing-file case exactly as before.
-  var std_err_promise = readFileAsync(self.std_err, "utf-8");
-  var progress_fn_promise = readFileAsync(self.progress_fn, "utf-8");
-  var std_out_promise = readFileAsync(self.std_out, "utf-8");
+  const std_err_promise = readFileAsync(self.std_err, "utf-8");
+  const progress_fn_promise = readFileAsync(self.progress_fn, "utf-8");
+  const std_out_promise = readFileAsync(self.std_out, "utf-8");
 
-  var promises = [std_err_promise, progress_fn_promise, std_out_promise];
+  const promises = [std_err_promise, progress_fn_promise, std_out_promise];
 
   Promise.allSettled(promises).then(function(results) {
     // Prepare redis packet for delivery
@@ -477,7 +477,7 @@ hyphyJob.prototype.onError = function(error) {
     redis_packet.progress = results[1].value || "No progress content";
     redis_packet.stdout = results[2].value || "No stdout content";
 
-    var str_redis_packet = JSON.stringify(redis_packet);
+    const str_redis_packet = JSON.stringify(redis_packet);
 
     // Enhanced logging for script errors
     logger.error(`[SCRIPT ERROR] Job ${self.id} failed`);
@@ -517,7 +517,7 @@ hyphyJob.prototype.onError = function(error) {
 // Called when a job is first created
 // Set id and output file names
 hyphyJob.prototype.setTorqueParameters = function(torque_id) {
-  var self = this;
+  const self = this;
   
   // Extract the ID, considering both object and string formats
   if (typeof torque_id === "object" && torque_id.torque_id) {
@@ -553,9 +553,9 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
 
 // Cancel the job and report an error
 hyphyJob.prototype.cancel = function() {
-  var self = this;
+  const self = this;
 
-  var cb = function() {
+  const cb = function() {
     self.onError("job cancelled");
   };
 
@@ -567,11 +567,11 @@ hyphyJob.prototype.cancel = function() {
 
 // Validate parameters for check-only mode
 hyphyJob.prototype.validateParameters = function() {
-  var self = this;
+  const self = this;
   
   // Basic validation - can be overridden by specific analysis types
-  var errors = [];
-  var valid = true;
+  const errors = [];
+  let valid = true;
   
   // Check required parameters based on analysis type
   if (!self.params.analysis_type) {
@@ -596,13 +596,13 @@ hyphyJob.prototype.validateParameters = function() {
 
 // Return whether job has completed, still running, or aborted
 hyphyJob.prototype.checkJob = function() {
-  var self = this;
+  const self = this;
 
   // Get results file stats
   fs.stat(self.results_fn, (err, res) => {
     if (err || !res) {
       // Get status of job
-      var jobStatus = new JobStatus(self.torque_id);
+      const jobStatus = new JobStatus(self.torque_id);
       jobStatus.returnJobStatus(self.torque_id, function(err, status) {
         if (err) {
           // If job has no status returned and there are no results, return aborted

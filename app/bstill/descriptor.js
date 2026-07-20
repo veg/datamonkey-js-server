@@ -19,12 +19,12 @@
  * Standard export prefix with no mode asymmetry, so no prefixKeys/skipInSlurm.
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "bstill",
   dir: __dirname,
   script: "bstill.sh",
@@ -39,7 +39,7 @@ var descriptor = {
   // raw params; in normal mode it is params.analysis (or params). This mirrors
   // the original bstill.js branches and its trailing advanced-options block.
   fields: function (self, params, src) {
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
     } else {
@@ -86,7 +86,7 @@ var descriptor = {
     utilities.ensureDirectoryExists(self.output_dir);
 
     // Clean tree data and write to file.
-    var cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
+    const cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
     logger.info("B-STILL job " + self.id + ": Writing cleaned tree file to " + self.tree_fn, {
       original_length: self.nwk_tree ? self.nwk_tree.length : 0,
       cleaned_length: cleanTree ? cleanTree.length : 0,
@@ -125,7 +125,7 @@ var descriptor = {
   ]
 };
 
-var bstill = factory.makeAnalysis(descriptor);
+const bstill = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.bstill is the constructor.
 exports.bstill = bstill;

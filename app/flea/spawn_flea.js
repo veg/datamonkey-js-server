@@ -1,4 +1,4 @@
-var spawn = require("child_process").spawn,
+const spawn = require("child_process").spawn,
   fs = require("fs"),
   tar = require("tar"),
   path = require("path"),
@@ -19,7 +19,7 @@ var spawn = require("child_process").spawn,
  * Date objects and full datetime strings pass straight through to new Date().
  */
 function formatVisitDate(visit_date) {
-  var d;
+  let d;
   if (typeof visit_date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(visit_date)) {
     d = new Date(visit_date + "T00:00:00");
   } else {
@@ -28,7 +28,7 @@ function formatVisitDate(visit_date) {
   return dateFns.format(d, "yyyyMMdd");
 }
 
-var FleaRunner = function() {};
+const FleaRunner = function() {};
 
 util.inherits(FleaRunner, EventEmitter);
 
@@ -39,7 +39,7 @@ util.inherits(FleaRunner, EventEmitter);
  */
 
 FleaRunner.prototype.start = function(fn, socket, flea_params) {
-  var self = this;
+  const self = this;
 
   self.filepath = fn;
   self.output_dir = path.dirname(self.filepath);
@@ -68,10 +68,10 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
   self.session_zip_fn = path.join(self.analysis_dir, "session.zip");
 
   // flea_pipeline.py
-  var flea_pipeline_submit = function() {
+  const flea_pipeline_submit = function() {
     self.emit("status update", { phase: self.status_stack[2], msg: "" });
 
-    var flea_pipeline_parameters = [
+    const flea_pipeline_parameters = [
       "run",
       self.pipeline,
       "-c",
@@ -94,7 +94,7 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
             flea_pipeline_parameters.join(" ")
         );
 
-        var flea_pipeline = spawn(self.nextflow, flea_pipeline_parameters, {
+        const flea_pipeline = spawn(self.nextflow, flea_pipeline_parameters, {
           cwd: self.filedir,
           env: Object.assign(process.env, {
             LD_LIBRARY_PATH:
@@ -109,14 +109,14 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
         flea_pipeline.stdout.on("data", function(data) {
           self.stdout += String(data);
           logger.info(self.id + " : flea : " + self.stdout);
-          var status_update_packet = { phase: "running", msg: self.stdout };
+          const status_update_packet = { phase: "running", msg: self.stdout };
           self.emit("status update", status_update_packet);
         });
 
         flea_pipeline.stderr.on("data", function(data) {
           self.stderr += String(data);
           logger.info(self.id + " : flea : " + self.stderr);
-          var status_update_packet = { phase: "running", msg: self.stderr };
+          const status_update_packet = { phase: "running", msg: self.stderr };
           self.emit("status update", status_update_packet);
         });
 
@@ -136,7 +136,7 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
 
   // Write the contents of the file in the parameters to a file on the
   // local filesystem, then spawn the job.
-  var do_flea = function(stream, flea_params) {
+  const do_flea = function(stream, flea_params) {
     self.emit("status update", { phase: self.status_stack[1], msg: "" });
 
     //Unpack the tar file
@@ -157,8 +157,8 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
           // Append to file
           // Format : PC64_V00_small.fastq V00 20080301
           if (files.indexOf(msa._id + ".fastq") != -1) {
-            var formatted_visit_date = formatVisitDate(msa.visit_date);
-            var string_to_write = util.format(
+            const formatted_visit_date = formatVisitDate(msa.visit_date);
+            const string_to_write = util.format(
               "%s %s %s\n",
               self.filedir + "/" + msa._id + ".fastq",
               msa.visit_code,
@@ -175,7 +175,7 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
       });
     }
 
-    var extractor = tar
+    const extractor = tar
       .Extract({ path: self.filedir })
       .on("error", onError)
       .on("end", onEnd);
@@ -187,7 +187,7 @@ FleaRunner.prototype.start = function(fn, socket, flea_params) {
 };
 
 FleaRunner.prototype.onComplete = function(fn, flea_params) {
-  var self = this;
+  const self = this;
   self.sendSessionJSONFile((err, success) => {
     self.sendSessionZipFile((err, success) => {
       self.emit("completed", { results: "success" });
@@ -196,7 +196,7 @@ FleaRunner.prototype.onComplete = function(fn, flea_params) {
 };
 
 FleaRunner.prototype.sendSessionJSONFile = function(cb) {
-  var self = this;
+  const self = this;
   fs.readFile(self.session_json_fn, function(err, results) {
     if (results) {
       self.socket.emit("flea session json file", { buffer: results });
@@ -208,7 +208,7 @@ FleaRunner.prototype.sendSessionJSONFile = function(cb) {
 };
 
 FleaRunner.prototype.sendSessionZipFile = function(cb) {
-  var self = this;
+  const self = this;
 
   fs.readFile(self.session_zip_fn, function(err, results) {
     if (results) {
