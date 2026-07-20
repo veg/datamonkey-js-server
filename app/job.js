@@ -1,4 +1,4 @@
-var spawn = require("child_process").spawn,
+const spawn = require("child_process").spawn,
   fs = require("fs"),
   cs = require("../lib/clientsocket.js"),
   logger = require("../lib/logger.js").logger,
@@ -9,112 +9,112 @@ var spawn = require("child_process").spawn,
 
 // Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
 // promise-native and camelCases commands (hgetall -> hGetAll, hset -> hSet).
-var client = require("../lib/redis-client").client;
+const client = require("../lib/redis-client").client;
 
 // resubscribes a socket to an existing pending job,
 // otherwise reports contents from redis
 // NOTE: resubscribe/cancel are invoked with `new` (see lib/routes/analysis-routes.js),
 // so the outer function must NOT be `async` (`new` on an async function throws
 // "not a constructor"). The async/await body runs in an inner IIFE instead.
-var resubscribe = function(socket, id) {
-  var self = this;
+const resubscribe = function(socket, id) {
+  const self = this;
   self.id = id;
   (async function() {
 
-  // redis@5 commands return promises; hGetAll resolves to the hash (an empty
-  // object when the key is missing), so treat an empty object like the old
-  // falsy `obj`.
-  try {
-    var obj = await client.hGetAll(self.id);
+    // redis@5 commands return promises; hGetAll resolves to the hash (an empty
+    // object when the key is missing), so treat an empty object like the old
+    // falsy `obj`.
+    try {
+      const obj = await client.hGetAll(self.id);
 
-    if (!obj || Object.keys(obj).length === 0) {
-      logger.warn(self.id + " : resubscribe : no job");
-      socket.emit("script error", { error: "no job" });
-      return;
-    }
+      if (!obj || Object.keys(obj).length === 0) {
+        logger.warn(self.id + " : resubscribe : no job");
+        socket.emit("script error", { error: "no job" });
+        return;
+      }
 
-    // check job status
-    var current_status = obj.status;
-    logger.info(self.id + " : job : current status : " + obj.status);
-    if (current_status != "completed" && current_status != "exiting") {
+      // check job status
+      const current_status = obj.status;
+      logger.info(self.id + " : job : current status : " + obj.status);
+      if (current_status != "completed" && current_status != "exiting") {
       // if job is still pending, resubscribe
-      logger.warn(
-        "info",
-        self.id + " : job : resubscribe : job pending, resuming"
-      );
+        logger.warn(
+          "info",
+          self.id + " : job : resubscribe : job pending, resuming"
+        );
 
-      new cs.ClientSocket(socket, self.id);
-    } else if (current_status == "completed") {
+        new cs.ClientSocket(socket, self.id);
+      } else if (current_status == "completed") {
       // if job completed, emit results
-      logger.info(self.id + " : job : resubscribe : job completed");
-      var json_results = JSON.parse(obj.results);
-      socket.emit("completed", json_results);
-      socket.disconnect();
-    } else {
+        logger.info(self.id + " : job : resubscribe : job completed");
+        const json_results = JSON.parse(obj.results);
+        socket.emit("completed", json_results);
+        socket.disconnect();
+      } else {
       // if job aborted, emit error
-      socket.emit("script error", obj.error);
+        socket.emit("script error", obj.error);
+      }
+    } catch (err) {
+      logger.warn(self.id + " : resubscribe : " + err);
+      socket.emit("script error", { error: err.message });
     }
-  } catch (err) {
-    logger.warn(self.id + " : resubscribe : " + err);
-    socket.emit("script error", { error: err.message });
-  }
   })();
 };
 
-var cancel = function(socket, id) {
-  var self = this;
+const cancel = function(socket, id) {
+  const self = this;
   self.id = id;
   (async function() {
 
-  try {
-    var obj = await client.hGetAll(self.id);
-
-    if (!obj || Object.keys(obj).length === 0) {
-      logger.warn(self.id + " : cancel : no job");
-      socket.emit("cancelled", { success: "no", error: "no job" });
-      return;
-    }
-
-    // check job status
-    var current_status = obj.status,
-      torque_id = "";
-
     try {
-      torque_id = JSON.parse(obj.torque_id).torque_id;
-    } catch (e) {
-      logger.info(
-        self.id + " : job : cancel : could not retrieve torque information"
-      );
-      socket.emit("cancelled", {
-        success: "no",
-        error: "could not retrieve torque id"
-      });
-    }
+      const obj = await client.hGetAll(self.id);
 
-    if (current_status != "completed" && current_status != "exiting") {
+      if (!obj || Object.keys(obj).length === 0) {
+        logger.warn(self.id + " : cancel : no job");
+        socket.emit("cancelled", { success: "no", error: "no job" });
+        return;
+      }
+
+      // check job status
+      const current_status = obj.status;
+      let torque_id = "";
+
+      try {
+        torque_id = JSON.parse(obj.torque_id).torque_id;
+      } catch (e) {
+        logger.info(
+          self.id + " : job : cancel : could not retrieve torque information"
+        );
+        socket.emit("cancelled", {
+          success: "no",
+          error: "could not retrieve torque id"
+        });
+      }
+
+      if (current_status != "completed" && current_status != "exiting") {
       // if job is still pending, cancel
-      logger.warn("info", self.id + " : job : cancel : cancelling job");
+        logger.warn("info", self.id + " : job : cancel : cancelling job");
 
-      jobdel.jobDelete(torque_id, function() {
-        logger.warn("info", self.id + " : job : cancel : job cancelled");
-        client.hSet(self.id, "status", "aborted");
+        jobdel.jobDelete(torque_id, function() {
+          logger.warn("info", self.id + " : job : cancel : job cancelled");
+          client.hSet(self.id, "status", "aborted");
+          socket.emit("cancelled", { success: "ok" });
+          socket.disconnect();
+        });
+      } else if (current_status == "completed") {
+      // if job completed, emit results
+        logger.info(self.id + " : job : cancel : job completed");
         socket.emit("cancelled", { success: "ok" });
         socket.disconnect();
-      });
-    } else if (current_status == "completed") {
-      // if job completed, emit results
-      logger.info(self.id + " : job : cancel : job completed");
-      socket.emit("cancelled", { success: "ok" });
-      socket.disconnect();
-    } else {
+      } else {
       // if job aborted, emit error
-      logger.info(self.id + " : job : cancel : job does not exist");
-      socket.emit("cancelled", { success: "no", error: "no job" });
+        logger.info(self.id + " : job : cancel : job does not exist");
+        socket.emit("cancelled", { success: "no", error: "no job" });
+      }
+    } catch (err) {
+      logger.warn(self.id + " : cancel : " + err);
+      socket.emit("cancelled", { success: "no", error: err.message });
     }
-  } catch (err) {
-    logger.warn(self.id + " : cancel : " + err);
-    socket.emit("cancelled", { success: "no", error: err.message });
-  }
   })();
 };
 
@@ -145,7 +145,7 @@ function get_slurm_id_from_data(data) {
 class jobRunner extends EventEmitter {
   constructor(params, results_fn) {
     super();
-    var self = this;
+    const self = this;
     self.torque_id = "";
     self.error_count = 0;
     self.QSTAT_ERROR_LIMIT = 500;
@@ -168,7 +168,7 @@ class jobRunner extends EventEmitter {
   // Submits a job to the scheduler (TORQUE, SLURM, or local) by spawning a submission script.
   // Emit events
   submit(params, cwd) {
-    var self = this;
+    const self = this;
     self.qsub_params = params;
 
     // Handle local execution
@@ -189,9 +189,10 @@ class jobRunner extends EventEmitter {
     logger.info(`[${scheduler.toUpperCase()} JOB] Job submission using ${scheduler} with params: ${JSON.stringify(params)}`);
     logger.info(`[${scheduler.toUpperCase()} JOB] Working directory: ${cwd}`);
   
+    let qsub;
     try {
       console.log(`EXECUTING: ${fullCommand}`);
-      var qsub = spawn(scheduler, params, { cwd: cwd });
+      qsub = spawn(scheduler, params, { cwd: cwd });
       logger.info(`${scheduler} process spawned successfully with pid: ${qsub.pid}`);
     } catch (error) {
       logger.error(`Error spawning ${scheduler} process: ${error.message}`);
@@ -215,7 +216,7 @@ class jobRunner extends EventEmitter {
       console.log(`${scheduler} STDOUT: ${output}`);
     
       try {
-        var torque_id = self.submit_type === "qsub" 
+        const torque_id = self.submit_type === "qsub" 
           ? get_torque_id_from_data(data) 
           : get_slurm_id_from_data(data);
       
@@ -249,7 +250,7 @@ class jobRunner extends EventEmitter {
 
   // Local job submission - used when submit_type is 'local'
   submit_local(script, params, cwd) {
-    var self = this;
+    const self = this;
   
     logger.info("[LOCAL JOB] Starting local job submission");
     logger.info(`[LOCAL JOB] Script: ${script}`);
@@ -270,7 +271,7 @@ class jobRunner extends EventEmitter {
   
     try {
     // For local execution, pass params as command line arguments
-      var proc = spawn(script, params, { cwd: cwd });
+      const proc = spawn(script, params, { cwd: cwd });
     
       // Store process reference for cancellation
       self.local_process = proc;
@@ -326,18 +327,18 @@ class jobRunner extends EventEmitter {
 
   // SLURM job submission with specific parameters
   submit_slurm(script, cwd, slurm_params) {
-    var self = this;
+    const self = this;
   
     logger.info("SLURM job submission", script, slurm_params);
   
-    var sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
+    const sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
   
     sbatch.stderr.on("data", function(data) {
       logger.info("SLURM stderr: " + data.toString("utf8"));
     });
   
     sbatch.stdout.on("data", function(data) {
-      var job_id = get_slurm_id_from_data(data);
+      const job_id = get_slurm_id_from_data(data);
       self.torque_id = job_id;
       self.emit("job created", { torque_id: job_id });
     });
@@ -350,7 +351,7 @@ class jobRunner extends EventEmitter {
   // Once the job has been scheduled, we need to watch the files that it
   // sends updates to.
   status_watcher() {
-    var self = this;
+    const self = this;
   
     // Don't create a job status watcher for local jobs
     if (self.submit_type === "local") {
@@ -358,7 +359,7 @@ class jobRunner extends EventEmitter {
     }
   
     logger.info(`Starting job status watcher for job ID: ${self.torque_id}`);
-    var job_status = new JobStatus(self.torque_id);
+    const job_status = new JobStatus(self.torque_id);
 
     self.metronome_id = job_status.watch(function(error, status_packet) {
     // Log status updates for debugging
