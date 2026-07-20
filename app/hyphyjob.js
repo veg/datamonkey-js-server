@@ -529,8 +529,14 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
     self.torque_id = torque_id.toString();
   }
   
-  // Determine scheduler type
-  const isSlurm = config.submit_type === "sbatch";
+  // Determine scheduler type.
+  // NOTE: config.submit_type is one of "slurm" | "qsub" | "local" (see
+  // lib/config.js). This previously compared against "sbatch" — a value the
+  // enum never holds — so isSlurm was ALWAYS false and the SLURM log-path
+  // branch below was dead code: onError() then read the (nonexistent)
+  // torque-style log path instead of the real SLURM <type>_<id>_<jobid>.err
+  // files, dropping stderr from error reports. See #410 (2nd battle-test).
+  const isSlurm = config.submit_type === "slurm";
   self.scheduler = isSlurm ? "slurm" : "torque";
   
   // Set output file paths based on scheduler type
