@@ -14,9 +14,13 @@ var client = require("../lib/redis-client").client;
 
 // resubscribes a socket to an existing pending job,
 // otherwise reports contents from redis
-var resubscribe = async function(socket, id) {
+// NOTE: resubscribe/cancel are invoked with `new` (see lib/routes/analysis-routes.js),
+// so the outer function must NOT be `async` (`new` on an async function throws
+// "not a constructor"). The async/await body runs in an inner IIFE instead.
+var resubscribe = function(socket, id) {
   var self = this;
   self.id = id;
+  (async function() {
 
   // redis@5 commands return promises; hGetAll resolves to the hash (an empty
   // object when the key is missing), so treat an empty object like the old
@@ -55,11 +59,13 @@ var resubscribe = async function(socket, id) {
     logger.warn(self.id + " : resubscribe : " + err);
     socket.emit("script error", { error: err.message });
   }
+  })();
 };
 
-var cancel = async function(socket, id) {
+var cancel = function(socket, id) {
   var self = this;
   self.id = id;
+  (async function() {
 
   try {
     var obj = await client.hGetAll(self.id);
@@ -110,6 +116,7 @@ var cancel = async function(socket, id) {
     logger.warn(self.id + " : cancel : " + err);
     socket.emit("cancelled", { success: "no", error: err.message });
   }
+  })();
 };
 
 var jobRunner = function(params, results_fn) {
