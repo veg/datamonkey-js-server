@@ -103,7 +103,10 @@ var descriptor = {
     fs.writeFile(self.tree_fn, self.selectedTree, function (err) {
       if (err) {
         logger.error("MEME job " + self.id + ": Error writing tree file: " + err.message);
-        throw err;
+        self.socket.emit("script error", {
+          error: "Failed to write tree file: " + err.message
+        });
+        return;
       }
       logger.info("MEME job " + self.id + ": Tree file written successfully");
     });

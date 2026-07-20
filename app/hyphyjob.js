@@ -204,9 +204,12 @@ hyphyJob.prototype.spawn = function() {
   fs.writeFile(self.fn, dataToWrite, err => {
     if (err) {
       logger.error(`Job ${self.id}: Error writing input file: ${err.message}`);
-      throw err;
+      self.socket.emit("script error", {
+        error: "Failed to write input file: " + err.message
+      });
+      return;
     }
-    
+
     logger.info(`Job ${self.id}: Input file written successfully, submitting job`);
     
     // Pass filename in as opposed to generating it in spawn_hyphyJob

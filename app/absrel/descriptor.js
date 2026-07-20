@@ -84,7 +84,10 @@ var descriptor = {
     fs.writeFile(self.tree_fn, self.nwk, function (err) {
       if (err) {
         logger.error("ABSREL job " + self.id + ": Error writing tree file: " + err.message);
-        throw err;
+        self.socket.emit("script error", {
+          error: "Failed to write tree file: " + err.message
+        });
+        return;
       }
       logger.info("ABSREL job " + self.id + ": Tree file written successfully");
     });
