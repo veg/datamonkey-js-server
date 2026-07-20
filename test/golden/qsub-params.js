@@ -69,9 +69,27 @@ function mkParams() {
 
 // Replace per-run volatile substrings with stable placeholders so the snapshot
 // is deterministic: the "check-<timestamp>" id and absolute repo paths.
+//
+// julia_path / julia_project are host-specific config values that difFubar
+// embeds verbatim into its export string. The committed snapshot pins the
+// portable CI-fixture values; normalize whatever THIS host's config.json holds
+// to the same tokens so the golden passes regardless of the local julia
+// install (otherwise a dev config with an absolute juliaup path drifts).
+var JULIA_PATH = config.julia_path || "/usr/local/bin/julia";
+var JULIA_PROJECT = config.julia_project || "../../.julia_env";
 function normalize(arr) {
   return (arr || []).map(function (entry) {
-    return String(entry)
+    var s = String(entry);
+    // Pin config-derived julia paths to the portable snapshot tokens FIRST,
+    // before the ABS_ROOT/HOME substitutions could rewrite an absolute julia
+    // path into <HOME>/... and stop it matching config.julia_path. difFubar
+    // embeds julia both as a bare positional element (local exec array) and as
+    // a "julia_path=<v>" token (slurm --export), so handle both forms.
+    if (s === JULIA_PATH) return "/usr/local/bin/julia";
+    if (s === JULIA_PROJECT) return "../../.julia_env";
+    s = s.split("julia_path=" + JULIA_PATH).join("julia_path=/usr/local/bin/julia")
+      .split("julia_project=" + JULIA_PROJECT).join("julia_project=../../.julia_env");
+    return s
       .split(ABS_ROOT).join("<ROOT>")
       .split(HOME).join("<HOME>")
       .replace(/check-\d+/g, "check-<TS>");

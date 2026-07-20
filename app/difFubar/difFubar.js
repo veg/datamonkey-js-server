@@ -3,7 +3,8 @@ const config = require("../../lib/config"),
   logger = require("../../lib/logger.js").logger,
   util = require("util"),
   fs = require("fs"),
-  path = require("path");
+  path = require("path"),
+  jobRegistry = require("../../lib/jobregistry.js");
 
 // Shared redis v5 client (promise-native, camelCased commands). Reused across
 // onComplete calls instead of creating (and leaking) a client per job
@@ -278,14 +279,31 @@ difFubar.prototype.onComplete = function() {
           const str_redis_packet = JSON.stringify(redis_packet);
           
           self.log("complete", "success (direct file transmission)");
-          
+
           // Reuse the shared redis client (GH #400). redis v5 hSet takes a
           // field/value object for multiple fields (the old variadic
           // field,value,field,value form silently drops extra pairs).
-          client.hSet(self.id, { results: str_redis_packet, status: "completed" });
-          client.publish(self.id, str_redis_packet);
-          client.lRem("active_jobs", 1, self.id);
-          
+          // Batch the terminal writes under Promise.all().catch (not
+          // fire-and-forget): a rejected redis write would otherwise leave the
+          // job never marked completed / never dequeued — a silent zombie.
+          // (Mirrors hyphyjob.js onComplete; the small-results branch below
+          // already delegates to hyphyJob.prototype.onComplete which does this.)
+          Promise.all([
+            client.hSet(self.id, { results: str_redis_packet, status: "completed" }),
+            client.publish(self.id, str_redis_packet),
+            client.lRem("active_jobs", 1, self.id)
+          ]).catch(function(werr) {
+            logger.error(
+              "[REDIS] Terminal completion write failed for difFubar job " +
+                self.id + " - job may be left as a zombie: " + werr.message
+            );
+          });
+
+          // Match the parent completion contract: drop the finished job from
+          // the live registry (the small-results path does this via the parent
+          // onComplete; this large-file path must do it explicitly).
+          jobRegistry.unregister(self.id);
+
           logger.info(`[DEBUG] difFUBAR ${self.id}: Sent results via direct socket + Redis completion`);
         });
       });
