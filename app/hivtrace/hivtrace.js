@@ -34,95 +34,97 @@ function once(fn) {
 // Promisified fs.readFile (replaces Q.nfcall(fs.readFile, ...)).
 const readFileAsync = util.promisify(fs.readFile);
 
-const hivtrace = function(socket, stream, params) {
-  const self = this;
+class hivtrace extends hyphyJob {
+  constructor(socket, stream, params) {
+    super();
+    const self = this;
 
-  self.status_states = {
-    PENDING: 1,
-    RUNNING: 2,
-    COMPLETED: 3
-  };
+    self.status_states = {
+      PENDING: 1,
+      RUNNING: 2,
+      COMPLETED: 3
+    };
 
-  const cluster_output_suffix = "_user.trace.json",
-    tn93_json_suffix = "_user.tn93output.json",
-    tn93_csv_suffix = "_user.tn93output.csv",
-    custom_reference_suffix = "_custom_reference.fas",
-    hivtrace_log_suffix = ".hivtrace.log",
-    output_fasta_suffix = "_output.fasta";
+    const cluster_output_suffix = "_user.trace.json",
+      tn93_json_suffix = "_user.tn93output.json",
+      tn93_csv_suffix = "_user.tn93output.csv",
+      custom_reference_suffix = "_custom_reference.fas",
+      hivtrace_log_suffix = ".hivtrace.log",
+      output_fasta_suffix = "_output.fasta";
 
-  self.socket = socket;
-  self.stream = stream;
-  self.params = params;
+    self.socket = socket;
+    self.stream = stream;
+    self.params = params;
 
-  // object specific attributes
-  self.python = path.join(__dirname, "../../.python/env/bin/python");
-  self.output_dir = path.join(__dirname, "/output/");
-  self.qsub_script_name = "hivtrace_submit.sh";
-  self.qsub_script = path.join(__dirname, self.qsub_script_name);
-  self.hivtrace = path.join(__dirname, "../../.python/env/bin/hivtrace");
-  self.custom_reference_fn = "";
-  self.type = "hivtrace";
-  self.submit_type = config.submit_type || "qsub";
+    // object specific attributes
+    self.python = path.join(__dirname, "../../.python/env/bin/python");
+    self.output_dir = path.join(__dirname, "/output/");
+    self.qsub_script_name = "hivtrace_submit.sh";
+    self.qsub_script = path.join(__dirname, self.qsub_script_name);
+    self.hivtrace = path.join(__dirname, "../../.python/env/bin/hivtrace");
+    self.custom_reference_fn = "";
+    self.type = "hivtrace";
+    self.submit_type = config.submit_type || "qsub";
 
-  // parameter attributes
-  self.id = params._id;
-  self.distance_threshold = params.distance_threshold;
-  self.ambiguity_handling = params.ambiguity_handling;
-  self.fraction = params.fraction;
-  self.reference = params.reference;
-  self.filter_edges = params.filter_edges;
-  self.reference_strip = params.reference_strip;
-  self.min_overlap = params.min_overlap;
-  self.status_stack = params.status_stack;
-  self.lanl_compare = params.lanl_compare;
-  self.prealigned = params.prealigned;
-  self.strip_drams = params.strip_drams == "no" ? false : params.strip_drams;
+    // parameter attributes
+    self.id = params._id;
+    self.distance_threshold = params.distance_threshold;
+    self.ambiguity_handling = params.ambiguity_handling;
+    self.fraction = params.fraction;
+    self.reference = params.reference;
+    self.filter_edges = params.filter_edges;
+    self.reference_strip = params.reference_strip;
+    self.min_overlap = params.min_overlap;
+    self.status_stack = params.status_stack;
+    self.lanl_compare = params.lanl_compare;
+    self.prealigned = params.prealigned;
+    self.strip_drams = params.strip_drams == "no" ? false : params.strip_drams;
 
-  // parameter-derived attributes.
-  // NOTE: self.filepath MUST be set before the Custom-reference block below,
-  // which derives custom_reference_fn from it. Previously filepath was assigned
-  // after that block, so a Custom reference was written to
-  // "undefined_custom_reference.fas" and never found. See #403 follow-up.
-  self.filepath = path.join(self.output_dir, self.id);
+    // parameter-derived attributes.
+    // NOTE: self.filepath MUST be set before the Custom-reference block below,
+    // which derives custom_reference_fn from it. Previously filepath was assigned
+    // after that block, so a Custom reference was written to
+    // "undefined_custom_reference.fas" and never found. See #403 follow-up.
+    self.filepath = path.join(self.output_dir, self.id);
 
-  if (params.reference == "Custom") {
-    self.custom_reference_fn = self.filepath + custom_reference_suffix;
-    self.custom_reference = params.custom_reference;
-    self.reference = self.custom_reference_fn;
-    // Check if reference is custom, and write to a file if so. Log write
-    // failures instead of swallowing them — the analysis depends on this file,
-    // and a silent failure surfaces later as a confusing "file not found".
-    fs.writeFile(self.custom_reference_fn, self.custom_reference, function(err) {
-      if (err) {
-        logger.error(
-          "hivtrace failed to write custom reference file " +
+    if (params.reference == "Custom") {
+      self.custom_reference_fn = self.filepath + custom_reference_suffix;
+      self.custom_reference = params.custom_reference;
+      self.reference = self.custom_reference_fn;
+      // Check if reference is custom, and write to a file if so. Log write
+      // failures instead of swallowing them — the analysis depends on this file,
+      // and a silent failure surfaces later as a confusing "file not found".
+      fs.writeFile(self.custom_reference_fn, self.custom_reference, function(err) {
+        if (err) {
+          logger.error(
+            "hivtrace failed to write custom reference file " +
             self.custom_reference_fn + ": " + err.message
-        );
-      }
+          );
+        }
+      });
+    }
+
+    self.status_fn = self.filepath + "_status";
+    self.output_cluster_output = self.filepath + cluster_output_suffix;
+    self.tn93_stdout = self.filepath + tn93_json_suffix;
+    self.tn93_results = self.filepath + tn93_csv_suffix;
+    self.tn93_lanl_results = self.filepath + tn93_csv_suffix;
+    self.aligned_fasta = self.filepath + output_fasta_suffix;
+    self.hivtrace_log = self.filepath + hivtrace_log_suffix;
+
+    const initial_statuses = [];
+    (self.status_stack || []).forEach(function(d) {
+      initial_statuses.push({ title: d, status: self.status_states.PENDING });
     });
-  }
 
-  self.status_fn = self.filepath + "_status";
-  self.output_cluster_output = self.filepath + cluster_output_suffix;
-  self.tn93_stdout = self.filepath + tn93_json_suffix;
-  self.tn93_results = self.filepath + tn93_csv_suffix;
-  self.tn93_lanl_results = self.filepath + tn93_csv_suffix;
-  self.aligned_fasta = self.filepath + output_fasta_suffix;
-  self.hivtrace_log = self.filepath + hivtrace_log_suffix;
+    client.hSet(
+      self.id,
+      "complete phase status",
+      JSON.stringify(initial_statuses)
+    );
 
-  const initial_statuses = [];
-  (self.status_stack || []).forEach(function(d) {
-    initial_statuses.push({ title: d, status: self.status_states.PENDING });
-  });
-
-  client.hSet(
-    self.id,
-    "complete phase status",
-    JSON.stringify(initial_statuses)
-  );
-
-  // Create parameter string for job submission
-  self.params_string = "fn=" +
+    // Create parameter string for job submission
+    self.params_string = "fn=" +
     self.filepath +
     ",python=" +
     self.python +
@@ -155,38 +157,37 @@ const hivtrace = function(socket, stream, params) {
     ",custom_reference_fn=" +
     self.custom_reference_fn;
 
-  // Prepare qsub params with unique output/error file names
-  self.qsub_params = [
-    "-l walltime=" + 
+    // Prepare qsub params with unique output/error file names
+    self.qsub_params = [
+      "-l walltime=" + 
     config.hivtrace_walltime + 
     ",nodes=1:ppn=" + 
     config.hivtrace_procs,
-    "-q",
-    config.qsub_queue,
-    "-v",
-    self.params_string,
-    "-o",
-    path.join(self.output_dir, `hivtrace_${self.id}.o`),
-    "-e",
-    path.join(self.output_dir, `hivtrace_${self.id}.e`),
-    self.qsub_script
-  ];
+      "-q",
+      config.qsub_queue,
+      "-v",
+      self.params_string,
+      "-o",
+      path.join(self.output_dir, `hivtrace_${self.id}.o`),
+      "-e",
+      path.join(self.output_dir, `hivtrace_${self.id}.e`),
+      self.qsub_script
+    ];
 
-  // Prepare sbatch params for SLURM with unique output/error file names
-  self.slurm_params = [
-    "--ntasks=1",
-    "--cpus-per-task=" + config.hivtrace_procs,
-    "--time=" + config.hivtrace_walltime,
-    "--output=" + path.join(self.output_dir, `hivtrace_${self.id}_%j.out`),
-    "--error=" + path.join(self.output_dir, `hivtrace_${self.id}_%j.err`),
-    "--export=" + self.params_string,
-    self.qsub_script
-  ];
+    // Prepare sbatch params for SLURM with unique output/error file names
+    self.slurm_params = [
+      "--ntasks=1",
+      "--cpus-per-task=" + config.hivtrace_procs,
+      "--time=" + config.hivtrace_walltime,
+      "--output=" + path.join(self.output_dir, `hivtrace_${self.id}_%j.out`),
+      "--error=" + path.join(self.output_dir, `hivtrace_${self.id}_%j.err`),
+      "--export=" + self.params_string,
+      self.qsub_script
+    ];
 
-  self.spawn();
-};
-
-util.inherits(hivtrace, hyphyJob);
+    self.spawn();
+  }
+}
 
 hivtrace.prototype.spawn = function() {
   const self = this;
@@ -389,23 +390,13 @@ hivtrace.prototype.onComplete = function() {
 
       self.socket.emit("completed", { results: results_data });
 
-      // Terminal writes: status + results + dequeue. A failure here would
-      // otherwise leave the job as a zombie, so catch and log loudly rather
-      // than fire-and-forget (mirrors hyphyjob.js onComplete).
-      Promise.all([
-        client.hSet(self.id, {
-          status: "completed",
-          results: str_redis_packet
-        }),
-        client.lRem("active_jobs", 1, self.id)
-      ]).catch(function(err) {
-        logger.error(
-          "[REDIS] Terminal completion write failed for hivtrace job " +
-            self.id + " - job may be left as a zombie: " + err.message
-        );
+      // Terminal writes + dequeue + unregister via the shared base helper.
+      // hivtrace delivers results over the socket above, so no publish packet
+      // (omit the 2nd arg). Single source of truth with hyphyjob.js onComplete.
+      self.finalizeCompletion({
+        status: "completed",
+        results: str_redis_packet
       });
-
-      jobRegistry.unregister(self.id);
     } else {
       self.onError(
         "job seems to have completed, but no results found: " +
