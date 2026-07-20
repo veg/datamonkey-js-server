@@ -9,6 +9,10 @@ module.exports = {
         "sourceType": "script"
     },
     "rules": {
+        // Phase 4c (#410): modern block-scoped declarations. no-var is a
+        // CI-blocking error; prefer-const nudges immutable bindings.
+        "no-var": "error",
+        "prefer-const": "error",
         "indent": [
             "error",
             2

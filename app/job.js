@@ -1,4 +1,4 @@
-var spawn = require("child_process").spawn,
+const spawn = require("child_process").spawn,
   fs = require("fs"),
   util = require("util"),
   cs = require("../lib/clientsocket.js"),
@@ -10,12 +10,12 @@ var spawn = require("child_process").spawn,
 
 // Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
 // promise-native and camelCases commands (hgetall -> hGetAll, hset -> hSet).
-var client = require("../lib/redis-client").client;
+const client = require("../lib/redis-client").client;
 
 // resubscribes a socket to an existing pending job,
 // otherwise reports contents from redis
-var resubscribe = function(socket, id) {
-  var self = this;
+const resubscribe = function(socket, id) {
+  const self = this;
   self.id = id;
 
   // redis@5 commands return promises; hGetAll resolves to the hash (an empty
@@ -29,7 +29,7 @@ var resubscribe = function(socket, id) {
     }
 
     // check job status
-    var current_status = obj.status;
+    const current_status = obj.status;
     logger.info(self.id + " : job : current status : " + obj.status);
     if (current_status != "completed" && current_status != "exiting") {
       // if job is still pending, resubscribe
@@ -42,7 +42,7 @@ var resubscribe = function(socket, id) {
     } else if (current_status == "completed") {
       // if job completed, emit results
       logger.info(self.id + " : job : resubscribe : job completed");
-      var json_results = JSON.parse(obj.results);
+      const json_results = JSON.parse(obj.results);
       socket.emit("completed", json_results);
       socket.disconnect();
     } else {
@@ -55,8 +55,8 @@ var resubscribe = function(socket, id) {
   });
 };
 
-var cancel = function(socket, id) {
-  var self = this;
+const cancel = function(socket, id) {
+  const self = this;
   self.id = id;
 
   client.hGetAll(self.id).then(function(obj) {
@@ -67,8 +67,8 @@ var cancel = function(socket, id) {
     }
 
     // check job status
-    var current_status = obj.status,
-      torque_id = "";
+    const current_status = obj.status;
+    let torque_id = "";
 
     try {
       torque_id = JSON.parse(obj.torque_id).torque_id;
@@ -108,8 +108,8 @@ var cancel = function(socket, id) {
   });
 };
 
-var jobRunner = function(params, results_fn) {
-  var self = this;
+const jobRunner = function(params, results_fn) {
+  const self = this;
   self.torque_id = "";
   self.error_count = 0;
   self.QSTAT_ERROR_LIMIT = 500;
@@ -158,7 +158,7 @@ function get_slurm_id_from_data(data) {
 // Submits a job to the scheduler (TORQUE, SLURM, or local) by spawning a submission script.
 // Emit events
 jobRunner.prototype.submit = function(params, cwd) {
-  var self = this;
+  const self = this;
   self.qsub_params = params;
 
   // Handle local execution
@@ -179,9 +179,12 @@ jobRunner.prototype.submit = function(params, cwd) {
   logger.info(`[${scheduler.toUpperCase()} JOB] Job submission using ${scheduler} with params: ${JSON.stringify(params)}`);
   logger.info(`[${scheduler.toUpperCase()} JOB] Working directory: ${cwd}`);
   
+  // declared outside the try so the spawned process is visible to the
+  // event-handler wiring below (the catch returns on failure)
+  let qsub;
   try {
     console.log(`EXECUTING: ${fullCommand}`);
-    var qsub = spawn(scheduler, params, { cwd: cwd });
+    qsub = spawn(scheduler, params, { cwd: cwd });
     logger.info(`${scheduler} process spawned successfully with pid: ${qsub.pid}`);
   } catch (error) {
     logger.error(`Error spawning ${scheduler} process: ${error.message}`);
@@ -205,7 +208,7 @@ jobRunner.prototype.submit = function(params, cwd) {
     console.log(`${scheduler} STDOUT: ${output}`);
     
     try {
-      var torque_id = self.submit_type === "qsub" 
+      const torque_id = self.submit_type === "qsub" 
         ? get_torque_id_from_data(data) 
         : get_slurm_id_from_data(data);
       
@@ -239,7 +242,7 @@ jobRunner.prototype.submit = function(params, cwd) {
 
 // Local job submission - used when submit_type is 'local'
 jobRunner.prototype.submit_local = function(script, params, cwd) {
-  var self = this;
+  const self = this;
   
   logger.info("[LOCAL JOB] Starting local job submission");
   logger.info(`[LOCAL JOB] Script: ${script}`);
@@ -260,7 +263,7 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
   
   try {
     // For local execution, pass params as command line arguments
-    var proc = spawn(script, params, { cwd: cwd });
+    const proc = spawn(script, params, { cwd: cwd });
     
     // Store process reference for cancellation
     self.local_process = proc;
@@ -316,18 +319,18 @@ jobRunner.prototype.submit_local = function(script, params, cwd) {
 
 // SLURM job submission with specific parameters
 jobRunner.prototype.submit_slurm = function(script, cwd, slurm_params) {
-  var self = this;
+  const self = this;
   
   logger.info("SLURM job submission", script, slurm_params);
   
-  var sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
+  const sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
   
   sbatch.stderr.on("data", function(data) {
     logger.info("SLURM stderr: " + data.toString("utf8"));
   });
   
   sbatch.stdout.on("data", function(data) {
-    var job_id = get_slurm_id_from_data(data);
+    const job_id = get_slurm_id_from_data(data);
     self.torque_id = job_id;
     self.emit("job created", { torque_id: job_id });
   });
@@ -340,7 +343,7 @@ jobRunner.prototype.submit_slurm = function(script, cwd, slurm_params) {
 // Once the job has been scheduled, we need to watch the files that it
 // sends updates to.
 jobRunner.prototype.status_watcher = function() {
-  var self = this;
+  const self = this;
   
   // Don't create a job status watcher for local jobs
   if (self.submit_type === "local") {
@@ -348,7 +351,7 @@ jobRunner.prototype.status_watcher = function() {
   }
   
   logger.info(`Starting job status watcher for job ID: ${self.torque_id}`);
-  var job_status = new JobStatus(self.torque_id);
+  const job_status = new JobStatus(self.torque_id);
 
   self.metronome_id = job_status.watch(function(error, status_packet) {
     // Log status updates for debugging

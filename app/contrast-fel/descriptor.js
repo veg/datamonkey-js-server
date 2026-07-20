@@ -17,12 +17,12 @@
  * no prefixKeys / skipInSlurm needed.
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "cfel",
   dir: __dirname,
   script: "cfel.sh",
@@ -36,10 +36,10 @@ var descriptor = {
   // raw params; in normal mode it is params.analysis (or params). This mirrors
   // the original cfel.js branches.
   fields: function (self, params, src) {
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
-      var rawBranchSets = params["branch-set"] || params.branch_sets || "";
+      const rawBranchSets = params["branch-set"] || params.branch_sets || "";
       self.branch_sets = Array.isArray(rawBranchSets) ? rawBranchSets.join(":") : rawBranchSets;
       self.rate_variation = params.srv || (params.ds_variation == 1 ? "Yes" : "No") || "Yes";
       self.permutations = params.permutations || "Yes";
@@ -61,7 +61,7 @@ var descriptor = {
           self.params.nwk_tree ||
           self.params.tree ||
           "";
-        var rawBranchSetsA =
+        const rawBranchSetsA =
           self.params.analysis["branch-set"] ||
           self.params.analysis.branch_sets ||
           src["branch-set"] ||
@@ -77,7 +77,7 @@ var descriptor = {
         self.q_value = src.q_value || src.qvalue || 0.2;
       } else {
         self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
-        var rawBranchSetsB = self.params["branch-set"] || self.params.branch_sets || "";
+        const rawBranchSetsB = self.params["branch-set"] || self.params.branch_sets || "";
         self.branch_sets = Array.isArray(rawBranchSetsB)
           ? rawBranchSetsB.join(":")
           : rawBranchSetsB;
@@ -104,7 +104,7 @@ var descriptor = {
     utilities.ensureDirectoryExists(self.output_dir);
 
     // Clean tree data and write to file.
-    var cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
+    const cleanTree = utilities.cleanTreeToNewick(self.nwk_tree);
     logger.info("Contrast-FEL job " + self.id + ": Writing cleaned tree file to " + self.tree_fn, {
       original_length: self.nwk_tree ? self.nwk_tree.length : 0,
       cleaned_length: cleanTree ? cleanTree.length : 0,
@@ -130,13 +130,13 @@ var descriptor = {
     // submit — the factory always calls self.init() after beforeInit, so we
     // suppress it here by replacing init with a no-op (mirrors the original
     // module's early return).
-    var _cfelSetCount = String(self.branch_sets == null ? "" : self.branch_sets)
+    const _cfelSetCount = String(self.branch_sets == null ? "" : self.branch_sets)
       .split(":")
       .filter(function (s) {
         return s.trim().length;
       }).length;
     if (_cfelSetCount < 2) {
-      var _cfelMsg =
+      const _cfelMsg =
         "Contrast-FEL requires at least two branch groups to compare, but " +
         _cfelSetCount +
         " were provided. Please tag a second group of branches in the tree and resubmit.";
@@ -168,7 +168,7 @@ var descriptor = {
   ]
 };
 
-var cfel = factory.makeAnalysis(descriptor);
+const cfel = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.cfel is the constructor.
 exports.cfel = cfel;

@@ -6,12 +6,12 @@
  * (pinned by test/golden/qsub-params.js).
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
-var descriptor = {
+const descriptor = {
   type: "fel",
   dir: __dirname,
   script: "fel.sh",
@@ -29,7 +29,7 @@ var descriptor = {
     self.bootstrap = src.bootstrap || false;
     self.resample = src.resample || 1;
 
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
       self.rate_variation = "No";
@@ -120,7 +120,7 @@ var descriptor = {
   ]
 };
 
-var fel = factory.makeAnalysis(descriptor);
+const fel = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.fel is the constructor.
 exports.fel = fel;

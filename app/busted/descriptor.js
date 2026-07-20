@@ -10,19 +10,19 @@
  * exportKeys entry for analysis_type is therefore scoped to "local".
  */
 
-var factory = require("../../lib/analysis-factory.js");
-var fs = require("fs");
-var utilities = require("../../lib/utilities");
-var logger = require("../../lib/logger").logger;
+const factory = require("../../lib/analysis-factory.js");
+const fs = require("fs");
+const utilities = require("../../lib/utilities");
+const logger = require("../../lib/logger").logger;
 
 // Original busted.js lookup tables + helper (verbatim).
-var synSubstitutionVar = {
+const synSubstitutionVar = {
   "1": "Yes",
   "2": "No",
   "3": "Branch-site"
 };
 
-var multihitVar = {
+const multihitVar = {
   Default: "None",
   Double: "Double",
   "Double+Triple": "Double+Triple"
@@ -34,7 +34,7 @@ function boolToYesNo(value) {
   return value; // Return as-is if already a string
 }
 
-var descriptor = {
+const descriptor = {
   type: "busted",
   dir: __dirname,
   script: "busted_submit.sh",
@@ -59,7 +59,7 @@ var descriptor = {
     self.starting_points = src.starting_points || 1;
     self.save_fit = src.save_fit || "/dev/null";
 
-    var isCheckOnly = params.checkOnly || false;
+    const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
       self.genetic_code = params.genetic_code || "Universal";
     } else {
@@ -134,7 +134,7 @@ var descriptor = {
   ]
 };
 
-var busted = factory.makeAnalysis(descriptor);
+const busted = factory.makeAnalysis(descriptor);
 
 // Preserve the original module's export shape: exports.busted is the constructor.
 exports.busted = busted;

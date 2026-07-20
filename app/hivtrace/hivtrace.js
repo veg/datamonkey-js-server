@@ -1,4 +1,4 @@
-var spawn = require("child_process").spawn,
+const spawn = require("child_process").spawn,
   cs = require("../../lib/clientsocket.js"),
   fs = require("fs"),
   config = require("../../lib/config"),
@@ -15,12 +15,12 @@ var spawn = require("child_process").spawn,
 // Use the shared redis v5 client (promise-native, camelCased commands) for
 // key-value + publish, and createSubscriber() for the dedicated pub/sub
 // connection (redis v5 requires a separate connection for subscriber mode).
-var { client, createSubscriber } = require("../../lib/redis-client");
+const { client, createSubscriber } = require("../../lib/redis-client");
 
 // Small replacement for underscore's _.once — returns a function that invokes
 // fn at most once and caches its result.
 function once(fn) {
-  var called = false,
+  let called = false,
     result;
   return function () {
     if (!called) {
@@ -32,10 +32,10 @@ function once(fn) {
 }
 
 // Promisified fs.readFile (replaces Q.nfcall(fs.readFile, ...)).
-var readFileAsync = util.promisify(fs.readFile);
+const readFileAsync = util.promisify(fs.readFile);
 
-var hivtrace = function(socket, stream, params) {
-  var self = this;
+const hivtrace = function(socket, stream, params) {
+  const self = this;
 
   self.status_states = {
     PENDING: 1,
@@ -43,7 +43,7 @@ var hivtrace = function(socket, stream, params) {
     COMPLETED: 3
   };
 
-  var cluster_output_suffix = "_user.trace.json",
+  const cluster_output_suffix = "_user.trace.json",
     tn93_json_suffix = "_user.tn93output.json",
     tn93_csv_suffix = "_user.tn93output.csv",
     custom_reference_suffix = "_custom_reference.fas",
@@ -103,7 +103,7 @@ var hivtrace = function(socket, stream, params) {
   self.aligned_fasta = self.filepath + output_fasta_suffix;
   self.hivtrace_log = self.filepath + hivtrace_log_suffix;
 
-  var initial_statuses = [];
+  const initial_statuses = [];
   (self.status_stack || []).forEach(function(d) {
     initial_statuses.push({ title: d, status: self.status_states.PENDING });
   });
@@ -182,7 +182,7 @@ var hivtrace = function(socket, stream, params) {
 util.inherits(hivtrace, hyphyJob);
 
 hivtrace.prototype.spawn = function() {
-  var self = this;
+  const self = this;
   self.send_aligned_fasta_once = once(self.sendAlignedFasta.bind(self));
   self.send_tn93_once = once(self.sendtn93.bind(self));
 
@@ -193,14 +193,14 @@ hivtrace.prototype.spawn = function() {
   );
 
   // Setup Analysis
-  var trace_runner = new HivTraceRunner(self.id, self.hivtrace_log);
+  const trace_runner = new HivTraceRunner(self.id, self.hivtrace_log);
   self.trace_runner = trace_runner;
   self.client_socket = new cs.ClientSocket(self.socket, self.id);
 
   // On status updates, report to datamonkey-js
   trace_runner.on("status update", function(status_update) {
-    var index = status_update.index;
-    var status = status_update.status;
+    const index = status_update.index;
+    const status = status_update.status;
 
     try {
       self.onStatusUpdate(status_update, status_update.index);
@@ -263,9 +263,9 @@ hivtrace.prototype.spawn = function() {
   // Choose the appropriate submission method based on config.submit_type
   if (self.submit_type === "local") {
     // For local submission, create job parameters as environment variables
-    var job_params = {};
+    const job_params = {};
     self.params_string.split(",").forEach(function(param) {
-      var parts = param.split("=");
+      const parts = param.split("=");
       if (parts.length === 2) {
         job_params[parts[0]] = parts[1];
       }
@@ -281,7 +281,7 @@ hivtrace.prototype.spawn = function() {
 };
 
 hivtrace.prototype.onStatusUpdate = function(data, index) {
-  var self = this;
+  const self = this;
 
   if (!data) {
     return;
@@ -301,7 +301,7 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
       //  'msg'    : msg
       //}
 
-      var new_status = JSON.parse(entire_status);
+      const new_status = JSON.parse(entire_status);
 
       // validate new_status and index
       if (new_status === undefined) {
@@ -324,7 +324,7 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
 
       new_status[data.index].msg = data.msg ? data.msg : "";
 
-      var status_update = {
+      const status_update = {
         msg: new_status,
         torque_id: self.torque_id
       };
@@ -332,9 +332,9 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
       // Prepare redis packet for delivery
       client.hSet(self.id, "status update", JSON.stringify(data));
 
-      var redis_packet = status_update;
+      const redis_packet = status_update;
       redis_packet.type = "status update";
-      var str_redis_packet = JSON.stringify(status_update);
+      const str_redis_packet = JSON.stringify(status_update);
 
       // Store packet in redis and publish to channel
       client.hSet(self.id, "complete phase status", JSON.stringify(new_status));
@@ -351,19 +351,19 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
 };
 
 hivtrace.prototype.onComplete = function() {
-  var self = this;
+  const self = this;
   client.hSet(self.id, "status", "completed");
 
-  var results_promise = readFileAsync(self.output_cluster_output, "utf-8");
-  var promises = [results_promise];
+  const results_promise = readFileAsync(self.output_cluster_output, "utf-8");
+  const promises = [results_promise];
 
   // Native Promise.allSettled result shape is {status, value/reason}
   // (q's allSettled used {state, value/reason}).
   Promise.allSettled(promises).then(function(results) {
     if (results[0].status == "fulfilled" && results[0].value) {
-      var results_data = JSON.parse(results[0].value);
-      var redis_packet = { type: "completed" };
-      var str_redis_packet = JSON.stringify(redis_packet);
+      const results_data = JSON.parse(results[0].value);
+      const redis_packet = { type: "completed" };
+      const str_redis_packet = JSON.stringify(redis_packet);
 
       // Log that the job has been completed
       self.log("complete", "success");
@@ -385,7 +385,7 @@ hivtrace.prototype.onComplete = function() {
 };
 
 hivtrace.prototype.onJobCreated = function(torque_id) {
-  var self = this;
+  const self = this;
 
   self.push_active_job = function(id) {
     client.rPush("active_jobs", self.id);
@@ -393,9 +393,9 @@ hivtrace.prototype.onJobCreated = function(torque_id) {
 
   self.push_job_once = once(self.push_active_job);
   self.setTorqueParameters(torque_id);
-  var redis_packet = torque_id;
+  const redis_packet = torque_id;
   redis_packet.type = "job created";
-  var str_redis_packet = JSON.stringify(torque_id);
+  const str_redis_packet = JSON.stringify(torque_id);
   self.log("job created", str_redis_packet);
   client.hSet(self.id, "torque_id", str_redis_packet);
   client.publish(self.id, str_redis_packet);
@@ -405,10 +405,10 @@ hivtrace.prototype.onJobCreated = function(torque_id) {
 };
 
 hivtrace.prototype.sendAlignedFasta = function() {
-  var self = this;
+  const self = this;
 
-  var aligned_promise = readFileAsync(self.aligned_fasta);
-  var promises = [aligned_promise];
+  const aligned_promise = readFileAsync(self.aligned_fasta);
+  const promises = [aligned_promise];
 
   Promise.allSettled(promises).then(function(results) {
     if (results[0].status == "fulfilled" && results[0].value) {
@@ -423,9 +423,9 @@ hivtrace.prototype.sendAlignedFasta = function() {
 };
 
 hivtrace.prototype.sendtn93 = function() {
-  var self = this;
-  var tn93_promise = readFileAsync(self.tn93_results);
-  var promises = [tn93_promise];
+  const self = this;
+  const tn93_promise = readFileAsync(self.tn93_results);
+  const promises = [tn93_promise];
 
   Promise.allSettled(promises).then(function(results) {
     if (results[0].status == "fulfilled" && results[0].value) {
@@ -439,8 +439,8 @@ hivtrace.prototype.sendtn93 = function() {
 };
 
 // An object that manages the job submission process
-var HivTraceRunner = function(id, hivtrace_log) {
-  var self = this;
+const HivTraceRunner = function(id, hivtrace_log) {
+  const self = this;
   self.python_redis_channel = "python_" + id;
   self.hivtrace_log = hivtrace_log;
   self.last_status_update = "";
@@ -471,7 +471,7 @@ var HivTraceRunner = function(id, hivtrace_log) {
       }
 
       return subscriber.subscribe(self.python_redis_channel, function(message) {
-        var redis_packet = JSON.parse(message);
+        const redis_packet = JSON.parse(message);
         logger.info(redis_packet);
 
         if (message != self.last_status_update) {
@@ -495,7 +495,7 @@ util.inherits(HivTraceRunner, EventEmitter);
  * See issue #397.
  */
 HivTraceRunner.prototype.close = function() {
-  var self = this;
+  const self = this;
   if (self._closed) return;
   self._closed = true;
 
@@ -519,7 +519,7 @@ HivTraceRunner.prototype.close = function() {
   // Wait for that to settle so we never leak a subscriber that finished
   // connecting after close() ran, then unsubscribe + quit. The _closed flag
   // set above also makes the connect() handler self-quit if it wins the race.
-  var teardown = self.subscriber_ready
+  const teardown = self.subscriber_ready
     ? Promise.resolve(self.subscriber_ready)
     : Promise.resolve();
 
@@ -547,7 +547,7 @@ HivTraceRunner.prototype.close = function() {
 };
 
 HivTraceRunner.prototype.log_publisher = function() {
-  var self = this;
+  const self = this;
 
   // read log file (stored on self so close() can stop watching it; GH #400)
   self.tail = new Tail(self.hivtrace_log);
@@ -556,11 +556,13 @@ HivTraceRunner.prototype.log_publisher = function() {
     logger.debug(data);
 
     if (data.indexOf("INFO:") != -1) {
-      var msg = "";
+      let msg = "";
+      // declared outside the try so the catch handler can reference it
+      let info;
 
       // try parsing the message
       try {
-        var info = data.split("INFO:")[1].split("root:")[1];
+        info = data.split("INFO:")[1].split("root:")[1];
         msg = JSON.parse(info);
       } catch (e) {
         logger.warn("error" + e + " for " + info);
@@ -577,17 +579,17 @@ HivTraceRunner.prototype.log_publisher = function() {
  * sends updates to.
  */
 HivTraceRunner.prototype.status_watcher = function() {
-  var self = this;
+  const self = this;
   
   // For local jobs, no status watcher is needed
   if (self.submit_type === "local") {
     return;
   }
 
-  var job_status = new JobStatus(self.torque_id);
+  const job_status = new JobStatus(self.torque_id);
 
   self.metronome_id = job_status.watch(function(error, status) {
-    var new_status = status.status;
+    const new_status = status.status;
 
     if (new_status == "completed" || new_status == "exiting") {
       // check exit code
@@ -606,10 +608,10 @@ HivTraceRunner.prototype.status_watcher = function() {
  * Emit events that are being listened for by the calling class
  */
 HivTraceRunner.prototype.submit = function(qsub_params, cwd) {
-  var self = this;
+  const self = this;
 
-  var qsub_submit = function() {
-    var qsub = spawn("qsub", qsub_params, { cwd: cwd });
+  const qsub_submit = function() {
+    const qsub = spawn("qsub", qsub_params, { cwd: cwd });
 
     qsub.stderr.on("data", function(data) {
       // error when starting job
@@ -640,12 +642,12 @@ HivTraceRunner.prototype.submit = function(qsub_params, cwd) {
  * Emit events that are being listened for by the calling class
  */
 HivTraceRunner.prototype.submit_slurm = function(slurm_params, cwd) {
-  var self = this;
+  const self = this;
   
   logger.info("Submitting job to SLURM", slurm_params);
 
-  var sbatch_submit = function() {
-    var sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
+  const sbatch_submit = function() {
+    const sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
 
     sbatch.stderr.on("data", function(data) {
       // error when starting job
@@ -680,12 +682,12 @@ HivTraceRunner.prototype.submit_slurm = function(slurm_params, cwd) {
  * Emit events that are being listened for by the calling class
  */
 HivTraceRunner.prototype.submit_local = function(script, params, cwd) {
-  var self = this;
+  const self = this;
   
   logger.info("Submitting job locally", script, params);
 
-  var local_submit = function() {
-    var proc = spawn(script, { cwd: cwd, env: params });
+  const local_submit = function() {
+    const proc = spawn(script, { cwd: cwd, env: params });
     
     // Use process id as job identifier
     self.torque_id = "local_" + process.pid;
