@@ -43,7 +43,12 @@ function injectSubmissionSource(qsub_params, source, submit_type) {
   return ["--comment=source=" + source].concat(qsub_params);
 }
 
-const hyphyJob = function() {};
+// Base job runner. Declared as a class so subclasses can use `class X extends
+// hyphyJob` (ES inheritance) instead of util.inherits. The methods are attached
+// to the prototype below (valid on a class prototype) rather than inlined, to
+// keep this a minimal, low-risk conversion — no method bodies move. No code
+// ever does `new hyphyJob` directly; it is only ever subclassed.
+class hyphyJob {}
 
 hyphyJob.prototype.log = function(notification, complementary_info) {
   const self = this;
@@ -303,6 +308,40 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   self.push_job_once(self.id);
 };
 
+/**
+ * Shared terminal-completion finalizer. Every onComplete path (base and the
+ * gard/difFubar/hivtrace overrides) MUST route its terminal redis writes
+ * through here so the hardening lives in one place: batched hSet/publish/lRem
+ * under Promise.all().catch (a rejected redis@5 write can't silently zombie the
+ * job) plus jobRegistry.unregister (drop the finished job from the live map so
+ * a later cancelAll can't act on it). Historically each override re-implemented
+ * this and battle-tests kept finding one that had drifted (missing unregister,
+ * fire-and-forget writes); a single helper removes that whole bug class.
+ *
+ * @param {object} hashFields  fields to hSet on self.id (e.g. {results, status})
+ * @param {string} [publishPacket]  stringified packet to publish on self.id.
+ *   Omit (undefined) to skip the publish — hivtrace delivers results via the
+ *   socket directly and does not publish a completion packet.
+ */
+hyphyJob.prototype.finalizeCompletion = function(hashFields, publishPacket) {
+  const self = this;
+  const writes = [
+    client.hSet(self.id, hashFields),
+    // Remove id from active_job queue
+    client.lRem("active_jobs", 1, self.id)
+  ];
+  if (publishPacket !== undefined) {
+    writes.push(client.publish(self.id, publishPacket));
+  }
+  Promise.all(writes).catch(function(err) {
+    logger.error(
+      `[REDIS] Terminal completion write failed for job ${self.id} - job may be left as a zombie: ${err.message}`
+    );
+  });
+  // Drop the finished job from the live registry.
+  jobRegistry.unregister(self.id);
+};
+
 hyphyJob.prototype.onComplete = function() {
   const self = this;
 
@@ -326,7 +365,7 @@ hyphyJob.prototype.onComplete = function() {
         logger.info(`[DEBUG REDIS] Completion data length: ${str_redis_packet.length} bytes`);
         logger.info(`[DEBUG REDIS] Completion packet type: ${redis_packet.type}`);
         logger.info(`[DEBUG REDIS] Results data length: ${data.length} bytes`);
-        
+
         // Check if message is too large (Redis default max is 512MB but practical limit is lower)
         const MAX_REDIS_MESSAGE_SIZE = 50 * 1024 * 1024; // 50MB
         if (str_redis_packet.length > MAX_REDIS_MESSAGE_SIZE) {
@@ -334,23 +373,12 @@ hyphyJob.prototype.onComplete = function() {
           logger.warn("[DEBUG REDIS] This may cause issues with Redis pub/sub");
         }
 
-        // Store packet in redis and publish to channel
-        Promise.all([
-          client.hSet(self.id, {
-            results: str_redis_packet,
-            status: "completed"
-          }),
-          client.publish(self.id, str_redis_packet),
-          // Remove id from active_job queue
-          client.lRem("active_jobs", 1, self.id)
-        ]).catch(function(err) {
-          logger.error(
-            `[REDIS] Terminal completion write failed for job ${self.id} - job may be left as a zombie: ${err.message}`
-          );
-        });
+        // Store packet in redis + publish + dequeue + unregister (shared helper).
+        self.finalizeCompletion(
+          { results: str_redis_packet, status: "completed" },
+          str_redis_packet
+        );
         logger.info(`[DEBUG REDIS] Published completion event to Redis channel: ${self.id}`);
-
-        jobRegistry.unregister(self.id);
       } else {
         // Empty results file
         self.onError("job seems to have completed, but no results found");

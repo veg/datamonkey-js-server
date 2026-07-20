@@ -1,97 +1,97 @@
 const config = require("../../lib/config"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   logger = require("../../lib/logger.js").logger,
-  util = require("util"),
   fs = require("fs"),
-  path = require("path"),
-  jobRegistry = require("../../lib/jobregistry.js");
+  path = require("path");
 
 // Shared redis v5 client (promise-native, camelCased commands). Reused across
 // onComplete calls instead of creating (and leaking) a client per job
 // (GH #400).
 const { client } = require("../../lib/redis-client");
 
-const difFubar = function(socket, stream, params) {
-  const self = this;
-  self.socket = socket;
-  self.stream = stream;
-  self.params = params;
+class difFubar extends hyphyJob {
+  constructor(socket, stream, params) {
+    super();
+    const self = this;
+    self.socket = socket;
+    self.stream = stream;
+    self.params = params;
 
-  // object specific attributes
-  self.type = "difFubar";
-  self.qsub_script_name = "difFubar.sh";
-  self.qsub_script = __dirname + "/" + self.qsub_script_name;
+    // object specific attributes
+    self.type = "difFubar";
+    self.qsub_script_name = "difFubar.sh";
+    self.qsub_script = __dirname + "/" + self.qsub_script_name;
 
-  // parameter attributes
-  self.msaid = self.params.msa && self.params.msa[0] && self.params.msa[0]._id;
-  self.id = self.params.analysis._id;
-  self.nj = self.params.msa[0].nj;
+    // parameter attributes
+    self.msaid = self.params.msa && self.params.msa[0] && self.params.msa[0]._id;
+    self.id = self.params.analysis._id;
+    self.nj = self.params.msa[0].nj;
   
-  // Use tagged tree if available, otherwise fall back to neighbor-joining tree
-  if (self.params.analysis.tagged_nwk_tree) {
-    self.nwk_tree = self.params.analysis.tagged_nwk_tree;
-    self.treemode = "user";
-  } else {
-    self.nwk_tree = self.nj;
-    self.treemode = "nj";
-  }
-
-  // parameter-derived attributes
-  self.fn = __dirname + "/output/" + self.id;
-  self.output_dir = path.dirname(self.fn);
-  self.results_short_fn = self.fn + ".difFubar";
-  self.results_fn = self.fn + ".difFubar.json";
-  self.progress_fn = self.fn + ".difFubar.progress";
-  self.tree_fn = self.fn + ".tre";
-
-  // difFUBAR specific options
-  self.number_of_grid_points = self.params.analysis.number_of_grid_points;
-  self.concentration_of_dirichlet_prior =
-    self.params.analysis.concentration_of_dirichlet_prior;
-  self.mcmc_iterations = self.params.analysis.mcmc_iterations;
-  self.burnin_samples = self.params.analysis.burnin_samples;
-  self.pos_threshold = self.params.analysis.pos_threshold;
-
-  // Configure parameters based on execution type
-  if (config.submit_type === "local") {
-    // For local execution, pass arguments directly to the script
-    self.qsub_params = [
-      self.qsub_script,
-      self.fn,
-      self.tree_fn,
-      self.results_short_fn,
-      self.progress_fn,
-      self.pos_threshold,
-      self.mcmc_iterations,
-      self.burnin_samples,
-      self.concentration_of_dirichlet_prior,
-      config.julia_path,
-      config.julia_project
-    ];
-  } else if (config.submit_type === "slurm") {
-    // Convert walltime from PBS format to SLURM format
-    let slurmTime = "24:00:00"; // Default 24 hours
-    if (config.difFubar_walltime) {
-      const parts = config.difFubar_walltime.split(":");
-      if (parts.length === 4) {
-        // Convert D:HH:MM:SS to SLURM format
-        const days = parseInt(parts[0]);
-        const hours = parseInt(parts[1]) + (days * 24);
-        slurmTime = `${hours}:${parts[2]}:${parts[3]}`;
-      } else if (parts.length === 3) {
-        // HH:MM:SS format, already compatible with SLURM
-        slurmTime = config.difFubar_walltime;
-      }
+    // Use tagged tree if available, otherwise fall back to neighbor-joining tree
+    if (self.params.analysis.tagged_nwk_tree) {
+      self.nwk_tree = self.params.analysis.tagged_nwk_tree;
+      self.treemode = "user";
+    } else {
+      self.nwk_tree = self.nj;
+      self.treemode = "nj";
     }
 
-    self.qsub_params = [
-      `--ntasks=${config.difFubar_procs || "8"}`,
-      "--cpus-per-task=1",
-      `--time=${slurmTime}`,
-      `--partition=${config.slurm_partition || "datamonkey"}`,
-      `--nodes=${config.difFubar_nodes || "1"}`,
-      `--mem=${config.difFubar_memory || "32GB"}`,
-      "--export=ALL,slurm_mpi_type=" + 
+    // parameter-derived attributes
+    self.fn = __dirname + "/output/" + self.id;
+    self.output_dir = path.dirname(self.fn);
+    self.results_short_fn = self.fn + ".difFubar";
+    self.results_fn = self.fn + ".difFubar.json";
+    self.progress_fn = self.fn + ".difFubar.progress";
+    self.tree_fn = self.fn + ".tre";
+
+    // difFUBAR specific options
+    self.number_of_grid_points = self.params.analysis.number_of_grid_points;
+    self.concentration_of_dirichlet_prior =
+    self.params.analysis.concentration_of_dirichlet_prior;
+    self.mcmc_iterations = self.params.analysis.mcmc_iterations;
+    self.burnin_samples = self.params.analysis.burnin_samples;
+    self.pos_threshold = self.params.analysis.pos_threshold;
+
+    // Configure parameters based on execution type
+    if (config.submit_type === "local") {
+    // For local execution, pass arguments directly to the script
+      self.qsub_params = [
+        self.qsub_script,
+        self.fn,
+        self.tree_fn,
+        self.results_short_fn,
+        self.progress_fn,
+        self.pos_threshold,
+        self.mcmc_iterations,
+        self.burnin_samples,
+        self.concentration_of_dirichlet_prior,
+        config.julia_path,
+        config.julia_project
+      ];
+    } else if (config.submit_type === "slurm") {
+    // Convert walltime from PBS format to SLURM format
+      let slurmTime = "24:00:00"; // Default 24 hours
+      if (config.difFubar_walltime) {
+        const parts = config.difFubar_walltime.split(":");
+        if (parts.length === 4) {
+        // Convert D:HH:MM:SS to SLURM format
+          const days = parseInt(parts[0]);
+          const hours = parseInt(parts[1]) + (days * 24);
+          slurmTime = `${hours}:${parts[2]}:${parts[3]}`;
+        } else if (parts.length === 3) {
+        // HH:MM:SS format, already compatible with SLURM
+          slurmTime = config.difFubar_walltime;
+        }
+      }
+
+      self.qsub_params = [
+        `--ntasks=${config.difFubar_procs || "8"}`,
+        "--cpus-per-task=1",
+        `--time=${slurmTime}`,
+        `--partition=${config.slurm_partition || "datamonkey"}`,
+        `--nodes=${config.difFubar_nodes || "1"}`,
+        `--mem=${config.difFubar_memory || "32GB"}`,
+        "--export=ALL,slurm_mpi_type=" + 
       (config.slurm_mpi_type || "pmix") + 
       "," +
       "fn=" +
@@ -124,22 +124,22 @@ const difFubar = function(socket, stream, params) {
       (config.julia_path || "/usr/local/bin/julia") +
       ",julia_project=" +
       (config.julia_project || "../../.julia_env"),
-      `--output=${self.output_dir}/difFubar_${self.id}_%j.out`,
-      `--error=${self.output_dir}/difFubar_${self.id}_%j.err`,
-      self.qsub_script
-    ];
-  } else {
+        `--output=${self.output_dir}/difFubar_${self.id}_%j.out`,
+        `--error=${self.output_dir}/difFubar_${self.id}_%j.err`,
+        self.qsub_script
+      ];
+    } else {
     // For cluster execution (PBS/Torque qsub)
-    self.qsub_params = [
-      "-l walltime=" + 
+      self.qsub_params = [
+        "-l walltime=" + 
       config.difFubar_walltime + 
       ",nodes=" + config.difFubar_nodes + ":ppn=" + 
       config.difFubar_procs + 
       ",mem=" + config.difFubar_memory,
-      "-q",
-      config.qsub_queue,
-      "-v",
-      "fn=" +
+        "-q",
+        config.qsub_queue,
+        "-v",
+        "fn=" +
         self.fn +
         ",tree_fn=" +
         self.tree_fn +
@@ -169,35 +169,36 @@ const difFubar = function(socket, stream, params) {
         config.julia_path +
         ",julia_project=" +
         config.julia_project,
-      "-o",
-      self.output_dir,
-      "-e",
-      self.output_dir,
-      self.qsub_script
-    ];
-  }
-
-  // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nwk_tree, function(err) {
-    if (err) {
-      logger.error(`difFUBAR ${self.id}: Error writing tree file: ${err.message}`);
-      self.socket.emit("script error", {
-        error: "Failed to write tree file: " + err.message
-      });
-      return;
+        "-o",
+        self.output_dir,
+        "-e",
+        self.output_dir,
+        self.qsub_script
+      ];
     }
-  });
 
-  // Ensure the progress file exists
-  fs.openSync(self.progress_fn, "w");
+    // Write tree to a file
+    fs.writeFile(self.tree_fn, self.nwk_tree, function(err) {
+      if (err) {
+        logger.error(`difFUBAR ${self.id}: Error writing tree file: ${err.message}`);
+        self.socket.emit("script error", {
+          error: "Failed to write tree file: " + err.message
+        });
+        return;
+      }
+    });
+
+    // Ensure the progress file exists
+    fs.openSync(self.progress_fn, "w");
   
-  // Add debug logging for job lifecycle
-  logger.info(`[DEBUG] difFUBAR ${self.id}: Constructor completed, calling init()`);
-  logger.info(`[DEBUG] difFUBAR ${self.id}: Results file will be: ${self.results_fn}`);
-  logger.info(`[DEBUG] difFUBAR ${self.id}: Progress file: ${self.progress_fn}`);
+    // Add debug logging for job lifecycle
+    logger.info(`[DEBUG] difFUBAR ${self.id}: Constructor completed, calling init()`);
+    logger.info(`[DEBUG] difFUBAR ${self.id}: Results file will be: ${self.results_fn}`);
+    logger.info(`[DEBUG] difFUBAR ${self.id}: Progress file: ${self.progress_fn}`);
   
-  self.init();
-};
+    self.init();
+  }
+}
 
 difFubar.prototype.sendPlotFiles = function(cb) {
   const self = this;
@@ -280,29 +281,14 @@ difFubar.prototype.onComplete = function() {
           
           self.log("complete", "success (direct file transmission)");
 
-          // Reuse the shared redis client (GH #400). redis v5 hSet takes a
-          // field/value object for multiple fields (the old variadic
-          // field,value,field,value form silently drops extra pairs).
-          // Batch the terminal writes under Promise.all().catch (not
-          // fire-and-forget): a rejected redis write would otherwise leave the
-          // job never marked completed / never dequeued — a silent zombie.
-          // (Mirrors hyphyjob.js onComplete; the small-results branch below
-          // already delegates to hyphyJob.prototype.onComplete which does this.)
-          Promise.all([
-            client.hSet(self.id, { results: str_redis_packet, status: "completed" }),
-            client.publish(self.id, str_redis_packet),
-            client.lRem("active_jobs", 1, self.id)
-          ]).catch(function(werr) {
-            logger.error(
-              "[REDIS] Terminal completion write failed for difFubar job " +
-                self.id + " - job may be left as a zombie: " + werr.message
-            );
-          });
-
-          // Match the parent completion contract: drop the finished job from
-          // the live registry (the small-results path does this via the parent
-          // onComplete; this large-file path must do it explicitly).
-          jobRegistry.unregister(self.id);
+          // Terminal writes + dequeue + unregister via the shared base helper
+          // (guarded Promise.all().catch; single source of truth with
+          // hyphyjob.js onComplete). The small-results branch below reaches the
+          // same helper through hyphyJob.prototype.onComplete.
+          self.finalizeCompletion(
+            { results: str_redis_packet, status: "completed" },
+            str_redis_packet
+          );
 
           logger.info(`[DEBUG] difFUBAR ${self.id}: Sent results via direct socket + Redis completion`);
         });
@@ -322,5 +308,4 @@ difFubar.prototype.onComplete = function() {
   });
 };
 
-util.inherits(difFubar, hyphyJob);
 exports.difFubar = difFubar;
