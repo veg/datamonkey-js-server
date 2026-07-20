@@ -13,7 +13,7 @@
     "test:analyses": "mocha -R spec --exit test/absrel/absrel.js test/busted/busted.js test/contrast-fel/contrast-fel.js test/fade/fade.js test/fubar/fubar.js test/gard/gard.js test/hivtrace/hivtrace.js test/meme/meme.js test/multihit/multihit.js test/prime/prime.js test/relax/relax.js test/slac/slac.js",
     "test:slurm-unit": "mocha -R spec --exit test/jobstatus.js test/jobqueue.js test/coverage-gaps/job-lifecycle.js test/coverage-gaps/hivtrace-checkjob.js",
     "test:integration": "mocha -R spec --exit test/integration/slac-completes.js",
-    "test:mcp": "mocha -R spec --exit test/mcp/mcp.test.js test/mcp/oauth-redirect.test.js",
+    "test:mcp": "mocha -R spec --exit test/mcp/mcp.test.js test/mcp/oauth-redirect.test.js test/mcp/job-notifier.test.js test/mcp/sse-notifications.test.js",
     "test-mcp": "npm run test:mcp",
     "lint": "eslint app lib server.js",
     "format:check": "prettier --check \"app/**/*.js\" \"lib/**/*.js\" server.js",
