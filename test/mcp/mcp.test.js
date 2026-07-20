@@ -14,19 +14,22 @@ const pkg = require("../../package.json");
 // ── Mock Redis ────────────────────────────────────────────────────────
 function createMockRedis(store) {
   return {
-    hgetall: function (id, cb) {
-      cb(null, store[id] || null);
+    // redis@5 promise API: hGetAll returns {} for a missing key (never null)
+    hGetAll: function (id) {
+      return Promise.resolve(store[id] || {});
     },
-    hset: function () {
+    hSet: function () {
       // record calls for assertions
       var args = Array.prototype.slice.call(arguments);
       this._hsetCalls = this._hsetCalls || [];
       this._hsetCalls.push(args);
+      return Promise.resolve();
     },
-    lrem: function () {
+    lRem: function () {
       var args = Array.prototype.slice.call(arguments);
       this._lremCalls = this._lremCalls || [];
       this._lremCalls.push(args);
+      return Promise.resolve();
     },
     _hsetCalls: [],
     _lremCalls: []
