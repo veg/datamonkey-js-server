@@ -9,7 +9,7 @@ on:
       - "package.json"
       - ".github/workflows/mcp-tests.yml"
   pull_request:
-    branches: [master]
+    branches: [master, feature/v4-modernization]
     paths:
       - "lib/mcp/**"
       - "test/mcp/**"

@@ -391,12 +391,19 @@ hivtrace.prototype.onComplete = function() {
       self.socket.emit("completed", { results: results_data });
 
       // Terminal writes + dequeue + unregister via the shared base helper.
-      // hivtrace delivers results over the socket above, so no publish packet
-      // (omit the 2nd arg). Single source of truth with hyphyjob.js onComplete.
-      self.finalizeCompletion({
-        status: "completed",
-        results: str_redis_packet
-      });
+      // hivtrace delivers full results over the socket above; we still publish a
+      // minimal {type:"completed"} marker on the job channel so the MCP SSE
+      // subscriber (#379) receives a completion trigger — it only reads
+      // packet.type, so no payload is needed. The browser already handles a
+      // 'completed' socket event for other methods, so this is behavior-safe.
+      // Single source of truth with hyphyjob.js onComplete.
+      self.finalizeCompletion(
+        {
+          status: "completed",
+          results: str_redis_packet
+        },
+        JSON.stringify({ type: "completed" })
+      );
     } else {
       self.onError(
         "job seems to have completed, but no results found: " +
