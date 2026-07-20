@@ -422,11 +422,18 @@ hivtrace.prototype.onComplete = function() {
 hivtrace.prototype.onJobCreated = function(torque_id) {
   const self = this;
 
-  self.push_active_job = function(id) {
-    client.rPush("active_jobs", self.id);
-  };
-
-  self.push_job_once = once(self.push_active_job);
+  // Build the once()-guarded active_jobs push exactly ONCE per job instance.
+  // onJobCreated is bound to the runner's "job created" event, which the
+  // scheduler stdout 'data' handlers (and the pub/sub re-emit) can fire more
+  // than once; rebuilding the guard each call gave a fresh once() every time,
+  // leaking duplicate active_jobs entries. Same fix as hyphyjob.js onJobCreated
+  // (this override doesn't inherit the parent's guard — util.inherits).
+  if (!self.push_job_once) {
+    self.push_active_job = function() {
+      client.rPush("active_jobs", self.id);
+    };
+    self.push_job_once = once(self.push_active_job);
+  }
   self.setTorqueParameters(torque_id);
   const redis_packet = torque_id;
   redis_packet.type = "job created";
