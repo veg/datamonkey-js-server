@@ -235,11 +235,18 @@ hyphyJob.prototype.spawn = function() {
 hyphyJob.prototype.onJobCreated = function(torque_id) {
   const self = this;
 
-  self.push_active_job = function() {
-    client.rPush("active_jobs", self.id);
-  };
-
-  self.push_job_once = once(self.push_active_job);
+  // onJobCreated fires on EVERY "job created" emission, and the status watcher
+  // re-emits "job created" on every queued poll tick (job.js status_watcher).
+  // Build the once()-guarded active_jobs push exactly ONCE per job instance —
+  // rebuilding it here each call gave a fresh guard every tick, so a job queued
+  // for N ticks pushed self.id into active_jobs N times (only one removed by the
+  // terminal lRem count=1), leaking N-1 phantom entries until restart.
+  if (!self.push_job_once) {
+    self.push_active_job = function() {
+      client.rPush("active_jobs", self.id);
+    };
+    self.push_job_once = once(self.push_active_job);
+  }
   self.setTorqueParameters(torque_id);
 
   // Enhanced job info for client

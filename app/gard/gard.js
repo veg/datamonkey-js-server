@@ -6,7 +6,8 @@ const config = require("../../lib/config"),
   datatypes = require("../type").type,
   code = require("../code").code,
   path = require("path"),
-  utilities = require("../../lib/utilities");
+  utilities = require("../../lib/utilities"),
+  jobRegistry = require("../../lib/jobregistry.js");
 
 // Use the shared redis v5 client (promise-native, camelCased commands).
 const { client } = require("../../lib/redis-client");
@@ -345,14 +346,30 @@ gard.prototype.onComplete = function() {
           // Log that the job has been completed
           self.log("complete", "success");
 
-          // Store packet in redis and publish to channel
-          client.hSet(self.id, "results", str_redis_packet);
-          client.hSet(self.id, "status", "completed");
-          client.publish(self.id, str_redis_packet);
+          // Store packet in redis and publish to channel. Terminal writes are
+          // batched under Promise.all().catch (not fire-and-forget): a rejected
+          // redis@5 write would otherwise leave the job never marked completed
+          // and never dequeued — a silent zombie. Mirrors hyphyjob.js onComplete.
+          Promise.all([
+            client.hSet(self.id, {
+              results: str_redis_packet,
+              status: "completed"
+            }),
+            client.publish(self.id, str_redis_packet),
+            // Remove id from active_job queue
+            client.lRem("active_jobs", 1, self.id)
+          ]).catch(function(werr) {
+            logger.error(
+              "[REDIS] Terminal completion write failed for gard job " +
+                self.id + " - job may be left as a zombie: " + werr.message
+            );
+          });
 
-          // Remove id from active_job queue
-          client.lRem("active_jobs", 1, self.id);
-        }    
+          // Match the parent completion contract (hyphyjob.js onComplete):
+          // drop the finished job from the live registry so a later cancelAll
+          // broadcast can't act on a completed job.
+          jobRegistry.unregister(self.id);
+        }
       });
     }
   });
