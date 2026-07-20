@@ -410,12 +410,12 @@
       "type": "multihit",
       "resultsSuffix": "MULTI.json",
       "qsub_params": [
-        "--ntasks=4",
+        "--ntasks=32",
         "--cpus-per-task=1",
         "--time=72:00:00",
         "--partition=datamonkey",
         "--nodes=1",
-        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/multihit/output/check-<TS>,tree_fn=<ROOT>/app/multihit/output/check-<TS>.tre,sfn=<ROOT>/app/multihit/output/check-<TS>.status,pfn=<ROOT>/app/multihit/output/check-<TS>.multihit.progress,rfn=<ROOT>/app/multihit/output/check-<TS>.MULTI.json,treemode=0,genetic_code=Universal,rate_classes=1,triple_islands=No,branches=All,analysis_type=multihit,cwd=<ROOT>/app/multihit,msaid=check,procs=4",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/multihit/output/check-<TS>,tree_fn=<ROOT>/app/multihit/output/check-<TS>.tre,sfn=<ROOT>/app/multihit/output/check-<TS>.status,pfn=<ROOT>/app/multihit/output/check-<TS>.multihit.progress,rfn=<ROOT>/app/multihit/output/check-<TS>.MULTI.json,treemode=0,genetic_code=Universal,rate_classes=1,triple_islands=No,branches=All,analysis_type=multihit,cwd=<ROOT>/app/multihit,msaid=check,procs=32",
         "--output=<ROOT>/app/multihit/output/multihit_check-<TS>_%j.out",
         "--error=<ROOT>/app/multihit/output/multihit_check-<TS>_%j.err",
         "<ROOT>/app/multihit/multihit.sh"
@@ -439,7 +439,7 @@
         "analysis_type=multihit",
         "cwd=<ROOT>/app/multihit",
         "msaid=check",
-        "procs=4"
+        "procs=32"
       ]
     }
   },
@@ -448,12 +448,12 @@
       "type": "nrm",
       "resultsSuffix": "NRM.json",
       "qsub_params": [
-        "--ntasks=4",
+        "--ntasks=32",
         "--cpus-per-task=1",
         "--time=72:00:00",
         "--partition=datamonkey",
         "--nodes=1",
-        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/nrm/output/check-<TS>,tree_fn=<ROOT>/app/nrm/output/check-<TS>.tre,sfn=<ROOT>/app/nrm/output/check-<TS>.status,pfn=<ROOT>/app/nrm/output/check-<TS>.nrm.progress,rfn=<ROOT>/app/nrm/output/check-<TS>.NRM.json,treemode=0,genetic_code=Universal,branches=All,analysis_type=nrm,cwd=<ROOT>/app/nrm,msaid=check,procs=4",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/nrm/output/check-<TS>,tree_fn=<ROOT>/app/nrm/output/check-<TS>.tre,sfn=<ROOT>/app/nrm/output/check-<TS>.status,pfn=<ROOT>/app/nrm/output/check-<TS>.nrm.progress,rfn=<ROOT>/app/nrm/output/check-<TS>.NRM.json,treemode=0,genetic_code=Universal,branches=All,analysis_type=nrm,cwd=<ROOT>/app/nrm,msaid=check,procs=32",
         "--output=<ROOT>/app/nrm/output/nrm_check-<TS>_%j.out",
         "--error=<ROOT>/app/nrm/output/nrm_check-<TS>_%j.err",
         "<ROOT>/app/nrm/nrm.sh"
@@ -475,7 +475,7 @@
         "analysis_type=nrm",
         "cwd=<ROOT>/app/nrm",
         "msaid=check",
-        "procs=4"
+        "procs=32"
       ]
     }
   },
@@ -489,7 +489,7 @@
         "--time=72:00:00",
         "--partition=datamonkey",
         "--nodes=1",
-        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/bstill/output/check-<TS>,tree_fn=<ROOT>/app/bstill/output/check-<TS>.tre,sfn=<ROOT>/app/bstill/output/check-<TS>.status,pfn=<ROOT>/app/bstill/output/check-<TS>.bstill.progress,rfn=<ROOT>/app/bstill/output/check-<TS>.bstill,treemode=0,genetic_code=Universal,analysis_type=bstill,cwd=<ROOT>/app/bstill,msaid=check,number_of_grid_points=20,concentration_of_dirichlet_prior=0.5,method=Variational-Bayes,ebf=10,radius_threshold=0.5,procs=48",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/bstill/output/check-<TS>,tree_fn=<ROOT>/app/bstill/output/check-<TS>.tre,sfn=<ROOT>/app/bstill/output/check-<TS>.status,pfn=<ROOT>/app/bstill/output/check-<TS>.bstill.progress,rfn=<ROOT>/app/bstill/output/check-<TS>.bstill,treemode=0,genetic_code=Universal,analysis_type=bstill,cwd=<ROOT>/app/bstill,msaid=check,number_of_grid_points=20,concentration_of_dirichlet_prior=0.5,method=Variational-Bayes,ebf=10,radius_threshold=0.5,procs=32",
         "--output=<ROOT>/app/bstill/output/bstill_check-<TS>_%j.out",
         "--error=<ROOT>/app/bstill/output/bstill_check-<TS>_%j.err",
         "<ROOT>/app/bstill/bstill.sh"
@@ -515,7 +515,7 @@
         "method=Variational-Bayes",
         "ebf=10",
         "radius_threshold=0.5",
-        "procs=48"
+        "procs=32"
       ]
     }
   },
@@ -565,12 +565,12 @@
       "resultsSuffix": "GARD.json",
       "field": "qsub_params",
       "qsub_params": [
-        "--ntasks=48",
+        "--ntasks=32",
         "--cpus-per-task=1",
         "--time=72:00:00",
         "--partition=datamonkey",
         "--nodes=1",
-        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/gard/output/check-<TS>,tree_fn=<ROOT>/app/gard/output/check-<TS>.tre,sfn=<ROOT>/app/gard/output/check-<TS>.status,pfn=<ROOT>/app/gard/output/check-<TS>.GARD.progress,rfn=<ROOT>/app/gard/output/check-<TS>.GARD.json,treemode=0,genetic_code=Universal,rate_var=None,rate_classes=2,datatype=codon,run_mode=Normal,max_breakpoints=10000,model=JTT,analysis_type=gard,cwd=<ROOT>/app/gard,msaid=check,procs=48",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/gard/output/check-<TS>,tree_fn=<ROOT>/app/gard/output/check-<TS>.tre,sfn=<ROOT>/app/gard/output/check-<TS>.status,pfn=<ROOT>/app/gard/output/check-<TS>.GARD.progress,rfn=<ROOT>/app/gard/output/check-<TS>.GARD.json,treemode=0,genetic_code=Universal,rate_var=None,rate_classes=2,datatype=codon,run_mode=Normal,max_breakpoints=10000,model=JTT,analysis_type=gard,cwd=<ROOT>/app/gard,msaid=check,procs=32",
         "--output=<ROOT>/app/gard/output/gard_check-<TS>_%j.out",
         "--error=<ROOT>/app/gard/output/gard_check-<TS>_%j.err",
         "<ROOT>/app/gard/gard.sh"
@@ -598,7 +598,7 @@
         "analysis_type=gard",
         "cwd=<ROOT>/app/gard",
         "msaid=check",
-        "procs=48"
+        "procs=32"
       ]
     }
   },
