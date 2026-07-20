@@ -1,8 +1,14 @@
 /**
- * Load-smoke test: statically verify every app/lib source module's require()
- * targets resolve. Catches the class of bug where a dependency is removed from
- * package.json but a module still requires it (which passes the unit suite only
- * because the dev node_modules still has the stale package). See #410.
+ * Load-smoke test: statically verify every app/lib/test source module's
+ * require() targets resolve. Catches the class of bug where a dependency is
+ * removed from package.json but a module still requires it (which passes the
+ * unit suite only because the dev node_modules still has the stale package).
+ * See #410.
+ *
+ * test/ is scanned too: a stale require in a test file (e.g. a leftover
+ * `require("underscore")`) throws "Cannot find module" as an "Exception during
+ * run" that aborts the ENTIRE mocha invocation, so it must be caught here as a
+ * static check rather than at run time.
  *
  * This is a STATIC check (parses require strings, resolves package names) — it
  * does NOT execute the modules (which would open redis/SLURM connections).
@@ -31,10 +37,15 @@ var BUILTINS = new Set([
 ]);
 
 describe("load-smoke: all source require() targets resolve", function () {
-  var files = jsFiles(path.join(ROOT, "app")).concat(jsFiles(path.join(ROOT, "lib")));
+  var files = jsFiles(path.join(ROOT, "app"))
+    .concat(jsFiles(path.join(ROOT, "lib")))
+    .concat(jsFiles(path.join(ROOT, "test")))
+    // Skip this file itself: its comments/examples contain literal
+    // require("...") strings that the scanner would otherwise flag.
+    .filter(function (f) { return f !== __filename; });
   files.push(path.join(ROOT, "server.js"));
 
-  it("every external package required by app/lib/server.js is installed", function () {
+  it("every external package required by app/lib/test/server.js is installed", function () {
     var missing = [];
     files.forEach(function (file) {
       var src = fs.readFileSync(file, "utf8");
