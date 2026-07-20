@@ -36,8 +36,11 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Create config.json
-        run: |
-          echo '{"port":7015,"redis_host":"localhost","redis_port":6379,"loglevel":"info","submit_type":"local","mcp_port":7016}' > config.json
+        # Use the committed deterministic CI fixture. It carries the exact
+        # per-analysis procs / walltime / scheduler keys the golden snapshots
+        # were captured with, so the golden tests are reproducible in CI (the
+        # old inline 6-key stub omitted them → procs=undefined golden drift).
+        run: cp test/fixtures/config.ci.json config.json
 
       - name: Install dependencies
         run: npm install

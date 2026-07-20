@@ -67,11 +67,11 @@ describe("MCP manifest (.well-known/mcp.json)", function () {
 // =====================================================================
 describe("MCP spawn-helpers", function () {
 
-  it("analysisMap contains all 18 analysis types", function () {
+  it("analysisMap contains all 17 analysis types", function () {
     var keys = Object.keys(spawnHelpers.analysisMap);
-    expect(keys).to.have.lengthOf(18);
+    expect(keys).to.have.lengthOf(17);
     var expected = [
-      "absrel", "bgm", "busted", "difFubar", "fel", "cfel", "flea",
+      "absrel", "bgm", "busted", "difFubar", "fel", "cfel",
       "fubar", "bstill", "fade", "gard", "hivtrace", "meme", "multihit",
       "nrm", "prime", "relax", "slac"
     ];
@@ -80,9 +80,9 @@ describe("MCP spawn-helpers", function () {
     });
   });
 
-  it("analysisInfo has metadata for all 18 types", function () {
+  it("analysisInfo has metadata for all 17 types", function () {
     var keys = Object.keys(spawnHelpers.analysisInfo);
-    expect(keys).to.have.lengthOf(18);
+    expect(keys).to.have.lengthOf(17);
   });
 
   it("each analysisInfo entry has name, description, and params", function () {
@@ -183,10 +183,10 @@ describe("MCP tools – list_analyses", function () {
     registerTools(mcpServer, mockRedis);
   });
 
-  it("returns an array with 18 entries", async function () {
+  it("returns an array with 17 entries", async function () {
     var result = await callTool(mcpServer, "list_analyses");
     var parsed = JSON.parse(result.content[0].text);
-    expect(parsed).to.be.an("array").with.lengthOf(18);
+    expect(parsed).to.be.an("array").with.lengthOf(17);
   });
 
   it("each entry has type, name, and description fields", async function () {
@@ -537,11 +537,11 @@ describe("MCP resources", function () {
     expect(text).to.include("HIV-TRACE");
   });
 
-  it("requirements resource returns JSON with 18 methods", async function () {
+  it("requirements resource returns JSON with 17 methods", async function () {
     var resource = mcpServer._registeredResources["datamonkey://methods/requirements"];
     var result = await resource.readCallback(new URL("datamonkey://methods/requirements"), {});
     var parsed = JSON.parse(result.contents[0].text);
-    expect(Object.keys(parsed)).to.have.lengthOf(18);
+    expect(Object.keys(parsed)).to.have.lengthOf(17);
     expect(parsed.relax.requires_branch_labels).to.be.true;
     expect(parsed.hivtrace.requires_codon_alignment).to.be.false;
   });

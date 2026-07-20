@@ -45,8 +45,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Create config.json
-        run: |
-          echo '{"port":7015,"redis_host":"localhost","redis_port":6379,"loglevel":"info","submit_type":"local","mcp_port":7016}' > config.json
+        # Shared deterministic CI fixture (single source of truth with ci.yml).
+        run: cp test/fixtures/config.ci.json config.json
 
       - name: Install dependencies
         run: npm install

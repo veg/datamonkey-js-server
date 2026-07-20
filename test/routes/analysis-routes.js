@@ -14,16 +14,16 @@ function collectRoutes() {
   var registered = {};
   var fakeR = { route: function (name, handlers) { registered[name] = handlers; } };
   var fakeSocket = { emit: function () {}, on: function () {} };
-  routes.registerAnalysisRoutes(fakeR, fakeSocket, { hivtrace: {}, flea: {} });
+  routes.registerAnalysisRoutes(fakeR, fakeSocket, { hivtrace: {} });
   return registered;
 }
 
 describe("routes: analysis route registry", function () {
-  it("registers all 18 analysis routes", function () {
+  it("registers all 17 analysis routes", function () {
     var r = collectRoutes();
     Object.keys(r).sort().should.eql([
       "absrel", "bgm", "bstill", "busted", "cfel", "difFubar", "fade", "fel",
-      "flea", "fubar", "gard", "hivtrace", "meme", "multihit", "nrm", "prime",
+      "fubar", "gard", "hivtrace", "meme", "multihit", "nrm", "prime",
       "relax", "slac"
     ]);
   });
@@ -34,10 +34,9 @@ describe("routes: analysis route registry", function () {
     Object.keys(r.bgm).sort().should.eql(["cancel", "check", "resubscribe", "spawn"]);
   });
 
-  it("gives hivtrace/flea only spawn/resubscribe (no check/cancel)", function () {
+  it("gives hivtrace only spawn/resubscribe (no check/cancel)", function () {
     var r = collectRoutes();
     Object.keys(r.hivtrace).sort().should.eql(["resubscribe", "spawn"]);
-    Object.keys(r.flea).sort().should.eql(["resubscribe", "spawn"]);
   });
 
   it("merges params.tree into a COPY of params.job for standard analyses (fel)", function () {
@@ -74,7 +73,7 @@ describe("routes: analysis route registry", function () {
     var emitted = null;
     var fakeR = { route: function (n, h) { registered[n] = h; } };
     var fakeSocket = { emit: function (ev, d) { emitted = { ev: ev, d: d }; }, on: function () {} };
-    routes.registerAnalysisRoutes(fakeR, fakeSocket, { hivtrace: {}, flea: {} });
+    routes.registerAnalysisRoutes(fakeR, fakeSocket, { hivtrace: {} });
     registered.fel.spawn("STREAM", {}); // no .job
     constructed.should.be.false();
     emitted.ev.should.equal("script error");
