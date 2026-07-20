@@ -47,6 +47,7 @@ var should = require("should"),
   os = require("os"),
   path = require("path"),
   EventEmitter = require("events").EventEmitter,
+  utilities = require(__dirname + "/../../lib/utilities"),
   config = require(__dirname + "/../../lib/config");
 
 var cfelMod = require(__dirname + "/../../app/contrast-fel/cfel.js");
@@ -218,6 +219,12 @@ describe("validation: derived parameters + results delivery", function () {
       // Pin submit_type=slurm so the assertion holds regardless of the ambient
       // config.submit_type (the CI fixture runs submit_type=local, which would
       // otherwise route difFubar through the positional local path — #403 QC).
+      // difFubar's constructor writes a progress file into app/difFubar/output/
+      // (fs.openSync at difFubar.js:191), so that dir must exist — it's gitignored
+      // and absent on a fresh CI checkout. (Same guard qsub-params.js uses.)
+      utilities.ensureDirectoryExists(
+        path.join(__dirname, "/../../app/difFubar/output")
+      );
       origSubmitType = config.submit_type;
       config.submit_type = "slurm";
       origSubmit = jobMod.jobRunner.prototype.submit;
