@@ -439,278 +439,279 @@ hivtrace.prototype.sendtn93 = function() {
 };
 
 // An object that manages the job submission process
-var HivTraceRunner = function(id, hivtrace_log) {
-  var self = this;
-  self.python_redis_channel = "python_" + id;
-  self.hivtrace_log = hivtrace_log;
-  self.last_status_update = "";
-  self.submit_type = config.submit_type || "qsub";
-  self.subscriber = null;
+class HivTraceRunner extends EventEmitter {
+  constructor(id, hivtrace_log) {
+    super();
+    var self = this;
+    self.python_redis_channel = "python_" + id;
+    self.hivtrace_log = hivtrace_log;
+    self.last_status_update = "";
+    self.submit_type = config.submit_type || "qsub";
+    self.subscriber = null;
 
-  // redis v5 pub/sub requires a dedicated (duplicated) connection, and both
-  // connect() and subscribe() are async. We kick off the connection here and
-  // wire the message listener once connected. The listener is passed directly
-  // to subscribe() (there is no more .on("message", ...)). We stash the promise
-  // so close() can await teardown after connect, avoiding a leaked subscriber
-  // if the job ends before the socket is up (see #397/#400).
-  self.subscriber_ready = createSubscriber()
-    .then(function(subscriber) {
-      self.subscriber = subscriber;
+    // redis v5 pub/sub requires a dedicated (duplicated) connection, and both
+    // connect() and subscribe() are async. We kick off the connection here and
+    // wire the message listener once connected. The listener is passed directly
+    // to subscribe() (there is no more .on("message", ...)). We stash the promise
+    // so close() can await teardown after connect, avoiding a leaked subscriber
+    // if the job ends before the socket is up (see #397/#400).
+    self.subscriber_ready = createSubscriber()
+      .then(function(subscriber) {
+        self.subscriber = subscriber;
 
-      // If close() ran before the subscriber finished connecting, tear it down
-      // immediately instead of leaking it.
-      if (self._closed) {
-        try {
-          subscriber.quit();
-        } catch (e) {
+        // If close() ran before the subscriber finished connecting, tear it down
+        // immediately instead of leaking it.
+        if (self._closed) {
           try {
-            subscriber.destroy();
-          } catch (e2) {}
+            subscriber.quit();
+          } catch (e) {
+            try {
+              subscriber.destroy();
+            } catch (e2) {}
+          }
+          return;
         }
-        return;
-      }
 
-      return subscriber.subscribe(self.python_redis_channel, function(message) {
-        var redis_packet = JSON.parse(message);
-        logger.info(redis_packet);
+        return subscriber.subscribe(self.python_redis_channel, function(message) {
+          var redis_packet = JSON.parse(message);
+          logger.info(redis_packet);
 
-        if (message != self.last_status_update) {
-          self.emit(redis_packet.type, redis_packet);
-          self.last_status_update = message;
-        }
-      });
-    })
-    .catch(function(err) {
-      logger.error(
-        "Error setting up HivTrace Redis subscriber: " + err.message
-      );
-    });
-};
-
-util.inherits(HivTraceRunner, EventEmitter);
-
-/**
- * Tears down the dedicated python_<id> Redis subscriber and the status-watcher
- * timer. Idempotent — safe to call from terminal events and socket disconnect.
- * See issue #397.
- */
-HivTraceRunner.prototype.close = function() {
-  var self = this;
-  if (self._closed) return;
-  self._closed = true;
-
-  if (self.metronome_id) clearInterval(self.metronome_id);
-
-  // Stop watching the hivtrace log file (node-tail exposes unwatch()). See #400.
-  if (self.tail) {
-    try {
-      self.tail.unwatch();
-    } catch (e) {
-      logger.warn("error unwatching hivtrace log tail: " + e);
-    }
-    self.tail = null;
-  }
-
-  logger.info(
-    "[REDIS] Closing subscriber for channel " + self.python_redis_channel
-  );
-
-  // The subscriber connects asynchronously (redis v5 duplicate + connect).
-  // Wait for that to settle so we never leak a subscriber that finished
-  // connecting after close() ran, then unsubscribe + quit. The _closed flag
-  // set above also makes the connect() handler self-quit if it wins the race.
-  var teardown = self.subscriber_ready
-    ? Promise.resolve(self.subscriber_ready)
-    : Promise.resolve();
-
-  teardown.then(function() {
-    if (!self.subscriber) return;
-    // In redis v5 the listener was passed to subscribe(); unsubscribe drops it.
-    return self.subscriber
-      .unsubscribe(self.python_redis_channel)
-      .then(function() {
-        return self.subscriber.quit();
+          if (message != self.last_status_update) {
+            self.emit(redis_packet.type, redis_packet);
+            self.last_status_update = message;
+          }
+        });
       })
       .catch(function(err) {
         logger.error(
-          "Error closing HivTrace Redis subscriber: " + err.message
+          "Error setting up HivTrace Redis subscriber: " + err.message
         );
-        try {
-          self.subscriber.destroy();
-        } catch (e) {
-          logger.error(
-            "Error force-ending HivTrace Redis subscriber: " + e.message
-          );
-        }
       });
-  });
-};
-
-HivTraceRunner.prototype.log_publisher = function() {
-  var self = this;
-
-  // read log file (stored on self so close() can stop watching it; GH #400)
-  self.tail = new Tail(self.hivtrace_log);
-
-  self.tail.on("line", function(data) {
-    logger.debug(data);
-
-    if (data.indexOf("INFO:") != -1) {
-      var msg = "";
-
-      // try parsing the message
-      try {
-        var info = data.split("INFO:")[1].split("root:")[1];
-        msg = JSON.parse(info);
-      } catch (e) {
-        logger.warn("error" + e + " for " + info);
-      }
-
-      // publish to redis
-      client.publish(self.python_redis_channel, JSON.stringify(msg));
-    }
-  });
-};
-
-/**
- * Once the job has been scheduled, we need to watch the files that it
- * sends updates to.
- */
-HivTraceRunner.prototype.status_watcher = function() {
-  var self = this;
-  
-  // For local jobs, no status watcher is needed
-  if (self.submit_type === "local") {
-    return;
   }
 
-  var job_status = new JobStatus(self.torque_id);
+  /**
+   * Tears down the dedicated python_<id> Redis subscriber and the status-watcher
+   * timer. Idempotent — safe to call from terminal events and socket disconnect.
+   * See issue #397.
+   */
+  close() {
+    var self = this;
+    if (self._closed) return;
+    self._closed = true;
 
-  self.metronome_id = job_status.watch(function(error, status) {
-    var new_status = status.status;
+    if (self.metronome_id) clearInterval(self.metronome_id);
 
-    if (new_status == "completed" || new_status == "exiting") {
-      // check exit code
-      clearInterval(self.metronome_id);
-      self.emit("completed", "");
+    // Stop watching the hivtrace log file (node-tail exposes unwatch()). See #400.
+    if (self.tail) {
+      try {
+        self.tail.unwatch();
+      } catch (e) {
+        logger.warn("error unwatching hivtrace log tail: " + e);
+      }
+      self.tail = null;
     }
-  });
+
+    logger.info(
+      "[REDIS] Closing subscriber for channel " + self.python_redis_channel
+    );
+
+    // The subscriber connects asynchronously (redis v5 duplicate + connect).
+    // Wait for that to settle so we never leak a subscriber that finished
+    // connecting after close() ran, then unsubscribe + quit. The _closed flag
+    // set above also makes the connect() handler self-quit if it wins the race.
+    var teardown = self.subscriber_ready
+      ? Promise.resolve(self.subscriber_ready)
+      : Promise.resolve();
+
+    teardown.then(function() {
+      if (!self.subscriber) return;
+      // In redis v5 the listener was passed to subscribe(); unsubscribe drops it.
+      return self.subscriber
+        .unsubscribe(self.python_redis_channel)
+        .then(function() {
+          return self.subscriber.quit();
+        })
+        .catch(function(err) {
+          logger.error(
+            "Error closing HivTrace Redis subscriber: " + err.message
+          );
+          try {
+            self.subscriber.destroy();
+          } catch (e) {
+            logger.error(
+              "Error force-ending HivTrace Redis subscriber: " + e.message
+            );
+          }
+        });
+    });
+  }
+
+  log_publisher() {
+    var self = this;
+
+    // read log file (stored on self so close() can stop watching it; GH #400)
+    self.tail = new Tail(self.hivtrace_log);
+
+    self.tail.on("line", function(data) {
+      logger.debug(data);
+
+      if (data.indexOf("INFO:") != -1) {
+        var msg = "";
+
+        // try parsing the message
+        try {
+          var info = data.split("INFO:")[1].split("root:")[1];
+          msg = JSON.parse(info);
+        } catch (e) {
+          logger.warn("error" + e + " for " + info);
+        }
+
+        // publish to redis
+        client.publish(self.python_redis_channel, JSON.stringify(msg));
+      }
+    });
+  }
+
+  /**
+   * Once the job has been scheduled, we need to watch the files that it
+   * sends updates to.
+   */
+  status_watcher() {
+    var self = this;
+  
+    // For local jobs, no status watcher is needed
+    if (self.submit_type === "local") {
+      return;
+    }
+
+    var job_status = new JobStatus(self.torque_id);
+
+    self.metronome_id = job_status.watch(function(error, status) {
+      var new_status = status.status;
+
+      if (new_status == "completed" || new_status == "exiting") {
+      // check exit code
+        clearInterval(self.metronome_id);
+        self.emit("completed", "");
+      }
+    });
 
   // The python_<id> subscriber message listener is wired at subscribe() time
   // in the constructor (redis v5 passes the listener to subscribe()); there is
   // no more .on("message", ...) here.
-};
+  }
 
-/**
- * Submits a job to TORQUE using qsub command
- * Emit events that are being listened for by the calling class
- */
-HivTraceRunner.prototype.submit = function(qsub_params, cwd) {
-  var self = this;
+  /**
+   * Submits a job to TORQUE using qsub command
+   * Emit events that are being listened for by the calling class
+   */
+  submit(qsub_params, cwd) {
+    var self = this;
 
-  var qsub_submit = function() {
-    var qsub = spawn("qsub", qsub_params, { cwd: cwd });
+    var qsub_submit = function() {
+      var qsub = spawn("qsub", qsub_params, { cwd: cwd });
 
-    qsub.stderr.on("data", function(data) {
+      qsub.stderr.on("data", function(data) {
       // error when starting job
-      self.emit("script error", { error: "" + data });
-    });
+        self.emit("script error", { error: "" + data });
+      });
 
-    qsub.stdout.on("data", function(data) {
-      self.torque_id = String(data).replace(/\n$/, "");
-      self.emit("job created", { torque_id: self.torque_id });
-      logger.info(self.torque_id);
-    });
+      qsub.stdout.on("data", function(data) {
+        self.torque_id = String(data).replace(/\n$/, "");
+        self.emit("job created", { torque_id: self.torque_id });
+        logger.info(self.torque_id);
+      });
 
-    qsub.on("close", function(code) {
-      self.status_watcher();
-    });
-  };
+      qsub.on("close", function(code) {
+        self.status_watcher();
+      });
+    };
 
-  // Ensure log directory exists
-  utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
+    // Ensure log directory exists
+    utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
   
-  fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
-  qsub_submit();
-  self.log_publisher();
-};
+    fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
+    qsub_submit();
+    self.log_publisher();
+  }
 
-/**
- * Submits a job to SLURM using sbatch command
- * Emit events that are being listened for by the calling class
- */
-HivTraceRunner.prototype.submit_slurm = function(slurm_params, cwd) {
-  var self = this;
+  /**
+   * Submits a job to SLURM using sbatch command
+   * Emit events that are being listened for by the calling class
+   */
+  submit_slurm(slurm_params, cwd) {
+    var self = this;
   
-  logger.info("Submitting job to SLURM", slurm_params);
+    logger.info("Submitting job to SLURM", slurm_params);
 
-  var sbatch_submit = function() {
-    var sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
+    var sbatch_submit = function() {
+      var sbatch = spawn("sbatch", slurm_params, { cwd: cwd });
 
-    sbatch.stderr.on("data", function(data) {
+      sbatch.stderr.on("data", function(data) {
       // error when starting job
-      logger.error("SLURM stderr: " + data.toString("utf8"));
-      self.emit("script error", { error: "" + data });
-    });
+        logger.error("SLURM stderr: " + data.toString("utf8"));
+        self.emit("script error", { error: "" + data });
+      });
 
-    sbatch.stdout.on("data", function(data) {
-      logger.info("SLURM stdout: " + data.toString("utf8"));
-      // Extract job ID from SLURM output (format: "Submitted batch job 123456")
-      self.torque_id = String(data).replace(/\n$/, "").split(" ").pop();
-      self.emit("job created", { torque_id: self.torque_id });
-      logger.info("SLURM job ID: " + self.torque_id);
-    });
+      sbatch.stdout.on("data", function(data) {
+        logger.info("SLURM stdout: " + data.toString("utf8"));
+        // Extract job ID from SLURM output (format: "Submitted batch job 123456")
+        self.torque_id = String(data).replace(/\n$/, "").split(" ").pop();
+        self.emit("job created", { torque_id: self.torque_id });
+        logger.info("SLURM job ID: " + self.torque_id);
+      });
 
-    sbatch.on("close", function(code) {
-      logger.info("SLURM sbatch process closed with code: " + code);
-      self.status_watcher();
-    });
-  };
+      sbatch.on("close", function(code) {
+        logger.info("SLURM sbatch process closed with code: " + code);
+        self.status_watcher();
+      });
+    };
 
-  // Ensure log directory exists
-  utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
+    // Ensure log directory exists
+    utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
   
-  fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
-  sbatch_submit();
-  self.log_publisher();
-};
+    fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
+    sbatch_submit();
+    self.log_publisher();
+  }
 
-/**
- * Submits a job locally without using a job scheduler
- * Emit events that are being listened for by the calling class
- */
-HivTraceRunner.prototype.submit_local = function(script, params, cwd) {
-  var self = this;
+  /**
+   * Submits a job locally without using a job scheduler
+   * Emit events that are being listened for by the calling class
+   */
+  submit_local(script, params, cwd) {
+    var self = this;
   
-  logger.info("Submitting job locally", script, params);
+    logger.info("Submitting job locally", script, params);
 
-  var local_submit = function() {
-    var proc = spawn(script, { cwd: cwd, env: params });
+    var local_submit = function() {
+      var proc = spawn(script, { cwd: cwd, env: params });
     
-    // Use process id as job identifier
-    self.torque_id = "local_" + process.pid;
-    self.emit("job created", { torque_id: self.torque_id });
+      // Use process id as job identifier
+      self.torque_id = "local_" + process.pid;
+      self.emit("job created", { torque_id: self.torque_id });
 
-    proc.stderr.on("data", function(data) {
-      logger.info("Local job stderr: " + data.toString("utf8"));
-    });
+      proc.stderr.on("data", function(data) {
+        logger.info("Local job stderr: " + data.toString("utf8"));
+      });
 
-    proc.stdout.on("data", function(data) {
-      logger.info("Local job stdout: " + data.toString("utf8"));
-    });
+      proc.stdout.on("data", function(data) {
+        logger.info("Local job stdout: " + data.toString("utf8"));
+      });
 
-    proc.on("close", function(code) {
-      logger.info("Local job completed with code: " + code);
-      self.emit("completed", "");
-    });
-  };
+      proc.on("close", function(code) {
+        logger.info("Local job completed with code: " + code);
+        self.emit("completed", "");
+      });
+    };
 
-  // Ensure log directory exists
-  utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
+    // Ensure log directory exists
+    utilities.ensureDirectoryExists(path.dirname(self.hivtrace_log));
   
-  fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
-  local_submit();
-  self.log_publisher();
-};
+    fs.closeSync(fs.openSync(self.hivtrace_log, "w"));
+    local_submit();
+    self.log_publisher();
+  }
+}
 
 exports.hivtrace = hivtrace;
