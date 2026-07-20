@@ -558,5 +558,118 @@
         "procs=32"
       ]
     }
+  },
+  "gard": {
+    "slurm": {
+      "type": "gard",
+      "resultsSuffix": "GARD.json",
+      "field": "qsub_params",
+      "qsub_params": [
+        "--ntasks=48",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/gard/output/check-<TS>,tree_fn=<ROOT>/app/gard/output/check-<TS>.tre,sfn=<ROOT>/app/gard/output/check-<TS>.status,pfn=<ROOT>/app/gard/output/check-<TS>.GARD.progress,rfn=<ROOT>/app/gard/output/check-<TS>.GARD.json,treemode=0,genetic_code=Universal,rate_var=None,rate_classes=2,datatype=codon,run_mode=Normal,max_breakpoints=10000,model=JTT,analysis_type=gard,cwd=<ROOT>/app/gard,msaid=check,procs=48",
+        "--output=<ROOT>/app/gard/output/gard_check-<TS>_%j.out",
+        "--error=<ROOT>/app/gard/output/gard_check-<TS>_%j.err",
+        "<ROOT>/app/gard/gard.sh"
+      ]
+    },
+    "local": {
+      "type": "gard",
+      "resultsSuffix": "GARD.json",
+      "field": "qsub_params",
+      "qsub_params": [
+        "<ROOT>/app/gard/gard.sh",
+        "fn=<ROOT>/app/gard/output/check-<TS>",
+        "tree_fn=<ROOT>/app/gard/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/gard/output/check-<TS>.status",
+        "pfn=<ROOT>/app/gard/output/check-<TS>.GARD.progress",
+        "rfn=<ROOT>/app/gard/output/check-<TS>.GARD.json",
+        "treemode=0",
+        "genetic_code=Universal",
+        "rate_var=None",
+        "rate_classes=2",
+        "datatype=codon",
+        "run_mode=Normal",
+        "max_breakpoints=10000",
+        "model=JTT",
+        "analysis_type=gard",
+        "cwd=<ROOT>/app/gard",
+        "msaid=check",
+        "procs=48"
+      ]
+    }
+  },
+  "difFubar": {
+    "slurm": {
+      "type": "difFubar",
+      "resultsSuffix": "GOLDEN-ID.difFubar.json",
+      "field": "qsub_params",
+      "qsub_params": [
+        "--ntasks=8",
+        "--cpus-per-task=1",
+        "--time=24:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--mem=32GB",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/difFubar/output/GOLDEN-ID,tree_fn=<ROOT>/app/difFubar/output/GOLDEN-ID.tre,pfn=<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar.progress,rfn=<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar,treemode=nj,analysis_type=difFubar,cwd=<ROOT>/app/difFubar,msaid=MSA-ID,number_of_grid_points=20,concentration_of_dirichlet_prior=0.5,mcmc_iterations=2500,burnin_samples=500,pos_threshold=0.95,julia_path=<HOME>/.juliaup/bin/julia,julia_project=<HOME>/programming/datamonkey-js-server/.julia_env/",
+        "--output=<ROOT>/app/difFubar/output/difFubar_GOLDEN-ID_%j.out",
+        "--error=<ROOT>/app/difFubar/output/difFubar_GOLDEN-ID_%j.err",
+        "<ROOT>/app/difFubar/difFubar.sh"
+      ]
+    },
+    "local": {
+      "type": "difFubar",
+      "resultsSuffix": "GOLDEN-ID.difFubar.json",
+      "field": "qsub_params",
+      "qsub_params": [
+        "<ROOT>/app/difFubar/difFubar.sh",
+        "<ROOT>/app/difFubar/output/GOLDEN-ID",
+        "<ROOT>/app/difFubar/output/GOLDEN-ID.tre",
+        "<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar",
+        "<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar.progress",
+        "0.95",
+        "2500",
+        "500",
+        "0.5",
+        "<HOME>/.juliaup/bin/julia",
+        "<HOME>/programming/datamonkey-js-server/.julia_env/"
+      ]
+    }
+  },
+  "hivtrace": {
+    "slurm": {
+      "type": "hivtrace",
+      "resultsSuffix": null,
+      "field": "slurm_params",
+      "qsub_params": [
+        "--ntasks=1",
+        "--cpus-per-task=16",
+        "--time=3:00:00:00",
+        "--output=<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID_%j.out",
+        "--error=<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID_%j.err",
+        "--export=fn=<ROOT>/app/hivtrace/output/GOLDEN-ID,python=<ROOT>/.python/env/bin/python,hivtrace=<ROOT>/.python/env/bin/hivtrace,dt=0.015,ambiguity_handling=Resolve,fraction=0.05,reference=HXB2_prrt,mo=500,filter=no,comparelanl=no,reference_strip=no,strip_drams=false,prealigned=no,output=<ROOT>/app/hivtrace/output/GOLDEN-ID_user.trace.json,hivtrace_log=<ROOT>/app/hivtrace/output/GOLDEN-ID.hivtrace.log,custom_reference_fn=",
+        "<ROOT>/app/hivtrace/hivtrace_submit.sh"
+      ]
+    },
+    "local": {
+      "type": "hivtrace",
+      "resultsSuffix": null,
+      "field": "qsub_params",
+      "qsub_params": [
+        "-l walltime=3:00:00:00,nodes=1:ppn=16",
+        "-q",
+        "datamonkey",
+        "-v",
+        "fn=<ROOT>/app/hivtrace/output/GOLDEN-ID,python=<ROOT>/.python/env/bin/python,hivtrace=<ROOT>/.python/env/bin/hivtrace,dt=0.015,ambiguity_handling=Resolve,fraction=0.05,reference=HXB2_prrt,mo=500,filter=no,comparelanl=no,reference_strip=no,strip_drams=false,prealigned=no,output=<ROOT>/app/hivtrace/output/GOLDEN-ID_user.trace.json,hivtrace_log=<ROOT>/app/hivtrace/output/GOLDEN-ID.hivtrace.log,custom_reference_fn=",
+        "-o",
+        "<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID.o",
+        "-e",
+        "<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID.e",
+        "<ROOT>/app/hivtrace/hivtrace_submit.sh"
+      ]
+    }
   }
 }
