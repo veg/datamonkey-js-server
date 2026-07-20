@@ -122,12 +122,6 @@ hyphyJob.prototype.spawn = function() {
   logger.info(`[DEBUG HYPHY] Job ${self.id}: jobRunner instance created successfully`);
 
   // On status updates, report to datamonkey-js
-  hyphy_job_runner.on("status", function(status) {
-    self.log("status", JSON.stringify(status));
-    client.hSet(self.id, "status", status);
-  });
-
-  // On status updates, report to datamonkey-js
   hyphy_job_runner.on("status update", function() {
     // HyPhy publishes updates to a specified progress file
     fs.readFile(self.progress_fn, "utf8", function(err, data) {

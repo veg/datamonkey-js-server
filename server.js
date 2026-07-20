@@ -8,11 +8,14 @@ const config = require("./lib/config"),
   router = require(path.join(__dirname, "/lib/router.js")),
   analysisRoutes = require("./lib/routes/analysis-routes.js"),
   JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue,
-  logger = require("./lib/logger.js").logger;
+  logger = require("./lib/logger.js").logger,
+  // Derive the CLI version from package.json so it can never drift (was
+  // hardcoded to a stale "2.8.0").
+  pkg = require("./package.json");
 
 //Script parameter for defining port number.
 program
-  .version("2.8.0")
+  .version(pkg.version)
   .usage("[options] <file ...>")
   .option("-p, --port <n>", "Port number", parseInt)
   .parse(process.argv);
