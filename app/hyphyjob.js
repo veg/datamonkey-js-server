@@ -2,26 +2,35 @@ const cs = require("../lib/clientsocket.js"),
   logger = require("../lib/logger.js").logger,
   job = require("./job.js"),
   jobdel = require("../lib/jobdel.js"),
-  redis = require("redis"),
-  Q = require("q"),
-  _ = require("underscore"),
   fs = require("fs"),
   path = require("path"),
+  util = require("util"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
-  config = require("../config.json");
+  config = require("../lib/config");
 
-var jobRegistry = require("../lib/jobregistry.js");
+const jobRegistry = require("../lib/jobregistry.js");
 
-// Use redis as our key-value store
-var client = redis.createClient({
-  host: config.redis_host,
-  port: config.redis_port
-});
+// Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
+// promise-native and camelCases commands (hset -> hSet, hget -> hGet,
+// rpush -> rPush, lrem -> lRem, llen -> lLen).
+const client = require("../lib/redis-client").client;
 
-// Add error handler for Redis client
-client.on("error", function(err) {
-  logger.error("Redis hyphyjob client error: " + err.message);
-});
+// Native replacement for underscore's _.once: returns a function that invokes
+// `fn` at most once, caching and returning that first result thereafter.
+function once(fn) {
+  let called = false;
+  let result;
+  return function() {
+    if (!called) {
+      called = true;
+      result = fn.apply(this, arguments);
+    }
+    return result;
+  };
+}
+
+// Promisified fs.readFile for the q -> native Promise migration in onError().
+const readFileAsync = util.promisify(fs.readFile);
 
 // Prepend a scheduler --comment flag carrying the submission source so SLURM
 // accounting (sacct/scontrol) records which path submitted the job. Grafana
@@ -34,10 +43,15 @@ function injectSubmissionSource(qsub_params, source, submit_type) {
   return ["--comment=source=" + source].concat(qsub_params);
 }
 
-var hyphyJob = function() {};
+// Base job runner. Declared as a class so subclasses can use `class X extends
+// hyphyJob` (ES inheritance) instead of util.inherits. The methods are attached
+// to the prototype below (valid on a class prototype) rather than inlined, to
+// keep this a minimal, low-risk conversion — no method bodies move. No code
+// ever does `new hyphyJob` directly; it is only ever subclassed.
+class hyphyJob {}
 
 hyphyJob.prototype.log = function(notification, complementary_info) {
-  var self = this;
+  const self = this;
 
   if (complementary_info) {
     logger.info(
@@ -49,7 +63,7 @@ hyphyJob.prototype.log = function(notification, complementary_info) {
 };
 
 hyphyJob.prototype.warn = function(notification, complementary_info) {
-  var self = this;
+  const self = this;
   if (complementary_info) {
     logger.warn(
       [self.type, self.id, notification, complementary_info].join(" : ")
@@ -61,18 +75,18 @@ hyphyJob.prototype.warn = function(notification, complementary_info) {
 
 // Attach socket to redis channel
 hyphyJob.prototype.attachSocket = function() {
-  var self = this;
+  const self = this;
   logger.info(`[DEBUG REDIS] Attaching socket to job ${self.id}`);
   self.client_socket = new cs.ClientSocket(self.socket, self.id);
 };
 
 // Can either initialize a new job or check on previous one
 hyphyJob.prototype.init = function() {
-  var self = this;
+  const self = this;
 
   // store parameters in redis
   logger.info(`Job ${self.id}: Storing parameters in redis`);
-  client.hset(self.id, "params", JSON.stringify(self.params));
+  client.hSet(self.id, "params", JSON.stringify(self.params));
   
   logger.info(`Job ${self.id}: Attaching socket`);
   self.attachSocket();
@@ -89,11 +103,11 @@ hyphyJob.prototype.init = function() {
 };
 
 hyphyJob.prototype.spawn = function() {
-  var self = this;
+  const self = this;
 
   self.log("spawning");
 
-  var source = (self.params && self.params.submission_source)
+  const source = (self.params && self.params.submission_source)
             || (self.params && self.params.analysis && self.params.analysis.submission_source)
             || "unknown";
   self.qsub_params = injectSubmissionSource(self.qsub_params, source, config.submit_type);
@@ -104,14 +118,8 @@ hyphyJob.prototype.spawn = function() {
   logger.info(`[JOB START] Parameters: ${JSON.stringify(self.qsub_params)}`);
   logger.info(`[JOB START] Results file: ${self.results_fn}`);
   logger.info(`[DEBUG HYPHY] Job ${self.id}: About to create jobRunner instance`);
-  var hyphy_job_runner = new job.jobRunner(self.qsub_params, self.results_fn);
+  const hyphy_job_runner = new job.jobRunner(self.qsub_params, self.results_fn);
   logger.info(`[DEBUG HYPHY] Job ${self.id}: jobRunner instance created successfully`);
-
-  // On status updates, report to datamonkey-js
-  hyphy_job_runner.on("status", function(status) {
-    self.log("status", JSON.stringify(status));
-    client.hset(self.id, "status", status);
-  });
 
   // On status updates, report to datamonkey-js
   hyphy_job_runner.on("status update", function() {
@@ -135,11 +143,14 @@ hyphyJob.prototype.spawn = function() {
 
   // On errors, report to datamonkey-js
   hyphy_job_runner.on("script error", function() {
-    // Check that job was not manually cancelled
-    client.hget(self.id, "status", function(err, status) {
+    // Check that job was not manually cancelled. redis@5 hGet returns a promise.
+    client.hGet(self.id, "status").then(function(status) {
       if (status != "cancelled") {
         self.onError();
       }
+    }).catch(function(err) {
+      logger.error("Redis hGet status failed: " + err.message);
+      self.onError();
     });
   });
 
@@ -161,21 +172,21 @@ hyphyJob.prototype.spawn = function() {
 
   logger.info(`Job ${self.id}: Writing input file to ${self.fn}`, {
     stream_type: typeof self.stream,
-    stream_length: self.stream ? (typeof self.stream === 'string' ? self.stream.length : 'not string') : 0,
+    stream_length: self.stream ? (typeof self.stream === "string" ? self.stream.length : "not string") : 0,
     stream_is_null: self.stream === null,
     stream_is_undefined: self.stream === undefined
   });
   
   // Handle different types of stream data
-  let dataToWrite = '';
+  let dataToWrite = "";
   if (self.stream) {
-    if (typeof self.stream === 'string') {
+    if (typeof self.stream === "string") {
       dataToWrite = self.stream;
       logger.info(`Job ${self.id}: Using string stream data, length: ${dataToWrite.length}`);
     } else if (Buffer.isBuffer(self.stream)) {
       dataToWrite = self.stream;
       logger.info(`Job ${self.id}: Using buffer stream data, length: ${dataToWrite.length}`);
-    } else if (typeof self.stream === 'object') {
+    } else if (typeof self.stream === "object") {
       // If stream is an object, stringify it
       dataToWrite = JSON.stringify(self.stream);
       logger.info(`Job ${self.id}: Using object stream data, stringified length: ${dataToWrite.length}`);
@@ -192,9 +203,12 @@ hyphyJob.prototype.spawn = function() {
   fs.writeFile(self.fn, dataToWrite, err => {
     if (err) {
       logger.error(`Job ${self.id}: Error writing input file: ${err.message}`);
-      throw err;
+      self.socket.emit("script error", {
+        error: "Failed to write input file: " + err.message
+      });
+      return;
     }
-    
+
     logger.info(`Job ${self.id}: Input file written successfully, submitting job`);
     
     // Pass filename in as opposed to generating it in spawn_hyphyJob
@@ -218,13 +232,20 @@ hyphyJob.prototype.spawn = function() {
 };
 
 hyphyJob.prototype.onJobCreated = function(torque_id) {
-  var self = this;
+  const self = this;
 
-  self.push_active_job = function() {
-    client.rpush("active_jobs", self.id);
-  };
-
-  self.push_job_once = _.once(self.push_active_job);
+  // onJobCreated fires on EVERY "job created" emission, and the status watcher
+  // re-emits "job created" on every queued poll tick (job.js status_watcher).
+  // Build the once()-guarded active_jobs push exactly ONCE per job instance —
+  // rebuilding it here each call gave a fresh guard every tick, so a job queued
+  // for N ticks pushed self.id into active_jobs N times (only one removed by the
+  // terminal lRem count=1), leaking N-1 phantom entries until restart.
+  if (!self.push_job_once) {
+    self.push_active_job = function() {
+      client.rPush("active_jobs", self.id);
+    };
+    self.push_job_once = once(self.push_active_job);
+  }
   self.setTorqueParameters(torque_id);
 
   // Enhanced job info for client
@@ -248,31 +269,32 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
     status_update.raw_status = torque_id.raw_status;
   }
   
-  var str_redis_packet = JSON.stringify(status_update);
+  const str_redis_packet = JSON.stringify(status_update);
 
   self.log("job created", str_redis_packet);
 
   // Store job info in Redis
-  client.hset(self.id, "torque_id", JSON.stringify({ torque_id: self.torque_id }));
-  client.hset(self.id, "status", status_update.status);
-  client.hset(self.id, "scheduler", scheduler);
+  client.hSet(self.id, "torque_id", JSON.stringify({ torque_id: self.torque_id }));
+  client.hSet(self.id, "status", status_update.status);
+  client.hSet(self.id, "scheduler", scheduler);
   client.publish(self.id, str_redis_packet);
-  
-  // Store cross-references in a single hset call to avoid errors
-  client.hset(
-    self.torque_id, 
-    "datamonkey_id", self.id,
-    "type", self.type,
-    "scheduler", scheduler
-  );
-  
-  // Safely add msa properties if they exist
+
+  // Store cross-references. redis@5 hSet takes an object for multi-field sets
+  // (the old variadic field/value form is no longer supported).
+  client.hSet(self.torque_id, {
+    datamonkey_id: self.id,
+    type: self.type,
+    scheduler: scheduler
+  });
+
+  // Safely add msa properties if they exist. hSet coerces numbers to strings,
+  // but rejects undefined, so keep the existing guards.
   if (self.params && self.params.msa && self.params.msa[0]) {
     if (self.params.msa[0].sites !== undefined) {
-      client.hset(self.torque_id, "sites", self.params.msa[0].sites);
+      client.hSet(self.torque_id, "sites", String(self.params.msa[0].sites));
     }
     if (self.params.msa[0].sequences !== undefined) {
-      client.hset(self.torque_id, "sequences", self.params.msa[0].sequences);
+      client.hSet(self.torque_id, "sequences", String(self.params.msa[0].sequences));
     }
   }
   
@@ -280,8 +302,42 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
   self.push_job_once(self.id);
 };
 
+/**
+ * Shared terminal-completion finalizer. Every onComplete path (base and the
+ * gard/difFubar/hivtrace overrides) MUST route its terminal redis writes
+ * through here so the hardening lives in one place: batched hSet/publish/lRem
+ * under Promise.all().catch (a rejected redis@5 write can't silently zombie the
+ * job) plus jobRegistry.unregister (drop the finished job from the live map so
+ * a later cancelAll can't act on it). Historically each override re-implemented
+ * this and battle-tests kept finding one that had drifted (missing unregister,
+ * fire-and-forget writes); a single helper removes that whole bug class.
+ *
+ * @param {object} hashFields  fields to hSet on self.id (e.g. {results, status})
+ * @param {string} [publishPacket]  stringified packet to publish on self.id.
+ *   Omit (undefined) to skip the publish — hivtrace delivers results via the
+ *   socket directly and does not publish a completion packet.
+ */
+hyphyJob.prototype.finalizeCompletion = function(hashFields, publishPacket) {
+  const self = this;
+  const writes = [
+    client.hSet(self.id, hashFields),
+    // Remove id from active_job queue
+    client.lRem("active_jobs", 1, self.id)
+  ];
+  if (publishPacket !== undefined) {
+    writes.push(client.publish(self.id, publishPacket));
+  }
+  Promise.all(writes).catch(function(err) {
+    logger.error(
+      `[REDIS] Terminal completion write failed for job ${self.id} - job may be left as a zombie: ${err.message}`
+    );
+  });
+  // Drop the finished job from the live registry.
+  jobRegistry.unregister(self.id);
+};
+
 hyphyJob.prototype.onComplete = function() {
-  var self = this;
+  const self = this;
 
   fs.readFile(self.results_fn, "utf8", function(err, data) {
     if (err) {
@@ -290,10 +346,10 @@ hyphyJob.prototype.onComplete = function() {
     } else {
       if (data && data.length > 0) {
         // Prepare redis packet for delivery
-        var redis_packet = { results: data };
+        const redis_packet = { results: data };
         redis_packet.type = "completed";
 
-        var str_redis_packet = JSON.stringify(redis_packet);
+        const str_redis_packet = JSON.stringify(redis_packet);
 
         // Log that the job has been completed
         self.log("complete", "success");
@@ -303,42 +359,34 @@ hyphyJob.prototype.onComplete = function() {
         logger.info(`[DEBUG REDIS] Completion data length: ${str_redis_packet.length} bytes`);
         logger.info(`[DEBUG REDIS] Completion packet type: ${redis_packet.type}`);
         logger.info(`[DEBUG REDIS] Results data length: ${data.length} bytes`);
-        
+
         // Check if message is too large (Redis default max is 512MB but practical limit is lower)
         const MAX_REDIS_MESSAGE_SIZE = 50 * 1024 * 1024; // 50MB
         if (str_redis_packet.length > MAX_REDIS_MESSAGE_SIZE) {
           logger.warn(`[DEBUG REDIS] WARNING: Completion message is very large (${(str_redis_packet.length / 1024 / 1024).toFixed(2)}MB)`);
-          logger.warn(`[DEBUG REDIS] This may cause issues with Redis pub/sub`);
+          logger.warn("[DEBUG REDIS] This may cause issues with Redis pub/sub");
         }
 
-        // Store packet in redis and publish to channel
-        client.hset(
-          self.id, 
-          "results", str_redis_packet,
-          "status", "completed"
+        // Store packet in redis + publish + dequeue + unregister (shared helper).
+        self.finalizeCompletion(
+          { results: str_redis_packet, status: "completed" },
+          str_redis_packet
         );
-        client.publish(self.id, str_redis_packet);
         logger.info(`[DEBUG REDIS] Published completion event to Redis channel: ${self.id}`);
-
-        // Remove id from active_job queue
-        client.lrem("active_jobs", 1, self.id);
-        jobRegistry.unregister(self.id);
-        delete this;
       } else {
         // Empty results file
         self.onError("job seems to have completed, but no results found");
-        delete this;
       }
     }
   });
 };
 
 hyphyJob.prototype.onStatusUpdate = function(data) {
-  var self = this;
+  const self = this;
   
   // If data is an object, extract the message
   let statusMessage = data;
-  if (typeof data === 'object') {
+  if (typeof data === "object") {
     if (data.status) {
       statusMessage = `Status: ${data.status}`;
       if (data.raw_status) {
@@ -352,7 +400,7 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   self.current_status = statusMessage;
 
   // Create enhanced status update with scheduler info
-  var status_update = {
+  const status_update = {
     msg: self.current_status,
     torque_id: self.torque_id,
     id: self.id,
@@ -360,13 +408,13 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
     stime: self.stime,
     ctime: self.ctime,
     phase: "running",
-    scheduler: typeof data === 'object' && data.scheduler ? 
-               data.scheduler : 
-               (self.submit_type === "qsub" ? "torque" : "slurm")
+    scheduler: typeof data === "object" && data.scheduler ? 
+      data.scheduler : 
+      (self.submit_type === "qsub" ? "torque" : "slurm")
   };
   
   // Add detailed status information if available
-  if (typeof data === 'object') {
+  if (typeof data === "object") {
     if (data.status) {
       status_update.status = data.status;
     }
@@ -376,20 +424,19 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
   }
 
   // Prepare redis packet for delivery
-  var redis_packet = status_update;
+  const redis_packet = status_update;
   redis_packet.type = "status update";
 
-  var str_redis_packet = JSON.stringify(redis_packet);
+  const str_redis_packet = JSON.stringify(redis_packet);
 
   // Store packet in redis and publish to channel
   logger.info(`[DEBUG REDIS] Publishing status update to channel: ${self.id}`);
   logger.info(`[DEBUG REDIS] Status update data: ${str_redis_packet}`);
   
-  client.hset(
-    self.id, 
-    "status update", str_redis_packet,
-    "current_status", self.current_status
-  );
+  client.hSet(self.id, {
+    "status update": str_redis_packet,
+    current_status: self.current_status
+  });
   client.publish(self.id, str_redis_packet);
 
   // Log status update on server
@@ -397,7 +444,7 @@ hyphyJob.prototype.onStatusUpdate = function(data) {
 };
 
 hyphyJob.prototype.onJobMetadata = function(data) {
-  var self = this;
+  const self = this;
   self.stime = data.stime;
   self.ctime = data.ctime;
   
@@ -420,42 +467,46 @@ hyphyJob.prototype.onJobMetadata = function(data) {
       metadata_update.raw_status = data.raw_status;
     }
     
-    var str_redis_packet = JSON.stringify(metadata_update);
+    const str_redis_packet = JSON.stringify(metadata_update);
     
     self.log("job metadata", str_redis_packet);
     
     // Store and publish metadata in a single call
-    client.hset(
-      self.id, 
-      "status", metadata_update.status,
-      "metadata", str_redis_packet
-    );
+    client.hSet(self.id, {
+      status: metadata_update.status,
+      metadata: str_redis_packet
+    });
     client.publish(self.id, str_redis_packet);
   }
 };
 
 // If a job is cancelled early or the result contents cannot be read
 hyphyJob.prototype.onError = function(error) {
-  var self = this;
+  const self = this;
 
   // The packet that will delivered to datamonkey via the publish command
-  var redis_packet = { error: error };
+  const redis_packet = { error: error };
   redis_packet.type = "script error";
 
-  // Read error path contents
-  var std_err_promise = Q.nfcall(fs.readFile, self.std_err, "utf-8");
-  var progress_fn_promise = Q.nfcall(fs.readFile, self.progress_fn, "utf-8");
-  var std_out_promise = Q.nfcall(fs.readFile, self.std_out, "utf-8");
+  // Read error path contents. q's Q.nfcall + Q.allSettled are replaced with
+  // native promisified fs.readFile + Promise.allSettled. NOTE: q's settled
+  // result shape is {state, value/reason} whereas native is
+  // {status:'fulfilled'|'rejected', value/reason}. A rejected read therefore
+  // has no `.value`, so the `|| "No ... content"` fallbacks below cover the
+  // missing-file case exactly as before.
+  const std_err_promise = readFileAsync(self.std_err, "utf-8");
+  const progress_fn_promise = readFileAsync(self.progress_fn, "utf-8");
+  const std_out_promise = readFileAsync(self.std_out, "utf-8");
 
-  var promises = [std_err_promise, progress_fn_promise, std_out_promise];
+  const promises = [std_err_promise, progress_fn_promise, std_out_promise];
 
-  Q.allSettled(promises).then(function(results) {
+  Promise.allSettled(promises).then(function(results) {
     // Prepare redis packet for delivery
     redis_packet.stderr = results[0].value || "No stderr content";
     redis_packet.progress = results[1].value || "No progress content";
     redis_packet.stdout = results[2].value || "No stdout content";
 
-    var str_redis_packet = JSON.stringify(redis_packet);
+    const str_redis_packet = JSON.stringify(redis_packet);
 
     // Enhanced logging for script errors
     logger.error(`[SCRIPT ERROR] Job ${self.id} failed`);
@@ -470,35 +521,51 @@ hyphyJob.prototype.onError = function(error) {
     self.warn("script error", str_redis_packet);
 
     // Publish error messages to redis
-    client.hset(self.id, "error", str_redis_packet, "status", "error");
-    client.publish(self.id, str_redis_packet);
-    client.lrem("active_jobs", 1, self.id);
-    jobRegistry.unregister(self.id);
-    client.llen("active_jobs", function(err, n) {
-      process.emit("jobCancelled", n);
+    Promise.all([
+      client.hSet(self.id, {
+        error: str_redis_packet,
+        status: "error"
+      }),
+      client.publish(self.id, str_redis_packet),
+      client.lRem("active_jobs", 1, self.id)
+    ]).catch(function(err) {
+      logger.error(
+        `[REDIS] Terminal error write failed for job ${self.id} - job may be left as a zombie: ${err.message}`
+      );
     });
-
-    delete this;
+    jobRegistry.unregister(self.id);
+    // redis@5 lLen returns a promise instead of taking an (err, n) callback.
+    client.lLen("active_jobs").then(function(n) {
+      process.emit("jobCancelled", n);
+    }).catch(function(err) {
+      logger.error("Redis lLen active_jobs failed: " + err.message);
+    });
   });
 };
 
 // Called when a job is first created
 // Set id and output file names
 hyphyJob.prototype.setTorqueParameters = function(torque_id) {
-  var self = this;
+  const self = this;
   
   // Extract the ID, considering both object and string formats
-  if (typeof torque_id === 'object' && torque_id.torque_id) {
+  if (typeof torque_id === "object" && torque_id.torque_id) {
     self.torque_id = torque_id.torque_id;
-  } else if (typeof torque_id === 'string') {
+  } else if (typeof torque_id === "string") {
     self.torque_id = torque_id;
   } else {
     // Default case
     self.torque_id = torque_id.toString();
   }
   
-  // Determine scheduler type
-  const isSlurm = config.submit_type === "sbatch";
+  // Determine scheduler type.
+  // NOTE: config.submit_type is one of "slurm" | "qsub" | "local" (see
+  // lib/config.js). This previously compared against "sbatch" — a value the
+  // enum never holds — so isSlurm was ALWAYS false and the SLURM log-path
+  // branch below was dead code: onError() then read the (nonexistent)
+  // torque-style log path instead of the real SLURM <type>_<id>_<jobid>.err
+  // files, dropping stderr from error reports. See #410 (2nd battle-test).
+  const isSlurm = config.submit_type === "slurm";
   self.scheduler = isSlurm ? "slurm" : "torque";
   
   // Set output file paths based on scheduler type
@@ -521,25 +588,25 @@ hyphyJob.prototype.setTorqueParameters = function(torque_id) {
 
 // Cancel the job and report an error
 hyphyJob.prototype.cancel = function() {
-  var self = this;
+  const self = this;
 
-  var cb = function() {
+  const cb = function() {
     self.onError("job cancelled");
   };
 
   self.warn("cancel called!");
 
-  self.cancel_once = _.once(jobdel.jobDelete);
+  self.cancel_once = once(jobdel.jobDelete);
   self.cancel_once(self.torque_id, cb);
 };
 
 // Validate parameters for check-only mode
 hyphyJob.prototype.validateParameters = function() {
-  var self = this;
+  const self = this;
   
   // Basic validation - can be overridden by specific analysis types
-  var errors = [];
-  var valid = true;
+  const errors = [];
+  let valid = true;
   
   // Check required parameters based on analysis type
   if (!self.params.analysis_type) {
@@ -564,13 +631,13 @@ hyphyJob.prototype.validateParameters = function() {
 
 // Return whether job has completed, still running, or aborted
 hyphyJob.prototype.checkJob = function() {
-  var self = this;
+  const self = this;
 
   // Get results file stats
   fs.stat(self.results_fn, (err, res) => {
     if (err || !res) {
       // Get status of job
-      var jobStatus = new JobStatus(self.torque_id);
+      const jobStatus = new JobStatus(self.torque_id);
       jobStatus.returnJobStatus(self.torque_id, function(err, status) {
         if (err) {
           // If job has no status returned and there are no results, return aborted

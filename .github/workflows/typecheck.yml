@@ -1,0 +1,32 @@
+name: Typecheck
+
+on:
+  push:
+    branches: [feature/v4-modernization]
+  pull_request:
+    branches: [feature/v4-modernization, master]
+
+jobs:
+  typecheck:
+    name: JSDoc / checkJs (report-only)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      # Report-only: the codebase has ~65 pre-existing checkJs findings (a mix
+      # of real shape issues and library-strictness false positives). Modules
+      # opt into checking with `// @ts-check` and are typed against lib/types.js.
+      # A follow-up will drive the count down and flip this to blocking. See #410.
+      - name: Typecheck (report-only)
+        run: npm run typecheck
+        continue-on-error: true

@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const utilities = require('../../lib/utilities');
 const logger = require('../../lib/logger').logger;
-const config = require('../../config.json');
+const config = require('../../lib/config');
 
 // Create mock data for testing
 const mockMsa = [{

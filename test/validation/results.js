@@ -47,7 +47,8 @@ var should = require("should"),
   os = require("os"),
   path = require("path"),
   EventEmitter = require("events").EventEmitter,
-  config = require(__dirname + "/../../config.json");
+  utilities = require(__dirname + "/../../lib/utilities"),
+  config = require(__dirname + "/../../lib/config");
 
 var cfelMod = require(__dirname + "/../../app/contrast-fel/cfel.js");
 var gardMod = require(__dirname + "/../../app/gard/gard.js");
@@ -208,11 +209,24 @@ describe("validation: derived parameters + results delivery", function () {
     // before the callback runs, letting a real sbatch through. To guarantee NO
     // job ever reaches the scheduler, install the stubs ONCE for the whole
     // block (before/after) and keep them installed across every async tick.
-    var origSubmit, origSubmitSlurm, origSubmitLocal;
+    var origSubmit, origSubmitSlurm, origSubmitLocal, origSubmitType;
 
     function capture(a) { captured = a; }
 
     before(function () {
+      // This block asserts the SLURM --export contract (msaid=<id> lives only in
+      // the slurm param string; the local contract is positional with no msaid=).
+      // Pin submit_type=slurm so the assertion holds regardless of the ambient
+      // config.submit_type (the CI fixture runs submit_type=local, which would
+      // otherwise route difFubar through the positional local path — #403 QC).
+      // difFubar's constructor writes a progress file into app/difFubar/output/
+      // (fs.openSync at difFubar.js:191), so that dir must exist — it's gitignored
+      // and absent on a fresh CI checkout. (Same guard qsub-params.js uses.)
+      utilities.ensureDirectoryExists(
+        path.join(__dirname, "/../../app/difFubar/output")
+      );
+      origSubmitType = config.submit_type;
+      config.submit_type = "slurm";
       origSubmit = jobMod.jobRunner.prototype.submit;
       origSubmitSlurm = jobMod.jobRunner.prototype.submit_slurm;
       origSubmitLocal = jobMod.jobRunner.prototype.submit_local;
@@ -222,6 +236,7 @@ describe("validation: derived parameters + results delivery", function () {
     });
 
     after(function () {
+      config.submit_type = origSubmitType;
       jobMod.jobRunner.prototype.submit = origSubmit;
       jobMod.jobRunner.prototype.submit_slurm = origSubmitSlurm;
       jobMod.jobRunner.prototype.submit_local = origSubmitLocal;

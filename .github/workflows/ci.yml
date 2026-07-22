@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [feature/v4-modernization]
+  pull_request:
+    branches: [feature/v4-modernization, master]
+
+jobs:
+  test:
+    name: Unit Tests (no cluster)
+    runs-on: ubuntu-latest
+
+    services:
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    strategy:
+      matrix:
+        node-version: [18, 20, 22]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Create config.json
+        # Use the committed deterministic CI fixture. It carries the exact
+        # per-analysis procs / walltime / scheduler keys the golden snapshots
+        # were captured with, so the golden tests are reproducible in CI (the
+        # old inline 6-key stub omitted them → procs=undefined golden drift).
+        run: cp test/fixtures/config.ci.json config.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run cluster-free test lane
+        run: npm run test:ci

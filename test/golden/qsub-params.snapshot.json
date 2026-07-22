@@ -1,0 +1,675 @@
+{
+  "fel": {
+    "slurm": {
+      "type": "fel",
+      "resultsSuffix": "FEL.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/fel/output/check-<TS>,tree_fn=<ROOT>/app/fel/output/check-<TS>.tre,sfn=<ROOT>/app/fel/output/check-<TS>.status,pfn=<ROOT>/app/fel/output/check-<TS>.fel.progress,rfn=<ROOT>/app/fel/output/check-<TS>.fel,treemode=0,bootstrap=false,resample=1,genetic_code=Universal,analysis_type=fel,rate_variation=No,ci=No,cwd=<ROOT>/app/fel,msaid=check,procs=32,multiple_hits=None,site_multihit=Estimate,branches=All",
+        "--output=<ROOT>/app/fel/output/fel_check-<TS>_%j.out",
+        "--error=<ROOT>/app/fel/output/fel_check-<TS>_%j.err",
+        "<ROOT>/app/fel/fel.sh"
+      ]
+    },
+    "local": {
+      "type": "fel",
+      "resultsSuffix": "FEL.json",
+      "qsub_params": [
+        "<ROOT>/app/fel/fel.sh",
+        "fn=<ROOT>/app/fel/output/check-<TS>",
+        "tree_fn=<ROOT>/app/fel/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/fel/output/check-<TS>.status",
+        "pfn=<ROOT>/app/fel/output/check-<TS>.fel.progress",
+        "rfn=<ROOT>/app/fel/output/check-<TS>.fel",
+        "treemode=0",
+        "bootstrap=false",
+        "resample=1",
+        "genetic_code=Universal",
+        "analysis_type=fel",
+        "rate_variation=No",
+        "ci=No",
+        "cwd=<ROOT>/app/fel",
+        "msaid=check",
+        "procs=32",
+        "multiple_hits=None",
+        "site_multihit=Estimate",
+        "branches=All"
+      ]
+    }
+  },
+  "meme": {
+    "slurm": {
+      "type": "meme",
+      "resultsSuffix": "MEME.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/meme/output/check-<TS>,tree_fn=<ROOT>/app/meme/output/check-<TS>.tre,sfn=<ROOT>/app/meme/output/check-<TS>.status,pfn=<ROOT>/app/meme/output/check-<TS>.meme.progress,rfn=<ROOT>/app/meme/output/check-<TS>.meme,treemode=0,bootstrap=false,resample=0,multiple_hits=None,site_multihit=Estimate,rates=2,impute_states=No,pvalue=0.1,genetic_code=Universal,analysis_type=meme,cwd=<ROOT>/app/meme,msaid=check,procs=32",
+        "--output=<ROOT>/app/meme/output/meme_check-<TS>_%j.out",
+        "--error=<ROOT>/app/meme/output/meme_check-<TS>_%j.err",
+        "<ROOT>/app/meme/meme.sh"
+      ]
+    },
+    "local": {
+      "type": "meme",
+      "resultsSuffix": "MEME.json",
+      "qsub_params": [
+        "<ROOT>/app/meme/meme.sh",
+        "fn=<ROOT>/app/meme/output/check-<TS>",
+        "tree_fn=<ROOT>/app/meme/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/meme/output/check-<TS>.status",
+        "pfn=<ROOT>/app/meme/output/check-<TS>.meme.progress",
+        "rfn=<ROOT>/app/meme/output/check-<TS>.meme",
+        "treemode=0",
+        "bootstrap=false",
+        "resample=0",
+        "multiple_hits=None",
+        "site_multihit=Estimate",
+        "rates=2",
+        "impute_states=No",
+        "pvalue=0.1",
+        "genetic_code=Universal",
+        "analysis_type=meme",
+        "cwd=<ROOT>/app/meme",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "slac": {
+    "slurm": {
+      "type": "slac",
+      "resultsSuffix": "SLAC.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/slac/output/check-<TS>,tree_fn=<ROOT>/app/slac/output/check-<TS>.tre,sfn=<ROOT>/app/slac/output/check-<TS>.status,pfn=<ROOT>/app/slac/output/check-<TS>.slac.progress,rfn=<ROOT>/app/slac/output/check-<TS>.slac,treemode=0,genetic_code=Universal,analysis_type=slac,branches=All,samples=100,pvalue=0.1,cwd=<ROOT>/app/slac,msaid=check,procs=32",
+        "--output=<ROOT>/app/slac/output/slac_check-<TS>_%j.out",
+        "--error=<ROOT>/app/slac/output/slac_check-<TS>_%j.err",
+        "<ROOT>/app/slac/slac.sh"
+      ]
+    },
+    "local": {
+      "type": "slac",
+      "resultsSuffix": "SLAC.json",
+      "qsub_params": [
+        "<ROOT>/app/slac/slac.sh",
+        "fn=<ROOT>/app/slac/output/check-<TS>",
+        "tree_fn=<ROOT>/app/slac/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/slac/output/check-<TS>.status",
+        "pfn=<ROOT>/app/slac/output/check-<TS>.slac.progress",
+        "rfn=<ROOT>/app/slac/output/check-<TS>.slac",
+        "treemode=0",
+        "genetic_code=Universal",
+        "analysis_type=slac",
+        "branches=All",
+        "samples=100",
+        "pvalue=0.1",
+        "cwd=<ROOT>/app/slac",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "busted": {
+    "slurm": {
+      "type": "busted",
+      "resultsSuffix": "BUSTED.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/busted/output/check-<TS>,tree_fn=<ROOT>/app/busted/output/check-<TS>.tre,sfn=<ROOT>/app/busted/output/check-<TS>.status,pfn=<ROOT>/app/busted/output/check-<TS>.BUSTED.progress,rfn=<ROOT>/app/busted/output/check-<TS>.BUSTED.json,treemode=0,genetic_code=Universal,synRateVariation=Yes,errorProtection=No,multihit=None,branches=All,rates=3,syn_rates=3,grid_size=250,starting_points=1,save_fit=/dev/null,cwd=<ROOT>/app/busted,msaid=check,procs=32",
+        "--output=<ROOT>/app/busted/output/busted_check-<TS>_%j.out",
+        "--error=<ROOT>/app/busted/output/busted_check-<TS>_%j.err",
+        "<ROOT>/app/busted/busted_submit.sh"
+      ]
+    },
+    "local": {
+      "type": "busted",
+      "resultsSuffix": "BUSTED.json",
+      "qsub_params": [
+        "<ROOT>/app/busted/busted_submit.sh",
+        "fn=<ROOT>/app/busted/output/check-<TS>",
+        "tree_fn=<ROOT>/app/busted/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/busted/output/check-<TS>.status",
+        "pfn=<ROOT>/app/busted/output/check-<TS>.BUSTED.progress",
+        "rfn=<ROOT>/app/busted/output/check-<TS>.BUSTED.json",
+        "treemode=0",
+        "genetic_code=Universal",
+        "synRateVariation=Yes",
+        "errorProtection=No",
+        "multihit=None",
+        "branches=All",
+        "rates=3",
+        "syn_rates=3",
+        "grid_size=250",
+        "starting_points=1",
+        "save_fit=/dev/null",
+        "analysis_type=busted",
+        "cwd=<ROOT>/app/busted",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "absrel": {
+    "slurm": {
+      "type": "absrel",
+      "resultsSuffix": "ABSREL.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/absrel/output/check-<TS>,tree_fn=<ROOT>/app/absrel/output/check-<TS>.tre,sfn=<ROOT>/app/absrel/output/check-<TS>.status,pfn=<ROOT>/app/absrel/output/check-<TS>.absrel.progress,rfn=<ROOT>/app/absrel/output/check-<TS>.absrel,treemode=0,genetic_code=Universal,multiple_hits=None,srv=Yes,blb=1,branches=All,analysis_type=absrel,cwd=<ROOT>/app/absrel,msaid=check,procs=32",
+        "--output=<ROOT>/app/absrel/output/absrel_check-<TS>_%j.out",
+        "--error=<ROOT>/app/absrel/output/absrel_check-<TS>_%j.err",
+        "<ROOT>/app/absrel/absrel.sh"
+      ]
+    },
+    "local": {
+      "type": "absrel",
+      "resultsSuffix": "ABSREL.json",
+      "qsub_params": [
+        "<ROOT>/app/absrel/absrel.sh",
+        "fn=<ROOT>/app/absrel/output/check-<TS>",
+        "tree_fn=<ROOT>/app/absrel/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/absrel/output/check-<TS>.status",
+        "pfn=<ROOT>/app/absrel/output/check-<TS>.absrel.progress",
+        "rfn=<ROOT>/app/absrel/output/check-<TS>.absrel",
+        "treemode=0",
+        "genetic_code=Universal",
+        "multiple_hits=None",
+        "srv=Yes",
+        "blb=1",
+        "branches=All",
+        "analysis_type=absrel",
+        "cwd=<ROOT>/app/absrel",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "relax": {
+    "slurm": {
+      "type": "relax",
+      "resultsSuffix": "RELAX.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/relax/output/check-<TS>,tree_fn=<ROOT>/app/relax/output/check-<TS>.tre,sfn=<ROOT>/app/relax/output/check-<TS>.status,pfn=<ROOT>/app/relax/output/check-<TS>.RELAX.progress,treemode=0,genetic_code=Universal,mode=Classic mode,test_branches=TEST,reference_branches=REFERENCE,models=All,rates=3,kill_zero_lengths=No,cwd=<ROOT>/app/relax,msaid=check,procs=32",
+        "--output=<ROOT>/app/relax/output/relax_check-<TS>_%j.out",
+        "--error=<ROOT>/app/relax/output/relax_check-<TS>_%j.err",
+        "<ROOT>/app/relax/relax.sh"
+      ]
+    },
+    "local": {
+      "type": "relax",
+      "resultsSuffix": "RELAX.json",
+      "qsub_params": [
+        "<ROOT>/app/relax/relax.sh",
+        "fn=<ROOT>/app/relax/output/check-<TS>",
+        "tree_fn=<ROOT>/app/relax/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/relax/output/check-<TS>.status",
+        "pfn=<ROOT>/app/relax/output/check-<TS>.RELAX.progress",
+        "treemode=0",
+        "genetic_code=Universal",
+        "mode=Classic mode",
+        "test_branches=TEST",
+        "reference_branches=REFERENCE",
+        "models=All",
+        "rates=3",
+        "kill_zero_lengths=No",
+        "cwd=<ROOT>/app/relax",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "prime": {
+    "slurm": {
+      "type": "prime",
+      "resultsSuffix": "PRIME.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/prime/output/check-<TS>,tree_fn=<ROOT>/app/prime/output/check-<TS>.tre,sfn=<ROOT>/app/prime/output/check-<TS>.status,pfn=<ROOT>/app/prime/output/check-<TS>.prime.progress,rfn=<ROOT>/app/prime/output/check-<TS>.prime,genetic_code=Universal,analysis_type=prime,cwd=<ROOT>/app/prime,msaid=check,procs=32,branches=All,property_set=5PROP,pvalue=0.1,impute_states=No",
+        "--output=<ROOT>/app/prime/output/prime_check-<TS>_%j.out",
+        "--error=<ROOT>/app/prime/output/prime_check-<TS>_%j.err",
+        "<ROOT>/app/prime/prime.sh"
+      ]
+    },
+    "local": {
+      "type": "prime",
+      "resultsSuffix": "PRIME.json",
+      "qsub_params": [
+        "<ROOT>/app/prime/prime.sh",
+        "fn=<ROOT>/app/prime/output/check-<TS>",
+        "tree_fn=<ROOT>/app/prime/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/prime/output/check-<TS>.status",
+        "pfn=<ROOT>/app/prime/output/check-<TS>.prime.progress",
+        "rfn=<ROOT>/app/prime/output/check-<TS>.prime",
+        "genetic_code=Universal",
+        "analysis_type=prime",
+        "cwd=<ROOT>/app/prime",
+        "msaid=check",
+        "procs=32",
+        "branches=All",
+        "property_set=5PROP",
+        "pvalue=0.1",
+        "impute_states=No"
+      ]
+    }
+  },
+  "fubar": {
+    "slurm": {
+      "type": "fubar",
+      "resultsSuffix": "FUBAR.json",
+      "qsub_params": [
+        "--ntasks=48",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/fubar/output/check-<TS>,tree_fn=<ROOT>/app/fubar/output/check-<TS>.tre,sfn=<ROOT>/app/fubar/output/check-<TS>.status,pfn=<ROOT>/app/fubar/output/check-<TS>.fubar.progress,rfn=<ROOT>/app/fubar/output/check-<TS>.fubar,treemode=0,genetic_code=Universal,analysis_type=fubar,cwd=<ROOT>/app/fubar,msaid=check,number_of_grid_points=20,concentration_of_dirichlet_prior=0.5,procs=48",
+        "--output=<ROOT>/app/fubar/output/fubar_check-<TS>_%j.out",
+        "--error=<ROOT>/app/fubar/output/fubar_check-<TS>_%j.err",
+        "<ROOT>/app/fubar/fubar.sh"
+      ]
+    },
+    "local": {
+      "type": "fubar",
+      "resultsSuffix": "FUBAR.json",
+      "qsub_params": [
+        "<ROOT>/app/fubar/fubar.sh",
+        "fn=<ROOT>/app/fubar/output/check-<TS>",
+        "tree_fn=<ROOT>/app/fubar/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/fubar/output/check-<TS>.status",
+        "pfn=<ROOT>/app/fubar/output/check-<TS>.fubar.progress",
+        "rfn=<ROOT>/app/fubar/output/check-<TS>.fubar",
+        "treemode=0",
+        "genetic_code=Universal",
+        "analysis_type=fubar",
+        "cwd=<ROOT>/app/fubar",
+        "msaid=check",
+        "number_of_grid_points=20",
+        "concentration_of_dirichlet_prior=0.5",
+        "procs=48"
+      ]
+    }
+  },
+  "fade": {
+    "slurm": {
+      "type": "fade",
+      "resultsSuffix": "FADE.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/fade/output/check-<TS>,tree_fn=<ROOT>/app/fade/output/check-<TS>.tre,sfn=<ROOT>/app/fade/output/check-<TS>.status,pfn=<ROOT>/app/fade/output/check-<TS>.fade.progress,rfn=<ROOT>/app/fade/output/check-<TS>.fade,treemode=0,genetic_code=Universal,substitution_model=LG,posterior_estimation_method=Metropolis-Hastings,branches=All,number_of_grid_points=20,number_of_mcmc_chains=5,length_of_each_chain=1000000,number_of_burn_in_samples=100000,number_of_samples=100,concentration_of_dirichlet_prior=0.5,analysis_type=fade,cwd=<ROOT>/app/fade,msaid=check,procs=32",
+        "--output=<ROOT>/app/fade/output/fade_check-<TS>_%j.out",
+        "--error=<ROOT>/app/fade/output/fade_check-<TS>_%j.err",
+        "<ROOT>/app/fade/fade.sh"
+      ]
+    },
+    "local": {
+      "type": "fade",
+      "resultsSuffix": "FADE.json",
+      "qsub_params": [
+        "<ROOT>/app/fade/fade.sh",
+        "fn=<ROOT>/app/fade/output/check-<TS>",
+        "tree_fn=<ROOT>/app/fade/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/fade/output/check-<TS>.status",
+        "pfn=<ROOT>/app/fade/output/check-<TS>.fade.progress",
+        "rfn=<ROOT>/app/fade/output/check-<TS>.fade",
+        "treemode=0",
+        "genetic_code=Universal",
+        "substitution_model=LG",
+        "posterior_estimation_method=Metropolis-Hastings",
+        "branches=All",
+        "number_of_grid_points=20",
+        "number_of_mcmc_chains=5",
+        "length_of_each_chain=1000000",
+        "number_of_burn_in_samples=100000",
+        "number_of_samples=100",
+        "concentration_of_dirichlet_prior=0.5",
+        "analysis_type=fade",
+        "cwd=<ROOT>/app/fade",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "bgm": {
+    "slurm": {
+      "type": "bgm",
+      "resultsSuffix": "BGM.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/bgm/output/check-<TS>,tree_fn=<ROOT>/app/bgm/output/check-<TS>.tre,sfn=<ROOT>/app/bgm/output/check-<TS>.status,pfn=<ROOT>/app/bgm/output/check-<TS>.bgm.progress,rfn=<ROOT>/app/bgm/output/check-<TS>.bgm,treemode=0,genetic_code=Universal,datatype=codon,substitution_model=,branches=All,length_of_each_chain=1000000,number_of_burn_in_samples=100000,number_of_samples=100,maximum_parents_per_node=1,minimum_subs_per_site=1,analysis_type=bgm,cwd=<ROOT>/app/bgm,msaid=check,procs=32",
+        "--output=<ROOT>/app/bgm/output/bgm_check-<TS>_%j.out",
+        "--error=<ROOT>/app/bgm/output/bgm_check-<TS>_%j.err",
+        "<ROOT>/app/bgm/bgm.sh"
+      ]
+    },
+    "local": {
+      "type": "bgm",
+      "resultsSuffix": "BGM.json",
+      "qsub_params": [
+        "<ROOT>/app/bgm/bgm.sh",
+        "fn=<ROOT>/app/bgm/output/check-<TS>",
+        "tree_fn=<ROOT>/app/bgm/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/bgm/output/check-<TS>.status",
+        "pfn=<ROOT>/app/bgm/output/check-<TS>.bgm.progress",
+        "rfn=<ROOT>/app/bgm/output/check-<TS>.bgm",
+        "treemode=0",
+        "genetic_code=Universal",
+        "datatype=codon",
+        "substitution_model=",
+        "branches=All",
+        "length_of_each_chain=1000000",
+        "number_of_burn_in_samples=100000",
+        "number_of_samples=100",
+        "maximum_parents_per_node=1",
+        "minimum_subs_per_site=1",
+        "analysis_type=bgm",
+        "cwd=<ROOT>/app/bgm",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "multihit": {
+    "slurm": {
+      "type": "multihit",
+      "resultsSuffix": "MULTI.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/multihit/output/check-<TS>,tree_fn=<ROOT>/app/multihit/output/check-<TS>.tre,sfn=<ROOT>/app/multihit/output/check-<TS>.status,pfn=<ROOT>/app/multihit/output/check-<TS>.multihit.progress,rfn=<ROOT>/app/multihit/output/check-<TS>.MULTI.json,treemode=0,genetic_code=Universal,rate_classes=1,triple_islands=No,branches=All,analysis_type=multihit,cwd=<ROOT>/app/multihit,msaid=check,procs=32",
+        "--output=<ROOT>/app/multihit/output/multihit_check-<TS>_%j.out",
+        "--error=<ROOT>/app/multihit/output/multihit_check-<TS>_%j.err",
+        "<ROOT>/app/multihit/multihit.sh"
+      ]
+    },
+    "local": {
+      "type": "multihit",
+      "resultsSuffix": "MULTI.json",
+      "qsub_params": [
+        "<ROOT>/app/multihit/multihit.sh",
+        "fn=<ROOT>/app/multihit/output/check-<TS>",
+        "tree_fn=<ROOT>/app/multihit/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/multihit/output/check-<TS>.status",
+        "pfn=<ROOT>/app/multihit/output/check-<TS>.multihit.progress",
+        "rfn=<ROOT>/app/multihit/output/check-<TS>.MULTI.json",
+        "treemode=0",
+        "genetic_code=Universal",
+        "rate_classes=1",
+        "triple_islands=No",
+        "branches=All",
+        "analysis_type=multihit",
+        "cwd=<ROOT>/app/multihit",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "nrm": {
+    "slurm": {
+      "type": "nrm",
+      "resultsSuffix": "NRM.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/nrm/output/check-<TS>,tree_fn=<ROOT>/app/nrm/output/check-<TS>.tre,sfn=<ROOT>/app/nrm/output/check-<TS>.status,pfn=<ROOT>/app/nrm/output/check-<TS>.nrm.progress,rfn=<ROOT>/app/nrm/output/check-<TS>.NRM.json,treemode=0,genetic_code=Universal,branches=All,analysis_type=nrm,cwd=<ROOT>/app/nrm,msaid=check,procs=32",
+        "--output=<ROOT>/app/nrm/output/nrm_check-<TS>_%j.out",
+        "--error=<ROOT>/app/nrm/output/nrm_check-<TS>_%j.err",
+        "<ROOT>/app/nrm/nrm.sh"
+      ]
+    },
+    "local": {
+      "type": "nrm",
+      "resultsSuffix": "NRM.json",
+      "qsub_params": [
+        "<ROOT>/app/nrm/nrm.sh",
+        "fn=<ROOT>/app/nrm/output/check-<TS>",
+        "tree_fn=<ROOT>/app/nrm/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/nrm/output/check-<TS>.status",
+        "pfn=<ROOT>/app/nrm/output/check-<TS>.nrm.progress",
+        "rfn=<ROOT>/app/nrm/output/check-<TS>.NRM.json",
+        "treemode=0",
+        "genetic_code=Universal",
+        "branches=All",
+        "analysis_type=nrm",
+        "cwd=<ROOT>/app/nrm",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "bstill": {
+    "slurm": {
+      "type": "bstill",
+      "resultsSuffix": "FUBAR-inv.json",
+      "qsub_params": [
+        "--ntasks=48",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/bstill/output/check-<TS>,tree_fn=<ROOT>/app/bstill/output/check-<TS>.tre,sfn=<ROOT>/app/bstill/output/check-<TS>.status,pfn=<ROOT>/app/bstill/output/check-<TS>.bstill.progress,rfn=<ROOT>/app/bstill/output/check-<TS>.bstill,treemode=0,genetic_code=Universal,analysis_type=bstill,cwd=<ROOT>/app/bstill,msaid=check,number_of_grid_points=20,concentration_of_dirichlet_prior=0.5,method=Variational-Bayes,ebf=10,radius_threshold=0.5,procs=32",
+        "--output=<ROOT>/app/bstill/output/bstill_check-<TS>_%j.out",
+        "--error=<ROOT>/app/bstill/output/bstill_check-<TS>_%j.err",
+        "<ROOT>/app/bstill/bstill.sh"
+      ]
+    },
+    "local": {
+      "type": "bstill",
+      "resultsSuffix": "FUBAR-inv.json",
+      "qsub_params": [
+        "<ROOT>/app/bstill/bstill.sh",
+        "fn=<ROOT>/app/bstill/output/check-<TS>",
+        "tree_fn=<ROOT>/app/bstill/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/bstill/output/check-<TS>.status",
+        "pfn=<ROOT>/app/bstill/output/check-<TS>.bstill.progress",
+        "rfn=<ROOT>/app/bstill/output/check-<TS>.bstill",
+        "treemode=0",
+        "genetic_code=Universal",
+        "analysis_type=bstill",
+        "cwd=<ROOT>/app/bstill",
+        "msaid=check",
+        "number_of_grid_points=20",
+        "concentration_of_dirichlet_prior=0.5",
+        "method=Variational-Bayes",
+        "ebf=10",
+        "radius_threshold=0.5",
+        "procs=32"
+      ]
+    }
+  },
+  "cfel": {
+    "slurm": {
+      "type": "cfel",
+      "resultsSuffix": "FEL.json",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/contrast-fel/output/check-<TS>,tree_fn=<ROOT>/app/contrast-fel/output/check-<TS>.tre,sfn=<ROOT>/app/contrast-fel/output/check-<TS>.status,pfn=<ROOT>/app/contrast-fel/output/check-<TS>.cfel.progress,rfn=<ROOT>/app/contrast-fel/output/check-<TS>.cfel,treemode=0,genetic_code=Universal,branch_sets=,rate_variation=No,permutations=Yes,p_value=0.05,q_value=0.2,analysis_type=cfel,cwd=<ROOT>/app/contrast-fel,msaid=check,procs=32",
+        "--output=<ROOT>/app/contrast-fel/output/cfel_check-<TS>_%j.out",
+        "--error=<ROOT>/app/contrast-fel/output/cfel_check-<TS>_%j.err",
+        "<ROOT>/app/contrast-fel/cfel.sh"
+      ]
+    },
+    "local": {
+      "type": "cfel",
+      "resultsSuffix": "FEL.json",
+      "qsub_params": [
+        "<ROOT>/app/contrast-fel/cfel.sh",
+        "fn=<ROOT>/app/contrast-fel/output/check-<TS>",
+        "tree_fn=<ROOT>/app/contrast-fel/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/contrast-fel/output/check-<TS>.status",
+        "pfn=<ROOT>/app/contrast-fel/output/check-<TS>.cfel.progress",
+        "rfn=<ROOT>/app/contrast-fel/output/check-<TS>.cfel",
+        "treemode=0",
+        "genetic_code=Universal",
+        "branch_sets=",
+        "rate_variation=No",
+        "permutations=Yes",
+        "p_value=0.05",
+        "q_value=0.2",
+        "analysis_type=cfel",
+        "cwd=<ROOT>/app/contrast-fel",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "gard": {
+    "slurm": {
+      "type": "gard",
+      "resultsSuffix": "GARD.json",
+      "field": "qsub_params",
+      "qsub_params": [
+        "--ntasks=32",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/gard/output/check-<TS>,tree_fn=<ROOT>/app/gard/output/check-<TS>.tre,sfn=<ROOT>/app/gard/output/check-<TS>.status,pfn=<ROOT>/app/gard/output/check-<TS>.GARD.progress,rfn=<ROOT>/app/gard/output/check-<TS>.GARD.json,treemode=0,genetic_code=Universal,rate_var=None,rate_classes=2,datatype=codon,run_mode=Normal,max_breakpoints=10000,model=JTT,analysis_type=gard,cwd=<ROOT>/app/gard,msaid=check,procs=32",
+        "--output=<ROOT>/app/gard/output/gard_check-<TS>_%j.out",
+        "--error=<ROOT>/app/gard/output/gard_check-<TS>_%j.err",
+        "<ROOT>/app/gard/gard.sh"
+      ]
+    },
+    "local": {
+      "type": "gard",
+      "resultsSuffix": "GARD.json",
+      "field": "qsub_params",
+      "qsub_params": [
+        "<ROOT>/app/gard/gard.sh",
+        "fn=<ROOT>/app/gard/output/check-<TS>",
+        "tree_fn=<ROOT>/app/gard/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/gard/output/check-<TS>.status",
+        "pfn=<ROOT>/app/gard/output/check-<TS>.GARD.progress",
+        "rfn=<ROOT>/app/gard/output/check-<TS>.GARD.json",
+        "treemode=0",
+        "genetic_code=Universal",
+        "rate_var=None",
+        "rate_classes=2",
+        "datatype=codon",
+        "run_mode=Normal",
+        "max_breakpoints=10000",
+        "model=JTT",
+        "analysis_type=gard",
+        "cwd=<ROOT>/app/gard",
+        "msaid=check",
+        "procs=32"
+      ]
+    }
+  },
+  "difFubar": {
+    "slurm": {
+      "type": "difFubar",
+      "resultsSuffix": "GOLDEN-ID.difFubar.json",
+      "field": "qsub_params",
+      "qsub_params": [
+        "--ntasks=8",
+        "--cpus-per-task=1",
+        "--time=24:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--mem=32GB",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/difFubar/output/GOLDEN-ID,tree_fn=<ROOT>/app/difFubar/output/GOLDEN-ID.tre,pfn=<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar.progress,rfn=<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar,treemode=nj,analysis_type=difFubar,cwd=<ROOT>/app/difFubar,msaid=MSA-ID,number_of_grid_points=20,concentration_of_dirichlet_prior=0.5,mcmc_iterations=2500,burnin_samples=500,pos_threshold=0.95,julia_path=/usr/local/bin/julia,julia_project=../../.julia_env",
+        "--output=<ROOT>/app/difFubar/output/difFubar_GOLDEN-ID_%j.out",
+        "--error=<ROOT>/app/difFubar/output/difFubar_GOLDEN-ID_%j.err",
+        "<ROOT>/app/difFubar/difFubar.sh"
+      ]
+    },
+    "local": {
+      "type": "difFubar",
+      "resultsSuffix": "GOLDEN-ID.difFubar.json",
+      "field": "qsub_params",
+      "qsub_params": [
+        "<ROOT>/app/difFubar/difFubar.sh",
+        "<ROOT>/app/difFubar/output/GOLDEN-ID",
+        "<ROOT>/app/difFubar/output/GOLDEN-ID.tre",
+        "<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar",
+        "<ROOT>/app/difFubar/output/GOLDEN-ID.difFubar.progress",
+        "0.95",
+        "2500",
+        "500",
+        "0.5",
+        "/usr/local/bin/julia",
+        "../../.julia_env"
+      ]
+    }
+  },
+  "hivtrace": {
+    "slurm": {
+      "type": "hivtrace",
+      "resultsSuffix": null,
+      "field": "slurm_params",
+      "qsub_params": [
+        "--ntasks=1",
+        "--cpus-per-task=16",
+        "--time=3:00:00:00",
+        "--output=<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID_%j.out",
+        "--error=<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID_%j.err",
+        "--export=fn=<ROOT>/app/hivtrace/output/GOLDEN-ID,python=<ROOT>/.python/env/bin/python,hivtrace=<ROOT>/.python/env/bin/hivtrace,dt=0.015,ambiguity_handling=Resolve,fraction=0.05,reference=HXB2_prrt,mo=500,filter=no,comparelanl=no,reference_strip=no,strip_drams=false,prealigned=no,output=<ROOT>/app/hivtrace/output/GOLDEN-ID_user.trace.json,hivtrace_log=<ROOT>/app/hivtrace/output/GOLDEN-ID.hivtrace.log,custom_reference_fn=",
+        "<ROOT>/app/hivtrace/hivtrace_submit.sh"
+      ]
+    },
+    "local": {
+      "type": "hivtrace",
+      "resultsSuffix": null,
+      "field": "qsub_params",
+      "qsub_params": [
+        "-l walltime=3:00:00:00,nodes=1:ppn=16",
+        "-q",
+        "datamonkey",
+        "-v",
+        "fn=<ROOT>/app/hivtrace/output/GOLDEN-ID,python=<ROOT>/.python/env/bin/python,hivtrace=<ROOT>/.python/env/bin/hivtrace,dt=0.015,ambiguity_handling=Resolve,fraction=0.05,reference=HXB2_prrt,mo=500,filter=no,comparelanl=no,reference_strip=no,strip_drams=false,prealigned=no,output=<ROOT>/app/hivtrace/output/GOLDEN-ID_user.trace.json,hivtrace_log=<ROOT>/app/hivtrace/output/GOLDEN-ID.hivtrace.log,custom_reference_fn=",
+        "-o",
+        "<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID.o",
+        "-e",
+        "<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID.e",
+        "<ROOT>/app/hivtrace/hivtrace_submit.sh"
+      ]
+    }
+  }
+}
