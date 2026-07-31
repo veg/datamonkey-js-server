@@ -259,6 +259,87 @@ describe('mock lifecycle: full socket -> registry -> redis teardown (no sbatch)'
   });
 
   // -------------------------------------------------------------------------
+  // 2b. On completion, the job hash (which embeds the full result JSON) gets a
+  //     completed-retention TTL (#453) so it can't linger in Redis forever. We
+  //     assert a positive TTL, not the exact window, so the test is robust to
+  //     config changes; the key must NOT be persistent (ttl == -1).
+  // -------------------------------------------------------------------------
+  it('sets a completed-retention TTL on the job hash on completion (#453)', function (done) {
+    var id = 'mocklife-ttl-' + process.pid + '-' + Date.now();
+    usedIds.push(id);
+    stubSubmit(id, { complete: true });
+    var params = buildParams(id);
+
+    var client = harness.connectClient(PORT);
+
+    client.on('connect', function () {
+      harness.emitSpawn(client, 'busted:spawn', '>A\nACG\n>B\nACG\n>C\nACG\n', params);
+    });
+
+    client.on('completed', function () {
+      // finalizeCompletion batches the hSet + lRem + expire; give it a beat.
+      setTimeout(function () {
+        redisClient.client.ttl(id).then(function (ttl) {
+          // -1 = key exists but no TTL (the bug); -2 = key missing. Require a
+          // positive TTL up to the configured completed window (default 24h).
+          ttl.should.be.above(0);
+          ttl.should.be.belowOrEqual(redisClient.COMPLETED_TTL_SECONDS);
+          client.disconnect();
+          done();
+        }).catch(done);
+      }, 200);
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // 2c. Resurrect-same-id (#453 review, HIGH): a job id is the frontend Mongo
+  //     _id, reused across re-runs, and redis HSET does NOT clear a TTL. If a
+  //     completed job (TTL set) is re-spawned with the SAME id, the live hash
+  //     must be PERSISTed (ttl == -1) or it would expire mid-run. onJobCreated
+  //     persists both self.id and self.torque_id; assert the job hash has no
+  //     TTL once the re-run reaches "job created".
+  // -------------------------------------------------------------------------
+  it('persists (clears TTL on) a resurrected job id when it goes back in-flight (#453)', function (done) {
+    var id = 'mocklife-resurrect-' + process.pid + '-' + Date.now();
+    usedIds.push(id);
+
+    // Simulate a prior completion having left a TTL on this id's hash.
+    redisClient.client
+      .hSet(id, 'status', 'completed')
+      .then(function () {
+        return redisClient.client.expire(id, redisClient.COMPLETED_TTL_SECONDS);
+      })
+      .then(function () {
+        return redisClient.client.ttl(id);
+      })
+      .then(function (preTtl) {
+        preTtl.should.be.above(0); // TTL is really set before the re-run
+
+        stubSubmit(id); // no completion — we only need it to reach "job created"
+        var params = buildParams(id);
+        var client = harness.connectClient(PORT);
+
+        client.on('connect', function () {
+          harness.emitSpawn(client, 'busted:spawn', '>A\nACG\n>B\nACG\n>C\nACG\n', params);
+        });
+
+        client.on('job created', function () {
+          // onJobCreated -> client.persist(self.id); give the async write a beat.
+          setTimeout(function () {
+            redisClient.client.ttl(id).then(function (ttl) {
+              // -1 = key exists, no TTL (persisted, correct). The bug would leave
+              // the stale positive TTL in place and expire the live job.
+              ttl.should.equal(-1);
+              client.disconnect();
+              done();
+            }).catch(done);
+          }, 200);
+        });
+      })
+      .catch(done);
+  });
+
+  // -------------------------------------------------------------------------
   // 3. Subscriber leak (#397): after the client disconnects, the dedicated
   //    redis subscriber for the job channel is released (NUMSUB back to 0).
   // -------------------------------------------------------------------------

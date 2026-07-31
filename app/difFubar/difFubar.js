@@ -4,11 +4,6 @@ const config = require("../../lib/config"),
   fs = require("fs"),
   path = require("path");
 
-// Shared redis v5 client (promise-native, camelCased commands). Reused across
-// onComplete calls instead of creating (and leaking) a client per job
-// (GH #400).
-const { client } = require("../../lib/redis-client");
-
 class difFubar extends hyphyJob {
   constructor(socket, stream, params) {
     super();
