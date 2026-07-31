@@ -96,6 +96,18 @@ RATE_CLASSES="${rate_classes:-2}"
 DATATYPE="${datatype:-codon}"
 RUN_MODE="${run_mode:-Normal}"
 MAX_BREAKPOINTS="${max_breakpoints:-10000}"
+
+# --- GARD codon + rate-variation guard ---
+# HyPhy GARD does not support rate variation with codon data: the run never
+# converges and HYPHY aborts ("MG_REV.ModelDescription needs 2 parameters,
+# but 1 were supplied"). See veg/hyphy#981 (maintainer: codon+RV unsupported;
+# classic datamonkey removed the codon option for this reason). Coerce RV off
+# for codon so the job completes instead of guaranteed-aborting.
+if [ "$DATATYPE" = "codon" ] && [ "$RATE_VARIATION" != "None" ]; then
+  echo "WARNING: GARD codon data does not support rate variation ('$RATE_VARIATION'); forcing --rv None (veg/hyphy#981)."
+  RATE_VARIATION="None"
+fi
+# --- end guard ---
 MODEL="${model:-JTT}"
 PROCS=${procs:-48}
 
