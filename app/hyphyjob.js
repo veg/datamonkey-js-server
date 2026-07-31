@@ -96,6 +96,12 @@ hyphyJob.prototype.init = function() {
   // If check param set, don't start new job
   if (self.params["checkOnly"]) {
     logger.info(`Job ${self.id}: Check only mode - validating parameters`);
+    // #453: a checkOnly run writes a transient `check-<ts>` params hash but
+    // never spawns a job, so it never reaches a terminal path that would set a
+    // TTL — one such hash accumulates per submission/validation. Expire it on
+    // the short terminal window; the validation result is emitted to the socket
+    // synchronously below and nothing reads this hash afterward.
+    expireTerminal(self.id);
     // For check-only, just validate parameters and emit result
     self.validateParameters();
   } else {
