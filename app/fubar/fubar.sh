@@ -120,8 +120,13 @@ if [ -n "$SLURM_JOB_ID" ]; then
   # Using SLURM srun
   echo "Using SLURM execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
-  srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
+  # FUBAR uses the non-MPI HYPHYMP binary and parallelizes the grid INTERNALLY.
+  # Launching it as srun -n $PROCS (e.g. 48) ran 48 independent copies racing on
+  # the same alignment/cache/output files -> "Could not read all the parameters
+  # requested in call to fscanf(path,\"RawREWIND\")" and tasks 0-N exit 1.
+  # Classic DM2 runs FUBAR as a single plain process; force -n 1 to match.
+  echo "srun --mpi=$MPI_TYPE -n 1 $HYPHY LIBPATH=$HYPHY_PATH fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
+  srun --mpi=$MPI_TYPE -n 1 $HYPHY LIBPATH=$HYPHY_PATH fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
 else
   # For local execution, use the HYPHY executable determined above
   echo "Using local HYPHY execution: $HYPHY"
