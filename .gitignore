@@ -43,3 +43,8 @@ STDIN*
 
 **/.claude/settings.local.json
 .telegram-bot-token
+
+# test/ is real source: on case-insensitive filesystems the *Test* pattern above
+# matches the test/ directory itself, silently ignoring every NEW test file.
+!test/
+!test/**

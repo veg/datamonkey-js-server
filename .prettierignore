@@ -1,0 +1,5 @@
+# Vendored DM3 code keeps upstream formatting (tabs / single quotes) to stay
+# diffable against datamonkey3 — see lib/axomeme/README.md.
+lib/axomeme/vendor/
+# Binary ONNX model weights.
+lib/axomeme/model/
