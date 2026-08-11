@@ -42,3 +42,4 @@ pm2.config.js
 STDIN*
 
 **/.claude/settings.local.json
+.telegram-bot-token
