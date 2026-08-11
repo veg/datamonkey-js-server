@@ -9,7 +9,9 @@ const spawn = require("child_process").spawn,
 
 // Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
 // promise-native and camelCases commands (hgetall -> hGetAll, hset -> hSet).
-const client = require("../lib/redis-client").client;
+const redisClient = require("../lib/redis-client");
+const client = redisClient.client;
+const { expireTerminal } = redisClient;
 
 // resubscribes a socket to an existing pending job,
 // otherwise reports contents from redis
@@ -102,6 +104,10 @@ const cancel = function(socket, id) {
         jobdel.jobDelete(torque_id, function() {
           logger.warn("info", self.id + " : job : cancel : job cancelled");
           client.hSet(self.id, "status", "aborted");
+          // #453: expire BOTH the job hash and its torque_id reverse-lookup hash
+          // so the live/dead pair die together (jobdel only expires torque_id on
+          // a successful scheduler delete; do it here unconditionally too).
+          expireTerminal(self.id, torque_id);
           socket.emit("cancelled", { success: "ok" });
           socket.disconnect();
         });

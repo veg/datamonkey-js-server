@@ -437,6 +437,15 @@ hivtrace.prototype.onJobCreated = function(torque_id) {
   redis_packet.type = "job created";
   const str_redis_packet = JSON.stringify(torque_id);
   self.log("job created", str_redis_packet);
+  // #453: clear any stale TTL a prior terminal transition left on these keys as
+  // the job goes (back) in-flight — ids are reused (Mongo _id) and scheduler ids
+  // recycle, and HSET does not clear a TTL. Mirrors hyphyjob.onJobCreated.
+  client.persist(self.id).catch(function (err) {
+    logger.error("[REDIS] persist(job hash) failed for " + self.id + ": " + err.message);
+  });
+  client.persist(self.torque_id).catch(function (err) {
+    logger.error("[REDIS] persist(torque hash) failed for " + self.torque_id + ": " + err.message);
+  });
   client.hSet(self.id, "torque_id", str_redis_packet);
   client.publish(self.id, str_redis_packet);
   client.hSet(self.torque_id, "datamonkey_id", self.id);

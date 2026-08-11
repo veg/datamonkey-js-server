@@ -13,7 +13,9 @@ const jobRegistry = require("../lib/jobregistry.js");
 // Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
 // promise-native and camelCases commands (hset -> hSet, hget -> hGet,
 // rpush -> rPush, lrem -> lRem, llen -> lLen).
-const client = require("../lib/redis-client").client;
+const redisClient = require("../lib/redis-client");
+const client = redisClient.client;
+const { expireCompleted, expireTerminal } = redisClient;
 
 // Native replacement for underscore's _.once: returns a function that invokes
 // `fn` at most once, caching and returning that first result thereafter.
@@ -94,6 +96,12 @@ hyphyJob.prototype.init = function() {
   // If check param set, don't start new job
   if (self.params["checkOnly"]) {
     logger.info(`Job ${self.id}: Check only mode - validating parameters`);
+    // #453: a checkOnly run writes a transient `check-<ts>` params hash but
+    // never spawns a job, so it never reaches a terminal path that would set a
+    // TTL — one such hash accumulates per submission/validation. Expire it on
+    // the short terminal window; the validation result is emitted to the socket
+    // synchronously below and nothing reads this hash afterward.
+    expireTerminal(self.id);
     // For check-only, just validate parameters and emit result
     self.validateParameters();
   } else {
@@ -273,7 +281,18 @@ hyphyJob.prototype.onJobCreated = function(torque_id) {
 
   self.log("job created", str_redis_packet);
 
-  // Store job info in Redis
+  // Store job info in Redis. #453: a job id is the frontend-supplied Mongo _id
+  // (not minted per run) and scheduler ids are recycled by SLURM/TORQUE, so a
+  // resurrected/recycled key may still carry the TTL a PRIOR terminal transition
+  // set on it. redis HSET does NOT clear an existing TTL, so we must PERSIST both
+  // hashes as they transition (back) to in-flight — otherwise a live job's hash
+  // could expire mid-run and break status polling / result delivery / cancel.
+  client.persist(self.id).catch(function (err) {
+    logger.error("[REDIS] persist(job hash) failed for " + self.id + ": " + err.message);
+  });
+  client.persist(self.torque_id).catch(function (err) {
+    logger.error("[REDIS] persist(torque hash) failed for " + self.torque_id + ": " + err.message);
+  });
   client.hSet(self.id, "torque_id", JSON.stringify({ torque_id: self.torque_id }));
   client.hSet(self.id, "status", status_update.status);
   client.hSet(self.id, "scheduler", scheduler);
@@ -322,7 +341,15 @@ hyphyJob.prototype.finalizeCompletion = function(hashFields, publishPacket) {
   const writes = [
     client.hSet(self.id, hashFields),
     // Remove id from active_job queue
-    client.lRem("active_jobs", 1, self.id)
+    client.lRem("active_jobs", 1, self.id),
+    // Bound Redis growth (#453): the job hash embeds the full result JSON, read
+    // back on WS reconnect + MCP get_results, so we retain (not drop) it and let
+    // it expire after the completed-retention window. Set here — the single
+    // completion chokepoint every override (gard/difFubar/hivtrace) routes
+    // through — so they all inherit the TTL. expireCompleted never rejects, so
+    // it is safe to fold into this batch. torque_id is the reverse-lookup hash;
+    // expire it on the same window so the live/dead pair die together.
+    expireCompleted(self.id, self.torque_id)
   ];
   if (publishPacket !== undefined) {
     writes.push(client.publish(self.id, publishPacket));
@@ -527,7 +554,11 @@ hyphyJob.prototype.onError = function(error) {
         status: "error"
       }),
       client.publish(self.id, str_redis_packet),
-      client.lRem("active_jobs", 1, self.id)
+      client.lRem("active_jobs", 1, self.id),
+      // #453: onError does NOT route through finalizeCompletion, so the terminal
+      // TTL must be set here too or errored job hashes leak forever. Shorter
+      // window than completed jobs — nobody polls a failed job.
+      expireTerminal(self.id, self.torque_id)
     ]).catch(function(err) {
       logger.error(
         `[REDIS] Terminal error write failed for job ${self.id} - job may be left as a zombie: ${err.message}`
