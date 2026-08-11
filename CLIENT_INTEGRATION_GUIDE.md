@@ -80,7 +80,6 @@ The server provides the following bioinformatics analyses:
 
 #### Special Analyses:
 - **hivtrace** - HIV molecular transmission network analysis
-- **flea** - FLEA pipeline analysis
 
 ### 4. Analysis Workflow Pattern
 

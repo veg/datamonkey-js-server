@@ -3,7 +3,7 @@ const expect = chai.expect;
 const fs = require('fs');
 const path = require('path');
 const { spawn, spawnSync } = require('child_process');
-const config = require('../config.json');
+const config = require('../lib/config');
 const difFubar = require('../app/difFubar/difFubar.js').difFubar;
 
 describe('difFUBAR Backend Tests', function() {
@@ -183,7 +183,7 @@ ATGCTGATGATG
     });
 
     it('should generate correct local execution parameters', function() {
-      const config = require('../config.json');
+      const config = require('../lib/config');
       const originalSubmitType = config.submit_type;
       config.submit_type = 'local'; // Force local execution
       

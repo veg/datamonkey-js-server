@@ -16,7 +16,7 @@ const util = require('util');
 const { spawn } = require('child_process');
 const job = require('../../app/job.js');
 const logger = require('../../lib/logger.js').logger;
-const config = require('../../config.json');
+const config = require('../../lib/config');
 const program = require('commander');
 
 // Define test parameters

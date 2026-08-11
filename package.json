@@ -1,36 +1,36 @@
 {
   "name": "datamonkey-js-server",
   "description": "",
-  "version": "3.4.3",
+  "version": "4.0.0",
   "engines": {
-    "node": ">=13"
+    "node": ">=18"
   },
   "private": true,
   "scripts": {
     "test": "npm run test:ci && npm run test:slurm",
-    "test:ci": "mocha -R spec --exit test/regression/leaks.js test/error-paths/validation.js test/validation/results.js test/mock/lifecycle.js test/sanitize-names.test.js test/difFubar.test.js test/difFubar.integration.test.js test/fubar-redirection.test.js",
+    "test:ci": "mocha -R spec --exit test/load-smoke.js test/regression/leaks.js test/error-paths/validation.js test/validation/results.js test/mock/lifecycle.js test/golden/qsub-params.js test/golden/factory-parity.js test/routes/analysis-routes.js test/sanitize-names.test.js test/difFubar.test.js test/difFubar.integration.test.js test/fubar-redirection.test.js",
     "test:slurm": "npm run test:analyses && npm run test:slurm-unit && npm run test:integration",
     "test:analyses": "mocha -R spec --exit test/absrel/absrel.js test/busted/busted.js test/contrast-fel/contrast-fel.js test/fade/fade.js test/fubar/fubar.js test/gard/gard.js test/hivtrace/hivtrace.js test/meme/meme.js test/multihit/multihit.js test/prime/prime.js test/relax/relax.js test/slac/slac.js",
     "test:slurm-unit": "mocha -R spec --exit test/jobstatus.js test/jobqueue.js test/coverage-gaps/job-lifecycle.js test/coverage-gaps/hivtrace-checkjob.js",
     "test:integration": "mocha -R spec --exit test/integration/slac-completes.js",
-    "test:mcp": "mocha -R spec --exit test/mcp/mcp.test.js",
+    "test:mcp": "mocha -R spec --exit test/mcp/mcp.test.js test/mcp/oauth-redirect.test.js test/mcp/job-notifier.test.js test/mcp/sse-notifications.test.js",
     "test-mcp": "npm run test:mcp",
-    "coverage": "nyc --reporter=text --reporter=html --include 'app/**/*.js' --include 'lib/**/*.js' npm run test"
+    "lint": "eslint app lib server.js",
+    "format:check": "prettier --check \"app/**/*.js\" \"lib/**/*.js\" server.js",
+    "coverage": "nyc --reporter=text --reporter=html --include 'app/**/*.js' --include 'lib/**/*.js' npm run test",
+    "typecheck": "tsc -p jsconfig.json"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "commander": "^6.0.0",
+    "date-fns": "^4.4.0",
     "express": "^5.2.1",
-    "moment": "2.x.x",
-    "moment-timezone": "0.5.37",
-    "q": "^1.2.1",
-    "redis": "^3.1.2",
+    "redis": "^5.12.1",
     "should": "^13.2.3",
     "socket.io": "4.6.2",
     "tail": "0.4.x",
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
-    "underscore": "1.13.x",
     "winston": "^3.8.2",
     "zod": "^4.3.6"
   },
@@ -38,7 +38,9 @@
     "chai": "^4.3.7",
     "eslint": "^7.32.0",
     "mocha": "^11.7.1",
+    "prettier": "^3.9.5",
     "socket.io-client": "^4.5.4",
-    "socket.io-stream": "^0.9.1"
+    "socket.io-stream": "^0.9.1",
+    "typescript": "^7.0.2"
   }
 }

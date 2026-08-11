@@ -12,9 +12,8 @@
  */
 
 var should  = require('should'),
-    redis   = require('redis'),
     EventEmitter = require('events').EventEmitter,
-    config  = require(__dirname + '/../../config.json'),
+    redisClient = require(__dirname + '/../../lib/redis-client.js'),
     cs      = require(__dirname + '/../../lib/clientsocket.js'),
     jobRegistry = require(__dirname + '/../../lib/jobregistry.js');
 
@@ -26,13 +25,26 @@ function fakeSocket(id) {
 }
 
 // Count Redis clients currently in pub/sub subscribe mode for a channel.
+//
+// redis@5 migration: the old v3 helper opened a throwaway
+// `redis.createClient({host,port})` and used `send_command('pubsub',...)` with
+// a callback. In v5 there is no callback form and no `send_command`; PUBSUB is
+// issued via `client.sendCommand(['PUBSUB','NUMSUB', channel])` on a CONNECTED
+// client, which returns a promise resolving to `[channel, count]`. We reuse the
+// shared, already-connecting client from lib/redis-client.js rather than
+// spinning up (and leaking) a fresh connection per call.
 function subscriberCount(channel, cb) {
-  var c = redis.createClient({ host: config.redis_host, port: config.redis_port });
-  c.send_command('pubsub', ['numsub', channel], function (err, res) {
-    c.quit();
-    // res = [channel, "<count>"]
-    cb(err ? 0 : parseInt(res[1], 10));
-  });
+  redisClient.ready
+    .then(function () {
+      return redisClient.client.sendCommand(['PUBSUB', 'NUMSUB', channel]);
+    })
+    .then(function (res) {
+      // res = [channel, "<count>"] (count may be a string or number)
+      cb(parseInt(res[1], 10));
+    })
+    .catch(function () {
+      cb(0);
+    });
 }
 
 describe('regression: resource leaks', function () {
@@ -135,19 +147,31 @@ describe('regression: resource leaks', function () {
   describe('#403 hivtrace hset tolerates object params', function () {
     this.timeout(5000);
 
-    it('does not throw when params is an object (node-redis 3 rejects raw objects)', function () {
-      var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
+    // redis@5 migration: `hset`->`hSet`, promise-returning (no callback), and
+    // the shared connected client from lib/redis-client.js replaces the
+    // per-test `createClient`. The #403 fix is that params is JSON.stringify'd
+    // before being written, so hSet receives a string (a raw object would
+    // reject). We assert the call resolves (does not reject).
+    it('does not reject when params is an object (must be stringified first)', function () {
       var params = { type: 'hivtrace', msa: [{ _id: 'x' }], analysis: { _id: 'y' } };
-      // Mirror the fixed hivtrace.spawn() call. Pre-fix this threw synchronously.
-      (function () {
-        client.hset(
-          'regr403-' + process.pid,
-          'params',
-          typeof params === 'string' ? params : JSON.stringify(params)
-        );
-      }).should.not.throw();
-      client.del('regr403-' + process.pid);
-      client.quit();
+      var key = 'regr403-' + process.pid;
+      // Mirror the fixed hivtrace.spawn() call. Pre-fix an object was passed raw.
+      return redisClient.ready
+        .then(function () {
+          return redisClient.client.hSet(
+            key,
+            'params',
+            typeof params === 'string' ? params : JSON.stringify(params)
+          );
+        })
+        .then(function () {
+          // Round-trip: the stored value must be the stringified object.
+          return redisClient.client.hGet(key, 'params');
+        })
+        .then(function (stored) {
+          stored.should.equal(JSON.stringify(params));
+          return redisClient.client.del(key);
+        });
     });
   });
 });

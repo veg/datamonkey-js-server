@@ -1,0 +1,35 @@
+name: Lint
+
+on:
+  push:
+    branches: [feature/v4-modernization]
+  pull_request:
+    branches: [feature/v4-modernization, master]
+
+jobs:
+  lint:
+    name: ESLint (blocking) + Prettier (report-only)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      # BLOCKING: the codebase now passes eslint:recommended with 0 errors
+      # (unused-vars are warn-level). Lint failures fail CI. See #410.
+      - name: Run ESLint
+        run: npm run lint
+
+      # Prettier stays report-only: a full reformat is deferred to its own
+      # dedicated PR (~40 files of reflow). See #410.
+      - name: Check formatting with Prettier (report-only)
+        run: npm run format:check
+        continue-on-error: true

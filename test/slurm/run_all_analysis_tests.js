@@ -4,7 +4,21 @@
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
-const colors = require('colors/safe');
+
+// Minimal ANSI color shim (replaces the unlisted `colors/safe` dependency,
+// which was not in package.json and crashed this runner on load). Cosmetic
+// only — supports the cyan/green/red/yellow + .bold chains used below.
+function ansi(code) {
+  const wrap = (s) => '\x1b[' + code + 'm' + s + '\x1b[0m';
+  wrap.bold = (s) => '\x1b[1;' + code + 'm' + s + '\x1b[0m';
+  return wrap;
+}
+const colors = {
+  cyan: ansi(36),
+  green: ansi(32),
+  red: ansi(31),
+  yellow: ansi(33)
+};
 
 // Define the analysis methods to test
 const methods = [
