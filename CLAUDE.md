@@ -22,14 +22,20 @@
 - Located in `lib/mcp/` — uses `@modelcontextprotocol/sdk` with StreamableHTTP transport.
 - Runs on a separate Express instance on `config.mcp_port` (default 7016).
 - Stdio transport at `lib/mcp/stdio.js` for local Claude Code usage.
-- Tools: `list_analyses`, `spawn_analysis`, `job_status`, `get_results`, `cancel_job`, `validate_alignment`.
+- Tools: `list_analyses`, `spawn_analysis`, `job_status`, `get_results`, `cancel_job`, `validate_alignment`, `axomeme_scan`.
 - `spawnAnalysis` in `lib/mcp/spawn-helpers.js` bridges MCP tool calls to the existing analysis constructors.
+
+### AxoMEME
+
+- AxoMEME is NOT a HyPhy method — it is an ONNX neural surrogate for MEME (`lib/axomeme/`), run as a Node CLI behind the standard job lifecycle (no `.bf`, no MPI).
+- The `axomeme_scan` MCP tool runs synchronous scans without going through the job queue.
+- Requires a tree WITH branch lengths; genetic code is fixed (universal) and there is no branch selection.
 
 ### Tree parameter routing
 
 Different analyses read the tree from different locations in the params object:
 - **FEL/aBSREL/BUSTED/RELAX**: `params.analysis.tagged_nwk_tree` or `params.tree`
-- **MEME/PRIME/SLAC**: `params.msa[0].nj`, then prefer `params.analysis.msa[0].usertree`
+- **MEME/PRIME/SLAC/axomeme**: `params.msa[0].nj`, then prefer `params.analysis.msa[0].usertree`
 
 `spawnAnalysis` sets the tree in all locations (`params.tree`, `msa[0].nj`, `msa[0].usertree`, `analysis.msa[0]`) to ensure every analysis constructor finds it.
 

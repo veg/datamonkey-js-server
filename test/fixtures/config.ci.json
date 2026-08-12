@@ -12,6 +12,7 @@
   "hivtrace_procs": "16",
   "hivtrace_walltime": "3:00:00:00",
   "absrel_procs": "32",
+  "axomeme_procs": "4",
   "bgm_procs": "32",
   "busted_procs": "32",
   "cfel_procs": "32",

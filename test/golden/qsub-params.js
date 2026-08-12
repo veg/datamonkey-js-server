@@ -31,7 +31,9 @@ var ABS_ROOT = path.resolve(__dirname, "../..");
 var HOME = require("os").homedir();
 var SNAPSHOT = path.join(__dirname, "qsub-params.snapshot.json");
 
-// The 14 declarative-candidate analyses: [label, module path, export key].
+// The 15 factory-built analyses: [label, module path, export key].
+// (14 declarative HyPhy candidates + axomeme, a non-HyPhy neural surrogate
+// that still uses lib/analysis-factory.js.)
 var ANALYSES = [
   ["fel", "../../app/fel/fel.js", "fel"],
   ["meme", "../../app/meme/meme.js", "meme"],
@@ -46,7 +48,8 @@ var ANALYSES = [
   ["multihit", "../../app/multihit/multihit.js", "multihit"],
   ["nrm", "../../app/nrm/nrm.js", "nrm"],
   ["bstill", "../../app/bstill/bstill.js", "bstill"],
-  ["cfel", "../../app/contrast-fel/cfel.js", "cfel"]
+  ["cfel", "../../app/contrast-fel/cfel.js", "cfel"],
+  ["axomeme", "../../app/axomeme/axomeme.js", "axomeme"]
 ];
 
 function fakeSocket() {
@@ -261,8 +264,8 @@ describe("golden: analysis qsub_params snapshot (Phase 2 oracle)", function () {
     config.submit_type = "slurm";
   });
 
-  it("captures all 14 factory + 3 bespoke analyses for slurm and local", function () {
-    Object.keys(current).length.should.equal(17);
+  it("captures all 15 factory + 3 bespoke analyses for slurm and local", function () {
+    Object.keys(current).length.should.equal(18);
     ALL_LABELS.forEach(function (label) {
       current[label].slurm.qsub_params.length.should.be.above(0);
       current[label].local.qsub_params.length.should.be.above(0);
@@ -274,7 +277,7 @@ describe("golden: analysis qsub_params snapshot (Phase 2 oracle)", function () {
       fs.writeFileSync(SNAPSHOT, JSON.stringify(current, null, 2) + "\n");
       // Sanity: file is valid + non-trivial.
       var written = JSON.parse(fs.readFileSync(SNAPSHOT, "utf8"));
-      Object.keys(written).length.should.equal(17);
+      Object.keys(written).length.should.equal(18);
     });
   } else {
     it("matches the committed golden snapshot (byte-for-byte per analysis)", function () {

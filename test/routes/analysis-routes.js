@@ -19,12 +19,12 @@ function collectRoutes() {
 }
 
 describe("routes: analysis route registry", function () {
-  it("registers all 17 analysis routes", function () {
+  it("registers all 18 analysis routes", function () {
     var r = collectRoutes();
     Object.keys(r).sort().should.eql([
-      "absrel", "bgm", "bstill", "busted", "cfel", "difFubar", "fade", "fel",
-      "fubar", "gard", "hivtrace", "meme", "multihit", "nrm", "prime",
-      "relax", "slac"
+      "absrel", "axomeme", "bgm", "bstill", "busted", "cfel", "difFubar",
+      "fade", "fel", "fubar", "gard", "hivtrace", "meme", "multihit", "nrm",
+      "prime", "relax", "slac"
     ]);
   });
 

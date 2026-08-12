@@ -13,6 +13,8 @@
   "hivtrace_walltime"      : "3:00:00:00",
   "absrel_procs"           : "32",
   "absrel_walltime"        : "3:00:00:00",
+  "axomeme_procs"          : "4",
+  "axomeme_walltime"       : "4:00:00",
   "bgm_procs"              : "32",
   "bgm_walltime"           : "3:00:00:00",
   "busted_procs"           : "32",

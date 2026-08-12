@@ -559,6 +559,44 @@
       ]
     }
   },
+  "axomeme": {
+    "slurm": {
+      "type": "axomeme",
+      "resultsSuffix": "AXOMEME.json",
+      "qsub_params": [
+        "--ntasks=4",
+        "--cpus-per-task=1",
+        "--time=72:00:00",
+        "--partition=datamonkey",
+        "--nodes=1",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/axomeme/output/check-<TS>,tree_fn=<ROOT>/app/axomeme/output/check-<TS>.tre,sfn=<ROOT>/app/axomeme/output/check-<TS>.status,pfn=<ROOT>/app/axomeme/output/check-<TS>.axomeme.progress,rfn=<ROOT>/app/axomeme/output/check-<TS>.axomeme,treemode=0,call_mode=percentile,max_species=512,reference_sequence=,genetic_code=Universal,analysis_type=axomeme,cwd=<ROOT>/app/axomeme,msaid=check,procs=4",
+        "--output=<ROOT>/app/axomeme/output/axomeme_check-<TS>_%j.out",
+        "--error=<ROOT>/app/axomeme/output/axomeme_check-<TS>_%j.err",
+        "<ROOT>/app/axomeme/axomeme.sh"
+      ]
+    },
+    "local": {
+      "type": "axomeme",
+      "resultsSuffix": "AXOMEME.json",
+      "qsub_params": [
+        "<ROOT>/app/axomeme/axomeme.sh",
+        "fn=<ROOT>/app/axomeme/output/check-<TS>",
+        "tree_fn=<ROOT>/app/axomeme/output/check-<TS>.tre",
+        "sfn=<ROOT>/app/axomeme/output/check-<TS>.status",
+        "pfn=<ROOT>/app/axomeme/output/check-<TS>.axomeme.progress",
+        "rfn=<ROOT>/app/axomeme/output/check-<TS>.axomeme",
+        "treemode=0",
+        "call_mode=percentile",
+        "max_species=512",
+        "reference_sequence=",
+        "genetic_code=Universal",
+        "analysis_type=axomeme",
+        "cwd=<ROOT>/app/axomeme",
+        "msaid=check",
+        "procs=4"
+      ]
+    }
+  },
   "gard": {
     "slurm": {
       "type": "gard",

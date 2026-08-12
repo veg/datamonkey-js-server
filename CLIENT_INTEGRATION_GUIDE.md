@@ -69,6 +69,7 @@ The server provides the following bioinformatics analyses:
 - **cfel** - Contrast-FEL
 - **relax** - RELAX test
 - **meme** - Mixed Effects Model of Evolution
+- **axomeme** - AxoMEME 2.0 neural surrogate for MEME (requires a tree with branch lengths; options call_mode, max_species, reference_sequence)
 - **slac** - Single Likelihood Ancestor Counting
 - **gard** - Genetic Algorithm for Recombination Detection
 - **fubar** - Fast, Unconstrained Bayesian AppRoximation
@@ -237,6 +238,18 @@ const memeParams = {
 };
 
 runUnifiedAnalysis('meme', alignmentData, treeData, memeParams);
+
+// Example AxoMEME analysis using unified format
+// Note: AxoMEME is a neural surrogate for MEME (not HyPhy) — the tree MUST have
+// branch lengths, the genetic code is fixed (universal), and there is no branch selection.
+const axomemeParams = {
+  analysis_type: 'axomeme',
+  call_mode: 'percentile',          // Site-calling mode: 'percentile', 'zscore', 'pvalue' (default: 'percentile')
+  max_species: 512,                 // Taxon cap, clamped to 2-512 (default: 512)
+  reference_sequence: 'Human'       // Optional reference sequence name; must match a sequence in the alignment
+};
+
+runUnifiedAnalysis('axomeme', alignmentData, treeData, axomemeParams);
 
 // Example SLAC analysis using unified format
 const slacParams = {

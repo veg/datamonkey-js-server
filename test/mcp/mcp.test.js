@@ -67,22 +67,22 @@ describe("MCP manifest (.well-known/mcp.json)", function () {
 // =====================================================================
 describe("MCP spawn-helpers", function () {
 
-  it("analysisMap contains all 17 analysis types", function () {
+  it("analysisMap contains all 18 analysis types", function () {
     var keys = Object.keys(spawnHelpers.analysisMap);
-    expect(keys).to.have.lengthOf(17);
+    expect(keys).to.have.lengthOf(18);
     var expected = [
       "absrel", "bgm", "busted", "difFubar", "fel", "cfel",
       "fubar", "bstill", "fade", "gard", "hivtrace", "meme", "multihit",
-      "nrm", "prime", "relax", "slac"
+      "nrm", "prime", "relax", "slac", "axomeme"
     ];
     expected.forEach(function (key) {
       expect(spawnHelpers.analysisMap).to.have.property(key);
     });
   });
 
-  it("analysisInfo has metadata for all 17 types", function () {
+  it("analysisInfo has metadata for all 18 types", function () {
     var keys = Object.keys(spawnHelpers.analysisInfo);
-    expect(keys).to.have.lengthOf(17);
+    expect(keys).to.have.lengthOf(18);
   });
 
   it("each analysisInfo entry has name, description, and params", function () {
@@ -183,10 +183,10 @@ describe("MCP tools – list_analyses", function () {
     registerTools(mcpServer, mockRedis);
   });
 
-  it("returns an array with 17 entries", async function () {
+  it("returns an array with 18 entries", async function () {
     var result = await callTool(mcpServer, "list_analyses");
     var parsed = JSON.parse(result.content[0].text);
-    expect(parsed).to.be.an("array").with.lengthOf(17);
+    expect(parsed).to.be.an("array").with.lengthOf(18);
   });
 
   it("each entry has type, name, and description fields", async function () {
@@ -445,6 +445,139 @@ describe("MCP tools – spawn_analysis", function () {
 });
 
 // =====================================================================
+// Suite 6b: axomeme validation behavior — every refusal must fire BEFORE
+// spawnAnalysis, so a rejected request can never leave a zombie job. The
+// reference_sequence whitelist is a security control (the name is
+// interpolated into a comma-joined SLURM --export string), so these are
+// pinned behaviorally, not just via registry counts.
+// =====================================================================
+describe("MCP tools – axomeme validation behavior", function () {
+  var mcpServer;
+  var originalSpawnAnalysis;
+  var spawnCalls;
+
+  var CODON_ALIGNMENT = ">s1\nATGATG\n>s2\nATGCTG";
+  var TREE_WITH_LENGTHS = "(s1:0.1,s2:0.2);";
+  var TOPOLOGY_ONLY = "(s1,s2);";
+
+  before(function () {
+    mcpServer = new McpServer(
+      { name: "test", version: "1.0.0" },
+      { capabilities: { tools: {} } }
+    );
+    spawnCalls = [];
+    originalSpawnAnalysis = spawnHelpers.spawnAnalysis;
+    spawnHelpers.spawnAnalysis = function (type) {
+      spawnCalls.push(type);
+      return "deadbeef5678";
+    };
+    registerTools(mcpServer, createMockRedis({}));
+  });
+
+  after(function () {
+    spawnHelpers.spawnAnalysis = originalSpawnAnalysis;
+  });
+
+  beforeEach(function () {
+    spawnCalls.length = 0;
+  });
+
+  it("spawn_analysis axomeme with no tree refuses without spawning", async function () {
+    var result = await callTool(mcpServer, "spawn_analysis", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT
+    });
+    expect(result.isError).to.be.true;
+    expect(result.content[0].text).to.match(/tree/i);
+    expect(spawnCalls).to.have.lengthOf(0);
+  });
+
+  it("spawn_analysis axomeme with a topology-only tree refuses without spawning", async function () {
+    var result = await callTool(mcpServer, "spawn_analysis", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT,
+      tree: TOPOLOGY_ONLY
+    });
+    expect(result.isError).to.be.true;
+    expect(result.content[0].text).to.match(/branch lengths/i);
+    expect(spawnCalls).to.have.lengthOf(0);
+  });
+
+  it("spawn_analysis axomeme rejects an unsafe reference_sequence without spawning", async function () {
+    var result = await callTool(mcpServer, "spawn_analysis", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT,
+      tree: TREE_WITH_LENGTHS,
+      params: { reference_sequence: "a b; rm -rf /" }
+    });
+    expect(result.isError).to.be.true;
+    expect(spawnCalls).to.have.lengthOf(0);
+  });
+
+  it("spawn_analysis axomeme rejects max_species outside 2..512 without spawning", async function () {
+    var result = await callTool(mcpServer, "spawn_analysis", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT,
+      tree: TREE_WITH_LENGTHS,
+      params: { max_species: 99999 }
+    });
+    expect(result.isError).to.be.true;
+    expect(spawnCalls).to.have.lengthOf(0);
+  });
+
+  it("spawn_analysis axomeme with a branch-length tree spawns exactly once", async function () {
+    var result = await callTool(mcpServer, "spawn_analysis", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT,
+      tree: TREE_WITH_LENGTHS
+    });
+    expect(result.isError).to.not.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.job_id).to.equal("deadbeef5678");
+    expect(spawnCalls).to.deep.equal(["axomeme"]);
+  });
+
+  it("validate_alignment axomeme flags a missing tree and a topology-only tree", async function () {
+    var noTree = await callTool(mcpServer, "validate_alignment", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT
+    });
+    expect(noTree.isError).to.be.true;
+    var bareTree = await callTool(mcpServer, "validate_alignment", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT,
+      tree: TOPOLOGY_ONLY
+    });
+    expect(bareTree.isError).to.be.true;
+    expect(bareTree.content[0].text).to.match(/branch lengths/i);
+  });
+
+  it("validate_alignment pre-flights axomeme params the way spawn_analysis will", async function () {
+    var result = await callTool(mcpServer, "validate_alignment", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT,
+      tree: TREE_WITH_LENGTHS,
+      params: { reference_sequence: "a,b=c" }
+    });
+    expect(result.isError).to.be.true;
+    var parsed = JSON.parse(result.content[0].text);
+    expect(JSON.stringify(parsed.errors)).to.match(/reference_sequence/i);
+  });
+
+  it("validate_alignment warns that axomeme ignores genetic_code", async function () {
+    var result = await callTool(mcpServer, "validate_alignment", {
+      analysis_type: "axomeme",
+      alignment: CODON_ALIGNMENT,
+      tree: TREE_WITH_LENGTHS,
+      params: { genetic_code: 4 }
+    });
+    var parsed = JSON.parse(result.content[0].text);
+    expect(parsed.valid).to.be.true;
+    expect(JSON.stringify(parsed.warnings)).to.match(/universal/i);
+  });
+});
+
+// =====================================================================
 // Suite 7: Prompts
 // =====================================================================
 describe("MCP prompts", function () {
@@ -537,11 +670,11 @@ describe("MCP resources", function () {
     expect(text).to.include("HIV-TRACE");
   });
 
-  it("requirements resource returns JSON with 17 methods", async function () {
+  it("requirements resource returns JSON with 18 methods", async function () {
     var resource = mcpServer._registeredResources["datamonkey://methods/requirements"];
     var result = await resource.readCallback(new URL("datamonkey://methods/requirements"), {});
     var parsed = JSON.parse(result.contents[0].text);
-    expect(Object.keys(parsed)).to.have.lengthOf(17);
+    expect(Object.keys(parsed)).to.have.lengthOf(18);
     expect(parsed.relax.requires_branch_labels).to.be.true;
     expect(parsed.hivtrace.requires_codon_alignment).to.be.false;
   });
