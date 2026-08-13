@@ -337,6 +337,8 @@ gard.prototype.onComplete = function() {
           // Prepare redis packet for delivery
           const redis_packet = { results: stringified_results };
           redis_packet.type = "completed";
+          // #209: terminal packets carry the job id (see hyphyjob.js onComplete).
+          redis_packet.id = self.id;
           const str_redis_packet = JSON.stringify(redis_packet);
 
           // Log that the job has been completed

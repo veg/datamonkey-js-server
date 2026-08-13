@@ -334,7 +334,11 @@ hivtrace.prototype.onStatusUpdate = function(data, index) {
 
       const status_update = {
         msg: new_status,
-        torque_id: self.torque_id
+        torque_id: self.torque_id,
+        // #209: hyphyjob's "status update" has always carried the job id; this
+        // one did not, so hivtrace progress was the one live packet a client
+        // could not attribute to a job. Same routing fix as the terminal packets.
+        id: self.id
       };
 
       // Prepare redis packet for delivery
@@ -382,7 +386,8 @@ hivtrace.prototype.onComplete = function() {
         return;
       }
 
-      const redis_packet = { type: "completed" };
+      // #209: terminal packets carry the job id (see hyphyjob.js onComplete).
+      const redis_packet = { type: "completed", id: self.id };
       const str_redis_packet = JSON.stringify(redis_packet);
 
       // Log that the job has been completed
@@ -402,7 +407,7 @@ hivtrace.prototype.onComplete = function() {
           status: "completed",
           results: str_redis_packet
         },
-        JSON.stringify({ type: "completed" })
+        JSON.stringify({ type: "completed", id: self.id })
       );
     } else {
       self.onError(
