@@ -38,5 +38,23 @@ module.exports = {
             "off",
             "never"
         ]
-    }
+    },
+    "overrides": [
+        {
+            // Vendored DM3 code keeps upstream tab indentation and single
+            // quotes so it stays byte-diffable against datamonkey3 (see
+            // lib/axomeme/README.md). es2021 env supplies the BigInt /
+            // BigInt64Array globals assemble.js uses (base env is es6,
+            // which predates them; parserOptions.ecmaVersion only affects
+            // syntax, not globals).
+            "files": ["lib/axomeme/vendor/**/*.js"],
+            "env": {
+                "es2021": true
+            },
+            "rules": {
+                "indent": "off",
+                "quotes": "off"
+            }
+        }
+    ]
 };

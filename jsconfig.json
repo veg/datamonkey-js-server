@@ -14,5 +14,5 @@
     "maxNodeModuleJsDepth": 0
   },
   "include": ["lib/**/*.js", "app/**/*.js", "server.js"],
-  "exclude": ["node_modules", "**/output/**", ".hyphy/**", ".python/**", "test/**"]
+  "exclude": ["node_modules", "**/output/**", ".hyphy/**", ".python/**", "test/**", "lib/axomeme/vendor"]
 }

@@ -44,6 +44,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: npm
       - name: Create config.json
         # Shared deterministic CI fixture (single source of truth with ci.yml).
         run: cp test/fixtures/config.ci.json config.json

@@ -34,7 +34,8 @@ var DESCRIPTORS = [
   ["multihit", require(__dirname + "/../../app/multihit/descriptor.js").multihit],
   ["nrm", require(__dirname + "/../../app/nrm/descriptor.js").nrm],
   ["bstill", require(__dirname + "/../../app/bstill/descriptor.js").bstill],
-  ["cfel", require(__dirname + "/../../app/contrast-fel/descriptor.js").cfel]
+  ["cfel", require(__dirname + "/../../app/contrast-fel/descriptor.js").cfel],
+  ["axomeme", require(__dirname + "/../../app/axomeme/descriptor.js").axomeme]
 ];
 
 function fakeSocket() {

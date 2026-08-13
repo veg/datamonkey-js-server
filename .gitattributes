@@ -1,1 +1,3 @@
 *.bf linguist-language=HyPhy
+*.onnx binary
+lib/axomeme/vendor/** linguist-vendored

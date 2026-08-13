@@ -15,6 +15,12 @@ app/hivtrace/output
 app/hivtrace/res/LANL.FASTA
 app/hivtrace/res/LANL.UNALIGNED.FASTA
 **/output
+# Analysis output dirs must exist in a fresh checkout (jobs write into them).
+# Re-including a file under an ignored DIRECTORY needs three steps: un-ignore
+# the dir itself, re-ignore its contents, then un-ignore just the .gitkeep.
+!app/*/output/
+app/*/output/*
+!app/*/output/.gitkeep
 .hyphy*
 .python
 
@@ -43,3 +49,8 @@ STDIN*
 
 **/.claude/settings.local.json
 .telegram-bot-token
+
+# test/ is real source: on case-insensitive filesystems the *Test* pattern above
+# matches the test/ directory itself, silently ignoring every NEW test file.
+!test/
+!test/**

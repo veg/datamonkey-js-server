@@ -28,6 +28,8 @@ const descriptor = {
     self.branches = src.branches || "All";
     self.bootstrap = src.bootstrap || false;
     self.resample = src.resample || 1;
+    // FEL.bf declares KeywordArgument("pvalue", ..., "0.1"); match that default.
+    self.p_value = src.p_value || 0.1;
 
     const isCheckOnly = params.checkOnly || false;
     if (isCheckOnly) {
@@ -116,7 +118,8 @@ const descriptor = {
     ["procs", function (self, config) { return config.fel_procs; }],
     ["multiple_hits", function (self) { return self.multiple_hits; }],
     ["site_multihit", function (self) { return self.site_multihit; }],
-    ["branches", function (self) { return self.branches; }]
+    ["branches", function (self) { return self.branches; }],
+    ["pvalue", function (self) { return self.p_value; }]
   ]
 };
 
