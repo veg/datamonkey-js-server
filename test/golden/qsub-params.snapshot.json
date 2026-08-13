@@ -9,7 +9,7 @@
         "--time=72:00:00",
         "--partition=datamonkey",
         "--nodes=1",
-        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/fel/output/check-<TS>,tree_fn=<ROOT>/app/fel/output/check-<TS>.tre,sfn=<ROOT>/app/fel/output/check-<TS>.status,pfn=<ROOT>/app/fel/output/check-<TS>.fel.progress,rfn=<ROOT>/app/fel/output/check-<TS>.fel,treemode=0,bootstrap=false,resample=1,genetic_code=Universal,analysis_type=fel,rate_variation=No,ci=No,cwd=<ROOT>/app/fel,msaid=check,procs=32,multiple_hits=None,site_multihit=Estimate,branches=All",
+        "--export=ALL,slurm_mpi_type=pmix,fn=<ROOT>/app/fel/output/check-<TS>,tree_fn=<ROOT>/app/fel/output/check-<TS>.tre,sfn=<ROOT>/app/fel/output/check-<TS>.status,pfn=<ROOT>/app/fel/output/check-<TS>.fel.progress,rfn=<ROOT>/app/fel/output/check-<TS>.fel,treemode=0,bootstrap=false,resample=1,genetic_code=Universal,analysis_type=fel,rate_variation=No,ci=No,cwd=<ROOT>/app/fel,msaid=check,procs=32,multiple_hits=None,site_multihit=Estimate,branches=All,pvalue=0.1",
         "--output=<ROOT>/app/fel/output/fel_check-<TS>_%j.out",
         "--error=<ROOT>/app/fel/output/fel_check-<TS>_%j.err",
         "<ROOT>/app/fel/fel.sh"
@@ -37,7 +37,8 @@
         "procs=32",
         "multiple_hits=None",
         "site_multihit=Estimate",
-        "branches=All"
+        "branches=All",
+        "pvalue=0.1"
       ]
     }
   },
