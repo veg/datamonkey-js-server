@@ -375,6 +375,13 @@ hyphyJob.prototype.onComplete = function() {
         // Prepare redis packet for delivery
         const redis_packet = { results: data };
         redis_packet.type = "completed";
+        // #209: terminal packets carry the job id, like "status update" always
+        // has. Without it a client holding several concurrent jobs on one socket
+        // cannot tell which job just finished. Stamped here rather than in
+        // finalizeCompletion because that helper receives an already-serialised
+        // string, and re-parsing a results payload that can approach the 50 MB
+        // guard below purely to insert one field is not worth it.
+        redis_packet.id = self.id;
 
         const str_redis_packet = JSON.stringify(redis_packet);
 
@@ -514,6 +521,9 @@ hyphyJob.prototype.onError = function(error) {
   // The packet that will delivered to datamonkey via the publish command
   const redis_packet = { error: error };
   redis_packet.type = "script error";
+  // #209: see onComplete — a failing job must be attributable to a job id too,
+  // and onError does not route through finalizeCompletion at all.
+  redis_packet.id = self.id;
 
   // Read error path contents. q's Q.nfcall + Q.allSettled are replaced with
   // native promisified fs.readFile + Promise.allSettled. NOTE: q's settled
