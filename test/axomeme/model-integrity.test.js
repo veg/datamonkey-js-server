@@ -5,7 +5,7 @@
  * milliseconds and fails for exactly one reason — the bytes on disk changed.
  *
  * Everything lib/axomeme/vendor/modelContract.js asserts about the graph (eval-mode export,
- * `lrt` already ordinal-decoded, the rate heads living in log1p space, the TCAG codon order) was
+ * `lrt` already ordinal-decoded, the single output head, the TCAG codon order) was
  * read off ONE artifact. A different export may well be fine, but none of those conclusions would
  * have been checked against it, and the failure mode of guessing is plausible numbers computed
  * from the wrong assumptions rather than an error.
@@ -16,11 +16,11 @@ const crypto = require("node:crypto");
 const fs = require("fs");
 const path = require("path");
 
-const MODEL = path.join(__dirname, "../../lib/axomeme/model/axomeme_2.0_viral_finetuned.onnx");
+const MODEL = path.join(__dirname, "../../lib/axomeme/model/axomeme_v1_viral_finetuned.onnx");
 
 /** Measured with `shasum -a 256` on the vendored artifact. */
-const EXPECTED_SHA = "3e06b591a060fca996a41c040c2c29f319aa47ca3d3401f4757571b57e6faec6";
-const EXPECTED_BYTES = 3782234;
+const EXPECTED_SHA = "de765904107ba436c6ad6abbecb8af54962abd8444e1b5044947bb945d8ccda3";
+const EXPECTED_BYTES = 7786911;
 
 describe("axomeme model artifact integrity", () => {
   it("the model artifact is exactly the pinned size", () => {

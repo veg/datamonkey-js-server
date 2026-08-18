@@ -30,6 +30,8 @@
 - AxoMEME is NOT a HyPhy method — it is an ONNX neural surrogate for MEME (`lib/axomeme/`), run as a Node CLI behind the standard job lifecycle (no `.bf`, no MPI).
 - The `axomeme_scan` MCP tool runs synchronous scans without going through the job queue.
 - Requires a tree WITH branch lengths; genetic code is fixed (universal) and there is no branch selection.
+- Model is `axomeme_v1_viral_finetuned.onnx` (v1-viral). It has 4 inputs and ONE output (`lrt`); the retired 2.0 export had 5 and 5. Results therefore carry no `alphaDs`/`betaPosDn`/`pPos` — those fields are omitted, never zero-filled.
+- The model must be swapped in lockstep with datamonkey3, or the same alignment scores differently in browser vs server. `max_species` is capped at 512 on BOTH sides for the same reason (see `lib/axomeme/predict.js`).
 
 ### Tree parameter routing
 
