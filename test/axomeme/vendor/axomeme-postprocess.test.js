@@ -21,11 +21,7 @@ const {
 function outputs(n, over = {}) {
 	const fill = (v) => new Float32Array(n).fill(v);
 	return {
-		lrt: over.lrt ?? fill(1),
-		alpha: over.alpha ?? fill(0),
-		beta_neg: over.beta_neg ?? fill(0),
-		beta_pos: over.beta_pos ?? fill(0),
-		p_neg: over.p_neg ?? fill(0.25)
+		lrt: over.lrt ?? fill(1)
 	};
 }
 
@@ -76,19 +72,18 @@ describe('buildPredictions', () => {
 		variable: new Array(n).fill(variable)
 	});
 
-	it('applies expm1 to the rate heads', () => {
-		// The heads are softplus, so the graph emits log1p(rate). expm1(1) = e - 1 = 1.7182818...
-		const rows = buildPredictions(
-			outputs(1, { alpha: new Float32Array([1]), beta_pos: new Float32Array([2]) }),
-			sites(1)
-		);
-		expect(rows[0].alphaDs).toBeCloseTo(Math.E - 1, 6);
-		expect(rows[0].betaPosDn).toBeCloseTo(Math.exp(2) - 1, 6);
-	});
-
-	it('reports p_pos as 1 - p_neg', () => {
-		const rows = buildPredictions(outputs(1, { p_neg: new Float32Array([0.25]) }), sites(1));
-		expect(rows[0].pPos).toBeCloseTo(0.75, 6);
+	it('emits no rate fields at all, rather than zeros', () => {
+		// v1-viral returns ONLY `lrt`. The retired 2.0 export also returned alpha / beta_neg /
+		// beta_pos / p_neg, which is where dS, dN+ and p came from.
+		//
+		// The tests this replaces asserted expm1 decoding and p_pos = 1 - p_neg. Those heads no
+		// longer exist, so the assertion that matters now is the ABSENCE of the fields: reporting
+		// dS = 0 would be a fabricated measurement, and a zero in a rate column reads as "no
+		// synonymous change" rather than "not measured".
+		const rows = buildPredictions(outputs(1, { lrt: new Float32Array([3]) }), sites(1));
+		expect(rows[0]).not.toHaveProperty('alphaDs');
+		expect(rows[0]).not.toHaveProperty('betaPosDn');
+		expect(rows[0]).not.toHaveProperty('pPos');
 	});
 
 	it('treats lrt as the LRT and DERIVES the log, not the other way round', () => {
@@ -99,13 +94,11 @@ describe('buildPredictions', () => {
 		expect(rows[0].logLrt).toBeCloseTo(Math.log1p(4), 6);
 	});
 
-	it('clamps a negative lrt or rate to zero', () => {
-		const rows = buildPredictions(
-			outputs(1, { lrt: new Float32Array([-2]), alpha: new Float32Array([-3]) }),
-			sites(1)
-		);
+	it('clamps a negative lrt to zero', () => {
+		// The rate half of this test went with the rate heads; the lrt clamp is the reference's and
+		// still applies.
+		const rows = buildPredictions(outputs(1, { lrt: new Float32Array([-2]) }), sites(1));
 		expect(rows[0].lrt).toBe(0);
-		expect(rows[0].alphaDs).toBe(0);
 	});
 
 	it('ZEROES an invariant site instead of scoring it', () => {

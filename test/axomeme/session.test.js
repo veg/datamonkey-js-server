@@ -315,7 +315,7 @@ describe("axomeme session loading", () => {
   });
 
   it("refuses a graph that is missing a contract input", async () => {
-    const ort = fakeOrt(["msa_codons", "msa_aas", "dist_matrix"]);
+    const ort = fakeOrt(["msa_codons", "msa_aas"]);
     await assert.rejects(
       session.loadSession({
         ort,
@@ -326,8 +326,8 @@ describe("axomeme session loading", () => {
         assert.match(err.message, /missing expected inputs/);
         // Names every missing input, not just the first: an upstream rename usually moves more
         // than one, and a one-at-a-time message costs a re-export per name to discover that.
+        assert.ok(err.message.includes("dist_matrix"));
         assert.ok(err.message.includes("mds_coords"));
-        assert.ok(err.message.includes("padding_mask"));
         return true;
       }
     );
@@ -342,8 +342,7 @@ describe("axomeme session loading", () => {
       msa_codons: { data: BigInt64Array.from([0n, 1n, 2n, 3n, 4n, 5n]), dims: [2, 3, 1] },
       msa_aas: { data: BigInt64Array.from([0n, 1n, 2n, 3n, 4n, 5n]), dims: [2, 3, 1] },
       dist_matrix: { data: new Float32Array(2 * 3 * 3), dims: [2, 3, 3] },
-      mds_coords: { data: new Float32Array(2 * 3 * 4), dims: [2, 3, 4] },
-      padding_mask: { data: Uint8Array.from([0, 0, 1, 0, 0, 1]), dims: [2, 3] }
+      mds_coords: { data: new Float32Array(2 * 3 * 4), dims: [2, 3, 4] }
     };
 
     const out = await session.runSites(graph, bundle, ort);
@@ -358,7 +357,6 @@ describe("axomeme session loading", () => {
     assert.equal(feeds.msa_aas.type, "int64");
     assert.equal(feeds.dist_matrix.type, "float32");
     assert.equal(feeds.mds_coords.type, "float32");
-    assert.equal(feeds.padding_mask.type, "bool");
 
     for (const name of INPUT_NAMES) {
       assert.deepEqual(feeds[name].dims, bundle[name].dims);
@@ -368,7 +366,7 @@ describe("axomeme session loading", () => {
     assert.deepEqual(Object.keys(out).sort(), OUTPUT_NAMES.slice().sort());
     assert.equal(out.lrt.length, 2);
 
-    // ONE run for the whole batch. dist_matrix, mds_coords and padding_mask are per-ALIGNMENT, not
+    // ONE run for the whole batch. dist_matrix and mds_coords are per-ALIGNMENT, not
     // per-site — the reference driver loops one forward pass per site
     // (predict_regression_nexus.py:1345), which on a 441-site alignment is 441 runs of overhead
     // for identical work. If runSites ever grows a loop, this is what notices.
@@ -376,8 +374,7 @@ describe("axomeme session loading", () => {
       msa_codons: { data: new BigInt64Array(441 * 2), dims: [441, 2, 1] },
       msa_aas: { data: new BigInt64Array(441 * 2), dims: [441, 2, 1] },
       dist_matrix: { data: new Float32Array(441 * 2 * 2), dims: [441, 2, 2] },
-      mds_coords: { data: new Float32Array(441 * 2 * 4), dims: [441, 2, 4] },
-      padding_mask: { data: new Uint8Array(441 * 2), dims: [441, 2] }
+      mds_coords: { data: new Float32Array(441 * 2 * 4), dims: [441, 2, 4] }
     };
     const wideOut = await session.runSites(graph, wide, ort);
     assert.equal(ort.runCalls.length, 2);

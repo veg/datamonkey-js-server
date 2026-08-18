@@ -61,11 +61,6 @@ function validBundle() {
 		mds_coords: {
 			data: new Float32Array(BATCH * SPECIES * MDS_COMPONENTS),
 			dims: [BATCH, SPECIES, MDS_COMPONENTS]
-		},
-		// TRUE = padded. Species 3 only.
-		padding_mask: {
-			data: new Uint8Array([0, 0, 0, 1, 0, 0, 0, 1]),
-			dims: [BATCH, SPECIES]
 		}
 	};
 }
@@ -117,42 +112,30 @@ describe('the transcribed constants', () => {
 		expect(Math.floor(WINDOW_SIZE_DEFAULT / 2)).toBe(0);
 	});
 
-	it('lists the five inputs in forward() order and marks the site-invariant ones', () => {
-		expect(INPUT_NAMES).toEqual([
-			'msa_codons',
-			'msa_aas',
-			'dist_matrix',
-			'mds_coords',
-			'padding_mask'
-		]);
-		// These three are computed once per alignment and expanded across sites. That is what makes
-		// batching every site into a single graph run cheap, so it is worth asserting rather than
-		// rediscovering.
+	it('lists the four inputs in forward() order and marks the site-invariant ones', () => {
+		expect(INPUT_NAMES).toEqual(['msa_codons', 'msa_aas', 'dist_matrix', 'mds_coords']);
+		// v1-viral dropped `padding_mask`; nothing ever padded anyway, so nothing was lost but the
+		// tensor. These two are computed once per alignment and expanded across sites, which is what
+		// makes batching every site into a single graph run cheap.
 		const invariant = INPUT_SPEC.filter((s) => s.siteInvariant).map((s) => s.name);
-		expect(invariant).toEqual(['dist_matrix', 'mds_coords', 'padding_mask']);
+		expect(invariant).toEqual(['dist_matrix', 'mds_coords']);
 	});
 
-	it('names the five outputs the graph actually exposes', () => {
+	it('names the single output the graph actually exposes', () => {
 		// Read from InferenceSession.outputNames on the real artifact, not from its README. This was an
 		// open question — the shipped driver reaches for the TRAIN branch to get raw ordinal logits —
 		// and the answer is that the export took the EVAL branch, so `lrt` arrives already decoded.
-		expect(OUTPUT_SPEC.map((o) => o.name)).toEqual([
-			'lrt',
-			'alpha',
-			'beta_neg',
-			'beta_pos',
-			'p_neg'
-		]);
+		expect(OUTPUT_SPEC.map((o) => o.name)).toEqual(['lrt']);
 		expect(OUTPUT_SPEC[0].note).toMatch(/already applied in-graph/);
 	});
 
-	it('records that the rate heads are log1p and need expm1 downstream', () => {
-		// The heads are softplus, and expm1(softplus(x)) == exp(x) — so these outputs are log1p(rate),
-		// not rates. Rendering them raw would understate every rate. p_neg is the exception.
-		for (const name of ['alpha', 'beta_neg', 'beta_pos']) {
-			expect(OUTPUT_SPEC.find((o) => o.name === name).note, name).toMatch(/expm1/);
+	it('exposes no rate heads to decode', () => {
+		// The test this replaces asserted that alpha / beta_neg / beta_pos were log1p and needed
+		// expm1. v1-viral does not export them, so the thing to pin is that nothing downstream can
+		// find a rate head and start decoding one that is not there.
+		for (const name of ['alpha', 'beta_neg', 'beta_pos', 'p_neg']) {
+			expect(OUTPUT_SPEC.find((o) => o.name === name), name).toBeUndefined();
 		}
-		expect(OUTPUT_SPEC.find((o) => o.name === 'p_neg').note).toMatch(/sigmoid/);
 	});
 
 	it('pins the artifact the contract was verified against', () => {
@@ -201,16 +184,17 @@ describe('validateInputBundle', () => {
 		expect(check(b).errors.join(' ')).toMatch(/msa_codons\[3\] = 66/);
 	});
 
-	it('catches a FLIPPED padding mask — the error that passes every shape check', () => {
-		// This is the one worth having the whole validator for. `padding_mask` is TRUE for padded
-		// rows, which is the opposite of the "1 = keep" convention most attention APIs use. Invert it
-		// and every tensor is still perfectly well-formed; the model simply masks out every real
-		// taxon and attends to nothing.
+	it('rejects a bundle carrying a tensor the graph does not accept', () => {
+		// This replaces the flipped-padding-mask test. That check existed because an inverted mask is
+		// well-formed in dtype, dims and element count while meaning the opposite — the model would
+		// mask out every real taxon. v1-viral has no mask input, so that failure mode is gone with
+		// it. What remains worth catching is a bundle built for the OLD graph reaching the new one,
+		// which would otherwise fail several layers down inside session.run.
 		const b = validBundle();
-		b.padding_mask.data = new Uint8Array([1, 1, 1, 0, 1, 1, 1, 0]);
+		b.padding_mask = { data: new Uint8Array([0, 0, 0, 0, 0, 0, 0, 0]), dims: [2, 4] };
 		const r = check(b);
-		expect(r.ok).toBe(false);
-		expect(r.errors.join(' ')).toMatch(/TRUE = PADDED/);
+		expect(r.ok, 'a stale padding_mask was accepted').toBe(false);
+		expect(r.errors.join(' ')).toMatch(/no such input/);
 	});
 
 	it('catches a negative patristic distance, which is a real DM3 tree and a Python crash', () => {

@@ -61,10 +61,41 @@ the header, import lines, and export block.
 
 ## Model
 
-`model/axomeme_2.0_viral_finetuned.onnx`
-- sha256: `3e06b591a060fca996a41c040c2c29f319aa47ca3d3401f4757571b57e6faec6`
-- size: 3,782,234 bytes
+`model/axomeme_v1_viral_finetuned.onnx`
+- sha256: `de765904107ba436c6ad6abbecb8af54962abd8444e1b5044947bb945d8ccda3`
+- size: 7,786,911 bytes
 - Marked `binary` in `.gitattributes`.
+- Published to `datamonkey/axomeme` on HuggingFace. That repo is gated, so this
+  copy was taken from the datamonkey3 PR branch that ships the client-side
+  swap and verified byte-for-byte against the sha above — which also
+  guarantees browser and server run the SAME artifact, the property the
+  coordinated swap exists to preserve.
+
+### The v1-viral graph contract
+
+The 2.0 lineage is retired. This was not a version bump — the graph signature
+changed on both sides, verified by loading both artifacts, not from docs:
+
+| | 2.0 (retired) | v1-viral |
+|---|---|---|
+| Inputs | 5, incl. `padding_mask` | **4** |
+| Outputs | 5: `lrt`, `alpha`, `beta_neg`, `beta_pos`, `p_neg` | **1**: `lrt` |
+| Size | 3,782,234 B | 7,786,911 B |
+
+Two consequences worth knowing before reading the code:
+
+- **`padding_mask` is gone and nothing was lost.** `n` is the number of
+  SELECTED species, so every row was always real and the mask was always all
+  zeros; it existed only to satisfy the 2.0 signature. The mask-polarity check
+  in `vendor/modelContract.js` went with it — there is no longer a polarity to
+  get backwards — replaced by a check that rejects any tensor the graph does
+  not declare, which catches a stale 2.0 bundle by name instead of failing
+  several layers down inside `session.run`.
+- **`alphaDs`, `betaPosDn` and `pPos` are no longer emitted at all.** They came
+  from the four retired heads. They are absent rather than zero: a zero in a dS
+  column reads as "no synonymous change", which would be a measurement the
+  model never made. hyphy-scope >= 1.11.0 makes those columns conditional on
+  the data, so 2.0 results already stored client-side keep rendering.
 
 ## onnxruntime-node pin
 

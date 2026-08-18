@@ -97,13 +97,16 @@ describe('prepareAlignment', () => {
 		expect(prep().totalCodons).toBe(3); // 9 nt / 3
 	});
 
-	it('feeds the graph only the real species, with nothing padded', () => {
-		// Measured equivalent to feeding max_species with the remainder masked (1 float32 ulp), and
-		// the difference is 462 MB vs 2.3 MB on a 441-site alignment.
+	it('feeds the graph only the real species, and emits no mask tensor', () => {
+		// Nothing was ever padded: `n` is the number of SELECTED species, so every row was already
+		// real and the mask was always all-zero. v1-viral drops the input entirely, so what is worth
+		// pinning now is that the bundle does not carry one — a stale mask would mean a bundle built
+		// for the retired 2.0 graph.
 		const p = prep();
 		expect(p.speciesCount).toBe(4);
-		expect(Array.from(p.paddingMask)).toEqual([0, 0, 0, 0]);
+		expect(p.batch(0)).not.toHaveProperty('padding_mask');
 		expect(p.batch(0).dist_matrix.dims).toEqual([3, 4, 4]);
+		expect(p.batch(0).mds_coords.dims[1]).toBe(p.speciesCount);
 	});
 
 	it('computes MDS on the PADDED matrix and slices, not on the real N', () => {

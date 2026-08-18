@@ -148,6 +148,23 @@ function buildMatchers(actual, message, negated) {
       );
     },
 
+    toBeUndefined() {
+      check(
+        actual === undefined,
+        `expected ${show(actual)} to be undefined`,
+        "expected value not to be undefined"
+      );
+    },
+
+    toHaveProperty(key) {
+      const has = actual != null && Object.prototype.hasOwnProperty.call(actual, key);
+      check(
+        has,
+        `expected ${show(actual)} to have property ${key}`,
+        `expected ${show(actual)} not to have property ${key}`
+      );
+    },
+
     toBeInstanceOf(expected) {
       const name = expected && expected.name ? expected.name : show(expected);
       check(

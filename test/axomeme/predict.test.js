@@ -38,20 +38,25 @@ const TOPOLOGY_ONLY =
 /** 0-based sites 4, 9, 14, 19, 24 are constant across all eight taxa by construction. */
 const INVARIANT_SITES = [5, 10, 15, 20, 25];
 
+/**
+ * v1-viral exports ONE head (`lrt`), so dS / dN+ / p are not emitted AT ALL — not emitted as zero.
+ * A zero in a rate column reads as "no synonymous change", which would be a measurement the model
+ * never made. The absence is the contract, which is why it is pinned as an exact key set.
+ */
 const SITE_FIELDS = [
-  "alphaDs",
-  "betaPosDn",
   "call",
   "isVariable",
   "logLrt",
   "lrt",
-  "pPos",
   "percentile",
   "refAa",
   "refCodon",
   "site",
   "zScore"
 ];
+
+/** Heads the retired 2.0 export had. Nothing downstream may resurrect them as zeros. */
+const RETIRED_FIELDS = ["alphaDs", "betaPosDn", "pPos"];
 
 describe("axomeme prediction", function () {
   // Generous only for a cold native-runtime load on a busy box; the work itself is ~1 s.
@@ -154,7 +159,7 @@ describe("axomeme prediction", function () {
     assert.deepEqual(result.summary.treeWarnings, []);
   });
 
-  it("gives every site row the same twelve fields, numbered 1..30", () => {
+  it("gives every site row the same nine fields, numbered 1..30", () => {
     result.sites.forEach((row, i) => {
       assert.deepEqual(Object.keys(row).sort(), SITE_FIELDS, `row ${i + 1} fields`);
       assert.equal(row.site, i + 1);
@@ -162,6 +167,18 @@ describe("axomeme prediction", function () {
     });
     assert.equal(result.sites[0].refCodon, "ATG");
     assert.equal(result.sites[0].refAa, "M");
+  });
+
+  it("emits no retired rate field, on any row", () => {
+    // The 2.0 heads are gone with the model. Asserting their ABSENCE across every row (not just
+    // the shape of row 1) is what stops a well-meaning "fill it with 0 so the column renders"
+    // from coming back: hyphy-scope 1.11.0 makes those columns conditional on the data precisely
+    // so that absent means absent.
+    for (const row of result.sites) {
+      for (const field of RETIRED_FIELDS) {
+        assert.ok(!(field in row), `site ${row.site} still carries ${field}`);
+      }
+    }
   });
 
   it("zeroes invariant sites instead of scoring them", () => {
@@ -173,7 +190,7 @@ describe("axomeme prediction", function () {
     assert.equal(invariant.length, 5);
     for (const row of invariant) {
       assert.equal(row.isVariable, false, `site ${row.site}`);
-      for (const field of ["lrt", "logLrt", "alphaDs", "betaPosDn", "pPos", "zScore", "percentile"]) {
+      for (const field of ["lrt", "logLrt", "zScore", "percentile"]) {
         assert.equal(row[field], 0, `site ${row.site} ${field}`);
       }
       assert.equal(row.call, "Neutral");
