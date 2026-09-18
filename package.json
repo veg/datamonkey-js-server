@@ -33,7 +33,6 @@
     "should": "^13.2.3",
     "socket.io": "4.6.2",
     "tail": "0.4.x",
-    "tar": "^2.0",
     "translate-gard": "^1.0.4",
     "winston": "^3.19.0",
     "zod": "^4.3.6"
