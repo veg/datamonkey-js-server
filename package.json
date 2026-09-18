@@ -24,7 +24,7 @@
     "typecheck": "tsc -p jsconfig.json"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/sdk": "^1.30.0",
     "commander": "^6.0.0",
     "date-fns": "^4.4.0",
     "express": "^5.2.1",
