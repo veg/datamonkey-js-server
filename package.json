@@ -31,7 +31,7 @@
     "onnxruntime-node": "1.30.0",
     "redis": "^5.12.1",
     "should": "^13.2.3",
-    "socket.io": "4.6.2",
+    "socket.io": "4.8.3",
     "tail": "0.4.x",
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
