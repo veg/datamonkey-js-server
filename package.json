@@ -35,7 +35,7 @@
     "tail": "0.4.x",
     "tar": "^2.0",
     "translate-gard": "^1.0.4",
-    "winston": "^3.8.2",
+    "winston": "^3.19.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
