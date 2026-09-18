@@ -42,7 +42,7 @@
     "chai": "^4.3.7",
     "eslint": "^7.32.0",
     "mocha": "^11.7.1",
-    "prettier": "^3.9.5",
+    "prettier": "^3.9.6",
     "socket.io-client": "^4.8.3",
     "socket.io-stream": "^0.9.1",
     "typescript": "^7.0.2"
