@@ -28,7 +28,7 @@
     "commander": "^6.0.0",
     "date-fns": "^4.4.0",
     "express": "^5.2.1",
-    "onnxruntime-node": "1.23.2",
+    "onnxruntime-node": "1.30.0",
     "redis": "^5.12.1",
     "should": "^13.2.3",
     "socket.io": "4.6.2",
