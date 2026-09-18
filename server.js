@@ -40,88 +40,102 @@ const io = require("socket.io")(ioPort, ioOptions);
 // Use the shared redis@5 client factory (see lib/redis-client.js). redis@5 is
 // promise-native, so commands return promises and are camelCased
 // (del stays del, hgetall -> hGetAll).
-const client = require("./lib/redis-client").client;
+const { client, ready } = require("./lib/redis-client");
+const reconcile = require("./lib/reconcile");
+const mcp = require("./lib/mcp");
 
-// clear active_jobs list
-// TODO: we should do more than just clear the active_jobs list
-client.del("active_jobs").catch(function(err) {
-  logger.error("Redis del active_jobs failed: " + err.message);
-});
-
-// For every new connection...
-io.sockets.on("connection", function(socket) {
-  //Routes
-  socket.on("job queue", function(jobs) {
-    JobQueue(function(jobs) {
-      socket.emit("job queue", jobs);
-      socket.disconnect();
-    });
+// Reconcile active_jobs against the live scheduler queue (#455) instead of
+// blindly clearing it — jobs still live on the scheduler survive the restart;
+// terminal/orphaned entries are dropped and their hashes get retention TTLs
+// (#453). Socket handler registration AND the MCP server (v3's second spawn
+// surface) are gated on reconciliation so no new submission can race the
+// snapshot or the SCAN sweep. reconcileActiveJobs never rejects (fail-open)
+// and the snapshot exec carries a 15s timeout, so boot always completes; the
+// .catch is belt-and-braces. The io port still binds immediately (same
+// v2-shipped contract; clients in the sub-second window auto-reconnect).
+ready
+  .then(function () {
+    return reconcile.reconcileActiveJobs(client);
+  })
+  .then(registerHandlers)
+  .catch(function (err) {
+    logger.error("reconcile : unexpected boot error, registering handlers anyway: " + err.message);
+    registerHandlers();
   });
 
-  // Query job status by ID (for reconnection after page refresh)
-  socket.on("job:status", function(params, callback) {
-    if (!params || !params.jobId) {
-      if (callback) callback({ status: "error", error: "Missing jobId" });
-      return;
-    }
+function registerHandlers() {
+  // For every new connection...
+  io.sockets.on("connection", function(socket) {
+    //Routes
+    socket.on("job queue", function(jobs) {
+      JobQueue(function(jobs) {
+        socket.emit("job queue", jobs);
+        socket.disconnect();
+      });
+    });
 
-    // redis@5 hGetAll returns a promise resolving to the hash (an empty object
-    // when the key is missing), so treat an empty object as "not found".
-    client.hGetAll(params.jobId).then(function(jobData) {
-      if (!jobData || Object.keys(jobData).length === 0) {
-        if (callback) callback({ status: "not_found" });
+    // Query job status by ID (for reconnection after page refresh)
+    socket.on("job:status", function(params, callback) {
+      if (!params || !params.jobId) {
+        if (callback) callback({ status: "error", error: "Missing jobId" });
         return;
       }
 
-      const response = {
-        status: jobData.status || "unknown",
-        torque_id: jobData.torque_id
-      };
-
-      if (jobData.status === "completed" && jobData.results) {
-        // Results are stored as: {"results":"{ stringified JSON }","type":"completed"}
-        // We need to unwrap and parse the inner results string
-        try {
-          const parsedResults = JSON.parse(jobData.results);
-          if (parsedResults.results && typeof parsedResults.results === "string") {
-            response.results = JSON.parse(parsedResults.results);
-          } else {
-            response.results = parsedResults.results || parsedResults;
-          }
-        } catch (e) {
-          logger.error("Error parsing job results: " + e.message);
-          response.results = jobData.results;
+      // redis@5 hGetAll returns a promise resolving to the hash (an empty object
+      // when the key is missing), so treat an empty object as "not found".
+      client.hGetAll(params.jobId).then(function(jobData) {
+        if (!jobData || Object.keys(jobData).length === 0) {
+          if (callback) callback({ status: "not_found" });
+          return;
         }
-      }
 
-      if (jobData.error) {
-        response.error = jobData.error;
-      }
+        const response = {
+          status: jobData.status || "unknown",
+          torque_id: jobData.torque_id
+        };
 
-      if (callback) callback(response);
-    }).catch(function(err) {
-      logger.error("Redis hGetAll job:status failed: " + err.message);
-      if (callback) callback({ status: "not_found" });
+        if (jobData.status === "completed" && jobData.results) {
+          // Results are stored as: {"results":"{ stringified JSON }","type":"completed"}
+          // We need to unwrap and parse the inner results string
+          try {
+            const parsedResults = JSON.parse(jobData.results);
+            if (parsedResults.results && typeof parsedResults.results === "string") {
+              response.results = JSON.parse(parsedResults.results);
+            } else {
+              response.results = parsedResults.results || parsedResults;
+            }
+          } catch (e) {
+            logger.error("Error parsing job results: " + e.message);
+            response.results = jobData.results;
+          }
+        }
+
+        if (jobData.error) {
+          response.error = jobData.error;
+        }
+
+        if (callback) callback(response);
+      }).catch(function(err) {
+        logger.error("Redis hGetAll job:status failed: " + err.message);
+        if (callback) callback({ status: "not_found" });
+      });
     });
+
+    const r = new router.io(socket);
+
+    // Analysis routes are data-driven — see lib/routes/analysis-routes.js.
+    // It reproduces the 16 standard spawn/check/resubscribe/cancel blocks plus
+    // the special hivtrace analysis. (Phase 3, #410)
+    analysisRoutes.registerAnalysisRoutes(r, socket, { hivtrace: hivtrace });
+
+    // Acknowledge new connection
+    socket.emit("connected", { hello: "Ready to serve" });
+
   });
 
-  const r = new router.io(socket);
-
-  // Analysis routes are data-driven — see lib/routes/analysis-routes.js.
-  // It reproduces the 16 standard spawn/check/resubscribe/cancel blocks plus
-  // the special hivtrace analysis. (Phase 3, #410)
-  analysisRoutes.registerAnalysisRoutes(r, socket, { hivtrace: hivtrace });
-
-  // Acknowledge new connection
-  socket.emit("connected", { hello: "Ready to serve" });
-
-});
-
-
-
-// Start MCP server on separate port
-const mcp = require("./lib/mcp");
-mcp.startMcpServer(config, client);
+  // Start MCP server on separate port
+  mcp.startMcpServer(config, client);
+}
 
 process.setMaxListeners(20); // bounded; GH #400 removed per-job cancelJob listeners
 
