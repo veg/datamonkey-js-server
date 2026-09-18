@@ -19,7 +19,10 @@ const config = require("./config.json"),
   slac = require("./app/slac/slac.js"),
   job = require("./app/job.js"),
   redis = require("redis"),
+  logger = require(path.join(__dirname, "/lib/logger.js")).logger,
   router = require(path.join(__dirname, "/lib/router.js")),
+  redisTtl = require(path.join(__dirname, "/lib/redis-ttl.js")),
+  reconcile = require(path.join(__dirname, "/lib/reconcile.js")),
   JobQueue = require(path.join(__dirname, "/lib/jobqueue.js")).JobQueue;
 
 //Script parameter for defining port number.
@@ -49,9 +52,18 @@ client.on("error", function(err) {
   logger.error("Redis client error: " + err.message);
 });
 
-// clear active_jobs list
-// TODO: we should do more than just clear the active_jobs list
-client.del("active_jobs");
+// Best-effort maxmemory guardrail (#453): volatile-ttl evicts only keys that
+// carry a TTL (finished result blobs), never the live queue or in-flight jobs.
+client.on("ready", function() {
+  redisTtl.applyMemoryPolicy(client);
+});
+
+// Reconcile active_jobs against the live scheduler queue (#455) instead of
+// blindly clearing it — jobs still live on the scheduler survive the restart,
+// terminal/orphaned entries are dropped and their hashes get retention TTLs
+// (#453). Socket handler registration is gated on the reconciliation callback
+// so no new submission can race the snapshot or the SCAN sweep.
+reconcile.reconcileActiveJobs(client, function() {
 
 // For every new connection...
 io.sockets.on("connection", function(socket) {
@@ -332,6 +344,8 @@ io.sockets.on("connection", function(socket) {
   socket.emit("connected", { hello: "Ready to serve" });
 
 });
+
+}); // end reconcileActiveJobs gate
 
 
 

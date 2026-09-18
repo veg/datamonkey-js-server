@@ -13,7 +13,8 @@ var spawn = require("child_process").spawn,
   logger = require("../../lib/logger").logger,
   redis = require("redis"),
   utilities = require("../../lib/utilities"),
-  jobRegistry = require("../../lib/jobregistry.js");
+  jobRegistry = require("../../lib/jobregistry.js"),
+  redisTtl = require("../../lib/redis-ttl.js");
 
 // Use redis as our key-value store
 var client = redis.createClient({ host: config.redis_host, port: config.redis_port });
@@ -353,8 +354,10 @@ hivtrace.prototype.onComplete = function() {
       client.hset(self.id, "results", str_redis_packet);
       self.socket.emit("completed", { results: results_data });
 
-      // Remove id from active_job queue
-      client.lrem("active_jobs", 1, self.id);
+      // Remove id from active_job queue (count 0 drains duplicates)
+      client.lrem("active_jobs", 0, self.id);
+      // Bound Redis growth (#453): expire the result-bearing pair together
+      redisTtl.expireCompleted(client, self.id, self.torque_id);
       jobRegistry.unregister(self.id);
     } else {
       self.onError(
@@ -368,12 +371,22 @@ hivtrace.prototype.onComplete = function() {
 hivtrace.prototype.onJobCreated = function(torque_id) {
   var self = this;
 
-  self.push_active_job = function(id) {
-    client.rpush("active_jobs", self.id);
-  };
-
-  self.push_job_once = _.once(self.push_active_job);
+  // onJobCreated fires on EVERY "job created" emission, and the status watcher
+  // re-emits "job created" on every queued poll tick (job.js status_watcher).
+  // Build the once()-guarded active_jobs push exactly ONCE per job instance —
+  // rebuilding it here each call gave a fresh guard every tick, leaking
+  // duplicate active_jobs entries until restart.
+  if (!self.push_job_once) {
+    self.push_active_job = function(id) {
+      client.rpush("active_jobs", self.id);
+    };
+    self.push_job_once = _.once(self.push_active_job);
+  }
   self.setTorqueParameters(torque_id);
+  // #453 suspenders: scheduler ids are recycled and job ids are reused Mongo
+  // _ids; HSET preserves any stale terminal TTL, so persist both hashes as
+  // they transition (back) to in-flight.
+  redisTtl.persistInFlight(client, self.id, self.torque_id);
   var redis_packet = torque_id;
   redis_packet.type = "job created";
   var str_redis_packet = JSON.stringify(torque_id);
