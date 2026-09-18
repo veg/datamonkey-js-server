@@ -44,5 +44,8 @@
     "socket.io-client": "^4.8.3",
     "socket.io-stream": "^0.9.1",
     "typescript": "^7.0.2"
+  },
+  "overrides": {
+    "serialize-javascript": "^7.0.5"
   }
 }
