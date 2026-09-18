@@ -7,7 +7,9 @@ const config = require("../../config.json"),
   fs = require("fs"),
   datatypes = require("../type").type,
   path = require("path"),
-  utilities = require("../../lib/utilities");
+  utilities = require("../../lib/utilities"),
+  jobRegistry = require("../../lib/jobregistry.js"),
+  redisTtl = require("../../lib/redis-ttl.js");
 
 // Use redis as our key-value store
 const client = redis.createClient({ host: config.redis_host, port: config.redis_port });
@@ -221,9 +223,14 @@ gard.prototype.onComplete = function() {
           client.hset(self.id, "status", "completed");
           client.publish(self.id, str_redis_packet);
 
-          // Remove id from active_job queue
-          client.lrem("active_jobs", 1, self.id);
-        }    
+          // Remove id from active_job queue (count 0 drains duplicates)
+          client.lrem("active_jobs", 0, self.id);
+          // Bound Redis growth (#453): expire the result-bearing pair together
+          redisTtl.expireCompleted(client, self.id, self.torque_id);
+          // Drop the finished job from the live registry so a later cancelAll
+          // cannot act on it (base class and hivtrace both unregister here)
+          jobRegistry.unregister(self.id);
+        }
       });
     }
   });

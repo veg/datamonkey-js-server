@@ -11,6 +11,7 @@ const cs = require("../lib/clientsocket.js"),
   config = require("../config.json");
 
 var jobRegistry = require("../lib/jobregistry.js");
+var redisTtl = require("../lib/redis-ttl.js");
 
 // Use redis as our key-value store
 var client = redis.createClient({
@@ -72,6 +73,11 @@ hyphyJob.prototype.init = function() {
     self.checkJob();
   } else {
     logger.info(`Job ${self.id}: Spawning new job`);
+    // #453 belt: the job id is the frontend-supplied Mongo _id (not minted per
+    // run), so a reused id may still carry the TTL a PRIOR terminal transition
+    // set on its hash. HSET does not clear an existing TTL — persist as the
+    // hash (re-)enters the in-flight state.
+    redisTtl.persistInFlight(client, self.id);
     self.spawn();
   }
 };
@@ -168,12 +174,27 @@ hyphyJob.prototype.spawn = function() {
 hyphyJob.prototype.onJobCreated = function(torque_id) {
   var self = this;
 
-  self.push_active_job = function() {
-    client.rpush("active_jobs", self.id);
-  };
-
-  self.push_job_once = _.once(self.push_active_job);
+  // onJobCreated fires on EVERY "job created" emission, and the status watcher
+  // re-emits "job created" on every queued poll tick (job.js status_watcher).
+  // Build the once()-guarded active_jobs push exactly ONCE per job instance —
+  // rebuilding it here each call gave a fresh guard every tick, so a job queued
+  // for N ticks pushed self.id into active_jobs N times (only one removed by the
+  // terminal lrem), leaking N-1 phantom entries until restart.
+  if (!self.push_job_once) {
+    self.push_active_job = function() {
+      client.rpush("active_jobs", self.id);
+    };
+    self.push_job_once = _.once(self.push_active_job);
+  }
   self.setTorqueParameters(torque_id);
+
+  // #453 suspenders: scheduler ids are recycled by SLURM/TORQUE and the job id
+  // is a reused Mongo _id, so a resurrected/recycled key may still carry the
+  // TTL a PRIOR terminal transition set on it. Redis HSET does NOT clear an
+  // existing TTL, so we must PERSIST both hashes as they transition (back) to
+  // in-flight — otherwise a live job's hash could expire mid-run and break
+  // status polling / result delivery / cancel.
+  redisTtl.persistInFlight(client, self.id, self.torque_id);
 
   // Enhanced job info for client
   const scheduler = torque_id.scheduler || "unknown";
@@ -254,8 +275,15 @@ hyphyJob.prototype.onComplete = function() {
         );
         client.publish(self.id, str_redis_packet);
 
-        // Remove id from active_job queue
-        client.lrem("active_jobs", 1, self.id);
+        // Remove id from active_job queue (count 0 drains any historical
+        // duplicate entries, not just the first)
+        client.lrem("active_jobs", 0, self.id);
+        // Bound Redis growth (#453): the job hash embeds the full result JSON,
+        // read back on WS reconnect, so we retain (not drop) it and let it
+        // expire after the completed-retention window. torque_id is the
+        // reverse-lookup hash; expire it on the same window so the live/dead
+        // pair die together.
+        redisTtl.expireCompleted(client, self.id, self.torque_id);
         jobRegistry.unregister(self.id);
         delete this;
       } else {
@@ -393,8 +421,12 @@ hyphyJob.prototype.onError = function(error) {
 
     // Publish error messages to redis
     client.hset(self.id, "error", str_redis_packet, "status", "error");
+    // #453: onError does NOT route through the completion path, so the terminal
+    // TTL must be set here too or errored job hashes leak forever. Shorter
+    // window than completed jobs — nobody polls a failed job.
+    redisTtl.expireTerminal(client, self.id, self.torque_id);
     client.publish(self.id, str_redis_packet);
-    client.lrem("active_jobs", 1, self.id);
+    client.lrem("active_jobs", 0, self.id);
     jobRegistry.unregister(self.id);
     client.llen("active_jobs", function(err, n) {
       process.emit("jobCancelled", n);

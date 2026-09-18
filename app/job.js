@@ -7,7 +7,8 @@ var spawn = require("child_process").spawn,
   jobdel = require("../lib/jobdel.js"),
   JobStatus = require(__dirname + "/../lib/jobstatus.js").JobStatus,
   EventEmitter = require("events").EventEmitter,
-  config = require("../config.json");
+  config = require("../config.json"),
+  redisTtl = require("../lib/redis-ttl.js");
 
 
 // Use redis as our key-value store
@@ -90,6 +91,11 @@ var cancel = function(socket, id) {
         jobdel.jobDelete(torque_id, function() {
           logger.warn("info", self.id + " : job : cancel : job cancelled");
           client.hset(self.id, "status", "aborted");
+          // #453: a cancelled job is terminal — expire the id/torque_id pair
+          // (jobdel only touches torque_id, and only on scheduler-delete
+          // success) and drain the id from the active_jobs queue.
+          redisTtl.expireTerminal(client, self.id, torque_id);
+          client.lrem("active_jobs", 0, self.id);
           socket.emit("cancelled", { success: "ok" });
           socket.disconnect();
         });
