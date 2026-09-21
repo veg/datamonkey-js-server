@@ -566,6 +566,12 @@ class HivTraceRunner extends EventEmitter {
 
     if (self.metronome_id) clearInterval(self.metronome_id);
 
+    // Cancel a pending log_publisher attach retry (tail 2.x hardening)
+    if (self.tail_retry) {
+      clearTimeout(self.tail_retry);
+      self.tail_retry = null;
+    }
+
     // Stop watching the hivtrace log file (node-tail exposes unwatch()). See #400.
     if (self.tail) {
       try {
@@ -614,30 +620,69 @@ class HivTraceRunner extends EventEmitter {
   log_publisher() {
     const self = this;
 
-    // read log file (stored on self so close() can stop watching it; GH #400)
-    self.tail = new Tail(self.hivtrace_log);
+    // tail >=2 throws ENOENT from the constructor if the file does not exist
+    // yet, and the hivtrace pipeline creates its log asynchronously after
+    // spawn — so wait for the file (1s cadence, bounded) before attaching.
+    // The retry timer is stored on self so close() can cancel it (GH #400).
+    const attach = function(attemptsLeft) {
+      self.tail_retry = null;
+      if (self._closed) return;
 
-    self.tail.on("line", function(data) {
-      logger.debug(data);
-
-      if (data.indexOf("INFO:") != -1) {
-        let msg = "";
-        // `info` is read in the catch below, so it must be declared before the
-        // try (var would hoist; let must be explicit).
-        let info;
-
-        // try parsing the message
-        try {
-          info = data.split("INFO:")[1].split("root:")[1];
-          msg = JSON.parse(info);
-        } catch (e) {
-          logger.warn("error" + e + " for " + info);
+      if (!fs.existsSync(self.hivtrace_log)) {
+        if (attemptsLeft <= 0) {
+          logger.warn(
+            self.id + " : log_publisher : log file never appeared: " + self.hivtrace_log
+          );
+          return;
         }
-
-        // publish to redis
-        client.publish(self.python_redis_channel, JSON.stringify(msg));
+        self.tail_retry = setTimeout(function() {
+          attach(attemptsLeft - 1);
+        }, 1000);
+        return;
       }
-    });
+
+      // read log file (stored on self so close() can stop watching it; GH #400)
+      try {
+        self.tail = new Tail(self.hivtrace_log);
+      } catch (err) {
+        logger.error(
+          self.id + " : log_publisher : could not tail " + self.hivtrace_log + ": " + err.message
+        );
+        return;
+      }
+
+      // Without a listener, a watch failure is an unhandled EventEmitter
+      // 'error' and takes the worker down; progress publishing is best-effort.
+      self.tail.on("error", function(err) {
+        logger.error(
+          self.id + " : log_publisher : tail error on " + self.hivtrace_log + ": " + err
+        );
+      });
+
+      self.tail.on("line", function(data) {
+        logger.debug(data);
+
+        if (data.indexOf("INFO:") != -1) {
+          let msg = "";
+          // `info` is read in the catch below, so it must be declared before the
+          // try (var would hoist; let must be explicit).
+          let info;
+
+          // try parsing the message
+          try {
+            info = data.split("INFO:")[1].split("root:")[1];
+            msg = JSON.parse(info);
+          } catch (e) {
+            logger.warn("error" + e + " for " + info);
+          }
+
+          // publish to redis
+          client.publish(self.python_redis_channel, JSON.stringify(msg));
+        }
+      });
+    };
+
+    attach(60);
   }
 
   /**
@@ -783,3 +828,5 @@ class HivTraceRunner extends EventEmitter {
 }
 
 exports.hivtrace = hivtrace;
+// Exported for tests (tail 2.x attach hardening); not part of the public API.
+exports.HivTraceRunner = HivTraceRunner;
