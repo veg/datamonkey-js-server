@@ -45,6 +45,49 @@ function injectSubmissionSource(qsub_params, source, submit_type) {
   return ["--comment=source=" + source].concat(qsub_params);
 }
 
+// Cap for the extracted error detail sent to the client (#220). Big enough
+// for any HyPhy assertion/error block, small enough to never bloat the
+// "script error" packet the way the raw progress/stdout fields can.
+const ERROR_DETAILS_MAX_CHARS = 4096;
+
+/**
+ * Extract the actionable HyPhy failure reason from the job's log files (#220,
+ * datamonkey3 issue). The wrapper scripts pipe HyPhy's stdout into the
+ * PROGRESS file (see e.g. gard.sh), so an "## ASSERTION FAILED" block usually
+ * sits at the tail of `progress` — while the scheduler's stderr holds only
+ * srun/qsub kill noise. Scan progress first, then stderr, then stdout, for
+ * the LAST error marker and return from there (capped). Fall back to a tail
+ * of stderr, then progress, so the client always gets the most specific text
+ * available. Returns "" when there is nothing better than the generic
+ * wrapper message.
+ */
+function extractHyphyError(progress, stderr, stdout) {
+  const markers = [
+    "Master node received an error",
+    "## ASSERTION FAILED",
+    "### FATAL ERROR",
+    "Error:"
+  ];
+  const sources = [progress, stderr, stdout];
+  for (const src of sources) {
+    if (!src || typeof src !== "string") continue;
+    for (const marker of markers) {
+      const at = src.lastIndexOf(marker);
+      if (at !== -1) {
+        return src.slice(at, at + ERROR_DETAILS_MAX_CHARS).trim();
+      }
+    }
+  }
+  // No explicit marker anywhere: prefer a non-empty stderr tail (real crash
+  // output), else the progress tail (where HyPhy stdout ends up).
+  for (const src of [stderr, progress]) {
+    if (src && typeof src === "string" && src.trim().length > 0) {
+      return src.slice(-2048).trim();
+    }
+  }
+  return "";
+}
+
 // Base job runner. Declared as a class so subclasses can use `class X extends
 // hyphyJob` (ES inheritance) instead of util.inherits. The methods are attached
 // to the prototype below (valid on a class prototype) rather than inlined, to
@@ -150,11 +193,14 @@ hyphyJob.prototype.spawn = function() {
   });
 
   // On errors, report to datamonkey-js
-  hyphy_job_runner.on("script error", function() {
+  hyphy_job_runner.on("script error", function(message) {
     // Check that job was not manually cancelled. redis@5 hGet returns a promise.
     client.hGet(self.id, "status").then(function(status) {
       if (status != "cancelled") {
-        self.onError();
+        // #220: the runner's message ("<scheduler> process failed with exit
+        // code: N" etc.) was previously dropped — onError() ran with an
+        // undefined error and the client saw no reason at all.
+        self.onError(message || "job runner reported a script error");
       }
     }).catch(function(err) {
       logger.error("Redis hGet status failed: " + err.message);
@@ -542,6 +588,16 @@ hyphyJob.prototype.onError = function(error) {
     redis_packet.stderr = results[0].value || "No stderr content";
     redis_packet.progress = results[1].value || "No progress content";
     redis_packet.stdout = results[2].value || "No stdout content";
+    // #220: surface the actionable HyPhy failure (e.g. an "## ASSERTION
+    // FAILED" block) in a compact structured field. The raw fields above are
+    // kept for compatibility, but the client UI shows `details` — extraction
+    // runs on the RAW reads (not the placeholder strings) so a missing file
+    // never masquerades as content.
+    redis_packet.details = extractHyphyError(
+      results[1].value,
+      results[0].value,
+      results[2].value
+    );
 
     const str_redis_packet = JSON.stringify(redis_packet);
 
@@ -705,3 +761,5 @@ hyphyJob.prototype.checkJob = function() {
 };
 
 exports.hyphyJob = hyphyJob;
+// Exported for tests (#220); not part of the public API.
+exports.extractHyphyError = extractHyphyError;

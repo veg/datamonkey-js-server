@@ -38,23 +38,42 @@ const resubscribe = function(socket, id) {
       // check job status
       const current_status = obj.status;
       logger.info(self.id + " : job : current status : " + obj.status);
-      if (current_status != "completed" && current_status != "exiting") {
-      // if job is still pending, resubscribe
-        logger.warn(
-          "info",
-          self.id + " : job : resubscribe : job pending, resuming"
-        );
-
-        new cs.ClientSocket(socket, self.id);
-      } else if (current_status == "completed") {
+      // NOTE branch ORDER (#220): terminal statuses must be tested explicitly.
+      // The old shape (`!= completed && != exiting` -> pending) routed
+      // error/aborted/cancelled jobs into the PENDING branch, subscribing the
+      // reconnecting client to a channel that would never publish again — the
+      // browser hung with no error at all after a refresh on a failed job.
+      if (current_status == "completed") {
       // if job completed, emit results
         logger.info(self.id + " : job : resubscribe : job completed");
         const json_results = JSON.parse(obj.results);
         socket.emit("completed", json_results);
         socket.disconnect();
+      } else if (
+        current_status == "error" ||
+        current_status == "aborted" ||
+        current_status == "cancelled"
+      ) {
+        // if job aborted, emit error. The hash stores the full serialized
+        // "script error" packet (error/stderr/details/...) — parse it so a
+        // reconnecting client receives the same structured object a live
+        // subscriber gets (#220); previously the raw JSON STRING was emitted
+        // and the client could not read any field from it. Fall back to
+        // wrapping legacy plain-string errors.
+        let error_packet;
+        try {
+          error_packet = JSON.parse(obj.error);
+        } catch (e) {
+          error_packet = { type: "script error", id: self.id, error: obj.error };
+        }
+        socket.emit("script error", error_packet);
       } else {
-      // if job aborted, emit error
-        socket.emit("script error", obj.error);
+      // still in flight (queued/running/exiting) — resubscribe for live updates
+        logger.warn(
+          "info",
+          self.id + " : job : resubscribe : job pending, resuming"
+        );
+        new cs.ClientSocket(socket, self.id);
       }
     } catch (err) {
       logger.warn(self.id + " : resubscribe : " + err);
