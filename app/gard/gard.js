@@ -328,8 +328,15 @@ gard.prototype.onComplete = function() {
       fs.readFile(self.results_fn, "utf8", function(err, data) {
 
         if (err || !data.length) {
-          // Error reading results file
-          self.onError("unable to read results file. " + err);
+          // #220: distinguish "file missing/unreadable" from "file empty" —
+          // the old message concatenated a null err into "unable to read
+          // results file. null", which is what users saw for every early
+          // HyPhy abort (e.g. assertion failures).
+          self.onError(
+            err
+              ? "unable to read results file. " + err
+              : "analysis produced no results (results file is empty — HyPhy likely aborted early)"
+          );
         } else {
 
           const stringified_results = String(data);
