@@ -16,7 +16,7 @@ const { spawn } = require('child_process');
 const job = require('../../app/job.js');
 const logger = require('../../lib/logger.js').logger;
 const redis = require('redis');
-const program = require('commander');
+const { program } = require('commander');
 
 // Parse command line arguments
 program
@@ -25,14 +25,15 @@ program
   .option('--config <path>', 'Path to config file', './config.json')
   .option('--output-dir <dir>', 'Output directory', path.join(__dirname, 'test_output'))
   .parse(process.argv);
+const opts = program.opts();
 
 // Ensure output directory exists
-if (!fs.existsSync(program.outputDir)) {
-  fs.mkdirSync(program.outputDir, { recursive: true });
+if (!fs.existsSync(opts.outputDir)) {
+  fs.mkdirSync(opts.outputDir, { recursive: true });
 }
 
 // Backup and read config
-const configPath = program.config;
+const configPath = opts.config;
 const configBackupPath = `${configPath}.backup`;
 
 if (!fs.existsSync(configBackupPath)) {
@@ -75,7 +76,7 @@ const testConfigs = {
 class JobTest {
   constructor(submitType) {
     this.submitType = submitType;
-    this.outputDir = path.join(program.outputDir, submitType);
+    this.outputDir = path.join(opts.outputDir, submitType);
     this.scriptPath = path.join(__dirname, 'test_script.sh');
     this.resultsPath = path.join(this.outputDir, `${submitType}_results.json`);
     this.events = [];
@@ -202,9 +203,9 @@ class JobTest {
 // Main test function
 async function runTests() {
   try {
-    const submitTypes = program.submitType === 'all' 
+    const submitTypes = opts.submitType === 'all' 
       ? Object.keys(testConfigs) 
-      : [program.submitType];
+      : [opts.submitType];
     
     console.log(`Running tests for job submission types: ${submitTypes.join(', ')}`);
     

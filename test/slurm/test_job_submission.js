@@ -17,7 +17,7 @@ const { spawn } = require('child_process');
 const job = require('../../app/job.js');
 const logger = require('../../lib/logger.js').logger;
 const config = require('../../lib/config');
-const program = require('commander');
+const { program } = require('commander');
 
 // Define test parameters
 program
@@ -26,14 +26,15 @@ program
   .option('--script <script>', 'Test script to run', path.join(__dirname, 'test_script.sh'))
   .option('--output-dir <dir>', 'Output directory', path.join(__dirname, 'test_output'))
   .parse(process.argv);
+const opts = program.opts();
 
 // Ensure output directory exists
-if (!fs.existsSync(program.outputDir)) {
-  fs.mkdirSync(program.outputDir, { recursive: true });
+if (!fs.existsSync(opts.outputDir)) {
+  fs.mkdirSync(opts.outputDir, { recursive: true });
 }
 
 // Create test script if it doesn't exist
-const testScriptPath = program.script;
+const testScriptPath = opts.script;
 if (!fs.existsSync(testScriptPath)) {
   const scriptContent = `#!/bin/bash
 echo "Starting test job"
@@ -72,7 +73,7 @@ function testJobSubmission(type) {
   let jobRunner;
   const testHandler = new TestEventHandler();
   
-  const resultsFn = path.join(program.outputDir, `test_${type}_results.txt`);
+  const resultsFn = path.join(opts.outputDir, `test_${type}_results.txt`);
   
   if (type === 'local') {
     console.log('Submitting local job');
@@ -85,7 +86,7 @@ function testJobSubmission(type) {
     
     // Submit the local job
     const env = { JOB_TYPE: type };
-    jobRunner.submit_local(testScriptPath, env, program.outputDir);
+    jobRunner.submit_local(testScriptPath, env, opts.outputDir);
   } else {
     // For SLURM or TORQUE
     let params;
@@ -94,8 +95,8 @@ function testJobSubmission(type) {
       console.log('Submitting SLURM job');
       params = [
         '--job-name=test_slurm_job',
-        '--output=' + path.join(program.outputDir, 'test_slurm.out'),
-        '--error=' + path.join(program.outputDir, 'test_slurm.err'),
+        '--output=' + path.join(opts.outputDir, 'test_slurm.out'),
+        '--error=' + path.join(opts.outputDir, 'test_slurm.err'),
         '--time=00:10:00',
         '--ntasks=1',
         '--export=JOB_TYPE=' + type,
@@ -105,8 +106,8 @@ function testJobSubmission(type) {
       console.log('Submitting TORQUE job');
       params = [
         '-l', 'walltime=00:10:00,nodes=1:ppn=1',
-        '-o', path.join(program.outputDir, 'test_torque.out'),
-        '-e', path.join(program.outputDir, 'test_torque.err'),
+        '-o', path.join(opts.outputDir, 'test_torque.out'),
+        '-e', path.join(opts.outputDir, 'test_torque.err'),
         '-v', 'JOB_TYPE=' + type,
         testScriptPath
       ];
@@ -122,7 +123,7 @@ function testJobSubmission(type) {
     jobRunner.on('script error', data => testHandler.handleEvent('script error', data));
     
     // Submit the job
-    jobRunner.submit(params, program.outputDir);
+    jobRunner.submit(params, opts.outputDir);
   }
   
   console.log(`Job submitted. Waiting for completion...`);
@@ -146,14 +147,14 @@ function testJobSubmission(type) {
     config.submit_type = originalSubmitType;
     
     // Exit if testing just this type
-    if (program.type === type) {
+    if (opts.type === type) {
       process.exit(0);
     }
   }, 30000);
 }
 
 // Run the test for the specified type
-if (program.type === 'all') {
+if (opts.type === 'all') {
   // Test all submission types
   testJobSubmission('qsub');
   
@@ -165,5 +166,5 @@ if (program.type === 'all') {
     testJobSubmission('local');
   }, 70000);
 } else {
-  testJobSubmission(program.type);
+  testJobSubmission(opts.type);
 }

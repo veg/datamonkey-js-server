@@ -1,5 +1,7 @@
 const config = require("./lib/config"),
-  program = require("commander"),
+  // commander >=7 stopped exporting a Command instance directly and moved
+  // parsed options off the program object onto .opts()
+  { program } = require("commander"),
   path = require("path"),
   // The 16 standard analyses are required by lib/routes/analysis-routes.js.
   // hivtrace is special-cased and passed into the route registry.
@@ -31,8 +33,8 @@ const ioOptions = {
 };
 let ioPort = config.port;
 
-if (program.port) {
-  ioPort = program.port;
+if (program.opts().port) {
+  ioPort = program.opts().port;
 }
 
 const io = require("socket.io")(ioPort, ioOptions);
