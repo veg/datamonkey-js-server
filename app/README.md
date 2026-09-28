@@ -26,7 +26,16 @@ Every analysis wrapper (`app/<analysis>/*.sh`) follows the same contract:
 * `mpi` (HyPhy wrappers): PATH prepend, best-effort module loads, the OpenMPI/UCX `LD_LIBRARY_PATH` pin, and `MPI_LIB_PATH`.
 * `base` (`hivtrace_submit.sh`): PATH prepend and module loads only; no library pin.
 
-Site-specific settings go in `app/cluster-env.local.sh` (gitignored; start from `app/cluster-env.local.example`), never in a wrapper. It is sourced into the batch shell, so it can also `export` MPI transport settings (`UCX_TLS`, `OMPI_MCA_*`, `PMIX_MCA_*`) that reach every srun task; scheduler settings (`slurm_mpi_type`, `slurm_partition`, `<method>_procs`, walltimes) belong in `config.json` instead.
+Site-specific settings go in `app/cluster-env.local.sh` (gitignored; start from `app/cluster-env.local.example`), never in a wrapper. It is sourced into the batch shell, so it can also `export` MPI transport settings (`UCX_TLS`, `OMPI_MCA_*`, `PMIX_MCA_*`) that reach every srun task; scheduler settings (`slurm_mpi_type`, `slurm_partition`, `<method>_partition`, `<method>_procs`, walltimes) belong in `config.json` instead.
+
+**Per-method partitions.** An analysis can run on its own SLURM partition via an optional `<method>_partition` key in `config.json`. If it's not set, the analysis falls back to `slurm_partition`, and then to `"datamonkey"` (`lib/partition.js`). Production uses this to isolate GARD on a dedicated partition, so heavy GARD load can't starve the shared partition through gang scheduling:
+
+```json
+"slurm_partition": "datamonkey",
+"gard_partition": "gard"
+```
+
+The method name is the same prefix used by `<method>_procs`: the descriptor `type` for factory analyses (`fel`, `meme`, `cfel`, `bstill`, and so on), plus `gard` and `difFubar` (camelCase). One exception: bstill uses `fubar_procs` for its process count, but its partition key is still `bstill_partition`. Every `*_partition` key must be a non-empty string; the config loader rejects anything else at startup. The partition only matters for `submit_type: "slurm"`.
 
 Every live srun line uses the same idiom, written out literally:
 

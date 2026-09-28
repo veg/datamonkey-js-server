@@ -2,7 +2,8 @@ const config = require("../../lib/config"),
   hyphyJob = require("../hyphyjob.js").hyphyJob,
   logger = require("../../lib/logger.js").logger,
   fs = require("fs"),
-  path = require("path");
+  path = require("path"),
+  { partitionFor } = require("../../lib/partition");
 
 class difFubar extends hyphyJob {
   constructor(socket, stream, params) {
@@ -83,7 +84,7 @@ class difFubar extends hyphyJob {
         `--ntasks=${config.difFubar_procs || "8"}`,
         "--cpus-per-task=1",
         `--time=${slurmTime}`,
-        `--partition=${config.slurm_partition || "datamonkey"}`,
+        `--partition=${partitionFor("difFubar", config)}`,
         `--nodes=${config.difFubar_nodes || "1"}`,
         `--mem=${config.difFubar_memory || "32GB"}`,
         "--export=ALL,slurm_mpi_type=" + 
