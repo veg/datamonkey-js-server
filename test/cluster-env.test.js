@@ -95,7 +95,9 @@ const SRUN_N = {
   'fel/fel.sh': ['$PROCS', '$PROCS'],
   'meme/meme.sh': ['$PROCS', '$PROCS'],
   'absrel/absrel.sh': ['$PROCS'],
-  'bstill/bstill.sh': ['$PROCS'],
+  // bstill runs the non-MPI HYPHYMP; -n $PROCS raced N copies on one cache
+  // (RawREWIND), so it uses -n 1 like fubar. Caught by the completion lane.
+  'bstill/bstill.sh': ['1'],
   'busted/busted_submit.sh': ['$PROCS'],
   'contrast-fel/cfel.sh': ['$PROCS'],
   'fade/fade.sh': ['$PROCS'],

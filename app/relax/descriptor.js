@@ -15,6 +15,19 @@ const fs = require("fs");
 const utilities = require("../../lib/utilities");
 const logger = require("../../lib/logger").logger;
 
+// RELAX.bf's `--models` takes a NAME ("All" or "Minimal"). Legacy DM2 clients
+// send `analysis_type` as the 1-based menu index that the old relax.sh piped
+// into the interactive "RELAX analysis type" prompt (1 = All, 2 = Minimal).
+// Passing that raw index as --models fails every job with "'1' is not a valid
+// choice passed to 'RELAX analysis type'". Map indices to names; pass names
+// through unchanged.
+const MODEL_INDEX = { 1: "All", 2: "Minimal" };
+function relaxModels(models, analysisType) {
+  const v = models || analysisType;
+  if (v === undefined || v === null || v === "") return "All";
+  return MODEL_INDEX[String(v).trim()] || v;
+}
+
 const descriptor = {
   type: "relax",
   dir: __dirname,
@@ -38,7 +51,7 @@ const descriptor = {
       self.test_branches = params.test || params.test_branches || "TEST";
       self.reference_branches =
         params.reference || params.reference_branches || "REFERENCE";
-      self.models = params.models || params.analysis_type || "All";
+      self.models = relaxModels(params.models, params.analysis_type);
       self.rates = params.rates || params.omega_rate_classes || 3;
       self.kill_zero_lengths = params.kill_zero_lengths || "No";
       self.nwk_tree = params.nwk_tree || params.tree || "";
@@ -55,7 +68,7 @@ const descriptor = {
         self.test_branches = src.test || src.test_branches || "TEST";
         self.reference_branches =
           src.reference || src.reference_branches || "REFERENCE";
-        self.models = src.models || src.analysis_type || "All";
+        self.models = relaxModels(src.models, src.analysis_type);
         self.rates = src.rates || src.omega_rate_classes || 3;
         self.kill_zero_lengths = src.kill_zero_lengths || "No";
         self.nwk_tree =
@@ -68,7 +81,7 @@ const descriptor = {
         self.test_branches = self.params.test || self.params.test_branches || "TEST";
         self.reference_branches =
           self.params.reference || self.params.reference_branches || "REFERENCE";
-        self.models = self.params.models || self.params.analysis_type || "All";
+        self.models = relaxModels(self.params.models, self.params.analysis_type);
         self.rates = self.params.rates || self.params.omega_rate_classes || 3;
         self.kill_zero_lengths = self.params.kill_zero_lengths || "No";
         self.nwk_tree = self.params.nwk_tree || self.params.tree || "";
@@ -133,3 +146,5 @@ const relax = factory.makeAnalysis(descriptor);
 // Preserve the original module's export shape: exports.relax is the constructor.
 exports.relax = relax;
 exports.descriptor = descriptor;
+// Exported for tests (legacy analysis_type -> --models name mapping).
+exports.relaxModels = relaxModels;

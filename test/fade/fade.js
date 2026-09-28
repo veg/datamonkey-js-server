@@ -55,7 +55,7 @@ var options = {
 
 describe('fade jobrunner', function() {
 
-  var fn = __dirname + '/res/upload.278155041617087.1';
+  var fn = __dirname + '/res/CD2.aa.fasta';
   var params_file = __dirname + '/res/params.json';
 
   // Track the SLURM job id the job reports so we can scancel it as a safety

@@ -177,20 +177,20 @@ if [ -n "$SLURM_JOB_ID" ]; then
   if [ -f "$HYPHY_NON_MPI" ]; then
     echo "Using non-MPI HYPHY: $HYPHY_NON_MPI"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches \"$BRANCHES\" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > \"$PROGRESS_FILE\""
-    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "$BRANCHES" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > "$PROGRESS_FILE"
+    echo "$HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches \"$BRANCHES\" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chains $CHAINS --chain-length $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > \"$PROGRESS_FILE\""
+    $HYPHY_NON_MPI LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "$BRANCHES" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chains $CHAINS --chain-length $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > "$PROGRESS_FILE"
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches \"$BRANCHES\" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "$BRANCHES" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > "$PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches \"$BRANCHES\" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chains $CHAINS --chain-length $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "$BRANCHES" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chains $CHAINS --chain-length $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > "$PROGRESS_FILE"
   fi
 else
   # For local execution, use the HYPHY executable determined above
   echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "$HYPHY LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches \"$BRANCHES\" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > \"$PROGRESS_FILE\""
-  $HYPHY LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "$BRANCHES" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chain $CHAINS --chains $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > "$PROGRESS_FILE"
+  echo "$HYPHY LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches \"$BRANCHES\" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chains $CHAINS --chain-length $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > \"$PROGRESS_FILE\""
+  $HYPHY LIBPATH=$HYPHY_PATH $FADE --alignment $FN --tree $TREE_FN --branches "$BRANCHES" --cache $CACHE_FILE --grid $GRIDPOINTS --model $SUBSTITUTIONMODEL --method $POSTERIORESTIMATIONMETHOD --chains $CHAINS --chain-length $LENGTH --burn-in $BURNIN --samples $SAMPLES --concentration_parameter $CONCENTRATION --output $RESULTS_FILE > "$PROGRESS_FILE"
 fi
 
 echo "Completed" > "$STATUS_FILE"

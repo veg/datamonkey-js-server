@@ -132,8 +132,13 @@ fi
 if [ -n "$SLURM_JOB_ID" ]; then
   echo "Using SLURM execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > \"$PROGRESS_FILE\""
-  srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method "$METHOD" --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > "$PROGRESS_FILE"
+  # B-STILL (like FUBAR) runs the non-MPI HYPHYMP binary and parallelizes
+  # INTERNALLY. Launching it as srun -n $PROCS (e.g. 32) ran 32 independent
+  # copies racing on the same alignment/cache/output files -> "Could not read
+  # all the parameters requested in call to fscanf(path,\"RawREWIND\")" and
+  # tasks 0-N exit 1. Force -n 1, as fubar.sh does.
+  echo "srun --mpi=$MPI_TYPE -n 1 /usr/bin/env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > \"$PROGRESS_FILE\""
+  srun --mpi=$MPI_TYPE -n 1 /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method "$METHOD" --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > "$PROGRESS_FILE"
 else
   echo "Using local HYPHY execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1

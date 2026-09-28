@@ -1,10 +1,10 @@
 {
-  "type": "meme",
+  "type": "bgm",
   "mail": "",
   "msa": [
     {
       "_id": "58b0a65ac097819c68d39646",
-      "datatype": 0,
+      "datatype": 3,
       "gencodeid": 0,
       "partitions": 1,
       "sites": 187,
@@ -80,14 +80,14 @@
   ],
   "analysis": {
     "_id": "58b0a65ac097819c68d39645",
-    "__t": "MEME",
+    "__t": "SLAC",
     "status": "queue",
     "mail": "",
     "created": "2017-02-24T21:32:10.026Z",
     "msa": [
       {
         "_id": "58b0a65ac097819c68d39646",
-        "datatype": 0,
+        "datatype": 3,
         "gencodeid": 0,
         "partitions": 1,
         "sites": 187,
