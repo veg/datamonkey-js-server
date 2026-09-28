@@ -25,6 +25,8 @@ export const meta = {
 //         run on compute nodes and cannot see the head node's /tmp.
 //       * Compute nodes have no lmod. Use `clush -w 'node[0-15]'` (quote the glob —
 //         zsh eats it unquoted) and `srun --partition=datamonkey --mpi=pmix`.
+//       * The MPI/module env lives in app/cluster-env.sh (site override:
+//         app/cluster-env.local.sh); never edit it per wrapper.
 //       * HyPhy: bundled `.hyphy/HYPHYMPI` + `.hyphy/HYPHYMP`; system
 //         `/usr/local/bin/hyphy` (res at /usr/local/share/hyphy/).
 //       * The `datamonkey` user owns the prod checkouts; `sudo -u datamonkey`

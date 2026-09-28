@@ -10,6 +10,8 @@ The branch adds support for:
 
 ## Configuration
 
+Environment problems (modules, `libmpi.so.40` not found): see `app/cluster-env.sh` and the site override `app/cluster-env.local.sh`. Every job .out starts with `cluster-env:` diagnostics.
+
 Job submission type is configured in `config.json` using the `submit_type` parameter:
 
 ```json

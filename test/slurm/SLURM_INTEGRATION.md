@@ -22,6 +22,9 @@ The following changes were made to support SLURM job submission:
    - Added fallback to non-MPI HYPHY when MPI libraries aren't available
    - Added module loading for OpenMPI with error handling
    - Added UCX library path configuration
+   - (Historical: per-script module loading and library paths are superseded by
+     the shared `app/cluster-env.sh`, with site overrides in the gitignored
+     `app/cluster-env.local.sh`.)
    - Better logging of library paths and module availability
 
 5. **Error Handling Improvements**
@@ -130,8 +133,10 @@ The following test scripts were created to verify SLURM integration:
 4. **test_absrel_job.js** - Tests ABSREL analysis with SLURM
 5. **test_busted_job.js** - Tests BUSTED analysis with SLURM
 6. **test_gard_job.js** - Tests GARD analysis with SLURM
-7. **slurm_analysis_wrapper.js** - Wrapper script for testing all analysis methods
-8. **verify_slurm_submission.js** - Simplified script for verifying SLURM submission
+7. **verify_slurm_submission.js** - Simplified script for verifying SLURM submission
+
+(`slurm_analysis_wrapper.js` was deleted: it rewrote `app/*/*.sh` in place to
+inject stale module-load blocks, which would undo the shared `app/cluster-env.sh`.)
 
 ## Conclusion
 

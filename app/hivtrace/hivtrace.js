@@ -155,7 +155,13 @@ class hivtrace extends hyphyJob {
     ",hivtrace_log=" +
     self.hivtrace_log +
     ",custom_reference_fn=" +
-    self.custom_reference_fn;
+    self.custom_reference_fn +
+    // Anchor for hivtrace_submit.sh's cluster-env locator ($cwd/..), same as
+    // every HyPhy wrapper. Without it the script would have to rely on
+    // SLURM_SUBMIT_DIR/PBS_O_WORKDIR, which follow symlinked output dirs and
+    // (Torque) the server's inherited $PWD rather than the repo layout.
+    ",cwd=" +
+    __dirname;
 
     // Prepare qsub params with unique output/error file names
     self.qsub_params = [

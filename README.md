@@ -31,6 +31,7 @@ Installation should be fairly straightforward as long as the dependencies are me
 
 * `git clone https://github.com/veg/datamonkey-js-server.git`
 * `cp config.json.tpl config.json`
+* (Optional) Not on silverback? `cp app/cluster-env.local.example app/cluster-env.local.sh` and set your cluster's module names and OpenMPI/UCX library dirs (`DM_ENV_MODULES`, `DM_ENV_MPI_LIB_DIRS`, ...). Check a job's .out for `cluster-env: found libmpi.so.40`. The file is per checkout (gitignored): copy it into every deployment (prod, staging) and every worktree; a checkout without it uses the silverback defaults.
 * `cp pm2.config.js.tpl pm2.config.js`
  
  Please make appropriate edits to config.json and pm2.config.js.

@@ -1,0 +1,69 @@
+# app/cluster-env.local.example -- template for SITE-LOCAL cluster settings.
+#
+#   cp app/cluster-env.local.example app/cluster-env.local.sh    # gitignored
+#
+# app/cluster-env.sh sources app/cluster-env.local.sh AFTER its silverback
+# defaults are assigned and BEFORE anything is applied, so set only what
+# differs here. Use plain bash assignments. Never `exit`. The file must
+# return 0: a syntax error or a failing last command fails every job with
+# "Error: cluster-env: ... cluster-env.local.sh failed" (end the file with
+# `true` if its last line is a conditional). Silverback needs no local file.
+#
+# The file is per checkout (gitignored): copy it into every deployment (prod,
+# staging) and every worktree; a checkout without it silently uses the
+# silverback defaults. To share one file, symlink app/cluster-env.local.sh to
+# it in each checkout.
+#
+# Set DM_ENV_* here, not in pm2.config.js or the service environment: inherited
+# DM_ENV_* values are ignored (and reported with a WARNING).
+#
+# Check syntax:  bash -n app/cluster-env.local.sh
+# Verify a run:  the job .out shows "cluster-env: applying site overrides from ..."
+#                and "cluster-env: found libmpi.so.40 at ...". Any unknown
+#                DM_ENV_* name is reported as a WARNING (typo guard).
+#                Any "WARNING: cluster-env: ... not found" line means the
+#                override is wrong, EVEN IF the job succeeded: the server's
+#                inherited LD_LIBRARY_PATH (forwarded by sbatch --export=ALL)
+#                may be masking it. To test the override on its own, submit
+#                once with `env -u LD_LIBRARY_PATH sbatch ...`.
+# Every analysis wrapper picks this up. Never edit app/<analysis>/*.sh for
+# environment reasons.
+
+# Where HyPhy's OpenMPI + UCX shared libraries live (':'-separated). This is
+# the setting that matters. When it is wrong, HYPHYMPI fails with
+# "libmpi.so.40: cannot open shared object file" (exit 127) -- but only if the
+# server's inherited LD_LIBRARY_PATH does not happen to hold MPI libs; the
+# WARNING line in the job .out is the authoritative signal. To find the
+# directories:  ldd .hyphy/HYPHYMPI | grep 'not found'
+# Leave it empty ("") only if MPI is already on the system loader path. (The
+# srun task then sees LD_LIBRARY_PATH=":..."; the empty entry is harmless.)
+#DM_ENV_MPI_LIB_DIRS="/opt/openmpi-5.0.7/lib:/opt/ucx-1.18/lib"
+
+# Environment modules, loaded in order; loading stops at the first failure.
+# "" = load none.
+#DM_ENV_MODULES="gcc/14 openmpi/5.0.7"
+
+# lmod / Environment Modules init script. Loads are skipped on nodes where
+# this file does not exist.
+#DM_ENV_LMOD_INIT="/usr/share/lmod/lmod/init/bash"
+
+# Appended after the inherited LD_LIBRARY_PATH (silverback: /usr/lib64).
+# "" = append nothing.
+#DM_ENV_LD_APPEND=""
+
+# Prepended to PATH (silverback: /usr/local/bin, where the system hyphy lives).
+#DM_ENV_PATH_PREPEND="/opt/hyphy/bin"
+
+# Libraries expected in DM_ENV_MPI_LIB_DIRS. Diagnostic only: a missing
+# library produces a warning in the job log.
+#DM_ENV_REQUIRED_LIBS="libmpi.so.40 libucp.so.0"
+
+# Extra runtime environment: this file is sourced into the batch shell, so
+# exports here reach every srun task (MPI transport / MCA settings), e.g.
+#export UCX_TLS=rc,sm,self
+#export OMPI_MCA_pml=ucx
+#export OMPI_MCA_btl=^openib
+#
+# Scheduler settings (srun --mpi type, partition, procs, walltimes) do NOT go
+# here: set slurm_mpi_type / slurm_partition / <method>_procs /
+# <method>_walltime in config.json.
