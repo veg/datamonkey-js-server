@@ -54,3 +54,8 @@ STDIN*
 # matches the test/ directory itself, silently ignoring every NEW test file.
 !test/
 !test/**
+
+# Site-local cluster environment override (template: app/cluster-env.local.example).
+# Explicit entry: no existing rule matches it. Do NOT rename the template to
+# *.sh.example / *.sh.tpl -- the '*.sh.*' rule above would silently ignore it.
+/app/cluster-env.local.sh

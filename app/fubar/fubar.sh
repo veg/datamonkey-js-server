@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Set the PATH but skip module loading - system specific
-export PATH=/usr/local/bin:$PATH
-
 # Parse command line arguments and set environment variables
 # For local execution, parameters are passed as command line arguments like "fn=/path/to/file"
 for arg in "$@"; do
@@ -49,26 +46,23 @@ for arg in "$@"; do
   esac
 done
 
-# Try to load modules if they exist, but don't fail if they don't
-if [ -f /etc/profile.d/lmod.sh ]; then
-  source /etc/profile.d/lmod.sh
-
-  # openmpi/gnu/3.1.6 no longer exists on the cluster; HYPHY binaries are
-  # built against OpenMPI 5.x (same fix as gard.sh)
-  module load gnu14/14.2.0 2>/dev/null && module load openmpi5/5.0.7 2>/dev/null || echo "Failed to load openmpi5/5.0.7"
-else
-  echo "Module system not available, using system environment"
+# >>> cluster-env (canonical block, pinned verbatim by test/cluster-env.test.js; never edit per wrapper)
+# PATH, modules and the OpenMPI/UCX LD_LIBRARY_PATH pin live in app/cluster-env.sh;
+# per-site overrides in app/cluster-env.local.sh (gitignored). sbatch/qsub run a
+# spooled copy of this script, so $0/BASH_SOURCE are NOT the repo there: anchor on cwd=.
+if [ -n "$cwd" ]; then DM_APP_DIR="$cwd/.."
+elif [ -n "$SLURM_SUBMIT_DIR" ]; then DM_APP_DIR="$SLURM_SUBMIT_DIR/../.."
+elif [ -n "$PBS_O_WORKDIR" ]; then DM_APP_DIR="$PBS_O_WORKDIR/../.."
+else DM_APP_DIR="${BASH_SOURCE[0]%/*}/.."
 fi
-
-# Make sure OpenMPI 5/UCX libraries are available even when lmod is absent
-# (compute nodes) — without this the HYPHY binary dies at link time with
-# "libmpi.so.40: cannot open shared object file". Mirrors gard.sh.
-export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib:$LD_LIBRARY_PATH:/usr/lib64
-
-# These are NOT on the system loader path (no ld.so.conf.d entry), and srun does
-# not reliably propagate the launching shell's LD_LIBRARY_PATH into the task.
-# We therefore pin these paths into the srun task via an env wrapper (gard.sh idiom).
-MPI_LIB_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib
+if [ ! -f "$DM_APP_DIR/cluster-env.sh" ]; then
+  echo "Error: cluster-env: $DM_APP_DIR/cluster-env.sh not found (cwd='$cwd' SLURM_SUBMIT_DIR='$SLURM_SUBMIT_DIR' PBS_O_WORKDIR='$PBS_O_WORKDIR')" >&2
+  DM_STATUS_FN="${sfn:-${fn:+${fn}_status}}"
+  if [ -n "$DM_STATUS_FN" ]; then echo "Error" > "$DM_STATUS_FN"; fi
+  exit 1
+fi
+. "$DM_APP_DIR/cluster-env.sh" mpi
+# <<< cluster-env
 
 FN=$fn
 CWD=$cwd
@@ -135,7 +129,7 @@ if [ -n "$SLURM_JOB_ID" ]; then
   # the same alignment/cache/output files -> "Could not read all the parameters
   # requested in call to fscanf(path,\"RawREWIND\")" and tasks 0-N exit 1.
   # Classic DM2 runs FUBAR as a single plain process; force -n 1 to match.
-  echo "srun --mpi=$MPI_TYPE -n 1 env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
+  echo "srun --mpi=$MPI_TYPE -n 1 /usr/bin/env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN > \"$PROGRESS_FILE\""
   srun --mpi=$MPI_TYPE -n 1 /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY LIBPATH=$HYPHY_PATH fubar --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --output $RESULTS_FN > "$PROGRESS_FILE"
 else
   # For local execution, use the HYPHY executable determined above

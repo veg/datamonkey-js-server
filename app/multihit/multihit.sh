@@ -1,8 +1,5 @@
 #!/bin/bash
 
-# Set the PATH but skip module loading - system specific
-export PATH=/usr/local/bin:$PATH
-
 # Parse command line arguments and set environment variables
 # For local execution, parameters are passed as command line arguments like "fn=/path/to/file"
 for arg in "$@"; do
@@ -52,28 +49,23 @@ for arg in "$@"; do
   esac
 done
 
-# Try to load modules if they exist, but don't fail if they don't
-if [ -f /etc/profile.d/lmod.sh ]; then
-  source /etc/profile.d/lmod.sh
-  
-  # Load the specific OpenMPI module for ARM architecture
-  module load gnu14/14.2.0 && module load openmpi5/5.0.7 2>/dev/null || echo "Failed to load openmpi-arm/5.0.5"
-  
-  # Check if module was loaded successfully
-  module list 2>&1
-  
-  # Print library paths for debugging
-  echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
-else
-  echo "Module system not available, using system environment"
+# >>> cluster-env (canonical block, pinned verbatim by test/cluster-env.test.js; never edit per wrapper)
+# PATH, modules and the OpenMPI/UCX LD_LIBRARY_PATH pin live in app/cluster-env.sh;
+# per-site overrides in app/cluster-env.local.sh (gitignored). sbatch/qsub run a
+# spooled copy of this script, so $0/BASH_SOURCE are NOT the repo there: anchor on cwd=.
+if [ -n "$cwd" ]; then DM_APP_DIR="$cwd/.."
+elif [ -n "$SLURM_SUBMIT_DIR" ]; then DM_APP_DIR="$SLURM_SUBMIT_DIR/../.."
+elif [ -n "$PBS_O_WORKDIR" ]; then DM_APP_DIR="$PBS_O_WORKDIR/../.."
+else DM_APP_DIR="${BASH_SOURCE[0]%/*}/.."
 fi
-
-# Make sure UCX libraries are available - these paths are critical for the MPI support
-export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib:$LD_LIBRARY_PATH:/usr/lib64
-
-# Print library paths and attempt to verify UCX is available
-echo "LD_LIBRARY_PATH after adjustment: $LD_LIBRARY_PATH"
-ls -l /opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib/libucp.so* 2>&1 || echo "UCX libraries not found"
+if [ ! -f "$DM_APP_DIR/cluster-env.sh" ]; then
+  echo "Error: cluster-env: $DM_APP_DIR/cluster-env.sh not found (cwd='$cwd' SLURM_SUBMIT_DIR='$SLURM_SUBMIT_DIR' PBS_O_WORKDIR='$PBS_O_WORKDIR')" >&2
+  DM_STATUS_FN="${sfn:-${fn:+${fn}_status}}"
+  if [ -n "$DM_STATUS_FN" ]; then echo "Error" > "$DM_STATUS_FN"; fi
+  exit 1
+fi
+. "$DM_APP_DIR/cluster-env.sh" mpi
+# <<< cluster-env
 
 FN=$fn
 CWD=$cwd
@@ -151,8 +143,8 @@ if [ -n "$SLURM_JOB_ID" ]; then
   else
     echo "Non-MPI HYPHY not found at $HYPHY_NON_MPI, attempting to use MPI version"
     export TOLERATE_NUMERICAL_ERRORS=1
-    echo "srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $MULTIHIT --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --rates $RATE_CLASSES --triple-islands $TRIPLE_ISLANDS --branches $BRANCHES --output $RESULTS_FN > \"$PROGRESS_FILE\""
-    srun --mpi=$MPI_TYPE -n $PROCS $HYPHY LIBPATH=$HYPHY_PATH $MULTIHIT --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --rates $RATE_CLASSES --triple-islands $TRIPLE_ISLANDS --branches $BRANCHES --output $RESULTS_FN > "$PROGRESS_FILE"
+    echo "srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH $MULTIHIT --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --rates $RATE_CLASSES --triple-islands $TRIPLE_ISLANDS --branches $BRANCHES --output $RESULTS_FN > \"$PROGRESS_FILE\""
+    srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY LIBPATH=$HYPHY_PATH $MULTIHIT --code $GENETIC_CODE --alignment $FN --tree $TREE_FN --rates $RATE_CLASSES --triple-islands $TRIPLE_ISLANDS --branches $BRANCHES --output $RESULTS_FN > "$PROGRESS_FILE"
   fi
 else
   # For local execution, use the HYPHY executable determined above

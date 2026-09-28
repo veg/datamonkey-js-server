@@ -689,7 +689,7 @@
         "--time=3:00:00:00",
         "--output=<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID_%j.out",
         "--error=<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID_%j.err",
-        "--export=fn=<ROOT>/app/hivtrace/output/GOLDEN-ID,python=<ROOT>/.python/env/bin/python,hivtrace=<ROOT>/.python/env/bin/hivtrace,dt=0.015,ambiguity_handling=Resolve,fraction=0.05,reference=HXB2_prrt,mo=500,filter=no,comparelanl=no,reference_strip=no,strip_drams=false,prealigned=no,output=<ROOT>/app/hivtrace/output/GOLDEN-ID_user.trace.json,hivtrace_log=<ROOT>/app/hivtrace/output/GOLDEN-ID.hivtrace.log,custom_reference_fn=",
+        "--export=fn=<ROOT>/app/hivtrace/output/GOLDEN-ID,python=<ROOT>/.python/env/bin/python,hivtrace=<ROOT>/.python/env/bin/hivtrace,dt=0.015,ambiguity_handling=Resolve,fraction=0.05,reference=HXB2_prrt,mo=500,filter=no,comparelanl=no,reference_strip=no,strip_drams=false,prealigned=no,output=<ROOT>/app/hivtrace/output/GOLDEN-ID_user.trace.json,hivtrace_log=<ROOT>/app/hivtrace/output/GOLDEN-ID.hivtrace.log,custom_reference_fn=,cwd=<ROOT>/app/hivtrace",
         "<ROOT>/app/hivtrace/hivtrace_submit.sh"
       ]
     },
@@ -702,7 +702,7 @@
         "-q",
         "datamonkey",
         "-v",
-        "fn=<ROOT>/app/hivtrace/output/GOLDEN-ID,python=<ROOT>/.python/env/bin/python,hivtrace=<ROOT>/.python/env/bin/hivtrace,dt=0.015,ambiguity_handling=Resolve,fraction=0.05,reference=HXB2_prrt,mo=500,filter=no,comparelanl=no,reference_strip=no,strip_drams=false,prealigned=no,output=<ROOT>/app/hivtrace/output/GOLDEN-ID_user.trace.json,hivtrace_log=<ROOT>/app/hivtrace/output/GOLDEN-ID.hivtrace.log,custom_reference_fn=",
+        "fn=<ROOT>/app/hivtrace/output/GOLDEN-ID,python=<ROOT>/.python/env/bin/python,hivtrace=<ROOT>/.python/env/bin/hivtrace,dt=0.015,ambiguity_handling=Resolve,fraction=0.05,reference=HXB2_prrt,mo=500,filter=no,comparelanl=no,reference_strip=no,strip_drams=false,prealigned=no,output=<ROOT>/app/hivtrace/output/GOLDEN-ID_user.trace.json,hivtrace_log=<ROOT>/app/hivtrace/output/GOLDEN-ID.hivtrace.log,custom_reference_fn=,cwd=<ROOT>/app/hivtrace",
         "-o",
         "<ROOT>/app/hivtrace/output/hivtrace_GOLDEN-ID.o",
         "-e",

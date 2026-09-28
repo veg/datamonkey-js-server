@@ -1,7 +1,5 @@
 #!/bin/bash
 
-export PATH=/usr/local/bin:$PATH
-
 for arg in "$@"; do
   case $arg in
     fn=*)
@@ -55,24 +53,23 @@ for arg in "$@"; do
   esac
 done
 
-if [ -f /etc/profile.d/lmod.sh ]; then
-  source /etc/profile.d/lmod.sh
-  # openmpi/gnu/3.1.6 no longer exists on the cluster; HYPHY binaries are
-  # built against OpenMPI 5.x (same fix as gard.sh)
-  module load gnu14/14.2.0 2>/dev/null && module load openmpi5/5.0.7 2>/dev/null || echo "Failed to load openmpi5/5.0.7"
-else
-  echo "Module system not available, using system environment"
+# >>> cluster-env (canonical block, pinned verbatim by test/cluster-env.test.js; never edit per wrapper)
+# PATH, modules and the OpenMPI/UCX LD_LIBRARY_PATH pin live in app/cluster-env.sh;
+# per-site overrides in app/cluster-env.local.sh (gitignored). sbatch/qsub run a
+# spooled copy of this script, so $0/BASH_SOURCE are NOT the repo there: anchor on cwd=.
+if [ -n "$cwd" ]; then DM_APP_DIR="$cwd/.."
+elif [ -n "$SLURM_SUBMIT_DIR" ]; then DM_APP_DIR="$SLURM_SUBMIT_DIR/../.."
+elif [ -n "$PBS_O_WORKDIR" ]; then DM_APP_DIR="$PBS_O_WORKDIR/../.."
+else DM_APP_DIR="${BASH_SOURCE[0]%/*}/.."
 fi
-
-# Make sure OpenMPI 5/UCX libraries are available even when lmod is absent
-# (compute nodes) — without this the HYPHY binary dies at link time with
-# "libmpi.so.40: cannot open shared object file". Mirrors gard.sh.
-export LD_LIBRARY_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib:$LD_LIBRARY_PATH:/usr/lib64
-
-# These are NOT on the system loader path (no ld.so.conf.d entry), and srun does
-# not reliably propagate the launching shell's LD_LIBRARY_PATH into the task.
-# We therefore pin these paths into the srun task via an env wrapper (gard.sh idiom).
-MPI_LIB_PATH=/opt/ohpc/pub/mpi/openmpi5-gnu14/5.0.7/lib:/opt/ohpc/pub/mpi/ucx-ohpc/1.18.0/lib
+if [ ! -f "$DM_APP_DIR/cluster-env.sh" ]; then
+  echo "Error: cluster-env: $DM_APP_DIR/cluster-env.sh not found (cwd='$cwd' SLURM_SUBMIT_DIR='$SLURM_SUBMIT_DIR' PBS_O_WORKDIR='$PBS_O_WORKDIR')" >&2
+  DM_STATUS_FN="${sfn:-${fn:+${fn}_status}}"
+  if [ -n "$DM_STATUS_FN" ]; then echo "Error" > "$DM_STATUS_FN"; fi
+  exit 1
+fi
+. "$DM_APP_DIR/cluster-env.sh" mpi
+# <<< cluster-env
 
 FN=$fn
 CWD=$cwd
@@ -135,7 +132,7 @@ fi
 if [ -n "$SLURM_JOB_ID" ]; then
   echo "Using SLURM execution: $HYPHY"
   export TOLERATE_NUMERICAL_ERRORS=1
-  echo "srun --mpi=$MPI_TYPE -n $PROCS env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > \"$PROGRESS_FILE\""
+  echo "srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH=$MPI_LIB_PATH:\$LD_LIBRARY_PATH $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method $METHOD --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > \"$PROGRESS_FILE\""
   srun --mpi=$MPI_TYPE -n $PROCS /usr/bin/env LD_LIBRARY_PATH="$MPI_LIB_PATH:$LD_LIBRARY_PATH" $HYPHY LIBPATH=$HYPHY_PATH b-still --alignment $FN --tree $TREE_FN --code $GENETIC_CODE --concentration_parameter $CONCENTRATION --grid $GRIDPOINTS --method "$METHOD" --ebf $EBF --radius-threshold $RADIUS_THRESHOLD --output $RESULTS_FN > "$PROGRESS_FILE"
 else
   echo "Using local HYPHY execution: $HYPHY"

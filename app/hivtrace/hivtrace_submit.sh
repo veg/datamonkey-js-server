@@ -3,30 +3,23 @@
 #SBATCH --ntasks-per-node=1
 #PBS -l nodes=1:ppn=16
 
-export PATH=/usr/local/bin:$PATH
-
-# Try to load modules if they exist, but don't fail if they don't
-if [ -f /etc/profile.d/lmod.sh ]; then
-  source /etc/profile.d/lmod.sh
-
-  # Load the specific OpenMPI module for ARM architecture
-  module load gnu14/14.2.0 && module load openmpi5/5.0.7 2>/dev/null || echo "Failed to load openmpi-arm/5.0.5"
-
-  # Check if module was loaded successfully
-  module list 2>&1
-
-  # Print library paths for debugging
-  echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
-else
-  echo "Module system not available, using system environment"
+# >>> cluster-env (canonical block, pinned verbatim by test/cluster-env.test.js; never edit per wrapper)
+# PATH, modules and the OpenMPI/UCX LD_LIBRARY_PATH pin live in app/cluster-env.sh;
+# per-site overrides in app/cluster-env.local.sh (gitignored). sbatch/qsub run a
+# spooled copy of this script, so $0/BASH_SOURCE are NOT the repo there: anchor on cwd=.
+if [ -n "$cwd" ]; then DM_APP_DIR="$cwd/.."
+elif [ -n "$SLURM_SUBMIT_DIR" ]; then DM_APP_DIR="$SLURM_SUBMIT_DIR/../.."
+elif [ -n "$PBS_O_WORKDIR" ]; then DM_APP_DIR="$PBS_O_WORKDIR/../.."
+else DM_APP_DIR="${BASH_SOURCE[0]%/*}/.."
 fi
-
-# Load modules if they exist (for cluster environments)
-if type module > /dev/null 2>&1; then
-  # Try to load common modules that might be available on the system
-  module load openmpi/gnu/1.6.3 2>/dev/null || true
-  module load aocc/1.3.0 2>/dev/null || true
+if [ ! -f "$DM_APP_DIR/cluster-env.sh" ]; then
+  echo "Error: cluster-env: $DM_APP_DIR/cluster-env.sh not found (cwd='$cwd' SLURM_SUBMIT_DIR='$SLURM_SUBMIT_DIR' PBS_O_WORKDIR='$PBS_O_WORKDIR')" >&2
+  DM_STATUS_FN="${sfn:-${fn:+${fn}_status}}"
+  if [ -n "$DM_STATUS_FN" ]; then echo "Error" > "$DM_STATUS_FN"; fi
+  exit 1
 fi
+. "$DM_APP_DIR/cluster-env.sh" base
+# <<< cluster-env
 
 # Get environment variables passed from the job submission
 FN=$fn
