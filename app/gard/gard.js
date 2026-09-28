@@ -5,7 +5,8 @@ const config = require("../../lib/config"),
   datatypes = require("../type").type,
   code = require("../code").code,
   path = require("path"),
-  utilities = require("../../lib/utilities");
+  utilities = require("../../lib/utilities"),
+  { partitionFor } = require("../../lib/partition");
 
 class gard extends hyphyJob {
   constructor(socket, stream, params) {
@@ -171,7 +172,7 @@ class gard extends hyphyJob {
         `--ntasks=${config.gard_procs || 4}`,                       // Use multiple tasks for MPI
         "--cpus-per-task=1",                                  // One CPU per task for MPI
         `--time=${slurmTime}`,                                // Converted time limit
-        `--partition=${config.slurm_partition || "datamonkey"}`,    // Use configured partition
+        `--partition=${partitionFor("gard", config)}`,           // gard_partition > slurm_partition
         "--nodes=1",                                          // Run on a single node
         "--export=ALL,slurm_mpi_type=" + 
       (config.slurm_mpi_type || "pmix") + 
