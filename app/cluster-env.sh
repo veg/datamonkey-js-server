@@ -109,6 +109,8 @@ echo "cluster-env: loaded $_dm_self (profile $DM_ENV_PROFILE)"
 
 if [ -f "$_dm_dir/cluster-env.local.sh" ]; then
   echo "cluster-env: applying site overrides from $_dm_dir/cluster-env.local.sh"
+  # Site-local and gitignored, so it cannot be followed statically.
+  # shellcheck source=/dev/null
   if ! . "$_dm_dir/cluster-env.local.sh"; then
     # Fatal: continuing would run with partial or silverback settings and fail
     # later at srun with a misleading libmpi error.
@@ -137,6 +139,8 @@ fi
 # 2. Modules: best effort
 # ------------------------------------------------------------------------
 if [ -n "$DM_ENV_MODULES" ] && [ -n "$DM_ENV_LMOD_INIT" ] && [ -f "$DM_ENV_LMOD_INIT" ]; then
+  # System lmod init script, path configurable per site.
+  # shellcheck source=/dev/null
   . "$DM_ENV_LMOD_INIT"
   for _dm_m in $DM_ENV_MODULES; do
     if ! module load "$_dm_m" 2>/dev/null; then
