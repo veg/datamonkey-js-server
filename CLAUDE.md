@@ -22,6 +22,8 @@
 - When testing SLURM/MPI jobs, always use files on shared storage, never `/tmp`.
 - Use `clush -g all` or `clush -w node0` to run commands on compute nodes.
 - Use `srun --partition=datamonkey --mpi=pmix` for MPI job testing.
+- **`test/<method>/*.js` only prove SUBMISSION** (most submit a job and cancel it). A green `test:analyses` does not mean jobs finish. **`npm run test:complete`** (cluster-only; needs `config.json` with `submit_type: "slurm"` and an isolated redis) runs all 15 MPI methods to completion, each on its own `test/<method>/res/` fixture, and checks the results JSON. Run it after any change to a wrapper, `app/cluster-env.sh`, a descriptor, or HyPhy. bgm's MCMC makes it take ~18 min.
+- **Fixture rules** (enforced cluster-free by `test/method-fixtures.test.js` in `test:ci`): the tree must be in ALL six routing locations (`params.tree`, `analysis.tagged_nwk_tree`, `msa[0].nj/usertree`, `analysis.msa[0].nj/usertree`), and every copy's tips must match the alignment's sequence names. The alignment must not embed a Newick tree: HyPhy stops to ask whether to use it and a batch job hangs forever. FADE needs a protein alignment and a ROOTED tree.
 
 ## MCP Server
 
