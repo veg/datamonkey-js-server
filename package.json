@@ -25,7 +25,7 @@
     "test:complete": "mocha -R spec --exit test/completion/completion.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
     "commander": "^15.0.0",
     "date-fns": "^4.4.0",
     "express": "^5.2.1",
