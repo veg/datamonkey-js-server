@@ -30,7 +30,7 @@
     "date-fns": "^4.4.0",
     "express": "^5.2.1",
     "onnxruntime-node": "1.30.0",
-    "redis": "^6.2.1",
+    "redis": "^6.3.0",
     "should": "^13.2.3",
     "socket.io": "4.8.3",
     "tail": "^2.2.6",
