@@ -6,3 +6,13 @@ updates:
       interval: weekly
       time: "10:00"
     open-pull-requests-limit: 10
+    # One PR per run instead of one per package: security fixes together,
+    # minor/patch version bumps together. Majors still get their own PR.
+    groups:
+      security:
+        applies-to: security-updates
+        patterns: ["*"]
+      minor-and-patch:
+        applies-to: version-updates
+        update-types: ["minor", "patch"]
+        patterns: ["*"]
