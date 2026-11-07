@@ -25,12 +25,12 @@
     "test:complete": "mocha -R spec --exit test/completion/completion.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.32.1",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "commander": "^15.0.0",
     "date-fns": "^4.4.0",
     "express": "^5.3.0",
     "onnxruntime-node": "1.31.1",
-    "redis": "^6.3.0",
+    "redis": "^6.3.1",
     "should": "^13.2.3",
     "socket.io": "4.8.4",
     "tail": "^2.2.6",
