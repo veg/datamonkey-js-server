@@ -65,5 +65,5 @@
 #export OMPI_MCA_btl=^openib
 #
 # Scheduler settings (srun --mpi type, partition, procs, walltimes) do NOT go
-# here: set slurm_mpi_type / slurm_partition / <method>_procs /
-# <method>_walltime in config.json.
+# here: set slurm_mpi_type / slurm_partition / <method>_partition /
+# <method>_procs / <method>_walltime in config.json.
