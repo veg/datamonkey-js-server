@@ -7,6 +7,18 @@ var config = require("../../config.json"),
   utilities = require("../../lib/utilities"),
   logger = require("../../lib/logger").logger;
 
+// Extract the first newick tree from a NEXUS TREES block, if present.
+// Returns the newick string (ending in ';') or null if none found.
+function extractNexusTreeFromContent(content) {
+  if (!content || typeof content !== "string") return null;
+  var m = content.match(/BEGIN\s+TREES\s*;[\s\S]*?END\s*;/i);
+  if (!m) return null;
+  var block = m[0];
+  // A TREE line looks like: TREE name = (....);  — grab the newick after '='.
+  var t = block.match(/TREE\s+[^=]+=\s*(\([\s\S]*?\)[^;]*;)/i);
+  return t ? t[1].trim() : null;
+}
+
 var slac = function(socket, stream, params) {
   var self = this;
   self.socket = socket;
@@ -23,6 +35,17 @@ var slac = function(socket, stream, params) {
   self.id = self.params.analysis._id;
   self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nj = self.params.msa[0].nj;
+  // Resolve the tree to write for HyPhy. Priority: the analysis' tagged newick
+  // tree (set when the user uploads/selects a tree, as FEL/MEME use), then the
+  // neighbor-joining tree, then a tree embedded in the alignment's NEXUS
+  // TREES block. Previously SLAC wrote only self.nj, so alignments whose tree
+  // lived in a NEXUS TREES block produced an EMPTY .tre file and HyPhy aborted
+  // with "<'constant' operation 'X'> ... not a number". See slac.js writeFile below.
+  self.resolved_tree =
+    (self.params.analysis && self.params.analysis.tagged_nwk_tree) ||
+    self.nj ||
+    extractNexusTreeFromContent(self.stream) ||
+    "";
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -125,8 +148,11 @@ var slac = function(socket, stream, params) {
     ];
   }
 
-  // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nj, function(err) {
+  // Write tree to a file (resolved above: tagged tree -> NJ -> embedded NEXUS tree)
+  if (!self.resolved_tree || self.resolved_tree.trim().length === 0) {
+    logger.error(`Job ${self.id}: no tree could be resolved for SLAC (empty tagged/NJ/NEXUS tree)`);
+  }
+  fs.writeFile(self.tree_fn, self.resolved_tree, function(err) {
     if (err) throw err;
   });
 

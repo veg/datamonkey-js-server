@@ -14,6 +14,15 @@ const config = require("../../config.json"),
 // Use redis as our key-value store
 const client = redis.createClient({ host: config.redis_host, port: config.redis_port });
 
+// Extract the first newick tree from a NEXUS TREES block, if present (see slac.js).
+function extractNexusTreeFromContent(content) {
+  if (!content || typeof content !== "string") return null;
+  var m = content.match(/BEGIN\s+TREES\s*;[\s\S]*?END\s*;/i);
+  if (!m) return null;
+  var t = m[0].match(/TREE\s+[^=]+=\s*(\([\s\S]*?\)[^;]*;)/i);
+  return t ? t[1].trim() : null;
+}
+
 var gard = function(socket, stream, params) {
 
   const self = this;
@@ -40,6 +49,14 @@ var gard = function(socket, stream, params) {
   self.datatype = self.params.analysis.datatype || "0";
   self.datatype = datatypes[self.datatype];
   self.nj = self.params.msa[0].nj;
+  // Resolve the tree to write (see slac.js): tagged newick -> NJ -> embedded
+  // NEXUS TREES block. Fixes empty .tre / HyPhy "'X' not a number" abort when
+  // the user's tree lives in the alignment's NEXUS TREES block.
+  self.resolved_tree =
+    (self.params.analysis && self.params.analysis.tagged_nwk_tree) ||
+    self.nj ||
+    extractNexusTreeFromContent(self.stream) ||
+    "";
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -79,7 +96,8 @@ var gard = function(socket, stream, params) {
       `--ntasks=${config.gard_procs}`,                       // Use multiple tasks for MPI
       "--cpus-per-task=1",                                  // One CPU per task for MPI
       `--time=${slurmTime}`,                                // Converted time limit
-      `--partition=${config.slurm_partition || "datamonkey"}`,    // Use configured partition
+      `--partition=${config.gard_partition || config.slurm_partition || "datamonkey"}`,    // Use configured partition
+      "--nodes=1",                                          // Run on a single node
       "--export=ALL,slurm_mpi_type=" + 
       (config.slurm_mpi_type || "pmix") + 
       "," +
@@ -162,7 +180,10 @@ var gard = function(socket, stream, params) {
   }
 
   // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nj, function(err) {
+  if (!self.resolved_tree || self.resolved_tree.trim().length === 0) {
+    logger.error(`Job ${self.id}: no tree could be resolved for GARD (empty tagged/NJ/NEXUS tree)`);
+  }
+  fs.writeFile(self.tree_fn, self.resolved_tree, function(err) {
     if (err) throw err;
   });
 
