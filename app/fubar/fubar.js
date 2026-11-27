@@ -7,6 +7,15 @@ var config = require("../../config.json"),
   utilities = require("../../lib/utilities"),
   logger = require("../../lib/logger").logger;
 
+// Extract the first newick tree from a NEXUS TREES block, if present (see slac.js).
+function extractNexusTreeFromContent(content) {
+  if (!content || typeof content !== "string") return null;
+  var m = content.match(/BEGIN\s+TREES\s*;[\s\S]*?END\s*;/i);
+  if (!m) return null;
+  var t = m[0].match(/TREE\s+[^=]+=\s*(\([\s\S]*?\)[^;]*;)/i);
+  return t ? t[1].trim() : null;
+}
+
 var fubar = function(socket, stream, params) {
   var self = this;
   self.socket = socket;
@@ -23,6 +32,14 @@ var fubar = function(socket, stream, params) {
   self.id = self.params.analysis._id;
   self.genetic_code = code[self.params.msa[0].gencodeid + 1];
   self.nj = self.params.msa[0].nj;
+  // Resolve the tree to write (see slac.js): tagged newick -> NJ -> embedded
+  // NEXUS TREES block. Fixes empty .tre / HyPhy "'X' not a number" abort when
+  // the user's tree lives in the alignment's NEXUS TREES block.
+  self.resolved_tree =
+    (self.params.analysis && self.params.analysis.tagged_nwk_tree) ||
+    self.nj ||
+    extractNexusTreeFromContent(self.stream) ||
+    "";
 
   // parameter-derived attributes
   self.fn = __dirname + "/output/" + self.id;
@@ -135,7 +152,10 @@ var fubar = function(socket, stream, params) {
   logger.info("FUBAR job " + self.id + ": Using " + config.submit_type + " parameters: " + JSON.stringify(self.qsub_params));
 
   // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nj, function(err) {
+  if (!self.resolved_tree || self.resolved_tree.trim().length === 0) {
+    logger.error(`Job ${self.id}: no tree could be resolved for FUBAR (empty tagged/NJ/NEXUS tree)`);
+  }
+  fs.writeFile(self.tree_fn, self.resolved_tree, function(err) {
     if (err) throw err;
   });
 

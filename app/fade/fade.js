@@ -13,6 +13,15 @@ estimationMethod = {
   "3" : "Variational-Bayes"
 }
 
+// Extract the first newick tree from a NEXUS TREES block, if present (see slac.js).
+function extractNexusTreeFromContent(content) {
+  if (!content || typeof content !== "string") return null;
+  var m = content.match(/BEGIN\s+TREES\s*;[\s\S]*?END\s*;/i);
+  if (!m) return null;
+  var t = m[0].match(/TREE\s+[^=]+=\s*(\([\s\S]*?\)[^;]*;)/i);
+  return t ? t[1].trim() : null;
+}
+
 var fade = function(socket, stream, params) {
   var self = this;
   self.socket = socket;
@@ -28,6 +37,14 @@ var fade = function(socket, stream, params) {
   self.msaid = self.params.msa._id;
   self.id = self.params.analysis._id;
   self.nj = self.params.msa[0].nj;
+  // Resolve the tree to write (see slac.js): tagged newick -> NJ -> embedded
+  // NEXUS TREES block. Fixes empty .tre / HyPhy "'X' not a number" abort when
+  // the user's tree lives in the alignment's NEXUS TREES block.
+  self.resolved_tree =
+    (self.params.analysis && self.params.analysis.tagged_nwk_tree) ||
+    self.nj ||
+    extractNexusTreeFromContent(self.stream) ||
+    "";
 
   // FADE specific attributes
   self.substitution_model = model[self.params.analysis.substitution_model];
@@ -148,7 +165,10 @@ var fade = function(socket, stream, params) {
   logger.info("FADE job " + self.id + ": Using " + config.submit_type + " parameters");
 
   // Write tree to a file
-  fs.writeFile(self.tree_fn, self.nj, function(err) {
+  if (!self.resolved_tree || self.resolved_tree.trim().length === 0) {
+    logger.error(`Job ${self.id}: no tree could be resolved for FADE (empty tagged/NJ/NEXUS tree)`);
+  }
+  fs.writeFile(self.tree_fn, self.resolved_tree, function(err) {
     if (err) throw err;
   });
 
