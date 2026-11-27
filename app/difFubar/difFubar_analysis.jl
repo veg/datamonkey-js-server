@@ -358,7 +358,16 @@ try
     else
         println("✓ All sequence names found in tree")
     end
-    
+
+    # difFUBAR compares omega between TWO groups of branches. With fewer than two
+    # tag groups in the tree, CodonMolecularEvolution crashes deep in the analysis
+    # (BoundsError in grids.jl / difFUBAR.jl) instead of erroring, so reject early.
+    tags_in_tree = [t for t in tags if occursin(t, treestring)]
+    if length(tags_in_tree) < 2
+        println("Tags found in tree: $tags_in_tree")
+        error("difFUBAR compares two groups of branches, but the tree has $(length(tags_in_tree)) tagged group(s) $(tags_in_tree). Please tag branches with at least two different groups.")
+    end
+
     println("=== PRE-ANALYSIS DEBUG ===")
     println("Number of sequences: $(length(seqnames))")
     println("Number of tags: $(length(tags))")
